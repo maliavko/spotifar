@@ -17,4 +17,7 @@ target_include_directories(${PROJECT_NAME}
 	PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(${PROJECT_NAME}
-	PRIVATE httplib::httplib nlohmann_json::nlohmann_json OpenSSL::SSL OpenSSL::Crypto)
+	PRIVATE
+		httplib::httplib
+		nlohmann_json::nlohmann_json
+		OpenSSL::SSL OpenSSL::Crypto)
