@@ -9,20 +9,13 @@
     {
       "name": "base",
       "hidden": true,
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "installDir": "${sourceDir}/install/${presetName}",
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "environment": {
         "VCPKG_FEATURE_FLAGS": "manifests,versions,binarycaching,registries"
       },
       "cacheVariables": {
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin"
-      },
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
       }
     },
     {
@@ -50,12 +43,14 @@
     {
       "name": "x64-debug",
       "displayName": "x64 Debug",
-      "configurePreset": "x64-debug"
+      "configurePreset": "x64-debug",
+      "configuration": "Debug"
     },
     {
       "name": "x64-release",
       "displayName": "x64 Release",
-      "configurePreset": "x64-release"
+      "configurePreset": "x64-release",
+      "configuration": "Release"
     }
   ]
 }

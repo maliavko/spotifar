@@ -5,7 +5,6 @@ project(spotifar)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-
 add_subdirectory(spotify-http-relay)
 
 
@@ -34,3 +33,13 @@ target_link_libraries(${PROJECT_NAME}
 		httplib::httplib
 		nlohmann_json::nlohmann_json
 		OpenSSL::SSL OpenSSL::Crypto)
+
+
+
+message(WARNING $<CONFIG>)
+
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
