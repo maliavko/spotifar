@@ -7,49 +7,51 @@
   },
   "configurePresets": [
     {
-      "name": "base",
+      "name": "vs17base",
       "hidden": true,
+      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-      "environment": {
-        "VCPKG_FEATURE_FLAGS": "manifests,versions,binarycaching,registries"
-      },
       "cacheVariables": {
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin"
       }
     },
     {
-      "name": "x64-debug",
-      "displayName": "x64 Debug",
-      "inherits": "base",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
+      "name": "vs64",
+      "displayName": "Visual Studio 17 x64",
+      "inherits": "vs17base",
+      "architecture": "x64"
     },
     {
-      "name": "x64-release",
-      "displayName": "x64 Release",
-      "inherits": "x64-debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
+      "name": "vs32",
+      "displayName": "Visual Studio 17 x86",
+      "inherits": "vs17base",
+      "architecture": "Win32"
     }
   ],
   "buildPresets": [
     {
       "name": "x64-debug",
-      "displayName": "x64 Debug",
-      "configurePreset": "x64-debug",
+      "displayName": "Visual Studio 17 x64 Debug",
+      "configurePreset": "vs64",
       "configuration": "Debug"
     },
     {
       "name": "x64-release",
-      "displayName": "x64 Release",
-      "configurePreset": "x64-release",
+      "displayName": "Visual Studio 17 x64 Release",
+      "configurePreset": "vs64",
+      "configuration": "Release"
+    },
+    {
+      "name": "x86-debug",
+      "displayName": "Visual Studio 17 x86 Debug",
+      "configurePreset": "vs32",
+      "configuration": "Debug"
+    },
+    {
+      "name": "x86-release",
+      "displayName": "Visual Studio 17 x86 Release",
+      "configurePreset": "vs32",
       "configuration": "Release"
     }
   ]
