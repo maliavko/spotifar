@@ -19,8 +19,8 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE
-		${PROJECT_SOURCE_DIR}/thirdparty/farmanager/common
-		${PROJECT_SOURCE_DIR}/thirdparty/farmanager/common/unicode)
+		${PROJECT_SOURCE_DIR}/thirdparty/farmanager/include/common
+		${PROJECT_SOURCE_DIR}/thirdparty/farmanager/include/common/unicode)
 
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE
