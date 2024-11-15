@@ -15,6 +15,8 @@ add_library(${PROJECT_NAME} SHARED
 	spotifar.vc.def
 )
 
+target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
+
 target_include_directories(${PROJECT_NAME}
 	PRIVATE
 		${PROJECT_SOURCE_DIR}/thirdparty/farmanager/common
