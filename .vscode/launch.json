@@ -1,0 +1,20 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        // it is not possible to pass input variables from launch.json to tasks.json
+        // and make it possible to configure a Far build on the fly from here;
+        // so binding Debug x64 version as a default one
+        {
+            "name": "Far x64",
+            "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Debug.x64/Far.exe",
+            "type":"cppvsdbg",
+            "request": "launch",
+            "cwd": "${fileDirname}",
+            "console": "externalTerminal",
+            "preLaunchTask": "Far msbuild (x64 debug)"
+        }
+    ]
+}

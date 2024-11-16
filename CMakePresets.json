@@ -17,14 +17,14 @@
       }
     },
     {
-      "name": "vs64",
+      "name": "x64",
       "displayName": "Visual Studio 17 x64",
       "inherits": "vs17base",
       "architecture": "x64"
     },
     {
-      "name": "vs32",
-      "displayName": "Visual Studio 17 x86",
+      "name": "Win32",
+      "displayName": "Visual Studio 17 Win32",
       "inherits": "vs17base",
       "architecture": "Win32"
     }
@@ -33,25 +33,25 @@
     {
       "name": "x64-debug",
       "displayName": "Visual Studio 17 x64 Debug",
-      "configurePreset": "vs64",
+      "configurePreset": "x64",
       "configuration": "Debug"
     },
     {
       "name": "x64-release",
       "displayName": "Visual Studio 17 x64 Release",
-      "configurePreset": "vs64",
+      "configurePreset": "x64",
       "configuration": "Release"
     },
     {
-      "name": "x86-debug",
-      "displayName": "Visual Studio 17 x86 Debug",
-      "configurePreset": "vs32",
+      "name": "Win32-debug",
+      "displayName": "Visual Studio 17 Win32 Debug",
+      "configurePreset": "Win32",
       "configuration": "Debug"
     },
     {
-      "name": "x86-release",
-      "displayName": "Visual Studio 17 x86 Release",
-      "configurePreset": "vs32",
+      "name": "Win32-release",
+      "displayName": "Visual Studio 17 Win32 Release",
+      "configurePreset": "Win32",
       "configuration": "Release"
     }
   ]

@@ -1,0 +1,148 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+
+    // extending win shell environment, so by default all the commands are
+    // being launched with VsDevCmd context for ability to access VS dev
+    // tools and variables
+    "windows": {
+      "options": {
+        "shell": {
+          "executable": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
+          "args": [
+            "&"
+          ]
+        }
+      }
+    },
+    "tasks": [
+        {
+            // default building and testing Spotifar + Far tasks in x64 debug
+            // configuration
+            //-------------------------------------------------------------------
+            "label": "Far msbuild (x64 debug)",
+            "type": "shell",
+            "command": "msbuild",
+            "args": [
+                "${workspaceFolder}\\thirdparty\\Farmanager\\_build\\vc\\all.sln",
+                "/t:Far\\Far",
+                "/p:Configuration=\"Debug\"",
+                "/p:Platform=\"x64\""
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "dependsOn": ["Spotifar cmake configure and build (x64-debug)", "Install Spotifar to Far (x64 debug)"],
+            "dependsOrder": "sequence",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Spotifar cmake configure and build (x64-debug)",
+            "type": "shell",
+            "command": "cmake --preset x64 && cmake --build --preset x64-debug",
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Install Spotifar to Far (x64 debug)",
+            "type": "shell",
+            "command": "xcopy",
+            "args": [
+                "${workspaceFolder}\\build\\x64\\bin\\Debug\\",
+                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\Debug.x64\\Plugins\\Spotifar\\",
+                "/y"
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": "$msCompile"
+        },
+
+        // generic builds with user inputs prompt configurations
+        //---------------------------------------------------------
+        {
+            "label": "Far msbuild",
+            "type": "shell",
+            "command": "msbuild",
+            "args": [
+                "${workspaceFolder}\\thirdparty\\Farmanager\\_build\\vc\\all.sln",
+                "/t:Far\\Far",
+                "/p:Configuration=\"${input:farBuildType}\"",
+                "/p:Platform=\"${input:farPlatform}\""
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Spotifar cmake configure",
+            "type": "shell",
+            "command": "cmake --preset ${input:cmakePlatform}",
+            "group": {
+                "kind": "build"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Spotifar cmake build",
+            "type": "shell",
+            "command": "cmake --build --preset ${input:cmakePlatform}-${input:cmakeBuildType}",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn":["Spotifar cmake configure"],
+            "problemMatcher": "$msCompile"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "farPlatform",
+            "type": "pickString",
+            "description": "Select a platform",
+            "options": [
+                "x64",
+                "Win32",
+                "ARM",
+                "ARM64"
+            ],
+            "default": "x64"
+        },
+        {
+            "id": "farBuildType",
+            "type": "pickString",
+            "description": "Select a build type",
+            "options": [
+                "Release",
+                "Release_no_LTCG",
+                "Debug",
+                "Debug_ASAN"
+            ],
+            "default": "Debug"
+        },
+        {
+            "id": "cmakePlatform",
+            "type": "pickString",
+            "description": "Select a platform",
+            "options": [
+                "x64",
+                "Win32"
+            ],
+            "default": "x64"
+        },
+        {
+            "id": "cmakeBuildType",
+            "type": "pickString",
+            "description": "Select a platform",
+            "options": [
+                "release",
+                "debug"
+            ],
+            "default": "Debug"
+        }
+    ]
+}
