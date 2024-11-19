@@ -19,6 +19,7 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE
+		${PROJECT_BINARY_DIR}  # required for being able to include CMake generated version file
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode)
 

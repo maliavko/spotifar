@@ -1,6 +1,5 @@
 project infrastructure
 - gcc support
-- specify version in CMakeLists file and integrate it with the one from version.hpp
 
 bugs
 - not enough memory: it looks like I was too much with usin stack memory, let's reconsider a usage strategy towards heap
