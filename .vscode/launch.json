@@ -4,17 +4,27 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        // it is not possible to pass input variables from launch.json to tasks.json
-        // and make it possible to configure a Far build on the fly from here;
-        // so binding Debug x64 version as a default one
+        // NOTE: Far and dependencies should be built in advance,
+        // launch a task (Ctrl+Shift+P): Far msbuild Debug x64
         {
-            "name": "Far x64",
+            "name": "Far run (x64 debug)",
             "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Debug.x64/Far.exe",
             "type":"cppvsdbg",
             "request": "launch",
             "cwd": "${fileDirname}",
-            "console": "externalTerminal",
-            "preLaunchTask": "Far msbuild (x64 debug)"
-        }
+            "console": "externalTerminal"
+        },
+        {
+            "name": "Spotify relay run",
+            "program": "${workspaceFolder}/build/x64/bin/Debug/spotify-http-relay.exe",
+            "args":[
+                "--port", "5000",
+                "--client-id", "299532be280e466bb418134118ecad89",
+                "--client-secret", "b80317de4da24197bb1c44ce55c464fe"
+            ],
+            "type":"cppvsdbg",
+            "request": "launch",
+            "cwd": "${workspaceFolder}"
+        },
     ]
 }

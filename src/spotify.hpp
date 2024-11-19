@@ -4,13 +4,16 @@
 
 // https://developer.spotify.com/documentation/web-api
 
-#include <string>
+#include "common/items.hpp"
+
 #include <map>
+#include <string>
 
 #include "httplib.h"
 
 namespace spotifar
 {
+	using std::map;
 	using std::string;
 
 	class SpotifyRelayApi
@@ -40,25 +43,16 @@ namespace spotifar
 
 		bool login();
 
-		bool is_playing();
-
-		bool play();
-
-		bool pause();
-
-		bool toggle_play();
-
-		PlaybackDevices get_devices_list();
-
-		Playlists get_playlists();
-
-		bool select_device(const std::string& device_id);
+		std::vector<Artist> get_artists();
 
 	protected:
 		std::string get_api_uri() const;
 
 	public:
 		httplib::Client api;
+
+		// cached data
+		ArtistsCollection artists;
 	};
 }
 

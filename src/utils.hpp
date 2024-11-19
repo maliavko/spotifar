@@ -1,12 +1,10 @@
 ﻿#ifndef UTILS_HPP_64E82CD1_3EFD_41A4_BD43_6FC38FE138A8
 #define UTILS_HPP_64E82CD1_3EFD_41A4_BD43_6FC38FE138A8
-
 #pragma once
 
 #include <plugin.hpp>
 #include <string>
 #include <format>
-
 
 namespace spotifar
 {

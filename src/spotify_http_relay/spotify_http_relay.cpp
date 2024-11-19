@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "spotify_http_relay.hpp"
+#include "items.hpp"
 
 namespace spotifar
 {
@@ -16,23 +17,6 @@ namespace spotifar
 		"user-library-modify "
 		"playlist-read-private "
 		"playlist-read-collaborative ";
-
-	using json = nlohmann::json;
-
-	struct Artist
-	{
-		std::string name;
-		size_t popularity;
-	};
-
-	void to_json(json& j, const Artist& p) {
-		j = json{ {"name", p.name}, {"popularity", p.popularity} };
-	}
-
-	void from_json(const json& j, Artist& p) {
-		j.at("name").get_to(p.name);
-		j.at("popularity").get_to(p.popularity);
-	}
 
 	SpotifyHttpRelay::SpotifyHttpRelay(int port_, const string& client_id_,
 		const string& client_secret_
@@ -90,12 +74,9 @@ namespace spotifar
 					{
 						artists.push_back(a.get<Artist>());
 					}
-
 					after = data["cursors"]["after"];
 				}
 				while (!after.is_null());
-
-				std::sort(artists.begin(), artists.end(), [](const auto& a, const auto& b) { return a.name < b.name; });
 
 				res.set_content(json(artists).dump(), "application/json; charset=utf-8");
 			});
@@ -152,7 +133,8 @@ namespace spotifar
 		string redirect_url = httplib::append_query_params(
 			"https://accounts.spotify.com/authorize/?", params);
 
-		ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
+		// TODO: should it be uncommented?
+		//ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
 
 		//res.set_redirect(redirect_url);
 

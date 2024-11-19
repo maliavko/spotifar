@@ -1,6 +1,5 @@
 #ifndef VERSION_HPP_190BAC0F_2C12_4955_932E_7A1D19EBC744
 #define VERSION_HPP_190BAC0F_2C12_4955_932E_7A1D19EBC744
-
 #pragma once
 
 #include <farversion.hpp>

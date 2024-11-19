@@ -1,6 +1,5 @@
 ﻿#ifndef STDAFX_H_E06D1A39_4BA9_4A03_BD55_44C9ACE84E30
 #define STDAFX_H_E06D1A39_4BA9_4A03_BD55_44C9ACE84E30
-
 #pragma once
 
 #include <string>

@@ -4,30 +4,103 @@
 #pragma once
 
 #include "spotify.hpp"
-#include "data_provider.hpp"
+#include "common/items.hpp"
 
-#include <windows.h>
+#include <vector>
+#include <string>
 
 namespace spotifar
 {
+	using std::string;
+	using std::wstring;
+
+	class Browser;
+	class ViewTarget
+	{
+	public:
+		struct ViewTargetItem
+		{
+			wstring name;
+			wstring description;
+		};
+
+		typedef std::vector<ViewTargetItem> ItemsCollection;
+
+	public:
+		ViewTarget(wstring target_name, string item_id);
+		virtual ~ViewTarget() {}
+
+		wstring get_name() const { return target_name; }
+
+		virtual ItemsCollection get_items(Browser& browser) const = 0;
+
+		virtual bool handle_item_selected(Browser& browser, wstring item_name) { return false; }
+
+	protected:
+		wstring target_name;
+		string item_id;
+	};
+
 	class Browser
 	{
 	public:
 		Browser();
 		~Browser();
 
+		void gotoRootMenu();
+		void gotoArtists();
+		void gotoPlaylists();
+
+		inline SpotifyRelayApi& get_api() { return api; }
+
+		wstring get_target_name() const { return current_target->get_name(); }
+		ViewTarget::ItemsCollection get_items();
+
+		bool handle_item_selected(wstring item_name);
+
 	protected:
 		bool start_relay();
-		void WINAPI stop_relay();
+		void stop_relay();
 
 	private:
 		SpotifyRelayApi api;
-		DataProvider data;
+		std::unique_ptr<ViewTarget> current_target;
+
+		ArtistsCollection artists;
 
 		STARTUPINFO relay_si;
 		PROCESS_INFORMATION relay_pi;
 	};
-}
 
+	class RootMenuTarget: public ViewTarget
+	{
+	public:
+		RootMenuTarget();
+
+		virtual ItemsCollection get_items(Browser& browser) const;
+
+		virtual bool handle_item_selected(Browser& browser, wstring item_name);
+	};
+
+	class ArtistsTarget: public ViewTarget
+	{
+	public:
+		ArtistsTarget();
+
+		virtual ItemsCollection get_items(Browser& browser) const;
+
+		virtual bool handle_item_selected(Browser& browser, wstring item_name);
+	};
+
+	class PlaylistsTarget: public ViewTarget
+	{
+	public:
+		PlaylistsTarget();
+
+		virtual ItemsCollection get_items(Browser& browser) const;
+
+		virtual bool handle_item_selected(Browser& browser, wstring item_name);
+	};
+}
 
 #endif //CONTROLLER_HPP_5BAFAEB4_0F9B_411A_8C57_D6A34B0412FC

@@ -10,7 +10,6 @@ namespace spotifar
 	SpotifyRelayApi::SpotifyRelayApi():
 		api(get_api_uri())
 	{
-
 	}
 
 	bool SpotifyRelayApi::login()
@@ -19,7 +18,13 @@ namespace spotifar
 		return r.value().status == httplib::StatusCode::OK_200;
 	}
 
-	bool SpotifyRelayApi::is_playing()
+	std::vector<Artist> SpotifyRelayApi::get_artists()
+	{
+		auto r = api.Get("/artists");
+		return json::parse(r->body).get<std::vector<Artist>>();
+	}
+
+	/*bool SpotifyRelayApi::is_playing()
 	{
 		auto r = api.Get("me/player/currently-playing");
 		return json::parse(r->body).value("is_playing", false);
@@ -99,7 +104,7 @@ namespace spotifar
 		auto rs = api.Put("player", j.dump(), "application/json");
 
 		return true;
-	}
+	}*/
 
 	std::string SpotifyRelayApi::get_api_uri() const
 	{

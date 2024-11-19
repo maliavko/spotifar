@@ -3,8 +3,13 @@ EXPORTS
   SetStartupInfoW
   GetPluginInfoW
   OpenW
+  FreeFindDataW
   GetFindDataW
   GetOpenPanelInfoW
   SetDirectoryW
   ConfigureW
   ExitFARW
+  DeleteFilesW
+  ClosePanelW
+  ProcessPanelInputW
+  ProcessPanelEventW

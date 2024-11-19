@@ -11,7 +11,7 @@ add_library(${PROJECT_NAME} SHARED
 	utils.cpp
 	browser.cpp
 	config.cpp
-	data_provider.cpp
+	common/items.cpp
 	spotifar.vc.def
 )
 
@@ -28,3 +28,10 @@ target_link_libraries(${PROJECT_NAME}
 		nlohmann_json::nlohmann_json
 		OpenSSL::SSL
 		OpenSSL::Crypto)
+
+# copy docs to the final package
+add_custom_command(
+	TARGET ${PROJECT_NAME}
+	POST_BUILD COMMAND ${CMAKE_COMMAND} -E
+	copy_directory ${PROJECT_SOURCE_DIR}/docs ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>
+)

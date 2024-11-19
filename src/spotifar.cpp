@@ -3,14 +3,12 @@
 #include "guid.hpp"
 #include "config.hpp"
 #include "browser.hpp"
+#include "lng.hpp"
 
 #include <plugin.hpp>
 
 namespace spotifar
 {
-	PluginStartupInfo PsInfo;
-	FarStandardFunctions FSF;
-
 	void WINAPI GetGlobalInfoW(struct GlobalInfo* info)
 	{
 		info->StructSize = sizeof(struct GlobalInfo);
@@ -24,10 +22,6 @@ namespace spotifar
 
 	void WINAPI SetStartupInfoW(const struct PluginStartupInfo* info)
 	{
-		PsInfo = *info;
-		FSF = *info->FSF;
-		PsInfo.FSF = &FSF;
-
 		config::Opt.Read(info);
 	}
 
@@ -39,26 +33,26 @@ namespace spotifar
 		if (config::Opt.AddToDisksMenu)
 		{
 			static const wchar_t* DiskMenuStrings[1];
-			DiskMenuStrings[0] = L"Spotifar";
+			DiskMenuStrings[0] = config::get_msg(MDiskMenuLabel);
 			info->DiskMenu.Guids = &MenuGuid;
 			info->DiskMenu.Strings = DiskMenuStrings;
-			info->DiskMenu.Count = ARRAYSIZE(DiskMenuStrings);
+			info->DiskMenu.Count = std::size(DiskMenuStrings);
 		}
 
 		if (TRUE)
 		{
 			static const wchar_t* PluginMenuStrings[1];
-			PluginMenuStrings[0] = L"Spotifar";
+			PluginMenuStrings[0] = config::get_msg(MPluginMenuLabel);
 			info->PluginMenu.Guids = &MenuGuid;
 			info->PluginMenu.Strings = PluginMenuStrings;
-			info->PluginMenu.Count = ARRAYSIZE(PluginMenuStrings);
+			info->PluginMenu.Count = std::size(PluginMenuStrings);
 		}
 
 		static const wchar_t* PluginCfgStrings[1];
-		PluginCfgStrings[0] = L"Spotifar";
+		PluginCfgStrings[0] = config::get_msg(MConfigMenuLabel);
 		info->PluginConfig.Guids = &MenuGuid;
 		info->PluginConfig.Strings = PluginCfgStrings;
-		info->PluginConfig.Count = ARRAYSIZE(PluginCfgStrings);
+		info->PluginConfig.Count = std::size(PluginCfgStrings);
 	}
 
 	HANDLE WINAPI OpenW(const struct OpenInfo* info)
@@ -69,6 +63,7 @@ namespace spotifar
 
 	void WINAPI ClosePanelW(const ClosePanelInfo* info)
 	{
+		// wrapping pointer with unique_ptr, to be disposed properly
 		std::unique_ptr<Browser>(static_cast<Browser*>(info->hPanel));
 	}
 
@@ -78,36 +73,37 @@ namespace spotifar
 
 		info->StructSize = sizeof(*info);
 		info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
+		info->CurDir = _wcsdup(browser.get_target_name().c_str());
 
-		info->CurDir = L"";
-
-		static wchar_t Title[100] = L"TestPanel";
+		static wchar_t Title[MAX_PATH];
+		config::FSF.sprintf(Title, L" %s: %s", config::get_msg(MPanelTitle), info->CurDir);
 		info->PanelTitle = Title;
 	}
 
 	intptr_t WINAPI GetFindDataW(GetFindDataInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
-
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
 
-		PluginPanelItem* NewPanelItem = new PluginPanelItem[1];
-
+		auto& browser = *static_cast<Browser*>(info->hPanel);
+		auto items = browser.get_items();
+	
+		auto* NewPanelItem = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
 		if (NewPanelItem)
 		{
-			memset(NewPanelItem, 0, sizeof(PluginPanelItem) * 1);
-
-			NewPanelItem[0].FileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-
-			NewPanelItem[0].FileName = new wchar_t[lstrlen(L"Playlists") + 1];
-			lstrcpy((LPWSTR)NewPanelItem[0].FileName, L"Playlists");
-
-			//NewPanelItem[0].Description = new wchar_t[lstrlen(L"D:\\") + 1];
-			//lstrcpy((LPWSTR)NewPanelItem[0].Description, L"D:\\");
+			for (size_t idx = 0; idx < items.size(); idx++)
+			{
+				auto& item = items[idx];
+				
+				memset(&NewPanelItem[idx], 0, sizeof(PluginPanelItem));
+				NewPanelItem[idx].FileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
+				NewPanelItem[idx].FileName = _wcsdup(item.name.c_str());
+				NewPanelItem[idx].Description = _wcsdup(item.description.c_str());
+			}
 
 			info->PanelItem = NewPanelItem;
-			info->ItemsNumber = 1;
+			info->ItemsNumber = items.size();
+
 			return TRUE;
 		}
 
@@ -118,20 +114,22 @@ namespace spotifar
 
 	void WINAPI FreeFindDataW(const FreeFindDataInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
+		for (size_t idx = 0; idx < info->ItemsNumber; idx++)
+		{
+			free(const_cast<wchar_t*>(info->PanelItem[idx].FileName));
+			free(const_cast<wchar_t*>(info->PanelItem[idx].Description));
+		}
+
+		free(info->PanelItem);
 	}
 
 	intptr_t WINAPI SetDirectoryW(const struct SetDirectoryInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
-
 		if (info->OpMode & OPM_FIND)
-			return TRUE;
+			return FALSE;
 
-		if (!lstrcmp(info->Dir, L"Playlists"))
-		{
-			//PsInfo.PanelControl(sdInfo->hPanel, FCTL_CLOSEPANEL, 0, (void*)L"D:\\");
-		}
+		auto& browser = *static_cast<Browser*>(info->hPanel);
+		browser.handle_item_selected(info->Dir);
 
 		return TRUE;
 	}
@@ -145,20 +143,19 @@ namespace spotifar
 	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo* info)
 	{
 		auto& browser = *static_cast<Browser*>(info->hPanel);
-		return TRUE;
+		return FALSE;
 	}
 
 	intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo* info)
 	{
 		auto& browser = *static_cast<Browser*>(info->hPanel);
-		return TRUE;
+		return FALSE;
 	}
 
 	intptr_t WINAPI ConfigureW(const ConfigureInfo* info)
 	{
 		return config::init();
 	}
-
 
 	void WINAPI ExitFARW(const ExitInfo* eInfo)
 	{

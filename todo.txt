@@ -1,1 +1,15 @@
+project infrastructure
 - gcc support
+- specify version in CMakeLists file and integrate it with the one from version.hpp
+
+bugs
+- not enough memory: it looks like I was too much with usin stack memory, let's reconsider a usage strategy towards heap
+
+refactor
+- consider proper MVC, MVP, MVVP framework usage and code refactor to it
+
+application ideas
+- fair random while playing, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)
+- playlists management via panels in Far
+- global hotkeys?
+- managing playlists via standard Far functions: create folder, move/remove from panel
