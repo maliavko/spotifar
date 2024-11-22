@@ -18,9 +18,10 @@ namespace spotifar
 		static const wchar_t* StrAddToDisksMenu = L"AddToDisksMenu";
 		static const wchar_t* StrSpotifyClientID = L"SpotifyClientID";
 		static const wchar_t* StrSpotifyClientSecret = L"SpotifyClientSecret";
+		static const wchar_t* StrSpotifyRefreshToken = L"SpotifyRefreshToken";
 		static const wchar_t* StrLocalhostServicePort = L"LocalhostServicePort";
 
-		int init()
+		int show_dialog()
 		{
 			PluginDialogBuilder Builder(spotifar::config::PsInfo, MainGuid, ConfigDialogGuid, MConfigTitle, L"Config");
 			Builder.AddCheckbox(MConfigAddToDisksMenu, &Opt.AddToDisksMenu);
@@ -37,42 +38,58 @@ namespace spotifar
 
 			if (Builder.ShowDialog())
 			{
-				Opt.Write();
+				Opt.write();
 				return TRUE;
 			}
 
 			return FALSE;
 		}
 
-		void Options::Read(const struct PluginStartupInfo* info)
+		void Options::read(const struct PluginStartupInfo* info)
 		{
 			PsInfo = *info;
 			FSF = *info->FSF;
 			PsInfo.FSF = &FSF;
 
-			PluginSettings settings(MainGuid, PsInfo.SettingsControl);
+			PluginSettings s(MainGuid, PsInfo.SettingsControl);
 
-			Opt.AddToDisksMenu = settings.Get(0, StrAddToDisksMenu, true);
-			lstrcpy(Opt.SpotifyClientID, settings.Get(0, StrSpotifyClientID, L""));
-			lstrcpy(Opt.SpotifyClientSecret, settings.Get(0, StrSpotifyClientSecret, L""));
-			Opt.LocalhostServicePort = settings.Get(0, StrLocalhostServicePort, int(5050));
+			Opt.AddToDisksMenu = s.Get(0, StrAddToDisksMenu, true);
+			lstrcpy(Opt.SpotifyClientID, s.Get(0, StrSpotifyClientID, L""));
+			lstrcpy(Opt.SpotifyClientSecret, s.Get(0, StrSpotifyClientSecret, L""));
+			lstrcpy(Opt.SpotifyRefreshToken, s.Get(0, StrSpotifyRefreshToken, L""));
+			Opt.LocalhostServicePort = s.Get(0, StrLocalhostServicePort, int(5050));
 
 			Opt.PluginStartupFolder = utils::get_plugin_launch_folder(info);
 		}
 
-		void Options::Write()
+		void Options::write()
 		{
-			PluginSettings settings(MainGuid, PsInfo.SettingsControl);
+			PluginSettings s(MainGuid, PsInfo.SettingsControl);
 
-			settings.Set(0, StrAddToDisksMenu, Opt.AddToDisksMenu);
-			settings.Set(0, StrSpotifyClientID, Opt.SpotifyClientID);
-			settings.Set(0, StrSpotifyClientSecret, Opt.SpotifyClientSecret);
-			settings.Set(0, StrLocalhostServicePort, Opt.LocalhostServicePort);
+			s.Set(0, StrAddToDisksMenu, Opt.AddToDisksMenu);
+			s.Set(0, StrSpotifyClientID, Opt.SpotifyClientID);
+			s.Set(0, StrSpotifyClientSecret, Opt.SpotifyClientSecret);
+			s.Set(0, StrSpotifyRefreshToken, Opt.SpotifyRefreshToken);
+			s.Set(0, StrLocalhostServicePort, Opt.LocalhostServicePort);
 		}
 
 		const wchar_t* get_msg(int msg_id)
 		{
 			return PsInfo.GetMsg(&MainGuid, msg_id);
+		}
+		
+		std::string to_str(const wchar_t* opt)
+		{
+			std::wstring s(opt);
+
+			// we do not keep unicode string in the file, so not afraid of the warning
+			#pragma warning(suppress: 4244)  
+			return std::string(s.begin(), s.end());
+		}
+
+		void set_str(wchar_t* opt, const std::string& s)
+		{
+			lstrcpy(opt, utils::to_wstring(s).c_str());
 		}
 	}
 }

@@ -1,10 +1,9 @@
 ﻿#ifndef CONTROLLER_HPP_5BAFAEB4_0F9B_411A_8C57_D6A34B0412FC
 #define CONTROLLER_HPP_5BAFAEB4_0F9B_411A_8C57_D6A34B0412FC
-
 #pragma once
 
-#include "spotify.hpp"
-#include "common/items.hpp"
+#include "spotify/controller.hpp"
+#include "spotify/items.hpp"
 
 #include <vector>
 #include <string>
@@ -51,25 +50,19 @@ namespace spotifar
 		void gotoArtists();
 		void gotoPlaylists();
 
-		inline SpotifyRelayApi& get_api() { return api; }
+		inline api::Controller& get_api() { return api; }
 
 		wstring get_target_name() const { return current_target->get_name(); }
 		ViewTarget::ItemsCollection get_items();
 
 		bool handle_item_selected(wstring item_name);
 
-	protected:
-		bool start_relay();
-		void stop_relay();
-
 	private:
-		SpotifyRelayApi api;
 		std::unique_ptr<ViewTarget> current_target;
 
-		ArtistsCollection artists;
+		api::Controller api;
 
-		STARTUPINFO relay_si;
-		PROCESS_INFORMATION relay_pi;
+		ArtistsCollection artists;
 	};
 
 	class RootMenuTarget: public ViewTarget

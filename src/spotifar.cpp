@@ -22,7 +22,7 @@ namespace spotifar
 
 	void WINAPI SetStartupInfoW(const struct PluginStartupInfo* info)
 	{
-		config::Opt.Read(info);
+		config::Opt.read(info);
 	}
 
 	void WINAPI GetPluginInfoW(struct PluginInfo* info)
@@ -65,6 +65,8 @@ namespace spotifar
 	{
 		// wrapping pointer with unique_ptr, to be disposed properly
 		std::unique_ptr<Browser>(static_cast<Browser*>(info->hPanel));
+		
+		config::Opt.write();
 	}
 
 	void WINAPI GetOpenPanelInfoW(OpenPanelInfo* info)
@@ -143,18 +145,28 @@ namespace spotifar
 	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo* info)
 	{
 		auto& browser = *static_cast<Browser*>(info->hPanel);
+
+		// https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
+
 		return FALSE;
 	}
 
 	intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo* info)
 	{
 		auto& browser = *static_cast<Browser*>(info->hPanel);
+		
+		if (info->Event == FE_CLOSE)
+		{
+			// panel is closing, a right time to save settings and so on
+		}
+		// the rest: https://api.farmanager.com/ru/structures/processpaneleventinfo.html
+
 		return FALSE;
 	}
 
 	intptr_t WINAPI ConfigureW(const ConfigureInfo* info)
 	{
-		return config::init();
+		return config::show_dialog();
 	}
 
 	void WINAPI ExitFARW(const ExitInfo* eInfo)

@@ -3,6 +3,7 @@
 #pragma once
 
 #include <plugin.hpp>
+#include <PluginSettings.hpp>
 #include <string>
 
 namespace spotifar
@@ -17,16 +18,20 @@ namespace spotifar
 			int AddToDisksMenu;
 			wchar_t SpotifyClientID[64];
 			wchar_t SpotifyClientSecret[64];
+			wchar_t SpotifyRefreshToken[256];
 			int LocalhostServicePort;
+
 			std::wstring PluginStartupFolder;
 
-			static void Read(const struct PluginStartupInfo* psInfo);
-			static void Write();
+			static void read(const struct PluginStartupInfo* info);
+			static void write();
 		} Opt;
 
-		int init();
+		int show_dialog();
 
 		const wchar_t* get_msg(int msg_id);
+		std::string to_str(const wchar_t* opt);
+		void set_str(wchar_t* opt, const std::string& s);
 	}
 }
 

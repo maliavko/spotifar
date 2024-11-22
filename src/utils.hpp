@@ -11,6 +11,10 @@ namespace spotifar
 	namespace utils
 	{
 		std::wstring get_plugin_launch_folder(const struct PluginStartupInfo* psInfo);
+
+		std::string generate_random_string(const int);
+
+		std::wstring to_wstring(const std::string& s);
 	}
 }
 

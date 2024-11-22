@@ -1,5 +1,3 @@
-add_subdirectory(spotify_http_relay)
-
 
 find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
@@ -7,11 +5,11 @@ find_package(OpenSSL REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
 	spotifar.cpp
-	spotify.cpp
 	utils.cpp
 	browser.cpp
 	config.cpp
-	common/items.cpp
+	spotify/items.cpp
+	spotify/controller.cpp
 	spotifar.vc.def
 )
 
@@ -20,6 +18,7 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
 target_include_directories(${PROJECT_NAME}
 	PRIVATE
 		${PROJECT_BINARY_DIR}  # required for being able to include CMake generated version file
+		${PROJECT_SOURCE_DIR}/src
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode)
 
