@@ -5,6 +5,9 @@
 #include <plugin.hpp>
 #include <string>
 #include <format>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
 
 namespace spotifar
 {

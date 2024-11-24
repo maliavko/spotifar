@@ -30,6 +30,9 @@ namespace spotifar
             // spotify api
             bool authenticate();
             ArtistsCollection get_artist();
+            AlbumsCollection get_albums(const std::string& artist_id);
+            TracksCollection get_tracks(const std::string& album_id);
+            void start_playback(const std::string& album_id, const std::string& track_id);
 
         protected:
 		    string get_auth_callback_url() const;

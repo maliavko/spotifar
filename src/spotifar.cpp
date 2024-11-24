@@ -82,6 +82,11 @@ namespace spotifar
 		info->PanelTitle = Title;
 	}
 
+	static void WINAPI FreeUserData(void* const UserData, const FarPanelItemFreeInfo* const Info)
+	{
+		delete static_cast<const ItemFarUserData*>(UserData);
+	}
+
 	intptr_t WINAPI GetFindDataW(GetFindDataInfo* info)
 	{
 		if (info->OpMode & OPM_FIND)
@@ -101,6 +106,8 @@ namespace spotifar
 				NewPanelItem[idx].FileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
 				NewPanelItem[idx].FileName = _wcsdup(item.name.c_str());
 				NewPanelItem[idx].Description = _wcsdup(item.description.c_str());
+				NewPanelItem[idx].UserData.Data = new ItemFarUserData(item.id);
+				NewPanelItem[idx].UserData.FreeData = FreeUserData;
 			}
 
 			info->PanelItem = NewPanelItem;
@@ -131,7 +138,12 @@ namespace spotifar
 			return FALSE;
 
 		auto& browser = *static_cast<Browser*>(info->hPanel);
-		browser.handle_item_selected(info->Dir);
+
+		const ItemFarUserData* data = NULL;
+		if (info->UserData.Data != NULL)
+			data = static_cast<const ItemFarUserData*>(info->UserData.Data);
+
+		browser.handle_item_selected(data);
 
 		return TRUE;
 	}

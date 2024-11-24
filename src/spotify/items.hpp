@@ -8,6 +8,7 @@
 
 namespace spotifar
 {
+	// missing namespace spotify
 	using std::map;
 	using std::string;
 	using json = nlohmann::json;
@@ -18,12 +19,30 @@ namespace spotifar
 		string name;
 		size_t popularity;
 	};
-
 	typedef map<string, Artist> ArtistsCollection;
-
-	void to_json(json& j, const Artist& a);
-
 	void from_json(const json& j, Artist& a);
+
+	struct Album
+	{
+		string id;
+		string name;
+	};
+	typedef map<string, Album> AlbumsCollection;
+	void from_json(const json& j, Album& a);
+
+	struct Track
+	{
+		string id;
+		string name;
+		size_t track_number;  // TODO: track number could be duplicated for different discs
+	};
+	typedef map<string, Track> TracksCollection;
+	void from_json(const json& j, Track& a);
+
+	struct ItemFarUserData
+	{
+		string id;
+	};
 }
 
 #endif //ITEMS_HPP_55A04E12_800F_4468_BD38_54D0CC81EF641

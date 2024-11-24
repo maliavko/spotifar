@@ -6,6 +6,8 @@ namespace spotifar
 {
     namespace api
     {
+        using json = nlohmann::json;
+
         static string scope =
             "streaming "
             "user-read-email "
@@ -59,10 +61,91 @@ namespace spotifar
             return update_access_token_with_auth_code(request_auth_code());
         }
         
+        void Controller::start_playback(const std::string& album_id, const std::string& track_id)
+        {
+            httplib::Params params = {
+                { "device_id", "ce8d71004f9597141d4b5940bd1bb2dc52a35dae" }  // TODO: add a normal detection of device id
+            };
+
+            json o{
+                { "context_uri", std::format("spotify:album:{}", album_id) },
+                { "offset", {
+                    { "uri", std::format("spotify:track:{}", track_id)} 
+                }}
+            };
+
+            auto r = api.Put(httplib::append_query_params("/v1/me/player/play", params), o.dump(), "application/json");
+        }
+        
+        AlbumsCollection Controller::get_albums(const std::string& artist_id)
+        {
+            AlbumsCollection albums;
+
+            httplib::Params params = {
+                { "limit", "50" },
+                { "offset", "0" },
+                { "include_groups", "album" }
+            };
+
+            std::string request_url = httplib::append_query_params(
+                std::format("/v1/artists/{}/albums", artist_id), params);
+
+            do
+            {
+                auto r = api.Get(request_url);
+
+                json data = json::parse(r->body);
+                for (json& aj : data["items"])
+                {
+                    auto a = aj.get<Album>();
+                    albums[a.id] = a;
+                }
+
+                json next = data["next"];
+                if (next.is_null())
+                    break;
+                
+                next.get_to(request_url);
+            } while (1);
+
+            return albums;
+        }
+        
+        TracksCollection Controller::get_tracks(const std::string& album_id)
+        {
+            TracksCollection tracks;
+
+            httplib::Params params = {
+                { "limit", "50" },
+                { "offset", "0" }
+            };
+
+            std::string request_url = httplib::append_query_params(
+                std::format("/v1/albums/{}/tracks", album_id), params);
+
+            do
+            {
+                auto r = api.Get(request_url);
+
+                json data = json::parse(r->body);
+                for (json& tj : data["items"])
+                {
+                    auto t = tj.get<Track>();
+                    tracks[t.id] = t;
+                }
+
+                json next = data["next"];
+                if (next.is_null())
+                    break;
+                
+                next.get_to(request_url);
+            } while (1);
+
+            return tracks;
+        }
+        
         ArtistsCollection Controller::get_artist()
         {
-            using json = nlohmann::json;
-
             json after = "";
             ArtistsCollection artists;
 
@@ -83,7 +166,7 @@ namespace spotifar
                     artists[a.id] = a;
                 }
                 after = data["cursors"]["after"];
-                break;
+                break; // TODO: remove, used for debugging
             }
             while (!after.is_null());
 

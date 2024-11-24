@@ -3,6 +3,7 @@ project infrastructure
 
 bugs
 - not enough memory: it looks like I was too much with usin stack memory, let's reconsider a usage strategy towards heap
+- librespot quite ofte catches the error: Remote connectino ws forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
 
 refactor
 - consider proper MVC, MVP, MVVP framework usage and code refactor to it

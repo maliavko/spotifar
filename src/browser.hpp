@@ -19,6 +19,7 @@ namespace spotifar
 	public:
 		struct ViewTargetItem
 		{
+			string id;
 			wstring name;
 			wstring description;
 		};
@@ -33,7 +34,7 @@ namespace spotifar
 
 		virtual ItemsCollection get_items(Browser& browser) const = 0;
 
-		virtual bool handle_item_selected(Browser& browser, wstring item_name) { return false; }
+		virtual bool handle_item_selected(Browser& browser, const ItemFarUserData* data) { return false; }
 
 	protected:
 		wstring target_name;
@@ -48,6 +49,8 @@ namespace spotifar
 
 		void gotoRootMenu();
 		void gotoArtists();
+		void gotoArtist(const std::string& id);
+		void gotoAlbum(const std::string& id, const std::string& artist_id);
 		void gotoPlaylists();
 
 		inline api::Controller& get_api() { return api; }
@@ -55,44 +58,56 @@ namespace spotifar
 		wstring get_target_name() const { return current_target->get_name(); }
 		ViewTarget::ItemsCollection get_items();
 
-		bool handle_item_selected(wstring item_name);
+		bool handle_item_selected(const ItemFarUserData* data);
 
 	private:
 		std::unique_ptr<ViewTarget> current_target;
-
 		api::Controller api;
-
-		ArtistsCollection artists;
 	};
 
 	class RootMenuTarget: public ViewTarget
 	{
 	public:
 		RootMenuTarget();
-
 		virtual ItemsCollection get_items(Browser& browser) const;
-
-		virtual bool handle_item_selected(Browser& browser, wstring item_name);
+		virtual bool handle_item_selected(Browser& browser, const ItemFarUserData* data);
 	};
 
 	class ArtistsTarget: public ViewTarget
 	{
 	public:
 		ArtistsTarget();
-
 		virtual ItemsCollection get_items(Browser& browser) const;
+		virtual bool handle_item_selected(Browser& browser, const ItemFarUserData* data);
+	};
 
-		virtual bool handle_item_selected(Browser& browser, wstring item_name);
+	class ArtistTarget: public ViewTarget
+	{
+	public:
+		ArtistTarget(const std::string& id);
+		virtual ItemsCollection get_items(Browser& browser) const;
+		virtual bool handle_item_selected(Browser& browser, const ItemFarUserData* data);
+	private:
+		std::string id;
+	};
+
+	class AlbumTarget: public ViewTarget
+	{
+	public:
+		AlbumTarget(const std::string& id, const std::string& artist_id);
+		virtual ItemsCollection get_items(Browser& browser) const;
+		virtual bool handle_item_selected(Browser& browser, const ItemFarUserData* data);
+	private:
+		std::string id;
+		std::string artist_id;
 	};
 
 	class PlaylistsTarget: public ViewTarget
 	{
 	public:
 		PlaylistsTarget();
-
 		virtual ItemsCollection get_items(Browser& browser) const;
-
-		virtual bool handle_item_selected(Browser& browser, wstring item_name);
+		virtual bool handle_item_selected(Browser& browser, const ItemFarUserData* data);
 	};
 }
 
