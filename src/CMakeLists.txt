@@ -3,6 +3,7 @@ find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 
+
 add_library(${PROJECT_NAME} SHARED
 	spotifar.cpp
 	utils.cpp

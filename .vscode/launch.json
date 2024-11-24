@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         // NOTE: Far and dependencies should be built in advance,
         // launch a task (Ctrl+Shift+P): Far msbuild Debug x64
         {
@@ -13,18 +14,6 @@
             "request": "launch",
             "cwd": "${fileDirname}",
             "console": "externalTerminal"
-        },
-        {
-            "name": "Spotify relay run",
-            "program": "${workspaceFolder}/build/x64/bin/Debug/spotify-http-relay.exe",
-            "args":[
-                "--port", "5000",
-                "--client-id", "299532be280e466bb418134118ecad89",
-                "--client-secret", "b80317de4da24197bb1c44ce55c464fe"
-            ],
-            "type":"cppvsdbg",
-            "request": "launch",
-            "cwd": "${workspaceFolder}"
-        },
+        }
     ]
 }
