@@ -6,6 +6,7 @@
 #include "lng.hpp"
 
 #include <plugin.hpp>
+#include <algorithm>
 
 namespace spotifar
 {
@@ -55,8 +56,37 @@ namespace spotifar
 		info->PluginConfig.Count = std::size(PluginCfgStrings);
 	}
 
+	
+	intptr_t WINAPI dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, void* param2)
+	{
+		return config::PsInfo.DefDlgProc(dlg, msg, param1, param2);;
+	}
+
+	std::wstring volume_bar(14, L'█');
+
 	HANDLE WINAPI OpenW(const struct OpenInfo* info)
 	{
+		const wchar_t* tmp[] = { L"█", L"▌", L"░", L"▄", L"▒", L"▓", L"▆", L"###..." };
+		volume_bar.append(std::wstring(14, L'░'));
+		volume_bar[0] = '|';
+		volume_bar[27] = '|';
+
+		int width = 30, height = 15;
+		 const FarDialogItem dlg_items[] = {
+   			{ DI_DOUBLEBOX,   0,0, width, height, DIF_SHOWAMPERSAND, L"Spotifar" },
+			{ DI_TEXT,    1,1, width-2, height-1, 0, nullptr,nullptr, DIF_CENTERTEXT, L"Text1" },
+			{ DI_TEXT,    1,height-2, width-2, height-1, 0, nullptr,nullptr, DIF_CENTERTEXT, volume_bar.c_str() },
+		};
+
+		const auto flags = FDLG_NODRAWSHADOW | FDLG_SMALLDIALOG | FDLG_NONMODAL;
+		intptr_t X1 = -1, Y1 = -1, X2 = width, Y2 = height;
+		
+		auto h = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, X1,Y1, X2,Y2, L"Player", dlg_items, std::size(dlg_items), 0, flags, &dlg_proc, NULL);
+
+		assert(h != INVALID_HANDLE_VALUE);
+		auto r = config::PsInfo.DialogRun(h);
+		config::PsInfo.DialogFree(h);
+
 		auto hPlugin = std::make_unique<Browser>();
 		return hPlugin.release();
 	}

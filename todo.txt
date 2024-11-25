@@ -13,3 +13,4 @@ application ideas
 - playlists management via panels in Far
 - global hotkeys?
 - managing playlists via standard Far functions: create folder, move/remove from panel
+- consider a nice progress icon with unicode symbols https://en.wikipedia.org/wiki/Block_Elements
