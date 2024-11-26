@@ -31,25 +31,25 @@
   ],
   "buildPresets": [
     {
-      "name": "x64-debug",
+      "name": "x64-Debug",
       "displayName": "Visual Studio 17 x64 Debug",
       "configurePreset": "x64",
       "configuration": "Debug"
     },
     {
-      "name": "x64-release",
+      "name": "x64-Release",
       "displayName": "Visual Studio 17 x64 Release",
       "configurePreset": "x64",
       "configuration": "Release"
     },
     {
-      "name": "Win32-debug",
+      "name": "Win32-Debug",
       "displayName": "Visual Studio 17 Win32 Debug",
       "configurePreset": "Win32",
       "configuration": "Debug"
     },
     {
-      "name": "Win32-release",
+      "name": "Win32-Release",
       "displayName": "Visual Studio 17 Win32 Release",
       "configurePreset": "Win32",
       "configuration": "Release"

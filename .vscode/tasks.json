@@ -18,14 +18,30 @@
     },
     "tasks": [
         {
+            "label": "Far + Spotifar build and configure",
+            "type": "shell",
+            "group": {
+                "kind": "build"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "clear": true
+            },
+            "dependsOn": ["Far msbuild", "Spotifar cmake build", "Install Spotifar to Far"],
+            "dependsOrder": "sequence",
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Far msbuild",
             "type": "shell",
             "command": "msbuild",
             "args": [
                 "${workspaceFolder}\\thirdparty\\Farmanager\\_build\\vc\\all.sln",
                 "/t:Far\\Far",
-                "/p:Configuration=\"${input:farBuildType}\"",
-                "/p:Platform=\"${input:farPlatform}\""
+                "/p:Configuration=\"${input:buildType}\"",
+                "/p:Platform=\"${input:platform}\""
             ],
             "group": {
                 "kind": "build"
@@ -36,14 +52,12 @@
                 "focus": true,
                 "clear": true
             },
-            "dependsOn": ["Spotifar cmake build", "Install Spotifar to Far"],
-            "dependsOrder": "sequence",
             "problemMatcher": "$msCompile"
         },
         {
             "label": "Spotifar cmake build",
             "type": "shell",
-            "command": "cmake --build --preset ${input:cmakePlatform}-${input:cmakeBuildType}",
+            "command": "cmake --build --preset ${input:platform}-${input:buildType}",
             "group": {
                 "kind": "build",
                 "isDefault": true,
@@ -54,7 +68,7 @@
         {
             "label": "Spotifar cmake configure",
             "type": "shell",
-            "command": "cmake --preset ${input:cmakePlatform}",
+            "command": "cmake --preset ${input:platform}",
             "group": {
                 "kind": "build"
             },
@@ -66,45 +80,32 @@
             "command": "mklink",
             "args": [
                 "/J",
-                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:cmakeBuildType}.${input:cmakePlatform}\\Plugins\\Spotifar\\",
-                "${workspaceFolder}\\build\\${input:cmakePlatform}\\bin\\${input:cmakeBuildType}\\"
+                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\Spotifar\\",
+                "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\"
             ],
             "presentation": {
                 "reveal": "silent"
             },
+            "dependsOn": ["Create Spotifar plugin folder"],
             "group": {
                 "kind": "build"
-            },
-            "problemMatcher": "$msCompile"
+            }
+        }
+        {
+            "label": "Create Spotifar plugin folder",
+            "type": "shell",
+            "command": "mkdir",
+            "args": [
+                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
+            ],
+            "group": {
+                "kind": "build"
+            }
         }
     ],
     "inputs": [
         {
-            "id": "farPlatform",
-            "type": "pickString",
-            "description": "Select a platform",
-            "options": [
-                "x64",
-                "Win32",
-                "ARM",
-                "ARM64"
-            ],
-            "default": "x64"
-        },
-        {
-            "id": "farBuildType",
-            "type": "pickString",
-            "description": "Select a build type",
-            "options": [
-                "Release",
-                "Release_no_LTCG",
-                "Debug",
-                "Debug_ASAN"
-            ],
-            "default": "Debug"
-        },
-        {
-            "id": "cmakePlatform",
+            "id": "platform",
             "type": "pickString",
             "description": "Select a platform",
             "options": [
@@ -114,14 +115,14 @@
             "default": "x64"
         },
         {
-            "id": "cmakeBuildType",
+            "id": "buildType",
             "type": "pickString",
-            "description": "Select a platform",
+            "description": "Select a build type",
             "options": [
-                "release",
-                "debug"
+                "Release",
+                "Debug"
             ],
-            "default": "debug"
+            "default": "Debug"
         }
     ]
 }

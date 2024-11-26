@@ -6,7 +6,7 @@
     "configurations": [
 
         // NOTE: Far and dependencies should be built in advance,
-        // launch a task (Ctrl+Shift+P): Far msbuild Debug x64
+        // launch a task (Ctrl+Shift+P): "Far + Spotifar build and configure" Debug x64
         {
             "name": "Far run (x64 debug)",
             "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Debug.x64/Far.exe",
