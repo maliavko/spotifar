@@ -17,7 +17,6 @@
       }
     },
     "tasks": [
-        // 
         {
             "label": "Build librespot",
             "type": "shell",
@@ -25,7 +24,8 @@
             "args": [
                 "build",
                 "--release",
-                "${workspaceFolder}\\thirdparty\\librespot\\"
+                //"--no-default-features",
+                "--manifest-path=${workspaceFolder}\\thirdparty\\librespot\\Cargo.toml\""
             ],
             "group": {
                 "kind": "build"
