@@ -13,3 +13,4 @@ EXPORTS
   ClosePanelW
   ProcessPanelInputW
   ProcessPanelEventW
+  ProcessSynchroEventW

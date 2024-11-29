@@ -6,6 +6,7 @@
 #include "lng.hpp"
 
 #include <plugin.hpp>
+#include <farcolor.hpp>
 #include <algorithm>
 
 namespace spotifar
@@ -56,36 +57,172 @@ namespace spotifar
 		info->PluginConfig.Count = std::size(PluginCfgStrings);
 	}
 
+	HANDLE hdlg1;
+	std::wstring track_bar;
+	std::wstring artist_name(L"Marilyn Manson");
+	std::wstring track_name(L"One Assassination Under God");
+	std::wstring source_target(L"Album: ");
+	std::wstring source_name(L"Album: One Assassination Under God - Chapter 1"); // 46 symbols
 	
-	intptr_t WINAPI dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, void* param2)
+	enum
 	{
-		return config::PsInfo.DefDlgProc(dlg, msg, param1, param2);;
-	}
+		ID_BOX = 0,
+		ID_TRACK_BAR,
+		ID_TRACK_TIME,
+		ID_TRACK_LENGTH,
+		ID_ARTIST_NAME,
+		ID_TRACK_NAME,
+		ID_SOURCE_NAME,
+		ID_PLAY_BTN,
+		ID_PREV_BTN,
+		ID_NEXT_BTN,
+		ID_LIKE_BTN,
+		ID_VOLUME_VALUE,
+		ID_DEVICES_LIST,
+	} DialogControls;
 
-	std::wstring volume_bar(14, L'█');
+	enum
+	{
+		CLR_BLACK = 0,
+		CLR_BLUE,
+		CLR_GREEN,
+		CLR_CYAN,
+		CLR_RED,
+		CLR_PURPLE,
+		CLR_BROWN,
+		CLR_GRAY,
+		CLR_DGRAY,
+		CLR_LBLUE,
+		CLR_LGREEN,
+		CLR_LCYAN,
+		CLR_LRED,
+		CLR_LPURPLE,
+		CLR_YELLOW,
+		CLR_WHITE
+	} Colors16;
+
+	intptr_t Dlg_OnCtlColorDlgItem(HANDLE hdlg, intptr_t id, void* par2)
+	{
+		WORD loattr = 0, hiattr = 0;
+		intptr_t res;
+		FarDialogItemColors* fdic = (FarDialogItemColors*)par2;
+		res = 0;
+
+		switch (id)
+		{
+			case ID_PLAY_BTN:
+				fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+				fdic->Colors->BackgroundColor = CLR_DGRAY;
+				fdic->Colors->ForegroundColor = CLR_GRAY;
+				res = TRUE;
+				break;
+			case ID_ARTIST_NAME:
+				fdic->Flags = FCF_FG_INDEX;
+				fdic->Colors->ForegroundColor = CLR_DGRAY;
+				break;
+			case ID_PREV_BTN:
+				fdic->Flags = FCF_FG_INDEX;
+				fdic->Colors->ForegroundColor = CLR_DGRAY;
+				break;
+			case ID_NEXT_BTN:
+				fdic->Flags = FCF_FG_INDEX;
+				fdic->Colors->ForegroundColor = CLR_DGRAY;
+				break;
+			case ID_LIKE_BTN:
+				fdic->Flags = FCF_FG_INDEX;
+				fdic->Colors->ForegroundColor = CLR_DGRAY;
+				break;
+			case ID_VOLUME_VALUE:
+				fdic->Flags = FCF_FG_INDEX;
+				fdic->Colors->ForegroundColor = CLR_DGRAY;
+				break;
+			case ID_TRACK_NAME:
+				break;
+			default:
+				res = FALSE;
+				break;
+		}
+
+		return res;
+	}
+	
+	intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
+	{
+		intptr_t id = param1;
+		intptr_t res = 0;
+
+		switch (msg)
+		{
+			case DN_INITDIALOG:
+				break;
+			case DN_CONTROLINPUT:
+				break;
+			case DN_BTNCLICK:
+				break;
+			case DN_CTLCOLORDLGITEM:
+				res = Dlg_OnCtlColorDlgItem(hdlg, param1, param2);
+				break;
+		default:
+			res = config::PsInfo.DefDlgProc(hdlg, msg, param1, param2);
+		}
+		return res;
+	}
 
 	HANDLE WINAPI OpenW(const struct OpenInfo* info)
 	{
-		const wchar_t* tmp[] = { L"█", L"▌", L"░", L"▄", L"▒", L"▓", L"▆", L"###..." };
-		volume_bar.append(std::wstring(14, L'░'));
-		volume_bar[0] = '|';
-		volume_bar[27] = '|';
+		int width = 60, height = 10, content_width = width - 2, content_height = height - 2;
+		int track_lengh = 328, track_progress = 228;
 
-		int width = 30, height = 15;
-		 const FarDialogItem dlg_items[] = {
+		// updating a track progress bar status
+		track_bar = std::wstring(content_width - 14, L'░');
+		float progress_percent = (float)track_progress/track_lengh;
+		int progress_whole_chars_length = (int)(track_bar.size() * progress_percent); 
+		fill(track_bar.begin(), track_bar.begin() + progress_whole_chars_length, L'█');
+
+
+		FarListItem items[3] = {
+			{ 0, L"1", 0, 0},
+			{ 0, L"2", 0, 0},
+		};
+		FarList* devices = new FarList{sizeof(FarListItem), 2, items};
+
+
+		const FarDialogItem dlg_items[] = {
    			{ DI_DOUBLEBOX,   0,0, width, height, DIF_SHOWAMPERSAND, L"Spotifar" },
-			{ DI_TEXT,    1,1, width-2, height-1, 0, nullptr,nullptr, DIF_CENTERTEXT, L"Text1" },
-			{ DI_TEXT,    1,height-2, width-2, height-1, 0, nullptr,nullptr, DIF_CENTERTEXT, volume_bar.c_str() },
+			{ DI_TEXT,    2,content_height-2, content_width, 1, 0, nullptr,nullptr, DIF_CENTERTEXT, track_bar.c_str() },
+			{ DI_TEXT,    2,content_height-2, 6, 1, 0, nullptr,nullptr, DIF_LEFTTEXT, L"03:28" },
+			{ DI_TEXT,    content_width-5,content_height-2, 6, 1, 0, nullptr,nullptr, DIF_RIGHTTEXT, L"05:28" },
+			{ DI_TEXT,    2,content_height-4, content_width, 1, 0, nullptr,nullptr, DIF_LEFTTEXT, artist_name.c_str() },
+			{ DI_TEXT,    2,content_height-5, content_width, 1, 0, nullptr,nullptr, DIF_LEFTTEXT, track_name.c_str() },
+			{ DI_TEXT,    6, 0, 53, 1, 0, nullptr,nullptr, DIF_CENTERTEXT, source_name.c_str() },
+			{ DI_BUTTON,    28, content_height, 1, 1, 0, nullptr,nullptr, DIF_NOBRACKETS | DIF_NOFOCUS, L"[ > ]" },
+			{ DI_BUTTON,    24, content_height, 1, 1, 0, nullptr,nullptr, DIF_NOBRACKETS | DIF_NOFOCUS, L"<<" },
+			{ DI_BUTTON,    35, content_height, 1, 1, 0, nullptr,nullptr, DIF_NOBRACKETS | DIF_NOFOCUS, L">>" },
+			{ DI_BUTTON,    2, content_height, 1, 1, 0, nullptr,nullptr, DIF_NOBRACKETS | DIF_NOFOCUS, L"[+]" },
+			{ DI_TEXT,    content_width-6, content_height, 1, 1, 0, nullptr,nullptr, DIF_CENTERTEXT, L"[100%]" },
+			{ DI_LISTBOX,    content_width-15, 2, 1, 1, 0, nullptr,nullptr, DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND, L"11" },
 		};
 
-		const auto flags = FDLG_NODRAWSHADOW | FDLG_SMALLDIALOG | FDLG_NONMODAL;
+		const auto flags = FDLG_SMALLDIALOG | FDLG_NONMODAL;
 		intptr_t X1 = -1, Y1 = -1, X2 = width, Y2 = height;
 		
-		auto h = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, X1,Y1, X2,Y2, L"Player", dlg_items, std::size(dlg_items), 0, flags, &dlg_proc, NULL);
+		hdlg1 = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, X1,Y1, X2,Y2, L"Player", dlg_items, std::size(dlg_items), 0, flags, &dlg_proc, NULL);
 
-		assert(h != INVALID_HANDLE_VALUE);
-		auto r = config::PsInfo.DialogRun(h);
-		config::PsInfo.DialogFree(h);
+		assert(hdlg1 != INVALID_HANDLE_VALUE);
+		auto r = config::PsInfo.DialogRun(hdlg1);
+		config::PsInfo.DialogFree(hdlg1);
+
+
+		config::PsInfo.SendDlgMessage(hdlg1, DM_ENABLEREDRAW, FALSE, 0);
+
+		config::PsInfo.SendDlgMessage(hdlg1, DM_LISTADDSTR, ID_DEVICES_LIST, (void*)L"111");
+		config::PsInfo.SendDlgMessage(hdlg1, DM_LISTADDSTR, ID_DEVICES_LIST, (void*)L"222");
+		config::PsInfo.SendDlgMessage(hdlg1, DM_SHOWITEM, ID_DEVICES_LIST, (void*)(TRUE));
+
+		config::PsInfo.SendDlgMessage(hdlg1, DM_SETTEXTPTR, ID_ARTIST_NAME, (void*)L"Test11");
+
+		config::PsInfo.SendDlgMessage(hdlg1, DM_ENABLEREDRAW, TRUE, 0);
+
 
 		auto hPlugin = std::make_unique<Browser>();
 		return hPlugin.release();
@@ -116,12 +253,24 @@ namespace spotifar
 	{
 		delete static_cast<const ItemFarUserData*>(UserData);
 	}
+	
+
+	intptr_t WINAPI ProcessSynchroEventW(const struct ProcessSynchroEventInfo* Info)
+	{
+		// config::PsInfo.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)0);
+		if (Info->Event == SE_COMMONSYNCHRO)
+		{
+			int param = *(int*)(Info->Param);
+		}
+
+		return 0;
+	}
 
 	intptr_t WINAPI GetFindDataW(GetFindDataInfo* info)
 	{
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
-
+		
 		auto& browser = *static_cast<Browser*>(info->hPanel);
 		auto items = browser.get_items();
 	
