@@ -1,10 +1,10 @@
-#include "controller.hpp"
+#include "api.hpp"
 #include "config.hpp"
 
 
 namespace spotifar
 {
-    namespace api
+    namespace spotify
     {
         using json = nlohmann::json;
 
@@ -22,28 +22,29 @@ namespace spotifar
             "playlist-read-private "
             "playlist-read-collaborative ";
 
-        const string Controller::SPOTIFY_AUTH_URL = "https://accounts.spotify.com";
-        const string Controller::SPOTIFY_API_URL = "https://api.spotify.com";
+        const string Api::SPOTIFY_AUTH_URL = "https://accounts.spotify.com";
+        const string Api::SPOTIFY_API_URL = "https://api.spotify.com";
 
-        Controller::Controller(const string& client_id, const string& client_secret, int port,
+        Api::Api(const string& client_id, const string& client_secret, int port,
                 const string& refresh_token):
             api(SPOTIFY_API_URL),
             port(port),
             client_id(client_id),
             client_secret(client_secret),
             refresh_token(refresh_token),
-            access_token_expires_at(0)
+            access_token_expires_at(0),
+            player()
         {
             // TODO: add timer to refresh token
             // https://stackoverflow.com/questions/32233019/wake-up-a-stdthread-from-usleep
             // https://en.cppreference.com/w/cpp/thread/condition_variable
         }
 
-        Controller::~Controller()
+        Api::~Api()
         {
         }
 
-        bool Controller::authenticate()
+        bool Api::authenticate()
         {
             // requesting access token only in case it is needed
             if (std::time(nullptr) < access_token_expires_at)
@@ -61,7 +62,7 @@ namespace spotifar
             return update_access_token_with_auth_code(request_auth_code());
         }
         
-        void Controller::start_playback(const std::string& album_id, const std::string& track_id)
+        void Api::start_playback(const std::string& album_id, const std::string& track_id)
         {
             httplib::Params params = {
                 { "device_id", "ce8d71004f9597141d4b5940bd1bb2dc52a35dae" }  // TODO: add a normal detection of device id
@@ -77,7 +78,7 @@ namespace spotifar
             auto r = api.Put(httplib::append_query_params("/v1/me/player/play", params), o.dump(), "application/json");
         }
         
-        AlbumsCollection Controller::get_albums(const std::string& artist_id)
+        AlbumsCollection Api::get_albums(const std::string& artist_id)
         {
             AlbumsCollection albums;
 
@@ -111,7 +112,7 @@ namespace spotifar
             return albums;
         }
         
-        TracksCollection Controller::get_tracks(const std::string& album_id)
+        TracksCollection Api::get_tracks(const std::string& album_id)
         {
             TracksCollection tracks;
 
@@ -144,7 +145,7 @@ namespace spotifar
             return tracks;
         }
         
-        ArtistsCollection Controller::get_artist()
+        ArtistsCollection Api::get_artist()
         {
             json after = "";
             ArtistsCollection artists;
@@ -173,7 +174,7 @@ namespace spotifar
             return artists;
         }
 
-        string Controller::request_auth_code()
+        string Api::request_auth_code()
         {
             // launching a http-server to receive an API auth reponse
             auto a = std::async(std::launch::async, [this]{
@@ -211,7 +212,7 @@ namespace spotifar
             return a.get();
         }
 
-        bool Controller::update_access_token_with_auth_code(const string& auth_code)
+        bool Api::update_access_token_with_auth_code(const string& auth_code)
         {
             return update_access_token(
                 auth_code,
@@ -223,7 +224,7 @@ namespace spotifar
             );
         }
 
-        bool Controller::update_access_token_with_refresh_token(const string& refresh_token)
+        bool Api::update_access_token_with_refresh_token(const string& refresh_token)
         {
             return update_access_token(
                 refresh_token,
@@ -234,7 +235,7 @@ namespace spotifar
             );
         }
         
-        bool Controller::update_access_token(const string& token, const httplib::Params& params)
+        bool Api::update_access_token(const string& token, const httplib::Params& params)
         {
             using json = nlohmann::json;
 
@@ -262,7 +263,7 @@ namespace spotifar
             return true;
         }
         
-        std::string Controller::get_auth_callback_url() const
+        std::string Api::get_auth_callback_url() const
         {
             return std::format("http://localhost:{}/auth/callback", port);
         }

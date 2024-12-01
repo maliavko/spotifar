@@ -6,11 +6,14 @@ find_package(OpenSSL REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED
 	spotifar.cpp
+	plugin.cpp
 	utils.cpp
-	browser.cpp
 	config.cpp
 	spotify/items.cpp
-	spotify/controller.cpp
+	spotify/api.cpp
+	spotify/player.cpp
+	ui/panel.cpp
+	ui/views.cpp
 	spotifar.vc.def
 )
 

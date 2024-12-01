@@ -22,4 +22,6 @@
 	MPanelArtistsItemDescr,
 	MPanelPlaylistsItemLabel,
 	MPanelPlaylistsItemDescr,
+
+	MKeyBarF4,
 };

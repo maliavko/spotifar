@@ -1,33 +1,33 @@
-#ifndef CONTROLLER_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
-#define CONTROLLER_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
+#ifndef API_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
+#define API_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
 #pragma once
 
 #include "httplib.h"
+#include "spotify/player.hpp"
 #include "spotify/items.hpp"
 
 namespace spotifar
 {
-    namespace api
+    namespace spotify
     {
         using std::string;
         using std::wstring;
         using httplib::Response;
 
-        // TODO: add an expiry time token refreshment
-        class Controller
+        class Api
         {
         public:
             const static string SPOTIFY_AUTH_URL;
             const static string SPOTIFY_API_URL;
 
         public:
-            Controller(const string& client_id, const string& client_secret, int port,
+            Api(const string& client_id, const string& client_secret, int port,
                 const string& refresh_token);
-            virtual ~Controller();
+            virtual ~Api();
 
             inline string get_refresh_token() const { return refresh_token; }
+            Player& get_player() { return player; }
 
-            // spotify api
             bool authenticate();
             ArtistsCollection get_artist();
             AlbumsCollection get_albums(const std::string& artist_id);
@@ -42,9 +42,9 @@ namespace spotifar
             bool update_access_token_with_refresh_token(const string& refresh_token);
             bool update_access_token(const string& token, const httplib::Params& params);
 
-
         private:
             httplib::Client api;
+            Player player;
 
             string client_id;
             string client_secret;
@@ -57,4 +57,4 @@ namespace spotifar
     }
 }
 
-#endif //CONTROLLER_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
+#endif //API_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66

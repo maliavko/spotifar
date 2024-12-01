@@ -7,6 +7,7 @@ bugs
 
 refactor
 - consider proper MVC, MVP, MVVP framework usage and code refactor to it
+- add a proper logging
 
 application ideas
 - fair random while playing, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)

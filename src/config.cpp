@@ -87,7 +87,7 @@ namespace spotifar
 			return std::string(s.begin(), s.end());
 		}
 
-		void set_str(wchar_t* opt, const std::string& s)
+		void set_option(wchar_t* opt, const std::string& s)
 		{
 			lstrcpy(opt, utils::to_wstring(s).c_str());
 		}
