@@ -7,7 +7,8 @@ namespace spotifar
 
 	Plugin::Plugin():
 		api(config::to_str(cfg.SpotifyClientID), config::to_str(cfg.SpotifyClientSecret),
-			cfg.LocalhostServicePort, config::to_str(cfg.SpotifyRefreshToken))
+			cfg.LocalhostServicePort, config::to_str(cfg.SpotifyRefreshToken)),
+        panel(api)
 	{
 		if (api.authenticate())
             panel.gotoRootMenu();
@@ -25,7 +26,7 @@ namespace spotifar
     
     intptr_t Plugin::update_panel_items(GetFindDataInfo* info)
     {
-        return panel.update_panel_items(info, api);
+        return panel.update_panel_items(info);
     }
     
     void Plugin::free_panel_items(const FreeFindDataInfo* info)
@@ -35,6 +36,6 @@ namespace spotifar
     
     intptr_t Plugin::select_item(const SetDirectoryInfo* info)
     {
-        return panel.select_item(info, api);
+        return panel.select_item(info);
     }
 }

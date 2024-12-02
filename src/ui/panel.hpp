@@ -11,23 +11,20 @@ namespace spotifar
         class Panel
         {
         public:
-            Panel();
+            Panel(spotify::Api& api);
             virtual ~Panel();
             
             void gotoRootMenu();
-            void gotoArtists();
-            void gotoArtist(const std::string& id);
-            void gotoAlbum(const std::string& id, const std::string& artist_id);
-            void gotoPlaylists();
 
             void update_panel_info(OpenPanelInfo* info);
-            intptr_t update_panel_items(GetFindDataInfo* info, spotify::Api& api);
+            intptr_t update_panel_items(GetFindDataInfo* info);
             void free_panel_items(const FreeFindDataInfo* info);
-            intptr_t select_item(const SetDirectoryInfo* info, spotify::Api& api);
+            intptr_t select_item(const SetDirectoryInfo* info);
         protected:
             static void WINAPI free_user_data(void* const UserData, const FarPanelItemFreeInfo* const Info);
         private:
-		    std::unique_ptr<View> view;
+		    std::shared_ptr<View> view;
+            spotify::Api& api;
         };
     }
 }

@@ -20,6 +20,10 @@
 	MPanelRootItemLabel,
 	MPanelArtistsItemLabel,
 	MPanelArtistsItemDescr,
+	MPanelAlbumItemLabel,
+	MPanelAlbumItemDescr,
+	MPanelArtistItemLabel,
+	MPanelArtistItemDescr,
 	MPanelPlaylistsItemLabel,
 	MPanelPlaylistsItemDescr,
 

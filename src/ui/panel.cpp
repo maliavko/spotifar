@@ -6,8 +6,12 @@ namespace spotifar
 {
     namespace ui
     {
-        Panel::Panel()
+        Panel::Panel(spotify::Api& api):
+            api(api)
         {
+            // TODO: process correctly selected item on the panel
+            // https://api.farmanager.com/ru/structures/pluginpanelitem.html
+            // PPIF_SELECTED
         }
 
         Panel::~Panel()
@@ -17,30 +21,7 @@ namespace spotifar
  
         void Panel::gotoRootMenu()
         {
-            view = std::make_unique<RootView>();
-        }
-    
-        void Panel::gotoArtists()
-        {
-            // TODO: process correctly selected item on the panel
-            // https://api.farmanager.com/ru/structures/pluginpanelitem.html
-            // PPIF_SELECTED
-            view = std::make_unique<ArtistsView>();
-        }
-    
-        void Panel::gotoArtist(const std::string& id)
-        {
-            view = std::make_unique<ArtistView>(id);
-        }
-    
-        void Panel::gotoAlbum(const std::string& id, const std::string& artist_id)
-        {
-            view = std::make_unique<AlbumView>(id, artist_id);
-        }
-    
-        void Panel::gotoPlaylists()
-        {
-            view = std::make_unique<PlaylistsView>();
+            view = create_root_view();
         }
         
         void Panel::update_panel_info(OpenPanelInfo* info)
@@ -110,7 +91,7 @@ namespace spotifar
             info->KeyBar = &kbt;
         }
         
-        intptr_t Panel::update_panel_items(GetFindDataInfo* info, spotify::Api& api)
+        intptr_t Panel::update_panel_items(GetFindDataInfo* info)
         {
             auto items = view->get_items(api);
         
@@ -155,40 +136,20 @@ namespace spotifar
             delete static_cast<const ItemFarUserData*>(UserData);
         }
         
-        intptr_t Panel::select_item(const SetDirectoryInfo* info, spotify::Api& api)
+        intptr_t Panel::select_item(const SetDirectoryInfo* info)
         {
             const ItemFarUserData* data = NULL;
             if (info->UserData.Data != NULL)
             	data = static_cast<const ItemFarUserData*>(info->UserData.Data);
 
-            std::string next_view = view->select_item(api, data);
-            if (next_view != NONE_VIEW_ID)
+            std::shared_ptr<View> next_view = view->select_item(api, data);
+            if (next_view != NULL)
             {
-                if (next_view == ROOT_VIEW_ID)
-                {
-                    gotoRootMenu();
-                }
-                else if (next_view == ARTISTS_VIEW_ID)
-                {
-                    gotoArtists();
-                }
-                else if (next_view == PLAYLISTS_VIEW_ID)
-                {
-                    gotoPlaylists();
-                }
-                else if (next_view == ARTIST_VIEW_ID)
-                {
-                    gotoArtist(data->id);
-                }
-                else if (next_view == ALBUM_VIEW_ID)
-                {
-                    gotoArtist(data->id);
-                }
-
-
+                view = next_view;
                 return TRUE;
             }
-            return FALSE;
+
+            return TRUE;
         }
     }
 }

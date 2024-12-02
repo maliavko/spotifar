@@ -15,7 +15,6 @@ namespace spotifar
         using std::wstring;
         using spotify::Api;
 
-        const static string NONE_VIEW_ID = "";
         const static string ROOT_VIEW_ID = "/";
         const static string ARTISTS_VIEW_ID = "artists";
         const static string ARTIST_VIEW_ID = "artist";
@@ -42,13 +41,13 @@ namespace spotifar
 
         public:
             View(wstring name);
-            virtual ~View() {}
+            virtual ~View();
 
             virtual string get_id() const = 0;
             inline wstring get_name() const { return name; }
 
             virtual Items get_items(Api& api) const = 0;
-            virtual std::string select_item(Api& api, const ItemFarUserData* data) = 0;
+            virtual std::shared_ptr<View> select_item(Api& api, const ItemFarUserData* data) = 0;
 
         protected:
             wstring name;
@@ -61,7 +60,7 @@ namespace spotifar
 
             virtual string get_id() const { return ROOT_VIEW_ID; }
             virtual Items get_items(Api& api) const;
-            virtual std::string select_item(Api& api, const ItemFarUserData* data);
+            virtual std::shared_ptr<View> select_item(Api& api, const ItemFarUserData* data);
         };
 
         class ArtistsView: public View
@@ -71,7 +70,7 @@ namespace spotifar
 
             virtual string get_id() const { return ARTISTS_VIEW_ID; }
             virtual Items get_items(Api& api) const;
-            virtual std::string select_item(Api& api, const ItemFarUserData* data);
+            virtual std::shared_ptr<View> select_item(Api& api, const ItemFarUserData* data);
         };
 
         class ArtistView: public View
@@ -81,7 +80,7 @@ namespace spotifar
 
             virtual string get_id() const { return ARTIST_VIEW_ID; }
             virtual Items get_items(Api& api) const;
-            virtual std::string select_item(Api& api, const ItemFarUserData* data);
+            virtual std::shared_ptr<View> select_item(Api& api, const ItemFarUserData* data);
         private:
             std::string artist_id;
         };
@@ -93,7 +92,7 @@ namespace spotifar
 
             virtual string get_id() const { return ALBUM_VIEW_ID; }
             virtual Items get_items(Api& api) const;
-            virtual std::string select_item(Api& api, const ItemFarUserData* data);
+            virtual std::shared_ptr<View> select_item(Api& api, const ItemFarUserData* data);
         private:
             std::string album_id;
             std::string artist_id;
@@ -106,8 +105,10 @@ namespace spotifar
 
             virtual string get_id() const { return PLAYLISTS_VIEW_ID; }
             virtual Items get_items(Api& api) const;
-            virtual std::string select_item(Api& api, const ItemFarUserData* data);
+            virtual std::shared_ptr<View> select_item(Api& api, const ItemFarUserData* data);
         };
+
+        std::shared_ptr<RootView> create_root_view();
     }
 }
 

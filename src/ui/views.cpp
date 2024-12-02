@@ -8,9 +8,40 @@ namespace spotifar
     {
         using config::get_msg;
 
+        std::shared_ptr<RootView> create_root_view()
+        {
+            return std::make_shared<RootView>();
+        }
+
+        std::shared_ptr<ArtistsView> create_artists_view()
+        {
+            return std::make_shared<ArtistsView>();
+        }
+
+        std::shared_ptr<PlaylistsView> create_playlists_view()
+        {
+            return std::make_shared<PlaylistsView>();
+        }
+
+        std::shared_ptr<ArtistView> create_artist_view(const std::string& artist_id)
+        {
+            return std::make_shared<ArtistView>(artist_id);
+        }
+
+        std::shared_ptr<AlbumView> create_album_view(const std::string& album_id, const std::string& artist_id)
+        {
+            return std::make_shared<AlbumView>(album_id, artist_id);
+        }
+
         View::View(wstring name):
             name(name)
         {
+
+        }
+
+        View::~View()
+        {
+            
         }
 
         RootView::RootView():
@@ -37,13 +68,15 @@ namespace spotifar
             return result;
         }
 
-        std::string RootView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> RootView::select_item(Api& api, const ItemFarUserData* data)
         {
-            if (data->id == ARTISTS_VIEW_ID && data->id == PLAYLIST_VIEW_ID)
-            {
-                return data->id;
-            }
-            return NONE_VIEW_ID;
+            if (data->id == ARTISTS_VIEW_ID)
+                return create_artists_view();
+            
+            if (data->id == PLAYLIST_VIEW_ID)
+                return create_playlists_view();
+
+            return NULL;
         }
         
         ArtistsView::ArtistsView():
@@ -64,15 +97,15 @@ namespace spotifar
             return result;
         }
 
-        std::string ArtistsView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> ArtistsView::select_item(Api& api, const ItemFarUserData* data)
         {
             if (data == nullptr)
-                return ROOT_VIEW_ID;
-            return ARTIST_VIEW_ID;
+                return create_root_view();
+            return create_artist_view(data->id);
         }
         
         ArtistView::ArtistView(const std::string& artist_id):
-            View(get_msg(MPanelArtistsItemLabel)),
+            View(get_msg(MPanelArtistItemLabel)),
             artist_id(artist_id)
         {
         }
@@ -90,17 +123,15 @@ namespace spotifar
             return result;	
         }
 
-        std::string ArtistView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> ArtistView::select_item(Api& api, const ItemFarUserData* data)
         {
             if (data == nullptr)
-                return ARTISTS_VIEW_ID;
-
-            browser.gotoAlbum(data->id, artist_id);
-            return ALBUM_VIEW_ID;
+                return create_artists_view();
+            return create_album_view(data->id, artist_id);
         }
         
-        AlbumView::AlbumView(const std::string& id, const std::string& artist_id):
-            View(get_msg(MPanelArtistsItemLabel)),
+        AlbumView::AlbumView(const std::string& album_id, const std::string& artist_id):
+            View(get_msg(MPanelAlbumItemLabel)),
             album_id(album_id),
             artist_id(artist_id)
         {
@@ -120,17 +151,15 @@ namespace spotifar
             return result;	
         }
 
-        std::string AlbumView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> AlbumView::select_item(Api& api, const ItemFarUserData* data)
         {
             if (data == nullptr)
-            {
-                browser.gotoArtist(artist_id);
-                return true;
-            }
+                return create_artist_view(artist_id);
 
-            api.start_playback(album_id, data->id);
+            // TODO: for some reason does not work, worked before
+            //api.start_playback(album_id, data->id);
             
-            return false;
+            return NULL;
         }
         
         PlaylistsView::PlaylistsView():
@@ -157,14 +186,11 @@ namespace spotifar
             return result;	
         }
 
-        std::string PlaylistsView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> PlaylistsView::select_item(Api& api, const ItemFarUserData* data)
         {
             if (data == nullptr)
-            {
-                browser.gotoRootMenu();
-                return true;
-            }
-            return false;
+                return create_root_view();
+            return NULL;
         }
     }
 }
