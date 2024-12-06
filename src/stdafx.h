@@ -15,6 +15,8 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#include "version.hpp"
+#include "guid.hpp"
 #include "httplib.h"
 #include "nlohmann/json.hpp"
 

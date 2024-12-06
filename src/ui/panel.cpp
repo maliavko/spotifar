@@ -43,7 +43,7 @@ namespace spotifar
             // updating the labels of command key bar in the down of the screen
             // the approach is copied from Network plugin, every third value represents a label,
             // if it is "0", the label will be empty
-            static WORD FKeys[] =
+            static WORD fkeys[] =
             {
             	VK_F3, 0, 0,  // view
             	VK_F4, 0, MKeyBarF4,  // edit -> show player
@@ -51,36 +51,36 @@ namespace spotifar
             	VK_F6, 0, 0,  // renmov
             	VK_F7, 0, 0,  // mkfold
             	VK_F8, 0, 0,  // delete
-            	VK_F1,SHIFT_PRESSED, 0,  // add archive
-            	VK_F2,SHIFT_PRESSED, 0,  // extract
-            	VK_F3,SHIFT_PRESSED, 0,  // arccmd
-            	VK_F4,SHIFT_PRESSED, 0,  // edit...
-            	VK_F5,SHIFT_PRESSED, 0,  // copy in-place
-            	VK_F6,SHIFT_PRESSED, 0,  // rename
-            	VK_F7,SHIFT_PRESSED, 0,  // <empty>
-            	VK_F8,SHIFT_PRESSED, 0,  // delete
-            	VK_F1,LEFT_CTRL_PRESSED, 0,  // show left panel
-            	VK_F2,LEFT_CTRL_PRESSED, 0,  // show right panel
-            	VK_F3,LEFT_CTRL_PRESSED, 0,  // sort by name
-            	VK_F4,LEFT_CTRL_PRESSED, 0,  // ..by ext
-            	VK_F5,LEFT_CTRL_PRESSED, 0,  // ..by write date
-            	VK_F6,LEFT_CTRL_PRESSED, 0,  // ..by size
-            	VK_F3,LEFT_ALT_PRESSED, 0,  // alt view
-            	VK_F4,LEFT_ALT_PRESSED, 0,  // alt edit
-            	VK_F5,LEFT_ALT_PRESSED, 0,  // print
+            	VK_F1, SHIFT_PRESSED, 0,  // add archive
+            	VK_F2, SHIFT_PRESSED, 0,  // extract
+            	VK_F3, SHIFT_PRESSED, 0,  // arccmd
+            	VK_F4, SHIFT_PRESSED, 0,  // edit...
+            	VK_F5, SHIFT_PRESSED, 0,  // copy in-place
+            	VK_F6, SHIFT_PRESSED, 0,  // rename
+            	VK_F7, SHIFT_PRESSED, 0,  // <empty>
+            	VK_F8, SHIFT_PRESSED, 0,  // delete
+            	VK_F1, LEFT_CTRL_PRESSED, 0,  // show left panel
+            	VK_F2, LEFT_CTRL_PRESSED, 0,  // show right panel
+            	VK_F3, LEFT_CTRL_PRESSED, 0,  // sort by name
+            	VK_F4, LEFT_CTRL_PRESSED, 0,  // ..by ext
+            	VK_F5, LEFT_CTRL_PRESSED, 0,  // ..by write date
+            	VK_F6, LEFT_CTRL_PRESSED, 0,  // ..by size
+            	VK_F3, LEFT_ALT_PRESSED, 0,  // alt view
+            	VK_F4, LEFT_ALT_PRESSED, 0,  // alt edit
+            	VK_F5, LEFT_ALT_PRESSED, 0,  // print
             };
 
-            static KeyBarLabel kbl[std::size(FKeys) / 3];
+            static KeyBarLabel kbl[std::size(fkeys) / 3];
             static KeyBarTitles kbt = {std::size(kbl), kbl};
 
-            for (size_t j = 0, i = 0; i < std::size(FKeys); i += 3, ++j)
+            for (size_t j = 0, i = 0; i < std::size(fkeys); i += 3, ++j)
             {
-            	kbl[j].Key.VirtualKeyCode = FKeys[i];
-            	kbl[j].Key.ControlKeyState = FKeys[i + 1];
+            	kbl[j].Key.VirtualKeyCode = fkeys[i];
+            	kbl[j].Key.ControlKeyState = fkeys[i + 1];
 
-            	if (FKeys[i + 2])
+            	if (fkeys[i + 2])
             	{
-            		kbl[j].Text = kbl[j].LongText = config::get_msg(FKeys[i + 2]);
+            		kbl[j].Text = kbl[j].LongText = config::get_msg(fkeys[i + 2]);
             	}
             	else
             	{

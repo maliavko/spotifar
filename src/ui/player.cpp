@@ -1,0 +1,259 @@
+#include "ui/player.hpp"
+#include "config.hpp"
+#include "lng.hpp"
+
+namespace spotifar
+{
+    namespace ui
+    {
+        using config::get_msg;
+
+        intptr_t WINAPI dlg_proc(HANDLE, intptr_t, intptr_t, void*);
+
+        PlayerDialog::PlayerDialog():
+            artist_name(L"Marilyn Manson"),
+            track_name(L"One Assassination Under God"),
+            source_name(L"One Assassination Under God - Chapter 1"),
+            volume(100)
+        {
+            int width = WIDTH, height = HEIGHT;
+            int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
+            int view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
+
+            int track_lengh = 328, track_progress = 228;
+
+            // updating a track progress bar status
+            track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
+            float progress_percent = (float)track_progress/track_lengh;
+            int progress_whole_chars_length = (int)(track_bar.size() * progress_percent); 
+            fill(track_bar.begin(), track_bar.begin() + progress_whole_chars_length, TRACK_BAR_CHAR_FILLED);
+
+            static wchar_t player_title[MAX_PATH];
+            config::FSF.sprintf(player_title, L" %s ", get_msg(MPlayerTitle));
+
+            dlg_items_layout.assign({
+                // border
+                { DI_DOUBLEBOX,     0, 0, width, height,                                                DIF_NONE, L"" },  // ID_BOX
+                { DI_TEXT,          view_center_x - 5, 0, 10, 1,                0, nullptr,nullptr,     DIF_CENTERTEXT, player_title }, // ID_TITLE
+
+                // trackbar
+                { DI_TEXT,          view_x, view_height - 2, view_width, 1,     0, nullptr,nullptr,     DIF_CENTERTEXT, track_bar.c_str() },  // ID_TRACK_BAR
+                { DI_TEXT,          view_x, view_height - 2, 6, 1,              0, nullptr,nullptr,     DIF_LEFTTEXT, L"00:00" },  // ID_TRACK_TIME
+                { DI_TEXT,          view_width - 5, view_height - 2, 6, 1,      0, nullptr,nullptr,     DIF_RIGHTTEXT, L"00:00" },  // ID_TRACK_TOTAL_TIME
+                
+                // playing info
+                { DI_TEXT,          view_x, view_height - 5, view_width, 1,     0, nullptr,nullptr,     DIF_LEFTTEXT, L"" },  // ID_ARTIST_NAME
+                { DI_TEXT,          view_x, view_height - 4, view_width, 1,     0, nullptr,nullptr,     DIF_LEFTTEXT, L"" },  // ID_TRACK_NAME
+
+                // controls
+                { DI_BUTTON,        view_center_x - 2, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerPlayBtn) },
+                { DI_BUTTON,        view_center_x - 7, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerPrevBtn) },
+                { DI_BUTTON,        view_center_x + 4, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerNextBtn) },
+                { DI_BUTTON,        view_x, view_height, 1, 1,                  0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerLikeBtn) },
+                { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     DIF_CENTERTEXT | DIF_NOFOCUS | DIF_BTNNOCLOSE, L"[---%]" },
+                { DI_BUTTON,        view_center_x + 9, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerRepeatNoneBtn) },
+                { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerShuffleBtn) },
+                
+                // devices box
+                { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0, {}, nullptr, nullptr, DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
+            });
+        }
+
+        PlayerDialog::~PlayerDialog()
+        {
+            hide();
+        }
+
+        bool PlayerDialog::show()
+        {
+            hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, WIDTH, HEIGHT, 0,
+                &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
+
+            if (hdlg != NULL)
+            {
+                visible = true;
+                return true;
+            }
+            
+            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Web Player");
+            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Librespot");
+
+            return false;
+        }
+
+        bool PlayerDialog::hide()
+        {
+            if (hdlg != NULL)
+            {
+                visible = false;
+                auto r = config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
+                hdlg = NULL;
+            }
+
+            return TRUE;
+        }
+
+        intptr_t PlayerDialog::Dlg_OnCtlColorDlgItem(HANDLE hdlg, intptr_t id, void* par2)
+        {
+            WORD loattr = 0, hiattr = 0;
+            intptr_t res;
+            FarDialogItemColors* fdic = (FarDialogItemColors*)par2;
+            res = 0;
+
+            switch (id)
+            {
+                case ID_PLAY_BTN:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
+                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
+                    res = TRUE;
+                    break;
+                case ID_ARTIST_NAME:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->ForegroundColor = utils::CLR_DGRAY;
+                    break;
+                case ID_PREV_BTN:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
+                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
+                    break;
+                case ID_NEXT_BTN:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
+                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
+                    break;
+                case ID_LIKE_BTN:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->ForegroundColor = utils::CLR_DGRAY;
+                    break;
+                case ID_SHUFFLE_BTN:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->ForegroundColor = utils::CLR_DGRAY;
+                    break;
+                case ID_DEVICES_COMBO:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
+                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
+                    break;
+                case ID_VOLUME_LABEL:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    break;
+                case ID_TRACK_BAR:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
+                    break;
+                case ID_TRACK_TOTAL_TIME:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    break;
+                case ID_TRACK_TIME:
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    break;
+                case ID_REPEAT_BTN:
+                {
+                    int color = utils::CLR_DGRAY;
+                    FarDialogItemData data = { sizeof(FarDialogItemData), 0, new wchar_t[32] };
+                    auto i = config::PsInfo.SendDlgMessage(hdlg, DM_GETTEXT, ID_REPEAT_BTN, &data);
+                    
+                    if (lstrcmp(data.PtrData, L"Repeat"))
+                    {
+                        color = utils::CLR_BLACK;
+                    }
+                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+                    fdic->Colors->ForegroundColor = color;
+                    break;
+                }
+                default:
+                    res = FALSE;
+                    break;
+            }
+
+            return res;
+        }
+	
+        intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
+        {
+            intptr_t id = param1;
+            intptr_t res = 0;
+            INPUT_RECORD* ir;
+            static PlayerDialog* dialog = nullptr;
+
+            switch (msg)
+            {
+                case DN_INITDIALOG:
+                    dialog = reinterpret_cast<PlayerDialog*>(param2);
+                    res = FALSE; // no changes made
+                    break;
+                case DN_CLOSE:
+                    dialog = NULL;
+                    res = TRUE; // dialog can be closed
+                    break;
+                case DN_BTNCLICK:
+                    break;
+                case DN_CTLCOLORDLGITEM:
+                    res = dialog->Dlg_OnCtlColorDlgItem(hdlg, param1, param2);
+                    break;
+                case DN_CONTROLINPUT:
+                {
+                    ir = (INPUT_RECORD*)param2;
+                    switch (ir->EventType)
+                    {
+                        case KEY_EVENT:
+                            if (ir->Event.KeyEvent.bKeyDown)
+                            {
+                                int key = utils::input_record_to_combined_key(ir->Event.KeyEvent);
+                                switch (key)
+                                {
+                                    case VK_UP:
+                                    case VK_DOWN:
+                                    {
+                                        dialog->volume += key == VK_UP ? +5 : -5;
+                                        dialog->volume = min(max(dialog->volume, 0), 100);
+                                        std::wstring volume_label = std::format(L"[{:3}%]", dialog->volume);
+                                        config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
+                                        break;
+                                    }
+                                }
+                            }
+                            break;
+                        case MOUSE_EVENT:
+                        {
+                            if (param1 == PlayerDialog::ID_REPEAT_BTN)
+                            {
+                                if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Repeat"))
+                                {
+                                    config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
+                                        (void*)get_msg(MPlayerRepeatOneBtn));
+                                }
+                                else if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Track"))
+                                {
+                                    config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
+                                        (void*)get_msg(MPlayerRepeatAllBtn));
+                                }
+                                else if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"All"))
+                                {
+                                    config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
+                                        (void*)get_msg(MPlayerRepeatNoneBtn));
+                                }
+                                res = true;
+
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
+                default:
+                    res = config::PsInfo.DefDlgProc(hdlg, msg, param1, param2);
+            }
+            return res;
+        }
+        
+        bool PlayerDialog::check_text_label(int dialog_item_id, const std::wstring& text_to_check) const
+        {
+            static wchar_t ptrdata[32];
+            FarDialogItemData data = { sizeof(FarDialogItemData), 0, ptrdata };
+                config::PsInfo.SendDlgMessage(hdlg, DM_GETTEXT, dialog_item_id, &data);
+            return text_to_check == data.PtrData;
+        }
+    }
+}
