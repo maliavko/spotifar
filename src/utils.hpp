@@ -40,6 +40,30 @@ namespace spotifar
 		std::string generate_random_string(const int);
 
 		std::wstring to_wstring(const std::string& s);
+
+		class IObserver
+		{
+		public:
+			virtual ~IObserver() {}
+		};
+
+		class Observable
+		{
+		public:
+            typedef void (IObserver::*EventHandler)();
+
+		public:
+			virtual ~Observable() {}
+
+            void add_observer(IObserver* o);
+            void remove_observer(IObserver* o);
+            void notify_all(EventHandler handler);
+		protected:
+			virtual void on_observers_changed() {};
+
+		protected:
+			std::vector<IObserver*> observers;
+		};
 	}
 }
 

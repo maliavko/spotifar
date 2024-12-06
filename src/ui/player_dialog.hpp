@@ -1,13 +1,14 @@
-#ifndef PLAYER_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
-#define PLAYER_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
+#ifndef PLAYER_DIALOG_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
+#define PLAYER_DIALOG_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
 
 #include "stdafx.h"
+#include "spotify/api.hpp"
 
 namespace spotifar
 {
     namespace ui
     {
-        class PlayerDialog
+        class PlayerDialog: public spotify::IApiObserver
         {
         public:
             enum
@@ -37,7 +38,7 @@ namespace spotifar
             static const int WIDTH = 60, HEIGHT = 10;
 
         public:
-            PlayerDialog();
+            PlayerDialog(spotify::Api& api);
             virtual ~PlayerDialog();
 
             bool show();
@@ -51,19 +52,15 @@ namespace spotifar
 
             bool check_text_label(int dialog_item_id, const std::wstring& text_to_check) const;
 
+            virtual void on_track_progress_changed() {};
+
         private:
             HANDLE hdlg;
-            std::vector<FarDialogItem> dlg_items_layout;
             bool visible = false;
-            
-            // TODO: integrate with relevant data
-            int volume = 100;
-            std::wstring track_bar;
-            std::wstring artist_name;
-            std::wstring track_name;
-            std::wstring source_name;
+            std::vector<FarDialogItem> dlg_items_layout;
+            spotify::Api& api;
         };
     }
 }
 
-#endif //PLAYER_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
+#endif //PLAYER_DIALOG_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3

@@ -14,11 +14,12 @@ namespace spotifar
         using std::wstring;
         using httplib::Response;
 
-        class Api
+        class Api: public utils::Observable
         {
         public:
             const static string SPOTIFY_AUTH_URL;
             const static string SPOTIFY_API_URL;
+            std::chrono::duration<float> SYNC_INTERVAL = std::chrono::seconds(1);
 
         public:
             Api(const string& client_id, const string& client_secret, int port,
@@ -26,9 +27,9 @@ namespace spotifar
             virtual ~Api();
 
             inline string get_refresh_token() const { return refresh_token; }
-            Player& get_player() { return player; }
 
             bool authenticate();
+
             ArtistsCollection get_artist();
             AlbumsCollection get_albums(const std::string& artist_id);
             TracksCollection get_tracks(const std::string& album_id);
@@ -42,9 +43,10 @@ namespace spotifar
             bool update_access_token_with_refresh_token(const string& refresh_token);
             bool update_access_token(const string& token, const httplib::Params& params);
 
+			virtual void on_observers_changed();
+
         private:
             httplib::Client api;
-            Player player;
 
             string client_id;
             string client_secret;
@@ -53,6 +55,12 @@ namespace spotifar
             string access_token;
             std::time_t access_token_expires_at;
             string refresh_token;
+        };
+        
+        class IApiObserver: public utils::IObserver
+        {
+        public:
+            virtual void on_track_progress_changed() = 0;
         };
     }
 }

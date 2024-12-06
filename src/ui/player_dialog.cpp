@@ -1,4 +1,4 @@
-#include "ui/player.hpp"
+#include "ui/player_dialog.hpp"
 #include "config.hpp"
 #include "lng.hpp"
 
@@ -8,13 +8,8 @@ namespace spotifar
     {
         using config::get_msg;
 
-        intptr_t WINAPI dlg_proc(HANDLE, intptr_t, intptr_t, void*);
-
-        PlayerDialog::PlayerDialog():
-            artist_name(L"Marilyn Manson"),
-            track_name(L"One Assassination Under God"),
-            source_name(L"One Assassination Under God - Chapter 1"),
-            volume(100)
+        PlayerDialog::PlayerDialog(spotify::Api& api):
+            api(api)
         {
             int width = WIDTH, height = HEIGHT;
             int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
@@ -23,10 +18,10 @@ namespace spotifar
             int track_lengh = 328, track_progress = 228;
 
             // updating a track progress bar status
-            track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
+            static std::wstring track_bar(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
             float progress_percent = (float)track_progress/track_lengh;
-            int progress_whole_chars_length = (int)(track_bar.size() * progress_percent); 
-            fill(track_bar.begin(), track_bar.begin() + progress_whole_chars_length, TRACK_BAR_CHAR_FILLED);
+            int progress_chars_length = (int)(track_bar.size() * progress_percent); 
+            fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
 
             static wchar_t player_title[MAX_PATH];
             config::FSF.sprintf(player_title, L" %s ", get_msg(MPlayerTitle));
@@ -55,44 +50,19 @@ namespace spotifar
                 { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerShuffleBtn) },
                 
                 // devices box
-                { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0, {}, nullptr, nullptr, DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
+                { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
             });
+
+            //api.add_observer(this);
         }
 
         PlayerDialog::~PlayerDialog()
         {
+            //api.remove_observer(this);
             hide();
         }
 
-        bool PlayerDialog::show()
-        {
-            hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, WIDTH, HEIGHT, 0,
-                &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
-
-            if (hdlg != NULL)
-            {
-                visible = true;
-                return true;
-            }
-            
-            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Web Player");
-            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Librespot");
-
-            return false;
-        }
-
-        bool PlayerDialog::hide()
-        {
-            if (hdlg != NULL)
-            {
-                visible = false;
-                auto r = config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
-                hdlg = NULL;
-            }
-
-            return TRUE;
-        }
-
+        // TODO: rename and reconsider function's content
         intptr_t PlayerDialog::Dlg_OnCtlColorDlgItem(HANDLE hdlg, intptr_t id, void* par2)
         {
             WORD loattr = 0, hiattr = 0;
@@ -206,10 +176,8 @@ namespace spotifar
                                     case VK_UP:
                                     case VK_DOWN:
                                     {
-                                        dialog->volume += key == VK_UP ? +5 : -5;
-                                        dialog->volume = min(max(dialog->volume, 0), 100);
-                                        std::wstring volume_label = std::format(L"[{:3}%]", dialog->volume);
-                                        config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
+                                        //std::wstring volume_label = std::format(L"[{:3}%]", dialog->volume);
+                                        //config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
                                         break;
                                     }
                                 }
@@ -219,6 +187,7 @@ namespace spotifar
                         {
                             if (param1 == PlayerDialog::ID_REPEAT_BTN)
                             {
+                                // TODO: consider some logic with cycled iterator
                                 if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Repeat"))
                                 {
                                     config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
@@ -246,6 +215,35 @@ namespace spotifar
                     res = config::PsInfo.DefDlgProc(hdlg, msg, param1, param2);
             }
             return res;
+        }
+
+        bool PlayerDialog::show()
+        {
+            hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, WIDTH, HEIGHT, 0,
+                &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
+
+            if (hdlg != NULL)
+            {
+                visible = true;
+                return true;
+            }
+            
+            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Web Player");
+            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Librespot");
+
+            return false;
+        }
+
+        bool PlayerDialog::hide()
+        {
+            if (hdlg != NULL)
+            {
+                visible = false;
+                auto r = config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
+                hdlg = NULL;
+            }
+
+            return TRUE;
         }
         
         bool PlayerDialog::check_text_label(int dialog_item_id, const std::wstring& text_to_check) const

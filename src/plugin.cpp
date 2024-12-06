@@ -1,6 +1,6 @@
 #include "plugin.h"
 #include "config.hpp"
-#include "ui/player.hpp"
+#include "ui/player_dialog.hpp"
 #include "ui/config_dialog.hpp"
 
 namespace spotifar
@@ -11,7 +11,7 @@ namespace spotifar
 		api(config::to_str(cfg.SpotifyClientID), config::to_str(cfg.SpotifyClientSecret),
 			cfg.LocalhostServicePort, config::to_str(cfg.SpotifyRefreshToken)),
         panel(std::make_unique<ui::Panel>(api)),
-        player(std::make_unique<ui::PlayerDialog>())
+        player(std::make_unique<ui::PlayerDialog>(api))
 	{
 		if (api.authenticate())
             panel->gotoRootMenu();

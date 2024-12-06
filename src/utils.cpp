@@ -43,5 +43,27 @@ namespace spotifar
 		{
 			return std::wstring(s.begin(), s.end());
 		}
+		
+
+        void Observable::add_observer(IObserver* o)
+        {
+            observers.push_back(o);
+			//on_observers_changed();
+        }
+
+        void Observable::remove_observer(IObserver* o)
+        {
+            auto it = std::find(observers.begin(), observers.end(), o);
+            if (it != observers.end())
+                observers.erase(it);
+
+			//on_observers_changed();
+        }
+
+        void Observable::notify_all(EventHandler handler)
+        {
+            for (auto& o: observers)
+                (o->*handler)();
+        }
 	}
 }

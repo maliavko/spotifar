@@ -2,7 +2,7 @@
 #define PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
 
 #include "ui/panel.hpp"
-#include "ui/player.hpp"
+#include "ui/player_dialog.hpp"
 
 #include <plugin.hpp>
 

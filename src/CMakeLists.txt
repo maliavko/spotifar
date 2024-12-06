@@ -11,10 +11,9 @@ add_library(${PROJECT_NAME} SHARED
 	config.cpp
 	spotify/items.cpp
 	spotify/api.cpp
-	spotify/player.cpp
 	ui/panel.cpp
 	ui/views.cpp
-	ui/player.cpp
+	ui/player_dialog.cpp
 	ui/config_dialog.cpp
 	spotifar.vc.def
 )

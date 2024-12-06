@@ -39,6 +39,11 @@ namespace spotifar
 		};
 		typedef map<string, Track> TracksCollection;
 		void from_json(const json& j, Track& a);
+
+		struct PlaybackInfo
+		{
+
+		};
 	}
 }
 

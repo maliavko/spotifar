@@ -32,8 +32,7 @@ namespace spotifar
             client_id(client_id),
             client_secret(client_secret),
             refresh_token(refresh_token),
-            access_token_expires_at(0),
-            player()
+            access_token_expires_at(0)
         {
             // TODO: add timer to refresh token
             // https://stackoverflow.com/questions/32233019/wake-up-a-stdthread-from-usleep
@@ -261,6 +260,11 @@ namespace spotifar
             api.set_bearer_token_auth(access_token);
 
             return true;
+        }
+        
+        void Api::on_observers_changed()
+        {
+            int i = 5;
         }
         
         std::string Api::get_auth_callback_url() const

@@ -8,7 +8,7 @@ namespace spotifar
 {
     namespace spotify
     {
-        class Player
+        /*class Player
         {
         public:
             std::chrono::duration<float> SYNC_INTERVAL = std::chrono::seconds(1);
@@ -17,10 +17,17 @@ namespace spotifar
             Player();
             virtual ~Player();
 
+            void add_listener(IPlayerListener* l);
+            void remove_listener(IPlayerListener* l);
+
+            typedef void (IPlayerListener::*EventFunction)(int, int);
+            void notify_all(EventFunction func);
+
             void set_active(bool is_active);
         private:
             bool is_active;
-        };
+            std::vector<IPlayerListener*> listeners;
+        };*/
     }
 }
 
