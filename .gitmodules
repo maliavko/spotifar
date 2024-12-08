@@ -4,3 +4,6 @@
 [submodule "thirdparty/FarManager"]
 	path = thirdparty/FarManager
 	url = https://github.com/FarGroup/FarManager
+[submodule "thirdparty/ObserverManager"]
+	path = thirdparty/ObserverManager
+	url = https://github.com/fnz/ObserverManager.git
