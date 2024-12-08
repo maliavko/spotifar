@@ -33,11 +33,12 @@ namespace spotifar
             // if CurDir is empty, it closes the plugin's panel. As plugin does not operate with
             // folders, but spotify items, just in case the current view name is handed over,
             // which equals empty string for the root view
+            // TODO: should I free this pointer?
             info->CurDir = _wcsdup(view->get_name().c_str());
 
             // filling the panel top title label
             static wchar_t title[MAX_PATH];
-            config::FSF.sprintf(title, L" %s: %s", config::get_msg(MPanelTitle), info->CurDir);
+            config::FSF.sprintf(title, L" %s: %s", config::get_msg(MPluginUserName), info->CurDir);
             info->PanelTitle = title;
 
             // updating the labels of command key bar in the down of the screen

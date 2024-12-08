@@ -28,7 +28,6 @@ namespace spotifar
 		} Opt;
 
 		const wchar_t* get_msg(int msg_id);
-		std::string to_str(const wchar_t* opt);
 		void set_option(wchar_t* opt, const std::string& s);
 	}
 }

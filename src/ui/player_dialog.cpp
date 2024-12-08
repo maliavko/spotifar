@@ -8,23 +8,12 @@ namespace spotifar
     {
         using config::get_msg;
 
+        // TODO: save sync data to compare it with the upcoming one and update only the controls changed
         PlayerDialog::PlayerDialog(spotify::Api& api):
             api(api)
         {
-            int width = WIDTH, height = HEIGHT;
-            int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
-            int view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
-
-            int track_lengh = 328, track_progress = 228;
-
-            // updating a track progress bar status
-            static std::wstring track_bar(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
-            float progress_percent = (float)track_progress/track_lengh;
-            int progress_chars_length = (int)(track_bar.size() * progress_percent); 
-            fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
-
             static wchar_t player_title[MAX_PATH];
-            config::FSF.sprintf(player_title, L" %s ", get_msg(MPlayerTitle));
+            config::FSF.sprintf(player_title, L" %s ", get_msg(MPluginUserName));
 
             dlg_items_layout.assign({
                 // border
@@ -32,7 +21,7 @@ namespace spotifar
                 { DI_TEXT,          view_center_x - 5, 0, 10, 1,                0, nullptr,nullptr,     DIF_CENTERTEXT, player_title }, // ID_TITLE
 
                 // trackbar
-                { DI_TEXT,          view_x, view_height - 2, view_width, 1,     0, nullptr,nullptr,     DIF_CENTERTEXT, track_bar.c_str() },  // ID_TRACK_BAR
+                { DI_TEXT,          view_x, view_height - 2, view_width, 1,     0, nullptr,nullptr,     DIF_CENTERTEXT, L"" },  // ID_TRACK_BAR
                 { DI_TEXT,          view_x, view_height - 2, 6, 1,              0, nullptr,nullptr,     DIF_LEFTTEXT, L"00:00" },  // ID_TRACK_TIME
                 { DI_TEXT,          view_width - 5, view_height - 2, 6, 1,      0, nullptr,nullptr,     DIF_RIGHTTEXT, L"00:00" },  // ID_TRACK_TOTAL_TIME
                 
@@ -53,12 +42,11 @@ namespace spotifar
                 { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
             });
 
-            //api.add_observer(this);
+            update_track_bar();
         }
 
         PlayerDialog::~PlayerDialog()
         {
-            //api.remove_observer(this);
             hide();
         }
 
@@ -154,6 +142,7 @@ namespace spotifar
                     res = FALSE; // no changes made
                     break;
                 case DN_CLOSE:
+                    dialog->hide();
                     dialog = NULL;
                     res = TRUE; // dialog can be closed
                     break;
@@ -219,31 +208,121 @@ namespace spotifar
 
         bool PlayerDialog::show()
         {
-            hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, WIDTH, HEIGHT, 0,
+            if (visible)
+                return true;
+            
+            hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, 0,
                 &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
+            
+            api.start_listening(this);
 
             if (hdlg != NULL)
             {
                 visible = true;
                 return true;
             }
-            
-            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Web Player");
-            //config::PsInfo.SendDlgMessage(hdlg, DM_LISTADDSTR, ID_DEVICES_COMBO, (void*)L" Librespot");
 
             return false;
         }
 
         bool PlayerDialog::hide()
         {
+            if (!visible)
+                return true;
+
+            api.stop_listening(this);
+
             if (hdlg != NULL)
             {
+                config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
                 visible = false;
-                auto r = config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
                 hdlg = NULL;
             }
 
             return TRUE;
+        }
+        
+        void PlayerDialog::update_devices_list(const DevicesList& devices)
+        {
+            // TODO: not finished, check when there are not devices
+            static std::vector<FarListItem> items;
+            for (int i = 0; i < devices.size(); i++)
+            {
+                auto& d = devices[i];
+
+                FarListItem item;
+                if (d.is_active)
+                    item.Flags |= LIF_SELECTED;
+
+                FarListItemData data{sizeof(FarListItemData), i, 0, (void*)d.id.c_str()};
+
+                items.push_back({
+                    0, d.user_name.c_str(), (intptr_t)&data, 0
+                });
+            }
+
+            FarList list={sizeof(FarList), items.size(), &items[0]};
+
+            config::PsInfo.SendDlgMessage(hdlg, DM_LISTSET, ID_DEVICES_COMBO, &list);
+        }
+        
+        void PlayerDialog::update_track_info()
+        {
+                // ID_ARTIST_NAME,
+                // ID_TRACK_NAME,
+        }
+        
+        void PlayerDialog::update_controls_block()
+        {                
+                // ID_PLAY_BTN,
+                // ID_PREV_BTN,
+                // ID_NEXT_BTN,
+                // ID_LIKE_BTN,
+                // ID_VOLUME_LABEL,
+                // ID_REPEAT_BTN,
+                // ID_SHUFFLE_BTN,
+        }
+        
+        // if @track_total_time is 0, the trackback will be filled empty
+        void PlayerDialog::update_track_bar(int track_total_time, int track_played_time)
+        {
+            static std::wstring track_bar(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
+            static std::wstring track_time_str(std::format(L"{:%M:%S}", std::chrono::seconds(track_played_time)));
+            static std::wstring track_total_time_str(std::format(L"{:%M:%S}", std::chrono::seconds(track_total_time)));
+
+            if (track_total_time)
+            {
+                float progress_percent = (float)track_played_time / track_total_time;
+                int progress_chars_length = (int)(track_bar.size() * progress_percent);
+                fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
+            }
+            
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_BAR, (void*)track_bar.c_str());
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_TIME, (void*)track_time_str.c_str());
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_TOTAL_TIME, (void*)track_total_time_str.c_str());
+        }
+        
+        void PlayerDialog::on_playback_updated(const spotify::PlaybackState& state)
+        {
+	        config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, FALSE, 0);
+
+            if (state.is_empty())
+            {
+                update_track_bar();
+            }
+            
+	        config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
+        }
+        
+        void PlayerDialog::on_playback_sync_failed(const std::string& err_msg)
+        {
+            utils::show_far_error_dlg(MFarMessageErrorPlaybackSync, err_msg);
+            hide();
+        }
+        
+        void PlayerDialog::on_devices_changed(const DevicesList& devices)
+        {
+            update_devices_list(devices);
         }
         
         bool PlayerDialog::check_text_label(int dialog_item_id, const std::wstring& text_to_check) const

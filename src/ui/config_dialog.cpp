@@ -10,7 +10,7 @@ namespace spotifar
 
         ConfigDialog::ConfigDialog():
             builder(std::make_unique<PluginDialogBuilder>(
-                config::PsInfo, MainGuid, ConfigDialogGuid, MConfigTitle, L"Config"
+                config::PsInfo, MainGuid, ConfigDialogGuid, MPluginUserName, L"Config"
             ))
         {
 			builder->AddCheckbox(MConfigAddToDisksMenu, &Opt.AddToDisksMenu);

@@ -6,6 +6,7 @@
 			"features": ["openssl"]
 		},
 		"openssl",
-		"nlohmann-json"
+		"nlohmann-json",
+		"spdlog"
   ]
 }

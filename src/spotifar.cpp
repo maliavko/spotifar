@@ -34,7 +34,7 @@ namespace spotifar
 		if (config::Opt.AddToDisksMenu)
 		{
 			static const wchar_t* DiskMenuStrings[1];
-			DiskMenuStrings[0] = config::get_msg(MDiskMenuLabel);
+			DiskMenuStrings[0] = config::get_msg(MPluginUserName);
 			info->DiskMenu.Guids = &MenuGuid;
 			info->DiskMenu.Strings = DiskMenuStrings;
 			info->DiskMenu.Count = std::size(DiskMenuStrings);
@@ -43,7 +43,7 @@ namespace spotifar
 		if (TRUE)  // add to plugins menu
 		{
 			static const wchar_t* PluginMenuStrings[1];
-			PluginMenuStrings[0] = config::get_msg(MPluginMenuLabel);
+			PluginMenuStrings[0] = config::get_msg(MPluginUserName);
 			info->PluginMenu.Guids = &MenuGuid;
 			info->PluginMenu.Strings = PluginMenuStrings;
 			info->PluginMenu.Count = std::size(PluginMenuStrings);
@@ -51,7 +51,7 @@ namespace spotifar
 
 		// add to plugins configuration menu
 		static const wchar_t* PluginCfgStrings[1];
-		PluginCfgStrings[0] = config::get_msg(MConfigMenuLabel);
+		PluginCfgStrings[0] = config::get_msg(MPluginUserName);
 		info->PluginConfig.Guids = &MenuGuid;
 		info->PluginConfig.Strings = PluginCfgStrings;
 		info->PluginConfig.Count = std::size(PluginCfgStrings);
@@ -59,6 +59,19 @@ namespace spotifar
 
 	HANDLE WINAPI OpenW(const struct OpenInfo* info)
 	{
+		try 
+		{
+			// note: logger uses config data, which is being initialized above
+			utils::init_logging();
+		}
+		catch (const spdlog::spdlog_ex& ex)
+		{
+			auto err_msg = utils::to_wstring(ex.what());
+			utils::show_far_error_dlg(MFarMessageErrorLogInit, err_msg);
+
+			return nullptr;
+		}
+
 		return std::make_unique<Plugin>().release();
 	}
 
@@ -139,5 +152,6 @@ namespace spotifar
 		std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
 
 		config::Opt.write();
+		utils::fini_logging();
 	}
 }

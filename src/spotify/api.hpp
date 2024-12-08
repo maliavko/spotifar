@@ -3,8 +3,8 @@
 #pragma once
 
 #include "httplib.h"
-#include "spotify/player.hpp"
 #include "spotify/items.hpp"
+#include "ObserverManager.h"
 
 namespace spotifar
 {
@@ -13,8 +13,16 @@ namespace spotifar
         using std::string;
         using std::wstring;
         using httplib::Response;
+        
+        class ApiProtocol: public BaseObserverProtocol
+        {
+        public:
+            virtual void on_playback_updated(const PlaybackState& state) {};
+            virtual void on_playback_sync_failed(const std::string& err_msg) {};
+            virtual void on_devices_changed(const DevicesList& devices) {};
+        };
 
-        class Api: public utils::Observable
+        class Api
         {
         public:
             const static string SPOTIFY_AUTH_URL;
@@ -26,13 +34,17 @@ namespace spotifar
                 const string& refresh_token);
             virtual ~Api();
 
+            bool authenticate();
             inline string get_refresh_token() const { return refresh_token; }
 
-            bool authenticate();
+            void start_listening(ApiProtocol* observer);
+            void stop_listening(ApiProtocol* observer);
 
             ArtistsCollection get_artist();
             AlbumsCollection get_albums(const std::string& artist_id);
-            TracksCollection get_tracks(const std::string& album_id);
+            std::map<string, SimplifiedTrack> get_tracks(const std::string& album_id);
+            PlaybackState get_playback_state();
+            DevicesList get_available_devices();
             void start_playback(const std::string& album_id, const std::string& track_id);
 
         protected:
@@ -42,8 +54,6 @@ namespace spotifar
             bool update_access_token_with_auth_code(const string& auth_code);
             bool update_access_token_with_refresh_token(const string& refresh_token);
             bool update_access_token(const string& token, const httplib::Params& params);
-
-			virtual void on_observers_changed();
 
         private:
             httplib::Client api;
@@ -55,12 +65,8 @@ namespace spotifar
             string access_token;
             std::time_t access_token_expires_at;
             string refresh_token;
-        };
-        
-        class IApiObserver: public utils::IObserver
-        {
-        public:
-            virtual void on_track_progress_changed() = 0;
+            bool is_listening;
+            std::vector<const ApiProtocol*> observers;
         };
     }
 }

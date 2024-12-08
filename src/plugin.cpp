@@ -8,8 +8,8 @@ namespace spotifar
 	auto& cfg = config::Opt;
 
 	Plugin::Plugin():
-		api(config::to_str(cfg.SpotifyClientID), config::to_str(cfg.SpotifyClientSecret),
-			cfg.LocalhostServicePort, config::to_str(cfg.SpotifyRefreshToken)),
+		api(utils::to_string(cfg.SpotifyClientID), utils::to_string(cfg.SpotifyClientSecret),
+			cfg.LocalhostServicePort, utils::to_string(cfg.SpotifyRefreshToken)),
         panel(std::make_unique<ui::Panel>(api)),
         player(std::make_unique<ui::PlayerDialog>(api))
 	{

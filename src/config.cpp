@@ -52,15 +52,6 @@ namespace spotifar
 		{
 			return PsInfo.GetMsg(&MainGuid, msg_id);
 		}
-		
-		std::string to_str(const wchar_t* opt)
-		{
-			std::wstring s(opt);
-
-			// we do not keep unicode string in the file, so not afraid of the warning
-			#pragma warning(suppress: 4244)  
-			return std::string(s.begin(), s.end());
-		}
 
 		void set_option(wchar_t* opt, const std::string& s)
 		{

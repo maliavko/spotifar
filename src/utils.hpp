@@ -41,29 +41,14 @@ namespace spotifar
 
 		std::wstring to_wstring(const std::string& s);
 
-		class IObserver
-		{
-		public:
-			virtual ~IObserver() {}
-		};
+		std::string to_string(const std::wstring& ws);
 
-		class Observable
-		{
-		public:
-            typedef void (IObserver::*EventHandler)();
+		void init_logging();
 
-		public:
-			virtual ~Observable() {}
+		void fini_logging();
 
-            void add_observer(IObserver* o);
-            void remove_observer(IObserver* o);
-            void notify_all(EventHandler handler);
-		protected:
-			virtual void on_observers_changed() {};
-
-		protected:
-			std::vector<IObserver*> observers;
-		};
+		intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message = L"");
+		intptr_t show_far_error_dlg(int error_msg_id, const std::string& extra_message = "");
 	}
 }
 

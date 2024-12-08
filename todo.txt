@@ -15,3 +15,4 @@ application ideas
 - global hotkeys?
 - managing playlists via standard Far functions: create folder, move/remove from panel
 - consider a nice progress icon with unicode symbols https://en.wikipedia.org/wiki/Block_Elements
+- ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?

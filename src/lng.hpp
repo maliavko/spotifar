@@ -6,23 +6,19 @@ namespace spotifar
 {
 	enum
 	{
+		MPluginUserName,
+
 		MOk,
 		MCancel,
 		MError,
 		MYes,
 
-		MConfigMenuLabel,
-		MConfigTitle,
 		MConfigAddToDisksMenu,
 		MConfigSpotifySettings,
 		MConfigSpotifyClientID,
 		MConfigSpotifyClientSecret,
 		MConfigLocalhostServicePort,
 
-		MDiskMenuLabel,
-		MPluginMenuLabel,
-
-		MPanelTitle,
 		MPanelRootItemLabel,
 		MPanelArtistsItemLabel,
 		MPanelArtistsItemDescr,
@@ -33,7 +29,6 @@ namespace spotifar
 		MPanelPlaylistsItemLabel,
 		MPanelPlaylistsItemDescr,
 
-		MPlayerTitle,
 		MPlayerPlayBtn,
 		MPlayerPrevBtn,
 		MPlayerNextBtn,
@@ -44,6 +39,11 @@ namespace spotifar
 		MPlayerShuffleBtn,
 
 		MKeyBarF4,
+
+		MFarMessageErrorTitle,
+		MFarMessageErrorLogInit,
+		MFarMessageErrorPlaybackSync,
+		MFarMessageWarning,
 	};
 }
 

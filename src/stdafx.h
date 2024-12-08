@@ -3,6 +3,7 @@
 #pragma once
 
 #define UNICODE
+#define SPDLOG_WCHAR_FILENAMES
 
 #include <string>
 #include <cmath>
@@ -19,6 +20,7 @@
 #include "guid.hpp"
 #include "httplib.h"
 #include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 #include "utils.hpp"
 

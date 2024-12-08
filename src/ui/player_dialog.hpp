@@ -8,7 +8,9 @@ namespace spotifar
 {
     namespace ui
     {
-        class PlayerDialog: public spotify::IApiObserver
+        using spotify::DevicesList;
+        
+        class PlayerDialog: public spotify::ApiProtocol
         {
         public:
             enum
@@ -35,7 +37,9 @@ namespace spotifar
             static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
             static const wchar_t TRACK_BAR_CHAR_FILLED = 0x2588;
 
-            static const int WIDTH = 60, HEIGHT = 10;
+            static const int width = 60, height = 10;
+            static const int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
+            static const int view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
 
         public:
             PlayerDialog(spotify::Api& api);
@@ -52,7 +56,14 @@ namespace spotifar
 
             bool check_text_label(int dialog_item_id, const std::wstring& text_to_check) const;
 
-            virtual void on_track_progress_changed() {};
+            void update_track_bar(int track_total_time = 0, int track_played_time = 0);
+            void update_controls_block();
+            void update_track_info();
+            void update_devices_list(const DevicesList& devices);
+
+            virtual void on_playback_updated(const spotify::PlaybackState& state);
+            virtual void on_playback_sync_failed(const std::string& err_msg);
+            virtual void on_devices_changed(const DevicesList& devices);
 
         private:
             HANDLE hdlg;
