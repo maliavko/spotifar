@@ -230,12 +230,12 @@ namespace spotifar
             if (!visible)
                 return true;
 
+            visible = false;
             api.stop_listening(this);
 
             if (hdlg != NULL)
             {
                 config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
-                visible = false;
                 hdlg = NULL;
             }
 
@@ -250,15 +250,13 @@ namespace spotifar
             {
                 auto& d = devices[i];
 
-                FarListItem item;
+                FarListItemData data{sizeof(FarListItemData), i, 0, (void*)d.id.c_str()};
+                FarListItem item{LIF_NONE, d.user_name.c_str(), (intptr_t)&data, 0};
+
                 if (d.is_active)
                     item.Flags |= LIF_SELECTED;
 
-                FarListItemData data{sizeof(FarListItemData), i, 0, (void*)d.id.c_str()};
-
-                items.push_back({
-                    0, d.user_name.c_str(), (intptr_t)&data, 0
-                });
+                items.push_back(item);
             }
 
             FarList list={sizeof(FarList), items.size(), &items[0]};

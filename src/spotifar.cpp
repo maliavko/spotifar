@@ -13,7 +13,7 @@ namespace spotifar
 	void WINAPI GetGlobalInfoW(struct GlobalInfo* info)
 	{
 		info->StructSize = sizeof(struct GlobalInfo);
-		info->MinFarVersion = FARMANAGERVERSION;
+		info->MinFarVersion = MAKEFARVERSION(3, 0, 0, 4400, VS_RELEASE);
 		info->Version = PLUGIN_VERSION;
 		info->Guid = MainGuid;
 		info->Title = PLUGIN_NAME;
