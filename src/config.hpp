@@ -27,11 +27,8 @@ namespace spotifar
 			static void write();
 		} Opt;
 
-		int show_dialog();
-
 		const wchar_t* get_msg(int msg_id);
-		std::string to_str(const wchar_t* opt);
-		void set_str(wchar_t* opt, const std::string& s);
+		void set_option(wchar_t* opt, const std::string& s);
 	}
 }
 

@@ -1,6 +1,5 @@
 ﻿#include "stdafx.h"
 
-#include <DlgBuilder.hpp>
 #include <PluginSettings.hpp>
 
 #include "config.hpp"
@@ -20,30 +19,6 @@ namespace spotifar
 		static const wchar_t* StrSpotifyClientSecret = L"SpotifyClientSecret";
 		static const wchar_t* StrSpotifyRefreshToken = L"SpotifyRefreshToken";
 		static const wchar_t* StrLocalhostServicePort = L"LocalhostServicePort";
-
-		int show_dialog()
-		{
-			PluginDialogBuilder Builder(spotifar::config::PsInfo, MainGuid, ConfigDialogGuid, MConfigTitle, L"Config");
-			Builder.AddCheckbox(MConfigAddToDisksMenu, &Opt.AddToDisksMenu);
-
-			Builder.AddSeparator(MConfigSpotifySettings);
-			Builder.AddText(MConfigSpotifyClientID);
-			Builder.AddEditField(Opt.SpotifyClientID, ARRAYSIZE(Opt.SpotifyClientID), 40, L"", true);
-			Builder.AddText(MConfigSpotifyClientSecret);
-			Builder.AddEditField(Opt.SpotifyClientSecret , ARRAYSIZE(Opt.SpotifyClientSecret), 40, L"", true);
-			Builder.AddText(MConfigLocalhostServicePort);
-			Builder.AddIntEditField(&Opt.LocalhostServicePort, 10);
-
-			Builder.AddOKCancel(MOk, MCancel);
-
-			if (Builder.ShowDialog())
-			{
-				Opt.write();
-				return TRUE;
-			}
-
-			return FALSE;
-		}
 
 		void Options::read(const struct PluginStartupInfo* info)
 		{
@@ -77,17 +52,8 @@ namespace spotifar
 		{
 			return PsInfo.GetMsg(&MainGuid, msg_id);
 		}
-		
-		std::string to_str(const wchar_t* opt)
-		{
-			std::wstring s(opt);
 
-			// we do not keep unicode string in the file, so not afraid of the warning
-			#pragma warning(suppress: 4244)  
-			return std::string(s.begin(), s.end());
-		}
-
-		void set_str(wchar_t* opt, const std::string& s)
+		void set_option(wchar_t* opt, const std::string& s)
 		{
 			lstrcpy(opt, utils::to_wstring(s).c_str());
 		}

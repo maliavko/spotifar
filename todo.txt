@@ -7,9 +7,12 @@ bugs
 
 refactor
 - consider proper MVC, MVP, MVVP framework usage and code refactor to it
+- add a proper logging
 
 application ideas
 - fair random while playing, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)
 - playlists management via panels in Far
 - global hotkeys?
 - managing playlists via standard Far functions: create folder, move/remove from panel
+- consider a nice progress icon with unicode symbols https://en.wikipedia.org/wiki/Block_Elements
+- ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?

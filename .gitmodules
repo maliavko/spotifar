@@ -4,6 +4,9 @@
 [submodule "thirdparty/FarManager"]
 	path = thirdparty/FarManager
 	url = https://github.com/FarGroup/FarManager
+[submodule "thirdparty/ObserverManager"]
+	path = thirdparty/ObserverManager
+	url = https://github.com/fnz/ObserverManager.git
 [submodule "thirdparty/librespot"]
 	path = thirdparty/librespot
 	url = https://github.com/librespot-org/librespot.git

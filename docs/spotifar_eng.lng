@@ -1,24 +1,40 @@
 .Language=English,English
 
+"Spotifar"
+
 "&Ok"
 "&Cancel"
 "Error"
 "&Yes"
 
-"Spotifar"
-"Spotifar"
 "Add to &Disks menu"
 "Spotify API"
 "Client ID"
 "Client secret"
 "Localhost service port"
 
-"Spotifar"
-"Spotifar"
-
-"Spotifar"
 "/"
 "Artists"
 "A list of followed artists"
+"Artist"
+"An artist materials"
+"Album"
+"An album list of songs"
 "Playlists"
 "A list of playlist accessible by user"
+
+"[ > ]"
+"[<<]"
+"[>>]"
+"[+]"
+"Repeat"
+"Track"
+"All"
+"Shuffle"
+
+"Player"
+
+"Critical error"
+"An error has occured while initializing of a logging system."
+"A critical error occured while syncing a playback info."
+"Warning"

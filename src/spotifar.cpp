@@ -1,9 +1,10 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "version.hpp"
 #include "guid.hpp"
 #include "config.hpp"
-#include "browser.hpp"
 #include "lng.hpp"
+#include "plugin.h"
+#include "ui/config_dialog.hpp"
 
 #include <plugin.hpp>
 
@@ -12,7 +13,7 @@ namespace spotifar
 	void WINAPI GetGlobalInfoW(struct GlobalInfo* info)
 	{
 		info->StructSize = sizeof(struct GlobalInfo);
-		info->MinFarVersion = FARMANAGERVERSION;
+		info->MinFarVersion = MAKEFARVERSION(3, 0, 0, 4400, VS_RELEASE);
 		info->Version = PLUGIN_VERSION;
 		info->Guid = MainGuid;
 		info->Title = PLUGIN_NAME;
@@ -33,23 +34,24 @@ namespace spotifar
 		if (config::Opt.AddToDisksMenu)
 		{
 			static const wchar_t* DiskMenuStrings[1];
-			DiskMenuStrings[0] = config::get_msg(MDiskMenuLabel);
+			DiskMenuStrings[0] = config::get_msg(MPluginUserName);
 			info->DiskMenu.Guids = &MenuGuid;
 			info->DiskMenu.Strings = DiskMenuStrings;
 			info->DiskMenu.Count = std::size(DiskMenuStrings);
 		}
 
-		if (TRUE)
+		if (TRUE)  // add to plugins menu
 		{
 			static const wchar_t* PluginMenuStrings[1];
-			PluginMenuStrings[0] = config::get_msg(MPluginMenuLabel);
+			PluginMenuStrings[0] = config::get_msg(MPluginUserName);
 			info->PluginMenu.Guids = &MenuGuid;
 			info->PluginMenu.Strings = PluginMenuStrings;
 			info->PluginMenu.Count = std::size(PluginMenuStrings);
 		}
 
+		// add to plugins configuration menu
 		static const wchar_t* PluginCfgStrings[1];
-		PluginCfgStrings[0] = config::get_msg(MConfigMenuLabel);
+		PluginCfgStrings[0] = config::get_msg(MPluginUserName);
 		info->PluginConfig.Guids = &MenuGuid;
 		info->PluginConfig.Strings = PluginCfgStrings;
 		info->PluginConfig.Count = std::size(PluginCfgStrings);
@@ -57,131 +59,99 @@ namespace spotifar
 
 	HANDLE WINAPI OpenW(const struct OpenInfo* info)
 	{
-		auto hPlugin = std::make_unique<Browser>();
-		return hPlugin.release();
-	}
+		try 
+		{
+			// note: logger uses config data, which is being initialized above
+			utils::init_logging();
+		}
+		catch (const spdlog::spdlog_ex& ex)
+		{
+			auto err_msg = utils::to_wstring(ex.what());
+			utils::show_far_error_dlg(MFarMessageErrorLogInit, err_msg);
 
-	void WINAPI ClosePanelW(const ClosePanelInfo* info)
-	{
-		// wrapping pointer with unique_ptr, to be disposed properly
-		std::unique_ptr<Browser>(static_cast<Browser*>(info->hPanel));
-		
-		config::Opt.write();
+			return nullptr;
+		}
+
+		return std::make_unique<Plugin>().release();
 	}
 
 	void WINAPI GetOpenPanelInfoW(OpenPanelInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
-
-		info->StructSize = sizeof(*info);
-		info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
-		info->CurDir = _wcsdup(browser.get_target_name().c_str());
-
-		static wchar_t Title[MAX_PATH];
-		config::FSF.sprintf(Title, L" %s: %s", config::get_msg(MPanelTitle), info->CurDir);
-		info->PanelTitle = Title;
-	}
-
-	static void WINAPI FreeUserData(void* const UserData, const FarPanelItemFreeInfo* const Info)
-	{
-		delete static_cast<const ItemFarUserData*>(UserData);
+		auto& plugin = *static_cast<Plugin*>(info->hPanel);
+		plugin.update_panel_info(info);
 	}
 
 	intptr_t WINAPI GetFindDataW(GetFindDataInfo* info)
 	{
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
-
-		auto& browser = *static_cast<Browser*>(info->hPanel);
-		auto items = browser.get_items();
-	
-		auto* NewPanelItem = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
-		if (NewPanelItem)
-		{
-			for (size_t idx = 0; idx < items.size(); idx++)
-			{
-				auto& item = items[idx];
-				
-				memset(&NewPanelItem[idx], 0, sizeof(PluginPanelItem));
-				NewPanelItem[idx].FileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-				NewPanelItem[idx].FileName = _wcsdup(item.name.c_str());
-				NewPanelItem[idx].Description = _wcsdup(item.description.c_str());
-				NewPanelItem[idx].UserData.Data = new ItemFarUserData(item.id);
-				NewPanelItem[idx].UserData.FreeData = FreeUserData;
-			}
-
-			info->PanelItem = NewPanelItem;
-			info->ItemsNumber = items.size();
-
-			return TRUE;
-		}
-
-		info->PanelItem = nullptr;
-		info->ItemsNumber = 0;
-		return FALSE;
+		
+		return static_cast<Plugin*>(info->hPanel)->update_panel_items(info);
 	}
 
 	void WINAPI FreeFindDataW(const FreeFindDataInfo* info)
 	{
-		for (size_t idx = 0; idx < info->ItemsNumber; idx++)
-		{
-			free(const_cast<wchar_t*>(info->PanelItem[idx].FileName));
-			free(const_cast<wchar_t*>(info->PanelItem[idx].Description));
-		}
-
-		free(info->PanelItem);
+		return static_cast<Plugin*>(info->hPanel)->free_panel_items(info);
 	}
 
-	intptr_t WINAPI SetDirectoryW(const struct SetDirectoryInfo* info)
+	intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo* info)
 	{
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
-
-		auto& browser = *static_cast<Browser*>(info->hPanel);
-
-		const ItemFarUserData* data = NULL;
-		if (info->UserData.Data != NULL)
-			data = static_cast<const ItemFarUserData*>(info->UserData.Data);
-
-		browser.handle_item_selected(data);
-
-		return TRUE;
+			
+		return static_cast<Plugin*>(info->hPanel)->select_item(info);
 	}
 
 	intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
 		return TRUE;
 	}
 
+	// https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
 	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
+		auto& plugin = *static_cast<Plugin*>(info->hPanel);
 
-		// https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
+		auto& key_event = info->Rec.Event.KeyEvent;
+		if (key_event.bKeyDown)
+		{
+			int key = utils::input_record_to_combined_key(key_event);
+			switch (key)
+			{
+				case VK_F4:
+				{
+					return plugin.show_player();
+				}
+			}
+		}
 
 		return FALSE;
 	}
 
 	intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo* info)
 	{
-		auto& browser = *static_cast<Browser*>(info->hPanel);
+		auto& plugin = *static_cast<Plugin*>(info->hPanel);
 		
 		if (info->Event == FE_CLOSE)
 		{
 			// panel is closing, a right time to save settings and so on
+			// the rest: https://api.farmanager.com/ru/structures/processpaneleventinfo.html
 		}
-		// the rest: https://api.farmanager.com/ru/structures/processpaneleventinfo.html
 
 		return FALSE;
 	}
 
 	intptr_t WINAPI ConfigureW(const ConfigureInfo* info)
 	{
-		return config::show_dialog();
+		return ui::ConfigDialog().show();
 	}
 
-	void WINAPI ExitFARW(const ExitInfo* eInfo)
+	void WINAPI ClosePanelW(const ClosePanelInfo* info)
 	{
+		// after auto-variable is destroyed, the last ref to plugin is as well
+		std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
+
+		config::Opt.write();
+		utils::fini_logging();
 	}
 }

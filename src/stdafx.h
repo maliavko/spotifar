@@ -3,6 +3,7 @@
 #pragma once
 
 #define UNICODE
+#define SPDLOG_WCHAR_FILENAMES
 
 #include <string>
 #include <cmath>
@@ -15,8 +16,11 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#include "version.hpp"
+#include "guid.hpp"
 #include "httplib.h"
 #include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 #include "utils.hpp"
 

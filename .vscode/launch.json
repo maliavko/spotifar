@@ -13,7 +13,13 @@
             "type":"cppvsdbg",
             "request": "launch",
             "cwd": "${fileDirname}",
-            "console": "externalTerminal"
+            "console": "externalTerminal",
+            "logging": {
+                "exceptions": true,
+                "moduleLoad": false,
+                "engineLogging": false,
+                "programOutput": true,
+            }
         }
     ]
 }

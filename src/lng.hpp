@@ -1,25 +1,50 @@
-﻿enum
+﻿#ifndef LNG_HPP_A5DED539_88BF_4605_9A46_F2D47A6D9F7C
+#define LNG_HPP_A5DED539_88BF_4605_9A46_F2D47A6D9F7C
+#pragma once
+
+namespace spotifar
 {
-	MOk,
-	MCancel,
-	MError,
-	MYes,
+	enum
+	{
+		MPluginUserName,
 
-	MConfigMenuLabel,
-	MConfigTitle,
-	MConfigAddToDisksMenu,
-	MConfigSpotifySettings,
-	MConfigSpotifyClientID,
-	MConfigSpotifyClientSecret,
-	MConfigLocalhostServicePort,
+		MOk,
+		MCancel,
+		MError,
+		MYes,
 
-	MDiskMenuLabel,
-	MPluginMenuLabel,
+		MConfigAddToDisksMenu,
+		MConfigSpotifySettings,
+		MConfigSpotifyClientID,
+		MConfigSpotifyClientSecret,
+		MConfigLocalhostServicePort,
 
-	MPanelTitle,
-	MPanelRootItemLabel,
-	MPanelArtistsItemLabel,
-	MPanelArtistsItemDescr,
-	MPanelPlaylistsItemLabel,
-	MPanelPlaylistsItemDescr,
-};
+		MPanelRootItemLabel,
+		MPanelArtistsItemLabel,
+		MPanelArtistsItemDescr,
+		MPanelAlbumItemLabel,
+		MPanelAlbumItemDescr,
+		MPanelArtistItemLabel,
+		MPanelArtistItemDescr,
+		MPanelPlaylistsItemLabel,
+		MPanelPlaylistsItemDescr,
+
+		MPlayerPlayBtn,
+		MPlayerPrevBtn,
+		MPlayerNextBtn,
+		MPlayerLikeBtn,
+		MPlayerRepeatNoneBtn,
+		MPlayerRepeatOneBtn,
+		MPlayerRepeatAllBtn,
+		MPlayerShuffleBtn,
+
+		MKeyBarF4,
+
+		MFarMessageErrorTitle,
+		MFarMessageErrorLogInit,
+		MFarMessageErrorPlaybackSync,
+		MFarMessageWarning,
+	};
+}
+
+#endif // LNG_HPP_A5DED539_88BF_4605_9A46_F2D47A6D9F7C
