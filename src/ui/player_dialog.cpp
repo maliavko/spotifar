@@ -109,10 +109,11 @@ namespace spotifar
                 case ID_REPEAT_BTN:
                 {
                     int color = utils::CLR_DGRAY;
+                    // TODO: memory leak
                     FarDialogItemData data = { sizeof(FarDialogItemData), 0, new wchar_t[32] };
                     auto i = config::PsInfo.SendDlgMessage(hdlg, DM_GETTEXT, ID_REPEAT_BTN, &data);
                     
-                    if (lstrcmp(data.PtrData, L"Repeat"))
+                    if (lstrcmp(data.PtrData, L"Off"))
                     {
                         color = utils::CLR_BLACK;
                     }
@@ -147,6 +148,14 @@ namespace spotifar
                     res = TRUE; // dialog can be closed
                     break;
                 case DN_BTNCLICK:
+                    if (param1 == PlayerDialog::ID_NEXT_BTN)
+                    {
+                        res = dialog->on_skip_to_next_btn_click();
+                    }
+                    else if (param1 == PlayerDialog::ID_PREV_BTN)
+                    {
+                        res = dialog->on_skip_to_previous_btn_click();
+                    }
                     break;
                 case DN_CTLCOLORDLGITEM:
                     res = dialog->Dlg_OnCtlColorDlgItem(hdlg, param1, param2);
@@ -165,8 +174,9 @@ namespace spotifar
                                     case VK_UP:
                                     case VK_DOWN:
                                     {
-                                        //std::wstring volume_label = std::format(L"[{:3}%]", dialog->volume);
-                                        //config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
+                                        int volume_to_request = dialog->volume_percent += key == VK_UP ? +5 : -5;
+                                        volume_to_request = max(min(volume_to_request, 100), 0);
+                                        dialog->api.set_playback_volume(volume_to_request);
                                         break;
                                     }
                                 }
@@ -177,7 +187,7 @@ namespace spotifar
                             if (param1 == PlayerDialog::ID_REPEAT_BTN)
                             {
                                 // TODO: consider some logic with cycled iterator
-                                if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Repeat"))
+                                if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Off"))
                                 {
                                     config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
                                         (void*)get_msg(MPlayerRepeatOneBtn));
@@ -279,15 +289,30 @@ namespace spotifar
             config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_NAME, (void*)track_user_name.c_str());
         }
         
-        void PlayerDialog::update_controls_block()
-        {                
-                // ID_PLAY_BTN,
-                // ID_PREV_BTN,
-                // ID_NEXT_BTN,
-                // ID_LIKE_BTN,
-                // ID_VOLUME_LABEL,
-                // ID_REPEAT_BTN,
-                // ID_SHUFFLE_BTN,
+        void PlayerDialog::update_controls_block(const spotify::PlaybackState& state)
+        {        
+	        utils::NoRedraw(this->hdlg);
+
+            static std::wstring volume_label, repeat_label, shuffle_label;
+
+            // TODO: do not forget about permissions and disable buttons accordingly
+            // ID_PLAY_BTN,
+            // ID_PREV_BTN,
+            // ID_NEXT_BTN,
+            // ID_LIKE_BTN,
+
+            // update repeat button
+            shuffle_label = utils::to_wstring(state.shuffle_state ? "Shuffle" : "No shuffle");
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_SHUFFLE_BTN, (void*)shuffle_label.c_str());
+
+            // update repeat button
+            repeat_label = utils::to_wstring(state.repeat_state);
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN, (void*)repeat_label.c_str());
+
+            // update volume
+            volume_percent = state.device.volume_percent;
+            volume_label = std::format(L"[{:3}%]", volume_percent);
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
         }
         
         // if @track_total_time is 0, the trackback will be filled empty
@@ -313,19 +338,33 @@ namespace spotifar
             config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_TIME, (void*)track_time_str.c_str());
             config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_TOTAL_TIME, (void*)track_total_time_str.c_str());
         }
+
+        bool PlayerDialog::on_skip_to_next_btn_click()
+        {
+            api.skip_to_next();
+            return true;
+        }
+
+        bool PlayerDialog::on_skip_to_previous_btn_click()
+        {
+            api.skip_to_previous();
+            return true;
+        }
         
         void PlayerDialog::on_playback_updated(const spotify::PlaybackState& state)
         {
             if (!state.is_empty())
             {
                 update_track_info(state.track->artists[0].name, state.track->name);
-                update_track_bar(state.track->duration_ms / 1000, state.progress);
+                update_track_bar(state.track->duration_ms / 1000, state.progress_ms / 1000);
             }
             else
             {
                 update_track_info();
                 update_track_bar();
             }
+
+            update_controls_block(state);
         }
         
         void PlayerDialog::on_playback_sync_failed(const std::string& err_msg)

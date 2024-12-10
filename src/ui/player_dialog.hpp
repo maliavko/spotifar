@@ -11,6 +11,7 @@ namespace spotifar
         using spotify::DevicesList;
         using spotify::Track;
         
+        // TODO: add links to art with redirectino to browser
         class PlayerDialog: public spotify::ApiProtocol
         {
         public:
@@ -58,10 +59,12 @@ namespace spotifar
             bool check_text_label(int dialog_item_id, const std::wstring& text_to_check) const;
 
             void update_track_bar(int track_total_time = 0, int track_played_time = 0);
-            void update_controls_block();
+            void update_controls_block(const spotify::PlaybackState& state);
             void update_track_info(const std::string& artist_name = "", const std::string& track_name = "");
             void update_devices_list(const DevicesList& devices);
 
+            bool on_skip_to_next_btn_click();
+            bool on_skip_to_previous_btn_click();
             virtual void on_playback_updated(const spotify::PlaybackState& state);
             virtual void on_playback_sync_failed(const std::string& err_msg);
             virtual void on_devices_changed(const DevicesList& devices);
@@ -71,6 +74,7 @@ namespace spotifar
             bool visible = false;
             std::vector<FarDialogItem> dlg_items_layout;
             spotify::Api& api;
+            int volume_percent = 100;
         };
     }
 }

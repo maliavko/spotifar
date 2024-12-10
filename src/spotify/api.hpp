@@ -22,6 +22,7 @@ namespace spotifar
             virtual void on_devices_changed(const DevicesList& devices) {};
         };
 
+        // TODO: to implement a cache of requesting data
         class Api
         {
         public:
@@ -45,7 +46,12 @@ namespace spotifar
             std::map<string, SimplifiedTrack> get_tracks(const std::string& album_id);
             PlaybackState get_playback_state();
             DevicesList get_available_devices();
+
             void start_playback(const std::string& album_id, const std::string& track_id);
+            void skip_to_next();
+            void skip_to_previous();
+            void toggle_shuffle(bool is_on);
+            void set_playback_volume(int volume_percent);
 
         protected:
 		    string get_auth_callback_url() const;

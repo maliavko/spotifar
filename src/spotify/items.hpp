@@ -104,10 +104,14 @@ namespace spotifar
 		// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
 		struct PlaybackState
 		{
+			inline static const std::string REPEAT_OFF = "off";
+			inline static const std::string REPEAT_TRACK = "track";
+			inline static const std::string REPEAT_CONTEXT = "context";
+
 			Device device;
 			string repeat_state;  // off, track, context
 			bool shuffle_state;
-			int progress;  // in seconds
+			int progress_ms;
 			bool is_playing;
 			Permissions permissions;
 			std::shared_ptr<Track> track = nullptr;

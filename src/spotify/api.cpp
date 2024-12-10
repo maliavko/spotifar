@@ -78,6 +78,32 @@ namespace spotifar
             auto r = api.Put(httplib::append_query_params("/v1/me/player/play", params), o.dump(), "application/json");
         }
         
+        void Api::skip_to_next()
+        {
+            // TODO: unfinished
+            auto r = api.Post("/v1/me/player/next");
+        }
+
+        void Api::skip_to_previous()
+        {
+            // TODO: unfinished
+            auto r = api.Post("/v1/me/player/previous");
+        }
+
+        void Api::toggle_shuffle(bool is_on)
+        {
+            auto r = api.Put(httplib::append_query_params("/v1/me/player/shuffle",
+                httplib::Params{{ "state", is_on ? "true" : "false" }}));
+        }
+
+        void Api::set_playback_volume(int volume_percent)
+        {
+            auto s = httplib::append_query_params("/v1/me/player/volume",
+                httplib::Params{{ "volume_percent", std::to_string(volume_percent) }});
+            auto r = api.Put(httplib::append_query_params("/v1/me/player/volume",
+                httplib::Params{{ "volume_percent", std::to_string(volume_percent) }}));
+        }
+        
         AlbumsCollection Api::get_albums(const std::string& artist_id)
         {
             AlbumsCollection albums;
@@ -302,7 +328,6 @@ namespace spotifar
                 return;
 
             is_listening = true;
-            // TODO: sync threads?
             std::packaged_task<void()> task([this, observer]
             {
                 static DevicesList devices;
@@ -322,6 +347,9 @@ namespace spotifar
                             devices = new_devices;
                         }
                 
+                        // TODO: make a diff and invoke the updates in particular,
+                        // note: after executing some command like play or set volume the diff can 
+                        // go to UI right away, to avoid desync artefacts
                         auto state = get_playback_state();
                         ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
 

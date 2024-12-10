@@ -15,9 +15,9 @@ namespace spotifar
 			j.at("is_active").get_to(d.is_active);
 			j.at("name").get_to(d.name);
 			j.at("type").get_to(d.type);
-			j.at("volume_percent").get_to(d.volume_percent);
 			j.at("supports_volume").get_to(d.supports_volume);
 
+			d.volume_percent = j.value("volume_percent", 100);
 			d.user_name = utils::to_wstring(d.name);
 		}
 		
@@ -26,7 +26,7 @@ namespace spotifar
 			j.at("device").get_to(p.device);
 			j.at("repeat_state").get_to(p.repeat_state);
 			j.at("shuffle_state").get_to(p.shuffle_state);
-			p.progress = j.value("progress_ms", 0)/1000; // convert to seconds
+			p.progress_ms = j.value("progress_ms", 0);
 			j.at("is_playing").get_to(p.is_playing);
 			j.at("actions").get_to(p.permissions);
 
