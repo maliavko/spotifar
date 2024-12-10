@@ -82,6 +82,8 @@ namespace spotifar
 			inline static const string SHOW = "show";
 
 			string type;
+			
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Context, type);
 		};
 
 		struct Device
@@ -93,38 +95,26 @@ namespace spotifar
 			int volume_percent;
 			bool supports_volume;
 			wstring user_name;
+			std::shared_ptr<Context> context;
 
 			friend bool operator==(const Device& lhs, const Device& rhs);
-			friend void from_json(const json& j, Device& d)
-			{
-				j.at("id").get_to(d.id);
-				j.at("is_active").get_to(d.is_active);
-				j.at("name").get_to(d.name);
-				j.at("type").get_to(d.type);
-				j.at("volume_percent").get_to(d.volume_percent);
-				j.at("supports_volume").get_to(d.supports_volume);
-
-				d.user_name = utils::to_wstring(d.name);
-			}
+			friend void from_json(const json& j, Device& d);
 		};
 
 		// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
 		struct PlaybackState
 		{
-			string repeat_state;
+			Device device;
+			string repeat_state;  // off, track, context
 			bool shuffle_state;
 			size_t progress_ms;
 			bool is_playing;
 			Permissions actions;
-			std::shared_ptr<Track> track;
-			std::shared_ptr<Context> context;
+			std::shared_ptr<Track> track = nullptr;
+			std::shared_ptr<Context> context = nullptr;
 
-			bool is_empty() const { return track == nullptr; }
-
-			friend void from_json(const json& j, PlaybackState& p)
-			{
-				//TODO: read the date normally
-			}
+			inline bool is_empty() const { return track == nullptr; }
+			friend void from_json(const json& j, PlaybackState& p);
 		};
 
 		typedef map<string, Album> AlbumsCollection;

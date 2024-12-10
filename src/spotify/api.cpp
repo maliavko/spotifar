@@ -176,7 +176,7 @@ namespace spotifar
         
         PlaybackState Api::get_playback_state()
         {
-            PlaybackState state;
+            PlaybackState state;  // empty playback by default
 
             auto r = api.Get("/v1/me/player");
             if (r->status == httplib::OK_200)    
