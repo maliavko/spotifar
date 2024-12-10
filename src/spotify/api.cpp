@@ -306,6 +306,7 @@ namespace spotifar
             std::packaged_task<void()> task([this, observer]
             {
                 static DevicesList devices;
+                auto marker = std::chrono::high_resolution_clock::now();
 
                 try
                 {
@@ -324,7 +325,14 @@ namespace spotifar
                         auto state = get_playback_state();
                         ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
 
-                        std::this_thread::sleep_for(SYNC_INTERVAL);
+                        // for the player to show track time ticking well, each frame starts as precise
+                        // as possible to the 'marker' frame with 1s increment; in case for some reason 
+                        // frame took more time to request and process data, we skip several of them
+                        auto now = std::chrono::high_resolution_clock::now();
+                        while (marker < now)
+                            marker += SYNC_INTERVAL;
+
+                        std::this_thread::sleep_until(marker);
                     }
                 }
                 catch (const std::exception& ex)

@@ -27,7 +27,7 @@ namespace spotifar
         public:
             const static string SPOTIFY_AUTH_URL;
             const static string SPOTIFY_API_URL;
-            std::chrono::duration<float> SYNC_INTERVAL = std::chrono::seconds(1);
+            std::chrono::milliseconds SYNC_INTERVAL = std::chrono::milliseconds(1000);
 
         public:
             Api(const string& client_id, const string& client_secret, int port,
