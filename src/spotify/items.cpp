@@ -26,15 +26,35 @@ namespace spotifar
 			j.at("device").get_to(p.device);
 			j.at("repeat_state").get_to(p.repeat_state);
 			j.at("shuffle_state").get_to(p.shuffle_state);
-			j.at("progress_ms").get_to(p.progress_ms);
+			p.progress = j.value("progress_ms", 0)/1000; // convert to seconds
 			j.at("is_playing").get_to(p.is_playing);
-			j.at("actions").get_to(p.actions);
+			j.at("actions").get_to(p.permissions);
 
-			if (j.contains("context") && !j["context"].is_null())
+			if (!j.value("context", nullptr))
+			{
+				p.context = std::make_shared<Context>();
 				j.at("context").get_to(*p.context);
+			}
 
-			if (j.contains("track") && !j["track"].is_null())
-				j.at("track").get_to(*p.track);
+			if (!j.value("item", nullptr))
+			{
+				p.track = std::make_shared<Track>();
+				j.at("item").get_to(*p.track);
+			}
+		}
+		
+		void from_json(const json& j, Permissions& p)
+		{
+			p.interrupting_playback = j.value("interrupting_playback", false);
+			p.pausing = j.value("pausing", false);
+			p.resuming = j.value("resuming", false);
+			p.seeking = j.value("seeking", false);
+			p.skipping_next = j.value("skipping_next", false);
+			p.skipping_prev = j.value("skipping_prev", false);
+			p.toggling_repeat_context = j.value("toggling_repeat_context", false);
+			p.toggling_repeat_track = j.value("toggling_repeat_track", false);
+			p.toggling_shuffle = j.value("toggling_shuffle", false);
+			p.trasferring_playback = j.value("trasferring_playback", false);
 		}
 	}
 }

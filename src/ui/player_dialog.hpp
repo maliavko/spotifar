@@ -9,6 +9,7 @@ namespace spotifar
     namespace ui
     {
         using spotify::DevicesList;
+        using spotify::Track;
         
         class PlayerDialog: public spotify::ApiProtocol
         {
@@ -58,7 +59,7 @@ namespace spotifar
 
             void update_track_bar(int track_total_time = 0, int track_played_time = 0);
             void update_controls_block();
-            void update_track_info();
+            void update_track_info(const std::string& artist_name = "", const std::string& track_name = "");
             void update_devices_list(const DevicesList& devices);
 
             virtual void on_playback_updated(const spotify::PlaybackState& state);

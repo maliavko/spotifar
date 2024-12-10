@@ -47,6 +47,15 @@ namespace spotifar
 
 		void fini_logging();
 
+		class NoRedraw
+		{
+		public:
+			NoRedraw(HANDLE hdlg);
+			~NoRedraw();
+		private:
+			HANDLE hdlg;
+		};
+
 		intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message = L"");
 		intptr_t show_far_error_dlg(int error_msg_id, const std::string& extra_message = "");
 	}

@@ -244,6 +244,8 @@ namespace spotifar
         
         void PlayerDialog::update_devices_list(const DevicesList& devices)
         {
+	        utils::NoRedraw(this->hdlg);
+            
             // TODO: not finished, check when there are not devices
             static std::vector<FarListItem> items;
             for (int i = 0; i < devices.size(); i++)
@@ -264,10 +266,17 @@ namespace spotifar
             config::PsInfo.SendDlgMessage(hdlg, DM_LISTSET, ID_DEVICES_COMBO, &list);
         }
         
-        void PlayerDialog::update_track_info()
+        void PlayerDialog::update_track_info(const std::string& artist_name, const std::string& track_name)
         {
-                // ID_ARTIST_NAME,
-                // ID_TRACK_NAME,
+	        utils::NoRedraw(this->hdlg);
+
+            static std::wstring artist_user_name, track_user_name;
+
+            artist_user_name = utils::to_wstring(artist_name);
+            track_user_name = utils::to_wstring(track_name);
+            
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_ARTIST_NAME, (void*)artist_user_name.c_str());
+            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_NAME, (void*)track_user_name.c_str());
         }
         
         void PlayerDialog::update_controls_block()
@@ -284,9 +293,14 @@ namespace spotifar
         // if @track_total_time is 0, the trackback will be filled empty
         void PlayerDialog::update_track_bar(int track_total_time, int track_played_time)
         {
-            static std::wstring track_bar(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
-            static std::wstring track_time_str(std::format(L"{:%M:%S}", std::chrono::seconds(track_played_time)));
-            static std::wstring track_total_time_str(std::format(L"{:%M:%S}", std::chrono::seconds(track_total_time)));
+	        utils::NoRedraw(this->hdlg);
+
+            // TODO: time ticking is stuttering, it is needed to try to implement it on the client side
+            static std::wstring track_bar, track_time_str, track_total_time_str;
+
+            track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
+            track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track_played_time));
+            track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track_total_time));
 
             if (track_total_time)
             {
@@ -302,14 +316,16 @@ namespace spotifar
         
         void PlayerDialog::on_playback_updated(const spotify::PlaybackState& state)
         {
-	        config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, FALSE, 0);
-
-            if (state.is_empty())
+            if (!state.is_empty())
             {
+                update_track_info(state.track->artists[0].name, state.track->name);
+                update_track_bar(state.track->duration_ms / 1000, state.progress);
+            }
+            else
+            {
+                update_track_info();
                 update_track_bar();
             }
-            
-	        config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
         }
         
         void PlayerDialog::on_playback_sync_failed(const std::string& err_msg)

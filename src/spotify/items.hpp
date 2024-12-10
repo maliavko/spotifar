@@ -44,6 +44,7 @@ namespace spotifar
 			string id;
 			string name;
 			size_t track_number;  // TODO: track number could be duplicated for different discs
+
 			
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(SimplifiedTrack, id, name, track_number);
 		};
@@ -52,8 +53,9 @@ namespace spotifar
 		{
 			Album album;
 			std::vector<SimplifiedArtist> artists;
+			int duration_ms;
 
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Track, id, name, track_number, album, artists);
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Track, id, name, track_number, album, artists, duration_ms);
 		};
 
 		struct Permissions
@@ -68,10 +70,8 @@ namespace spotifar
 			bool toggling_repeat_track;
 			bool toggling_shuffle;
 			bool trasferring_playback;
-			
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Permissions, interrupting_playback, pausing, resuming, seeking,
-				skipping_next, skipping_prev, toggling_repeat_context, toggling_repeat_track,
-				toggling_shuffle, trasferring_playback);
+
+			friend void from_json(const json& j, Permissions& p);
 		};
 
 		struct Context
@@ -107,9 +107,9 @@ namespace spotifar
 			Device device;
 			string repeat_state;  // off, track, context
 			bool shuffle_state;
-			size_t progress_ms;
+			int progress;  // in seconds
 			bool is_playing;
-			Permissions actions;
+			Permissions permissions;
 			std::shared_ptr<Track> track = nullptr;
 			std::shared_ptr<Context> context = nullptr;
 

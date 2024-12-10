@@ -99,6 +99,19 @@ namespace spotifar
 			spdlog::shutdown();
 		}
 
+		NoRedraw::NoRedraw(HANDLE hdlg):
+			hdlg(hdlg)
+		{
+			assert(hdlg);
+			config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, FALSE, 0);
+		}
+
+		NoRedraw::~NoRedraw()
+		{
+			config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
+		}
+
+
 		intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message)
 		{
 			auto err_msg = config::get_msg(error_msg_id);
