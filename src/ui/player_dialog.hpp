@@ -48,7 +48,7 @@ namespace spotifar
             virtual ~PlayerDialog();
 
             bool show();
-            bool hide();
+            bool hide(bool is_silent = false);
 
             bool is_visible() const { return visible; }
 
@@ -57,6 +57,8 @@ namespace spotifar
 	        friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
 
             bool check_text_label(int dialog_item_id, const std::wstring& text_to_check) const;
+            intptr_t set_control_text(int control_id, const std::wstring& text);
+            intptr_t set_control_enabled(int control_id, bool is_enabled);
 
             void update_track_bar(int track_total_time = 0, int track_played_time = 0);
             void update_controls_block(const spotify::PlaybackState& state);

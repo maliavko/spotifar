@@ -60,16 +60,16 @@ namespace spotifar
 
 		struct Permissions
 		{
-			bool interrupting_playback;
-			bool pausing;
-			bool resuming;
-			bool seeking;
-			bool skipping_next;
-			bool skipping_prev;
-			bool toggling_repeat_context;
-			bool toggling_repeat_track;
-			bool toggling_shuffle;
-			bool trasferring_playback;
+			bool interrupting_playback = false;
+			bool pausing = false;
+			bool resuming = false;
+			bool seeking = false;
+			bool skipping_next = false;
+			bool skipping_prev = false;
+			bool toggling_repeat_context = false;
+			bool toggling_repeat_track = false;
+			bool toggling_shuffle = false;
+			bool trasferring_playback = false;
 
 			friend void from_json(const json& j, Permissions& p);
 		};
@@ -89,11 +89,11 @@ namespace spotifar
 		struct Device
 		{
 			string id;
-			bool is_active;
+			bool is_active = false;
 			string name;
 			string type;
-			int volume_percent;
-			bool supports_volume;
+			int volume_percent = 100;
+			bool supports_volume = false;
 			wstring user_name;
 			std::shared_ptr<Context> context;
 
@@ -104,15 +104,15 @@ namespace spotifar
 		// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
 		struct PlaybackState
 		{
-			inline static const std::string REPEAT_OFF = "off";
-			inline static const std::string REPEAT_TRACK = "track";
-			inline static const std::string REPEAT_CONTEXT = "context";
+			inline static const string REPEAT_OFF = "off";
+			inline static const string REPEAT_TRACK = "track";
+			inline static const string REPEAT_CONTEXT = "context";
 
 			Device device;
-			string repeat_state;  // off, track, context
-			bool shuffle_state;
-			int progress_ms;
-			bool is_playing;
+			string repeat_state = REPEAT_OFF;  // off, track, context
+			bool shuffle_state = false;
+			int progress_ms = 0;
+			bool is_playing = false;
 			Permissions permissions;
 			std::shared_ptr<Track> track = nullptr;
 			std::shared_ptr<Context> context = nullptr;

@@ -36,7 +36,7 @@ namespace spotifar
                 { DI_BUTTON,        view_x, view_height, 1, 1,                  0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerLikeBtn) },
                 { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     DIF_CENTERTEXT | DIF_NOFOCUS | DIF_BTNNOCLOSE, L"[---%]" },
                 { DI_BUTTON,        view_center_x + 9, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerRepeatNoneBtn) },
-                { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerShuffleBtn) },
+                { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE | DIF_RIGHTTEXT, get_msg(MPlayerShuffleBtn) },
                 
                 // devices box
                 { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
@@ -143,7 +143,7 @@ namespace spotifar
                     res = FALSE; // no changes made
                     break;
                 case DN_CLOSE:
-                    dialog->hide();
+                    dialog->hide(true);
                     dialog = NULL;
                     res = TRUE; // dialog can be closed
                     break;
@@ -235,7 +235,7 @@ namespace spotifar
             return false;
         }
 
-        bool PlayerDialog::hide()
+        bool PlayerDialog::hide(bool is_silent)
         {
             if (!visible)
                 return true;
@@ -243,13 +243,13 @@ namespace spotifar
             visible = false;
             api.stop_listening(this);
 
-            if (hdlg != NULL)
+            if (hdlg != NULL && !is_silent)
             {
                 config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
                 hdlg = NULL;
             }
 
-            return TRUE;
+            return true;
         }
         
         void PlayerDialog::update_devices_list(const DevicesList& devices)
@@ -285,8 +285,8 @@ namespace spotifar
             artist_user_name = utils::to_wstring(artist_name);
             track_user_name = utils::to_wstring(track_name);
             
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_ARTIST_NAME, (void*)artist_user_name.c_str());
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_NAME, (void*)track_user_name.c_str());
+            set_control_text(ID_ARTIST_NAME, artist_user_name);
+            set_control_text(ID_TRACK_NAME, track_user_name);
         }
         
         void PlayerDialog::update_controls_block(const spotify::PlaybackState& state)
@@ -297,13 +297,17 @@ namespace spotifar
 
             // TODO: do not forget about permissions and disable buttons accordingly
             // ID_PLAY_BTN,
-            // ID_PREV_BTN,
-            // ID_NEXT_BTN,
             // ID_LIKE_BTN,
 
-            // update repeat button
+            // play, next, prev
+            set_control_enabled(ID_PLAY_BTN, state.permissions.resuming);
+            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_NEXT_BTN, (void*)state.permissions.skipping_next);
+            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_PLAY_BTN, (void*)state.permissions.skipping_prev);
+
+            // update shuffle button
             shuffle_label = utils::to_wstring(state.shuffle_state ? "Shuffle" : "No shuffle");
             config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_SHUFFLE_BTN, (void*)shuffle_label.c_str());
+            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_PLAY_BTN, (void*)state.permissions.toggling_shuffle);
 
             // update repeat button
             repeat_label = utils::to_wstring(state.repeat_state);
@@ -313,6 +317,7 @@ namespace spotifar
             volume_percent = state.device.volume_percent;
             volume_label = std::format(L"[{:3}%]", volume_percent);
             config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
+            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_VOLUME_LABEL, (void*)state.device.supports_volume);
         }
         
         // if @track_total_time is 0, the trackback will be filled empty
@@ -384,6 +389,16 @@ namespace spotifar
             FarDialogItemData data = { sizeof(FarDialogItemData), 0, ptrdata };
                 config::PsInfo.SendDlgMessage(hdlg, DM_GETTEXT, dialog_item_id, &data);
             return text_to_check == data.PtrData;
+        }
+        
+        intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)
+        {
+            return config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
+        }
+        
+        intptr_t PlayerDialog::set_control_enabled(int control_id, bool is_enabled)
+        {
+            return config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, control_id, (void*)is_enabled);
         }
     }
 }
