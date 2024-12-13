@@ -13,6 +13,7 @@ namespace spotifar
     public:
         Plugin();
         virtual ~Plugin();
+        void shutdown();
 
         void update_panel_info(OpenPanelInfo* info);
         intptr_t update_panel_items(GetFindDataInfo* info);
@@ -21,9 +22,9 @@ namespace spotifar
         intptr_t show_player();
         intptr_t hide_player();
     private:
+        spotify::Api api;
         std::unique_ptr<ui::Panel> panel;
         std::unique_ptr<ui::PlayerDialog> player;
-        spotify::Api api;
     };
 }
 

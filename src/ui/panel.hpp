@@ -13,6 +13,7 @@ namespace spotifar
         public:
             Panel(spotify::Api& api);
             virtual ~Panel();
+            // TODO: consider having here shutdown/close method to cleanup resources
             
             void gotoRootMenu();
 

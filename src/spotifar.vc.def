@@ -12,3 +12,4 @@ EXPORTS
   ClosePanelW
   ProcessPanelInputW
   ProcessPanelEventW
+  ExitFARW

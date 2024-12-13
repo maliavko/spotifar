@@ -16,7 +16,7 @@ namespace spotifar
 
         Panel::~Panel()
         {
-            
+            view = nullptr;
         }
  
         void Panel::gotoRootMenu()

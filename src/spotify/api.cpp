@@ -62,6 +62,12 @@ namespace spotifar
             return update_access_token_with_auth_code(request_auth_code());
         }
         
+        void Api::shutdown()
+        {
+            while (observers.size())
+                stop_listening(*observers.begin());
+        }
+        
         void Api::start_playback(const std::string& album_id, const std::string& track_id)
         {
             httplib::Params params = {
@@ -332,11 +338,11 @@ namespace spotifar
             {
                 static DevicesList devices;
                 auto marker = std::chrono::high_resolution_clock::now();
+                
+                is_in_sync_with_api = true;
 
                 try
                 {
-                    // TODO: thread can process data while application is closing, some data could be
-                    // already invalid. Repro steps: close far in the middle of syncs
                     while (is_listening)
                     {
                         // updating available devices list
@@ -362,6 +368,8 @@ namespace spotifar
 
                         std::this_thread::sleep_until(marker);
                     }
+                    is_in_sync_with_api = false;
+                    cv.notify_all();
                 }
                 catch (const std::exception& ex)
                 {
@@ -383,7 +391,14 @@ namespace spotifar
             ObserverManager::unsubscribe<ApiProtocol>(observer);
 
             if (is_listening && !observers.size())
+            {
                 is_listening = false;
+
+                // manual object lifetime management, due to detached thread,
+                // lets hold object untill the last sync is completed
+                std::unique_lock<std::mutex> lk(m);
+                cv.wait(lk, [this]{ return !is_in_sync_with_api; });
+            }
         }
         
         std::string Api::get_auth_callback_url() const

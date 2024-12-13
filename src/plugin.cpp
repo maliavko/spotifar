@@ -20,7 +20,17 @@ namespace spotifar
 	Plugin::~Plugin()
 	{
 		config::set_option(cfg.SpotifyRefreshToken, api.get_refresh_token());
+
+        panel = nullptr;
+        player = nullptr;
 	}
+
+    void Plugin::shutdown()
+    {
+        // let far close ui itself, to avoid memory violation
+        player->hide(false);
+        api.shutdown();
+    }
     
     void Plugin::update_panel_info(OpenPanelInfo* info)
     {

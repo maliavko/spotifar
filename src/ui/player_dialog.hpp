@@ -48,7 +48,7 @@ namespace spotifar
             virtual ~PlayerDialog();
 
             bool show();
-            bool hide(bool is_silent = false);
+            bool hide(bool close_ui = true);
 
             bool is_visible() const { return visible; }
 

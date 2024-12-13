@@ -143,10 +143,14 @@ namespace spotifar
                     res = FALSE; // no changes made
                     break;
                 case DN_CLOSE:
-                    dialog->hide(true);
+                {
+                    // the event comes from far and ui will be closed automatically,
+                    // avoiding recursion
+                    dialog->hide(false);
                     dialog = NULL;
                     res = TRUE; // dialog can be closed
                     break;
+                }
                 case DN_BTNCLICK:
                     if (param1 == PlayerDialog::ID_NEXT_BTN)
                     {
@@ -218,38 +222,37 @@ namespace spotifar
 
         bool PlayerDialog::show()
         {
-            if (visible)
-                return true;
-            
-            hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, 0,
-                &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
-            
-            api.start_listening(this);
-
-            if (hdlg != NULL)
+            if (!visible)
             {
-                visible = true;
-                return true;
-            }
+                hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, 0,
+                    &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
+                
+                api.start_listening(this);
 
+                if (hdlg != NULL)
+                {
+                    visible = true;
+                    return true;
+                }
+            }
             return false;
         }
 
-        bool PlayerDialog::hide(bool is_silent)
+        bool PlayerDialog::hide(bool close_ui)
         {
-            if (!visible)
-                return true;
-
-            visible = false;
-            api.stop_listening(this);
-
-            if (hdlg != NULL && !is_silent)
+            if (visible)
             {
-                config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
-                hdlg = NULL;
-            }
+                api.stop_listening(this);
 
-            return true;
+                if (hdlg != NULL && close_ui)
+                {
+                    config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
+                    hdlg = NULL;
+                }
+                visible = false;
+                return true;
+            }
+            return false;
         }
         
         void PlayerDialog::update_devices_list(const DevicesList& devices)

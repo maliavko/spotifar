@@ -134,8 +134,7 @@ namespace spotifar
 		
 		if (info->Event == FE_CLOSE)
 		{
-			// panel is closing, a right time to save settings and so on
-			// the rest: https://api.farmanager.com/ru/structures/processpaneleventinfo.html
+			static_cast<Plugin*>(info->hPanel)->shutdown();
 		}
 
 		return FALSE;
@@ -148,10 +147,14 @@ namespace spotifar
 
 	void WINAPI ClosePanelW(const ClosePanelInfo* info)
 	{
-		// after auto-variable is destroyed, the last ref to plugin is as well
+		// after auto-variable is destroyed, so is the last ref to plugin
 		std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
 
 		config::Opt.write();
 		utils::fini_logging();
+	}
+
+	void WINAPI ExitFARW(const struct ExitInfo *Info)
+	{
 	}
 }

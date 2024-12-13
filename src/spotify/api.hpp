@@ -36,6 +36,7 @@ namespace spotifar
             virtual ~Api();
 
             bool authenticate();
+            void shutdown();
             inline string get_refresh_token() const { return refresh_token; }
 
             void start_listening(ApiProtocol* observer);
@@ -72,7 +73,11 @@ namespace spotifar
             std::time_t access_token_expires_at;
             string refresh_token;
             bool is_listening;
-            std::vector<const ApiProtocol*> observers;
+            std::vector<ApiProtocol*> observers;
+
+            std::mutex m;
+            std::condition_variable cv;
+            bool is_in_sync_with_api = false;
         };
     }
 }
