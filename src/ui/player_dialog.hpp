@@ -11,7 +11,7 @@ namespace spotifar
         using spotify::DevicesList;
         using spotify::Track;
         
-        // TODO: add links to art with redirectino to browser
+        // TODO: add links to art with redirection to browser
         class PlayerDialog: public spotify::ApiProtocol
         {
         public:

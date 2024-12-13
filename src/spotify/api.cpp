@@ -33,7 +33,8 @@ namespace spotifar
             client_secret(client_secret),
             refresh_token(refresh_token),
             access_token_expires_at(0),
-            is_listening(false)
+            is_listening(false),
+            devices(std::make_unique<DevicesList>())
         {
             // TODO: add timer to refresh token
             // https://stackoverflow.com/questions/32233019/wake-up-a-stdthread-from-usleep
@@ -42,6 +43,7 @@ namespace spotifar
 
         Api::~Api()
         {
+            devices = nullptr;
         }
 
         bool Api::authenticate()
@@ -219,16 +221,6 @@ namespace spotifar
             return state;
         }
 
-        DevicesList Api::get_available_devices()
-        {
-            DevicesList devices;
-
-            if (auto r = api.Get("/v1/me/player/devices"))
-                json::parse(r->body).at("devices").get_to(devices);
-
-            return devices;
-        }
-
         string Api::request_auth_code()
         {
             // launching a http-server to receive an API auth reponse
@@ -266,6 +258,12 @@ namespace spotifar
             ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
 
             return a.get();
+        }
+
+        void Api::request_available_devices(DevicesList& devices_in)
+        {
+            if (auto r = api.Get("/v1/me/player/devices"))
+                json::parse(r->body).at("devices").get_to(devices_in);
         }
 
         bool Api::update_access_token_with_auth_code(const string& auth_code)
@@ -336,28 +334,14 @@ namespace spotifar
             is_listening = true;
             std::packaged_task<void()> task([this, observer]
             {
-                static DevicesList devices;
-                auto marker = std::chrono::high_resolution_clock::now();
-                
+                auto marker = std::chrono::high_resolution_clock::now();   
                 is_in_sync_with_api = true;
 
                 try
                 {
                     while (is_listening)
                     {
-                        // updating available devices list
-                        auto new_devices = get_available_devices();
-                        if (devices != new_devices)
-                        {
-                            ObserverManager::notify(&ApiProtocol::on_devices_changed, new_devices);
-                            devices = new_devices;
-                        }
-                
-                        // TODO: make a diff and invoke the updates in particular,
-                        // note: after executing some command like play or set volume the diff can 
-                        // go to UI right away, to avoid desync artefacts
-                        auto state = get_playback_state();
-                        ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
+                        resync_caches();
 
                         // for the player to show track time ticking well, each frame starts as precise
                         // as possible to the 'marker' frame with 1s increment; in case for some reason 
@@ -399,6 +383,28 @@ namespace spotifar
                 std::unique_lock<std::mutex> lk(m);
                 cv.wait(lk, [this]{ return !is_in_sync_with_api; });
             }
+        }
+
+        void Api::resync_caches()
+        {
+            // updating available devices list
+            DevicesList new_devices;
+            request_available_devices(new_devices);
+            bool has_devices_changed = !std::equal(new_devices.begin(), new_devices.end(),
+                                                   devices->begin(), devices->end(),
+                                                   [](const auto& a, const auto& b) { return a.id == b.id && a.is_active == b.is_active; });
+            
+            if (has_devices_changed)
+            {
+                devices->assign(new_devices.begin(), new_devices.end());
+                ObserverManager::notify(&ApiProtocol::on_devices_changed, *devices);
+            }
+    
+            // TODO: make a diff and invoke the updates in particular,
+            // note: after executing some command like play or set volume the diff can 
+            // go to UI right away, to avoid desync artefacts
+            //auto state = get_playback_state();
+            //ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
         }
         
         std::string Api::get_auth_callback_url() const

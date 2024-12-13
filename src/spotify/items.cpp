@@ -4,11 +4,6 @@ namespace spotifar
 {
 	namespace spotify
 	{
-		bool operator==(const Device& lhs, const Device& rhs)
-		{
-			return lhs.id == rhs.id;
-		}
-		
 		void from_json(const json& j, Device& d)
 		{
 			j.at("id").get_to(d.id);

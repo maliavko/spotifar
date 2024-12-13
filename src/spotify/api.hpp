@@ -12,14 +12,13 @@ namespace spotifar
     {
         using std::string;
         using std::wstring;
-        using httplib::Response;
         
         class ApiProtocol: public BaseObserverProtocol
         {
         public:
-            virtual void on_playback_updated(const PlaybackState& state) {};
-            virtual void on_playback_sync_failed(const std::string& err_msg) {};
-            virtual void on_devices_changed(const DevicesList& devices) {};
+            virtual void on_playback_updated(const PlaybackState& state) = 0;
+            virtual void on_playback_sync_failed(const std::string& err_msg) = 0;
+            virtual void on_devices_changed(const DevicesList& devices) = 0;
         };
 
         // TODO: to implement a cache of requesting data
@@ -41,12 +40,13 @@ namespace spotifar
 
             void start_listening(ApiProtocol* observer);
             void stop_listening(ApiProtocol* observer);
+            void resync_caches();
 
             ArtistsCollection get_artist();
             AlbumsCollection get_albums(const std::string& artist_id);
             std::map<string, SimplifiedTrack> get_tracks(const std::string& album_id);
             PlaybackState get_playback_state();
-            DevicesList get_available_devices();
+            inline const DevicesList& get_available_devices() { return *devices; }
 
             void start_playback(const std::string& album_id, const std::string& track_id);
             void skip_to_next();
@@ -57,13 +57,19 @@ namespace spotifar
         protected:
 		    string get_auth_callback_url() const;
             string request_auth_code();
+            void request_available_devices(DevicesList& devices_in);
 
             bool update_access_token_with_auth_code(const string& auth_code);
             bool update_access_token_with_refresh_token(const string& refresh_token);
             bool update_access_token(const string& token, const httplib::Params& params);
 
+
+
         private:
             httplib::Client api;
+
+            // cached data
+            std::unique_ptr<DevicesList> devices;
 
             string client_id;
             string client_secret;

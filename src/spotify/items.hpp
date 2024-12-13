@@ -95,9 +95,7 @@ namespace spotifar
 			int volume_percent = 100;
 			bool supports_volume = false;
 			wstring user_name;
-			std::shared_ptr<Context> context;
 
-			friend bool operator==(const Device& lhs, const Device& rhs);
 			friend void from_json(const json& j, Device& d);
 		};
 

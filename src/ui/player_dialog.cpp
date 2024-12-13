@@ -42,7 +42,7 @@ namespace spotifar
                 { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
             });
 
-            update_track_bar();
+            update_devices_list(api.get_available_devices());
         }
 
         PlayerDialog::~PlayerDialog()
@@ -260,7 +260,8 @@ namespace spotifar
 	        utils::NoRedraw(this->hdlg);
             
             // TODO: not finished, check when there are not devices
-            static std::vector<FarListItem> items;
+            static std::vector<FarListItem> items; items.clear();
+
             for (int i = 0; i < devices.size(); i++)
             {
                 auto& d = devices[i];
@@ -274,9 +275,11 @@ namespace spotifar
                 items.push_back(item);
             }
 
-            FarList list={sizeof(FarList), items.size(), &items[0]};
-
-            config::PsInfo.SendDlgMessage(hdlg, DM_LISTSET, ID_DEVICES_COMBO, &list);
+            if (items.size())
+            {
+                FarList list={sizeof(FarList), items.size(), &items[0]};
+                config::PsInfo.SendDlgMessage(hdlg, DM_LISTSET, ID_DEVICES_COMBO, &list);
+            }
         }
         
         void PlayerDialog::update_track_info(const std::string& artist_name, const std::string& track_name)
