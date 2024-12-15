@@ -4,6 +4,26 @@ namespace spotifar
 {
 	namespace spotify
 	{
+		std::string SimplifiedArtist::to_str() const
+		{
+			return std::format("SimplifiedArtist(name={}, id={})", name, id);
+		}
+
+		std::string Album::to_str() const
+		{
+			return std::format("Album(name={}, id={})", name, id);
+		}
+
+		std::string Device::to_str() const
+		{
+			return std::format("Device(name={}, id={})", name, id);
+		}
+
+		bool operator==(const Device &lhs, const Device &rhs)
+		{
+			return lhs.id == rhs.id;
+		}
+
 		void from_json(const json& j, Device& d)
 		{
 			j.at("id").get_to(d.id);
@@ -25,13 +45,13 @@ namespace spotifar
 			j.at("is_playing").get_to(p.is_playing);
 			j.at("actions").get_to(p.permissions);
 
-			if (!j.value("context", nullptr))
+			if (j.contains("context") && !j.at("context").is_null())
 			{
 				p.context = std::make_shared<Context>();
 				j.at("context").get_to(*p.context);
 			}
 
-			if (!j.value("item", nullptr))
+			if (j.contains("item") && !j.at("item").is_null())
 			{
 				p.track = std::make_shared<Track>();
 				j.at("item").get_to(*p.track);

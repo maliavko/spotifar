@@ -9,32 +9,35 @@ namespace spotifar
     namespace ui
     {
         using spotify::DevicesList;
+        using spotify::PlaybackState;
         using spotify::Track;
         
         // TODO: add links to art with redirection to browser
         class PlayerDialog: public spotify::ApiProtocol
         {
         public:
-            enum
+            friend struct DlgEventsSuppressor;
+
+            enum DialogControls
             {
-                ID_BOX = 0,
-                ID_TITLE,
-                ID_TRACK_BAR,
-                ID_TRACK_TIME,
-                ID_TRACK_TOTAL_TIME,
-                ID_ARTIST_NAME,
-                ID_TRACK_NAME,
-                ID_PLAY_BTN,
-                ID_PREV_BTN,
-                ID_NEXT_BTN,
-                ID_LIKE_BTN,
-                ID_VOLUME_LABEL,
-                ID_REPEAT_BTN,
-                ID_SHUFFLE_BTN,
-                ID_DEVICES_COMBO,
+                NO_CONTROL = -1,
+                BOX,
+                TITLE,
+                TRACK_BAR,
+                TRACK_TIME,
+                TRACK_TOTAL_TIME,
+                ARTIST_NAME,
+                TRACK_NAME,
+                PLAY_BTN,
+                PREV_BTN,
+                NEXT_BTN,
+                LIKE_BTN,
+                VOLUME_LABEL,
+                REPEAT_BTN,
+                SHUFFLE_BTN,
+                DEVICES_COMBO,
                 TOTAL_ELEMENTS_COUNT,
-            }
-            DialogControls;
+            };
 
             static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
             static const wchar_t TRACK_BAR_CHAR_FILLED = 0x2588;
@@ -53,30 +56,44 @@ namespace spotifar
             bool is_visible() const { return visible; }
 
         protected:
-	        intptr_t Dlg_OnCtlColorDlgItem(HANDLE hdlg, intptr_t id, void* par2);
 	        friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
+            bool handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void* param);
 
+            void update_track_bar(int track_total_time = 0, int track_played_time = 0);
+            void update_controls_block(const PlaybackState& state);
+            void update_track_info(const std::string& artist_name = "", const std::string& track_name = "");
+            void update_devices_list(const DevicesList& devices);
+
+            // control even hndlers
+            bool on_skip_to_next_btn_click(void* empty);
+            bool on_skip_to_previous_btn_click(void* empty);
+            bool on_devices_item_selected(void* dialog_item);
+            bool on_input_received(void* input_record);
+
+            // control styles
+            bool on_playback_control_style_applied(void* dialog_item_colors);
+            bool on_track_bar_style_applied(void* dialog_item_colors);
+            bool on_inactive_control_style_applied(void* dialog_item_colors);
+
+            // api even handlers
+            virtual void on_playback_updated(const PlaybackState& state);
+            virtual void on_playback_sync_finished(const std::string& err_msg);
+            virtual void on_devices_changed(const DevicesList& devices);
+
+            // helpers
             bool check_text_label(int dialog_item_id, const std::wstring& text_to_check) const;
             intptr_t set_control_text(int control_id, const std::wstring& text);
             intptr_t set_control_enabled(int control_id, bool is_enabled);
 
-            void update_track_bar(int track_total_time = 0, int track_played_time = 0);
-            void update_controls_block(const spotify::PlaybackState& state);
-            void update_track_info(const std::string& artist_name = "", const std::string& track_name = "");
-            void update_devices_list(const DevicesList& devices);
-
-            bool on_skip_to_next_btn_click();
-            bool on_skip_to_previous_btn_click();
-            virtual void on_playback_updated(const spotify::PlaybackState& state);
-            virtual void on_playback_sync_failed(const std::string& err_msg);
-            virtual void on_devices_changed(const DevicesList& devices);
-
         private:
             HANDLE hdlg;
             bool visible = false;
+            bool are_dlg_events_suppressed = true;
             std::vector<FarDialogItem> dlg_items_layout;
             spotify::Api& api;
-            int volume_percent = 100;
+
+            typedef bool (PlayerDialog::*ControlHandler)(void*);
+            static const std::map<DialogControls, std::map<FARMESSAGE, ControlHandler> > dlg_event_handlers;
         };
     }
 }

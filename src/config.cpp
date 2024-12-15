@@ -13,7 +13,7 @@ namespace spotifar
 		PluginStartupInfo PsInfo;
 		FarStandardFunctions FSF;
 		Options Opt;
-		
+
 		static const wchar_t* StrAddToDisksMenu = L"AddToDisksMenu";
 		static const wchar_t* StrSpotifyClientID = L"SpotifyClientID";
 		static const wchar_t* StrSpotifyClientSecret = L"SpotifyClientSecret";
@@ -56,6 +56,12 @@ namespace spotifar
 		void set_option(wchar_t* opt, const std::string& s)
 		{
 			lstrcpy(opt, utils::to_wstring(s).c_str());
+		}
+		
+		// TODO: looks like an utils function, consider moving
+		intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
+		{
+			return PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
 		}
 	}
 }

@@ -47,7 +47,7 @@ namespace spotifar
 
 		void fini_logging();
 
-		class NoRedraw
+		class [[nodiscard]] NoRedraw
 		{
 		public:
 			NoRedraw(HANDLE hdlg);

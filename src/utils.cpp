@@ -6,6 +6,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
 #include "spdlog/sinks/daily_file_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/msvc_sink.h"
 
 #include <filesystem>
@@ -72,18 +73,28 @@ namespace spotifar
 
 		void init_logging()
 		{
-			// TODO: perhaps the plugin folder is not the best for storing logs, clarify
+			// TODO: perhaps the plugin folder is not the best for storing logs, clarify with community
+			
+			// a default sink to the file 
 			auto filepath = std::format(L"{}\\logs\\spotifar.log", config::Opt.PluginStartupFolder);
-			auto logger = spdlog::daily_logger_mt("plugin", filepath, 0, 0, false, 3);
-			spdlog::set_default_logger(logger);
+			auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
+			
+			auto default_logger = std::make_shared<spdlog::logger>("global", daily_sink);
+			spdlog::set_default_logger(default_logger);
+
+			// specific logger for spotify api communication
+			auto api_logger = std::make_shared<spdlog::logger>("api", daily_sink);
+			spdlog::register_logger(api_logger);
 
 			#ifdef _DEBUG
 				spdlog::set_level(spdlog::level::debug);
 				
-				// separate sink for debuging in VS Code
-				logger->sinks().push_back(
-					std::make_shared<spdlog::sinks::msvc_sink_mt>()
-				);
+				// for debugging in VS Code this sink helps seeing the messages in the Debug Console view
+				auto msvc_debug_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+				spdlog::apply_all([&msvc_debug_sink](const auto& logger)
+				{
+					logger->sinks().push_back(msvc_debug_sink);
+				});
 			#else
 				spdlog::set_level(spdlog::level::info);
 			#endif

@@ -29,6 +29,8 @@ namespace spotifar
 
 		const wchar_t* get_msg(int msg_id);
 		void set_option(wchar_t* opt, const std::string& s);
+
+		intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
 	}
 }
 

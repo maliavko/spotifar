@@ -7,6 +7,60 @@ namespace spotifar
     namespace ui
     {
         using config::get_msg;
+        using config::send_dlg_msg;
+        using utils::NoRedraw;
+        
+        // a helper class to suppress dlg_proc function from handling incoming events,
+        // while the instance of the class exists in the particular scope
+        struct [[nodiscard]] DlgEventsSuppressor
+        {
+            bool were_events_suppressed;
+            PlayerDialog& dialog;
+
+            DlgEventsSuppressor(PlayerDialog& d):
+                dialog(d)
+            {
+                were_events_suppressed = dialog.are_dlg_events_suppressed;
+                dialog.are_dlg_events_suppressed = true;
+            }
+
+            ~DlgEventsSuppressor()
+            {
+                dialog.are_dlg_events_suppressed = were_events_suppressed;
+            }
+        };
+
+        const std::map<PlayerDialog::DialogControls, std::map<FARMESSAGE, PlayerDialog::ControlHandler> > PlayerDialog::dlg_event_handlers{
+            { PlayerDialog::NO_CONTROL, {
+                { DN_CONTROLINPUT, &PlayerDialog::on_input_received },
+            }},
+            { PlayerDialog::DEVICES_COMBO, {
+                { DN_EDITCHANGE, &PlayerDialog::on_devices_item_selected },
+            }},
+            { PlayerDialog::NEXT_BTN, {
+                { DN_BTNCLICK, &PlayerDialog::on_skip_to_next_btn_click },
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_playback_control_style_applied },
+            }},
+            { PlayerDialog::PREV_BTN, {
+                { DN_BTNCLICK, &PlayerDialog::on_skip_to_previous_btn_click },
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_playback_control_style_applied },
+            }},
+            { PlayerDialog::PLAY_BTN, {
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_playback_control_style_applied },
+            }},
+            { PlayerDialog::TRACK_BAR, {
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_track_bar_style_applied },
+            }},
+            { PlayerDialog::ARTIST_NAME, {
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
+            }},
+            { PlayerDialog::LIKE_BTN, {
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
+            }},
+            { PlayerDialog::SHUFFLE_BTN, {
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
+            }},
+        };
 
         // TODO: save sync data to compare it with the upcoming one and update only the controls changed
         PlayerDialog::PlayerDialog(spotify::Api& api):
@@ -39,185 +93,57 @@ namespace spotifar
                 { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE | DIF_RIGHTTEXT, get_msg(MPlayerShuffleBtn) },
                 
                 // devices box
-                { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
+                { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
             });
-
-            update_devices_list(api.get_available_devices());
         }
 
         PlayerDialog::~PlayerDialog()
         {
             hide();
         }
-
-        // TODO: rename and reconsider function's content
-        intptr_t PlayerDialog::Dlg_OnCtlColorDlgItem(HANDLE hdlg, intptr_t id, void* par2)
-        {
-            WORD loattr = 0, hiattr = 0;
-            intptr_t res;
-            FarDialogItemColors* fdic = (FarDialogItemColors*)par2;
-            res = 0;
-
-            switch (id)
-            {
-                case ID_PLAY_BTN:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
-                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
-                    res = TRUE;
-                    break;
-                case ID_ARTIST_NAME:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->ForegroundColor = utils::CLR_DGRAY;
-                    break;
-                case ID_PREV_BTN:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
-                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
-                    break;
-                case ID_NEXT_BTN:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
-                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
-                    break;
-                case ID_LIKE_BTN:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->ForegroundColor = utils::CLR_DGRAY;
-                    break;
-                case ID_SHUFFLE_BTN:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->ForegroundColor = utils::CLR_DGRAY;
-                    break;
-                case ID_DEVICES_COMBO:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
-                    fdic->Colors->BackgroundColor = utils::CLR_DGRAY;
-                    break;
-                case ID_VOLUME_LABEL:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    break;
-                case ID_TRACK_BAR:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->ForegroundColor = utils::CLR_BLACK;
-                    break;
-                case ID_TRACK_TOTAL_TIME:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    break;
-                case ID_TRACK_TIME:
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    break;
-                case ID_REPEAT_BTN:
-                {
-                    int color = utils::CLR_DGRAY;
-                    // TODO: memory leak
-                    FarDialogItemData data = { sizeof(FarDialogItemData), 0, new wchar_t[32] };
-                    auto i = config::PsInfo.SendDlgMessage(hdlg, DM_GETTEXT, ID_REPEAT_BTN, &data);
-                    
-                    if (lstrcmp(data.PtrData, L"Off"))
-                    {
-                        color = utils::CLR_BLACK;
-                    }
-                    fdic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-                    fdic->Colors->ForegroundColor = color;
-                    break;
-                }
-                default:
-                    res = FALSE;
-                    break;
-            }
-
-            return res;
-        }
 	
+        bool PlayerDialog::handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void* param)
+        {
+            if (are_dlg_events_suppressed)
+                return false;
+            
+            // first, trying to find a handler among the given control id event handers;
+            // in negative scenario, trying to search for a hander among global handlers @NO_CONTROL id;
+            // otherwise @false return control to the @dlg_proc function
+            for (auto ctrl_id: { control_id, NO_CONTROL })
+            {
+                auto it = dlg_event_handlers.find(ctrl_id);
+                if (it != dlg_event_handlers.end())
+                {
+                    for (auto& [mid, handler]: it->second)
+                        if (mid == msg_id)
+                            return (this->*handler)(param);
+                }
+            }
+            return false;
+        }
+
         intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
         {
-            intptr_t id = param1;
-            intptr_t res = 0;
-            INPUT_RECORD* ir;
             static PlayerDialog* dialog = nullptr;
-
-            switch (msg)
+            if (msg == DN_INITDIALOG)
             {
-                case DN_INITDIALOG:
-                    dialog = reinterpret_cast<PlayerDialog*>(param2);
-                    res = FALSE; // no changes made
-                    break;
-                case DN_CLOSE:
-                {
-                    // the event comes from far and ui will be closed automatically,
-                    // avoiding recursion
-                    dialog->hide(false);
-                    dialog = NULL;
-                    res = TRUE; // dialog can be closed
-                    break;
-                }
-                case DN_BTNCLICK:
-                    if (param1 == PlayerDialog::ID_NEXT_BTN)
-                    {
-                        res = dialog->on_skip_to_next_btn_click();
-                    }
-                    else if (param1 == PlayerDialog::ID_PREV_BTN)
-                    {
-                        res = dialog->on_skip_to_previous_btn_click();
-                    }
-                    break;
-                case DN_CTLCOLORDLGITEM:
-                    res = dialog->Dlg_OnCtlColorDlgItem(hdlg, param1, param2);
-                    break;
-                case DN_CONTROLINPUT:
-                {
-                    ir = (INPUT_RECORD*)param2;
-                    switch (ir->EventType)
-                    {
-                        case KEY_EVENT:
-                            if (ir->Event.KeyEvent.bKeyDown)
-                            {
-                                int key = utils::input_record_to_combined_key(ir->Event.KeyEvent);
-                                switch (key)
-                                {
-                                    case VK_UP:
-                                    case VK_DOWN:
-                                    {
-                                        int volume_to_request = dialog->volume_percent += key == VK_UP ? +5 : -5;
-                                        volume_to_request = max(min(volume_to_request, 100), 0);
-                                        dialog->api.set_playback_volume(volume_to_request);
-                                        break;
-                                    }
-                                }
-                            }
-                            break;
-                        case MOUSE_EVENT:
-                        {
-                            if (param1 == PlayerDialog::ID_REPEAT_BTN)
-                            {
-                                // TODO: consider some logic with cycled iterator
-                                if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Off"))
-                                {
-                                    config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
-                                        (void*)get_msg(MPlayerRepeatOneBtn));
-                                }
-                                else if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"Track"))
-                                {
-                                    config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
-                                        (void*)get_msg(MPlayerRepeatAllBtn));
-                                }
-                                else if (dialog->check_text_label(PlayerDialog::ID_REPEAT_BTN, L"All"))
-                                {
-                                    config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN,
-                                        (void*)get_msg(MPlayerRepeatNoneBtn));
-                                }
-                                res = true;
-
-                            }
-                            break;
-                        }
-                    }
-                    break;
-                }
-                default:
-                    res = config::PsInfo.DefDlgProc(hdlg, msg, param1, param2);
+                dialog = reinterpret_cast<PlayerDialog*>(param2);
+                return FALSE;
             }
-            return res;
+            else if (msg == DN_CLOSE)
+            {
+                // the event comes from far and ui will be closed automatically,
+                // to avoid recursion, we're telling "hide" not to fire a message
+                dialog->hide(false);
+                dialog = nullptr;
+                return TRUE;
+            }
+
+            if (dialog && dialog->handle_dlg_proc_event(msg, (PlayerDialog::DialogControls)param1, param2))
+                return TRUE;
+
+            return config::PsInfo.DefDlgProc(hdlg, msg, param1, param2);
         }
 
         bool PlayerDialog::show()
@@ -226,12 +152,16 @@ namespace spotifar
             {
                 hdlg = config::PsInfo.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, 0,
                     &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
+                are_dlg_events_suppressed = false;
                 
                 api.start_listening(this);
 
                 if (hdlg != NULL)
                 {
                     visible = true;
+                    
+                    update_devices_list(api.get_available_devices());
+
                     return true;
                 }
             }
@@ -245,11 +175,12 @@ namespace spotifar
                 api.stop_listening(this);
 
                 if (hdlg != NULL && close_ui)
-                {
-                    config::PsInfo.SendDlgMessage(hdlg, DM_CLOSE, -1, 0);
-                    hdlg = NULL;
-                }
+                    send_dlg_msg(hdlg, DM_CLOSE, -1, 0);
+                
+                hdlg = NULL;
                 visible = false;
+                are_dlg_events_suppressed = true;
+
                 return true;
             }
             return false;
@@ -257,79 +188,72 @@ namespace spotifar
         
         void PlayerDialog::update_devices_list(const DevicesList& devices)
         {
-	        utils::NoRedraw(this->hdlg);
-            
-            // TODO: not finished, check when there are not devices
-            static std::vector<FarListItem> items; items.clear();
+	        NoRedraw nr(hdlg);
+            DlgEventsSuppressor s(*this);
+
+            send_dlg_msg(this->hdlg, DM_LISTDELETE, DEVICES_COMBO, NULL);
 
             for (int i = 0; i < devices.size(); i++)
             {
-                auto& d = devices[i];
+                auto& dev = devices[i];
 
-                FarListItemData data{sizeof(FarListItemData), i, 0, (void*)d.id.c_str()};
-                FarListItem item{LIF_NONE, d.user_name.c_str(), (intptr_t)&data, 0};
-
-                if (d.is_active)
+                FarListItem item{ LIF_NONE, dev.user_name.c_str(), NULL, NULL };
+                if (dev.is_active)
                     item.Flags |= LIF_SELECTED;
-
-                items.push_back(item);
-            }
-
-            if (items.size())
-            {
-                FarList list={sizeof(FarList), items.size(), &items[0]};
-                config::PsInfo.SendDlgMessage(hdlg, DM_LISTSET, ID_DEVICES_COMBO, &list);
+                    
+                FarList list{ sizeof(FarList), 1, &item };
+                send_dlg_msg(this->hdlg, DM_LISTADD, DEVICES_COMBO, &list);
+                
+                FarListItemData data{sizeof(FarListItemData), i, dev.id.size(), (void*)dev.id.c_str()};
+                send_dlg_msg(this->hdlg, DM_LISTSETDATA, DEVICES_COMBO, &data);
             }
         }
         
         void PlayerDialog::update_track_info(const std::string& artist_name, const std::string& track_name)
         {
-	        utils::NoRedraw(this->hdlg);
+	        NoRedraw nr(hdlg);
 
             static std::wstring artist_user_name, track_user_name;
 
             artist_user_name = utils::to_wstring(artist_name);
             track_user_name = utils::to_wstring(track_name);
             
-            set_control_text(ID_ARTIST_NAME, artist_user_name);
-            set_control_text(ID_TRACK_NAME, track_user_name);
+            set_control_text(ARTIST_NAME, artist_user_name);
+            set_control_text(TRACK_NAME, track_user_name);
         }
         
-        void PlayerDialog::update_controls_block(const spotify::PlaybackState& state)
-        {        
-	        utils::NoRedraw(this->hdlg);
+        void PlayerDialog::update_controls_block(const PlaybackState& state)
+        {
+	        NoRedraw nr(hdlg);
 
             static std::wstring volume_label, repeat_label, shuffle_label;
 
-            // TODO: do not forget about permissions and disable buttons accordingly
-            // ID_PLAY_BTN,
-            // ID_LIKE_BTN,
+            // TODO: complete permissions, they come always "false"
 
             // play, next, prev
-            set_control_enabled(ID_PLAY_BTN, state.permissions.resuming);
-            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_NEXT_BTN, (void*)state.permissions.skipping_next);
-            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_PLAY_BTN, (void*)state.permissions.skipping_prev);
+            //set_control_enabled(PLAY_BTN, state.permissions.resuming);
+            //set_control_enabled(NEXT_BTN, state.permissions.skipping_next);
+            //set_control_enabled(PLAY_BTN, state.permissions.skipping_prev);
 
             // update shuffle button
             shuffle_label = utils::to_wstring(state.shuffle_state ? "Shuffle" : "No shuffle");
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_SHUFFLE_BTN, (void*)shuffle_label.c_str());
-            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_PLAY_BTN, (void*)state.permissions.toggling_shuffle);
+            set_control_text(SHUFFLE_BTN, shuffle_label);
+            //set_control_enabled(PLAY_BTN, state.permissions.toggling_shuffle);
 
             // update repeat button
             repeat_label = utils::to_wstring(state.repeat_state);
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_REPEAT_BTN, (void*)repeat_label.c_str());
+            set_control_text(REPEAT_BTN, repeat_label);
 
             // update volume
-            volume_percent = state.device.volume_percent;
-            volume_label = std::format(L"[{:3}%]", volume_percent);
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, PlayerDialog::ID_VOLUME_LABEL, (void*)volume_label.c_str());
-            config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, PlayerDialog::ID_VOLUME_LABEL, (void*)state.device.supports_volume);
+            volume_label = std::format(L"[{:3}%]", state.device.volume_percent);
+            set_control_text(VOLUME_LABEL, volume_label);
+            //set_control_enabled(VOLUME_LABEL, state.device.supports_volume);
         }
         
         // if @track_total_time is 0, the trackback will be filled empty
         void PlayerDialog::update_track_bar(int track_total_time, int track_played_time)
         {
-	        utils::NoRedraw(this->hdlg);
+	        NoRedraw nr(hdlg);
 
             // TODO: time ticking is stuttering, it is needed to try to implement it on the client side
             static std::wstring track_bar, track_time_str, track_total_time_str;
@@ -345,24 +269,94 @@ namespace spotifar
                 fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
             }
             
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_BAR, (void*)track_bar.c_str());
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_TIME, (void*)track_time_str.c_str());
-            config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, ID_TRACK_TOTAL_TIME, (void*)track_total_time_str.c_str());
+            set_control_text(TRACK_BAR, track_bar);
+            set_control_text(TRACK_TIME, track_time_str);
+            set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
         }
 
-        bool PlayerDialog::on_skip_to_next_btn_click()
+        bool PlayerDialog::on_devices_item_selected(void* dialog_item)
+        {
+            FarDialogItem* item = reinterpret_cast<FarDialogItem*>(dialog_item);
+
+            size_t pos = send_dlg_msg(hdlg, DM_LISTGETCURPOS, DEVICES_COMBO, NULL);
+            auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, DEVICES_COMBO, (void*)pos);
+            size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, DEVICES_COMBO, (void*)pos);
+            if (item_data)
+            {
+                auto device_id = std::string(reinterpret_cast<const char*>(item_data), item_data_size);
+                api.transfer_playback(device_id, true);
+            }
+
+            //update_devices_list(api.get_available_devices());
+
+            return true;
+        }
+
+        bool PlayerDialog::on_input_received(void* input_record)
+        {
+            INPUT_RECORD* ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+            switch (ir->EventType)
+            {
+                case KEY_EVENT:
+                    if (ir->Event.KeyEvent.bKeyDown)
+                    {
+                        int key = utils::input_record_to_combined_key(ir->Event.KeyEvent);
+                        switch (key)
+                        {
+                            case VK_UP:
+                            case VK_DOWN:
+                            {
+                                // int volume_to_request = dialog->volume_percent += key == VK_UP ? +5 : -5;
+                                // volume_to_request = max(min(volume_to_request, 100), 0);
+                                // dialog->api.set_playback_volume(volume_to_request);
+                                int i = 0;
+                                return true;
+                            }
+                        }
+                    }
+                    break;
+            }
+            return false;
+        }
+        
+        bool PlayerDialog::on_playback_control_style_applied(void* dialog_item_colors)
+        {
+            FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+            dic->Colors->BackgroundColor = utils::CLR_DGRAY;
+            dic->Colors->ForegroundColor = utils::CLR_BLACK;
+            return true;
+        }
+        
+        bool PlayerDialog::on_track_bar_style_applied(void* dialog_item_colors)
+        {
+            FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+            dic->Colors->ForegroundColor = utils::CLR_BLACK;
+            return true;
+        }
+        
+        bool PlayerDialog::on_inactive_control_style_applied(void* dialog_item_colors)
+        {
+            FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+            dic->Colors->ForegroundColor = utils::CLR_DGRAY;
+            return true;
+        }
+
+        bool PlayerDialog::on_skip_to_next_btn_click(void* empty)
         {
             api.skip_to_next();
             return true;
         }
 
-        bool PlayerDialog::on_skip_to_previous_btn_click()
+        bool PlayerDialog::on_skip_to_previous_btn_click(void* empty)
         {
             api.skip_to_previous();
             return true;
         }
         
-        void PlayerDialog::on_playback_updated(const spotify::PlaybackState& state)
+        void PlayerDialog::on_playback_updated(const PlaybackState& state)
         {
             if (!state.is_empty())
             {
@@ -378,9 +372,11 @@ namespace spotifar
             update_controls_block(state);
         }
         
-        void PlayerDialog::on_playback_sync_failed(const std::string& err_msg)
+        void PlayerDialog::on_playback_sync_finished(const std::string& exit_msg)
         {
-            utils::show_far_error_dlg(MFarMessageErrorPlaybackSync, err_msg);
+            if (!exit_msg.empty())
+                utils::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
+            
             hide();
         }
         
@@ -393,18 +389,18 @@ namespace spotifar
         {
             static wchar_t ptrdata[32];
             FarDialogItemData data = { sizeof(FarDialogItemData), 0, ptrdata };
-                config::PsInfo.SendDlgMessage(hdlg, DM_GETTEXT, dialog_item_id, &data);
+                send_dlg_msg(hdlg, DM_GETTEXT, dialog_item_id, &data);
             return text_to_check == data.PtrData;
         }
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)
         {
-            return config::PsInfo.SendDlgMessage(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
+            return send_dlg_msg(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
         }
         
         intptr_t PlayerDialog::set_control_enabled(int control_id, bool is_enabled)
         {
-            return config::PsInfo.SendDlgMessage(hdlg, DM_ENABLE, control_id, (void*)is_enabled);
+            return send_dlg_msg(hdlg, DM_ENABLE, control_id, (void*)is_enabled);
         }
     }
 }

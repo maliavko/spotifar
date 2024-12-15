@@ -16,10 +16,17 @@ namespace spotifar
 		using std::wstring;
 		using json = nlohmann::json;
 
-		struct SimplifiedArtist
+		struct ApiDataItem
+		{
+			virtual std::string to_str() const = 0;
+		};
+
+		struct SimplifiedArtist: ApiDataItem
 		{
 			string id;
 			string name;
+			
+			virtual std::string to_str() const;
 
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(SimplifiedArtist, id, name);
 		};
@@ -35,6 +42,8 @@ namespace spotifar
 		{
 			string id;
 			string name;
+			
+			virtual std::string to_str() const;
 
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Album, id, name);
 		};
@@ -45,7 +54,6 @@ namespace spotifar
 			string name;
 			size_t track_number;  // TODO: track number could be duplicated for different discs
 
-			
 			NLOHMANN_DEFINE_TYPE_INTRUSIVE(SimplifiedTrack, id, name, track_number);
 		};
 
@@ -96,7 +104,10 @@ namespace spotifar
 			bool supports_volume = false;
 			wstring user_name;
 
-			friend void from_json(const json& j, Device& d);
+			virtual std::string to_str() const;
+			
+			friend bool operator==(const Device &lhs, const Device &rhs);
+			friend void from_json(const json &j, Device &d);
 		};
 
 		// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback

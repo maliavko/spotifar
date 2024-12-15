@@ -12,16 +12,9 @@ namespace spotifar
     {
         using std::string;
         using std::wstring;
-        
-        class ApiProtocol: public BaseObserverProtocol
-        {
-        public:
-            virtual void on_playback_updated(const PlaybackState& state) = 0;
-            virtual void on_playback_sync_failed(const std::string& err_msg) = 0;
-            virtual void on_devices_changed(const DevicesList& devices) = 0;
-        };
 
         // TODO: to implement a cache of requesting data
+        class ApiProtocol;
         class Api
         {
         public:
@@ -53,6 +46,7 @@ namespace spotifar
             void skip_to_previous();
             void toggle_shuffle(bool is_on);
             void set_playback_volume(int volume_percent);
+            bool transfer_playback(const std::string& device_id, bool start_playing = false);
 
         protected:
 		    string get_auth_callback_url() const;
@@ -62,8 +56,6 @@ namespace spotifar
             bool update_access_token_with_auth_code(const string& auth_code);
             bool update_access_token_with_refresh_token(const string& refresh_token);
             bool update_access_token(const string& token, const httplib::Params& params);
-
-
 
         private:
             httplib::Client api;
@@ -84,6 +76,16 @@ namespace spotifar
             std::mutex m;
             std::condition_variable cv;
             bool is_in_sync_with_api = false;
+
+            std::shared_ptr<spdlog::logger> logger;
+        };
+        
+        class ApiProtocol: public BaseObserverProtocol
+        {
+        public:
+            virtual void on_playback_updated(const PlaybackState& state) = 0;
+            virtual void on_playback_sync_finished(const std::string& err_msg = "") = 0;
+            virtual void on_devices_changed(const DevicesList& devices) = 0;
         };
     }
 }

@@ -7,6 +7,44 @@ namespace spotifar
     namespace spotify
     {
         using json = nlohmann::json;
+        using namespace httplib;
+        using clock = std::chrono::high_resolution_clock;
+
+        std::string dump_headers(const Headers &headers) {
+            std::string s;
+            char buf[BUFSIZ];
+
+            for (auto it = headers.begin(); it != headers.end(); ++it) {
+                const auto &x = *it;
+                snprintf(buf, sizeof(buf), "%s: %s\n", x.first.c_str(), x.second.c_str());
+                s += buf;
+            }
+
+            return s;
+        }
+
+        std::string dump_http_error(const Request &req, const Response &res)
+        {
+            std::stringstream ss, query;
+            
+            for (auto it = req.params.begin(); it != req.params.end(); ++it)
+                query << std::format("{}{}={}", (it == req.params.begin()) ? '?' : '&', it->first, it->second);
+
+            ss  << "An error occured while making an http request: "
+                << std::format("{} {} {}", req.method, req.version, req.path) << query.str() << std::endl;
+
+            // ss << dump_headers(req.headers);
+
+            ss << std::endl << "A response received: " << std::endl;
+            ss << std::format("{} {}", res.status, res.version) << std::endl;
+
+            // ss << dump_headers(res.headers) << std::endl;
+
+            if (!res.body.empty())
+                ss << res.body << std::endl;
+
+            return ss.str();
+        }
 
         static string scope =
             "streaming "
@@ -34,16 +72,24 @@ namespace spotifar
             refresh_token(refresh_token),
             access_token_expires_at(0),
             is_listening(false),
-            devices(std::make_unique<DevicesList>())
+            devices(std::make_unique<DevicesList>()),
+            logger(spdlog::get("api"))
         {
             // TODO: add timer to refresh token
             // https://stackoverflow.com/questions/32233019/wake-up-a-stdthread-from-usleep
             // https://en.cppreference.com/w/cpp/thread/condition_variable
+
+            api.set_logger([this](const Request &req, const Response &res)
+            {
+                if (res.status != OK_200 && res.status != NoContent_204)
+                    logger->error(dump_http_error(req, res));
+            });
         }
 
         Api::~Api()
         {
             devices = nullptr;
+            logger = nullptr;
         }
 
         bool Api::authenticate()
@@ -106,10 +152,37 @@ namespace spotifar
 
         void Api::set_playback_volume(int volume_percent)
         {
-            auto s = httplib::append_query_params("/v1/me/player/volume",
-                httplib::Params{{ "volume_percent", std::to_string(volume_percent) }});
             auto r = api.Put(httplib::append_query_params("/v1/me/player/volume",
                 httplib::Params{{ "volume_percent", std::to_string(volume_percent) }}));
+        }
+        
+        bool Api::transfer_playback(const std::string& device_id, bool start_playing)
+        {   
+            auto device_it = std::find_if(devices->begin(), devices->end(),
+                [&device_id](auto &d) { return d.id == device_id; });
+
+            if (device_it == devices->end())
+            {
+                logger->error("There is no devices with the given id={}", device_id);
+                return false;
+            }
+
+            if (device_it->is_active)
+            {
+                logger->warn("The given device is already active {}", device_it->to_str());
+                return true;
+            }
+
+            json body{
+                { "device_ids", { device_id } },
+                { "play", start_playing },
+            };
+
+            logger->info("Transferring playback to the device {}, autoplay {}",
+                device_it->to_str(), start_playing);
+
+            auto res = api.Put("/v1/me/player", body.dump(), "application/json");
+            return res->status == NoContent_204;
         }
         
         AlbumsCollection Api::get_albums(const std::string& artist_id)
@@ -254,7 +327,7 @@ namespace spotifar
             string redirect_url = httplib::append_query_params(
                 SPOTIFY_AUTH_URL + "/authorize/", params);
 
-            spdlog::info("Requesting spotify auth code, redirecting to the external browser");
+            logger->info("Requesting spotify auth code, redirecting to the external browser");
             ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
 
             return a.get();
@@ -268,7 +341,7 @@ namespace spotifar
 
         bool Api::update_access_token_with_auth_code(const string& auth_code)
         {
-            spdlog::info("Trying to obtain a spotify auth token with auth code");
+            logger->info("Trying to obtain a spotify auth token with auth code");
             return update_access_token(
                 auth_code,
                 httplib::Params{
@@ -281,7 +354,7 @@ namespace spotifar
 
         bool Api::update_access_token_with_refresh_token(const string& refresh_token)
         {
-            spdlog::info("Trying to obtain a spotify auth token with stored refresh token");
+            logger->info("Trying to obtain a spotify auth token with stored refresh token");
             return update_access_token(
                 refresh_token,
                 httplib::Params{
@@ -314,16 +387,16 @@ namespace spotifar
             if (data.contains("refresh_token"))
             {
                 refresh_token = data["refresh_token"];
-                spdlog::info("A refresh token is found and stored");
+                logger->info("A refresh token is found and stored");
             }
 
             api.set_bearer_token_auth(access_token);
-            spdlog::info("An auth token is received successfully");
+            logger->info("An auth token is received successfully");
 
             return true;
         }
     
-        void Api::start_listening(ApiProtocol* observer)
+        void Api::start_listening(ApiProtocol *observer)
         {
             ObserverManager::subscribe<ApiProtocol>(observer);
             observers.push_back(observer);
@@ -332,9 +405,10 @@ namespace spotifar
                 return;
 
             is_listening = true;
-            std::packaged_task<void()> task([this, observer]
+            std::packaged_task<void()> task([this]
             {
-                auto marker = std::chrono::high_resolution_clock::now();   
+                std::string exit_msg = "";
+                auto marker = clock::now();
                 is_in_sync_with_api = true;
 
                 try
@@ -346,26 +420,28 @@ namespace spotifar
                         // for the player to show track time ticking well, each frame starts as precise
                         // as possible to the 'marker' frame with 1s increment; in case for some reason 
                         // frame took more time to request and process data, we skip several of them
-                        auto now = std::chrono::high_resolution_clock::now();
+                        auto now = clock::now();
                         while (marker < now)
                             marker += SYNC_INTERVAL;
 
                         std::this_thread::sleep_until(marker);
                     }
-                    is_in_sync_with_api = false;
-                    cv.notify_all();
                 }
-                catch (const std::exception& ex)
+                catch (const std::exception &ex)
                 {
-                    ObserverManager::notify(&ApiProtocol::on_playback_sync_failed, ex.what());
-                    return;
+                    exit_msg = ex.what();
                 }
+                
+                is_in_sync_with_api = false;
+                cv.notify_all();
+                
+                ObserverManager::notify(&ApiProtocol::on_playback_sync_finished, exit_msg);
             });
 
             std::thread(std::move(task)).detach();
         }
 
-        void Api::stop_listening(ApiProtocol* observer)
+        void Api::stop_listening(ApiProtocol *observer)
         {
             auto it = std::find(observers.begin(), observers.end(), observer);
             if (it == observers.end())
@@ -380,9 +456,13 @@ namespace spotifar
 
                 // manual object lifetime management, due to detached thread,
                 // lets hold object untill the last sync is completed
-                std::unique_lock<std::mutex> lk(m);
-                cv.wait(lk, [this]{ return !is_in_sync_with_api; });
+                if (is_in_sync_with_api)
+                {
+                    std::unique_lock<std::mutex> lk(m);
+                    cv.wait(lk, [this]{ return !is_in_sync_with_api; });
+                }
             }
+            
         }
 
         void Api::resync_caches()
@@ -403,8 +483,8 @@ namespace spotifar
             // TODO: make a diff and invoke the updates in particular,
             // note: after executing some command like play or set volume the diff can 
             // go to UI right away, to avoid desync artefacts
-            //auto state = get_playback_state();
-            //ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
+            auto state = get_playback_state();
+            ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
         }
         
         std::string Api::get_auth_callback_url() const
