@@ -47,7 +47,7 @@ namespace spotifar
             static const int view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
 
         public:
-            PlayerDialog(spotify::Api& api);
+            PlayerDialog(spotify::Api &api);
             virtual ~PlayerDialog();
 
             bool show();
@@ -56,33 +56,33 @@ namespace spotifar
             bool is_visible() const { return visible; }
 
         protected:
-	        friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
-            bool handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void* param);
+	        friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
+            bool handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void *param);
 
             void update_track_bar(int track_total_time = 0, int track_played_time = 0);
-            void update_controls_block(const PlaybackState& state);
-            void update_track_info(const std::string& artist_name = "", const std::string& track_name = "");
-            void update_devices_list(const DevicesList& devices);
+            void update_controls_block(const PlaybackState &state);
+            void update_track_info(const std::wstring &artist_name = L"", const std::wstring &track_name = L"");
+            void update_devices_list(const DevicesList &devices);
 
             // control even hndlers
-            bool on_skip_to_next_btn_click(void* empty);
-            bool on_skip_to_previous_btn_click(void* empty);
-            bool on_devices_item_selected(void* dialog_item);
-            bool on_input_received(void* input_record);
+            bool on_skip_to_next_btn_click(void *empty);
+            bool on_skip_to_previous_btn_click(void *empty);
+            bool on_devices_item_selected(void *dialog_item);
+            bool on_input_received(void *input_record);
 
             // control styles
-            bool on_playback_control_style_applied(void* dialog_item_colors);
-            bool on_track_bar_style_applied(void* dialog_item_colors);
-            bool on_inactive_control_style_applied(void* dialog_item_colors);
+            bool on_playback_control_style_applied(void *dialog_item_colors);
+            bool on_track_bar_style_applied(void *dialog_item_colors);
+            bool on_inactive_control_style_applied(void *dialog_item_colors);
 
             // api even handlers
-            virtual void on_playback_updated(const PlaybackState& state);
-            virtual void on_playback_sync_finished(const std::string& err_msg);
-            virtual void on_devices_changed(const DevicesList& devices);
+            virtual void on_playback_updated(const PlaybackState &state);
+            virtual void on_playback_sync_finished(const std::string &err_msg);
+            virtual void on_devices_changed(const DevicesList &devices);
 
             // helpers
-            bool check_text_label(int dialog_item_id, const std::wstring& text_to_check) const;
-            intptr_t set_control_text(int control_id, const std::wstring& text);
+            bool check_text_label(int dialog_item_id, const std::wstring &text_to_check) const;
+            intptr_t set_control_text(int control_id, const std::wstring &text);
             intptr_t set_control_enabled(int control_id, bool is_enabled);
 
         private:

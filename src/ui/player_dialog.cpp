@@ -197,7 +197,7 @@ namespace spotifar
             {
                 auto& dev = devices[i];
 
-                FarListItem item{ LIF_NONE, dev.user_name.c_str(), NULL, NULL };
+                FarListItem item{ LIF_NONE, dev.name.c_str(), NULL, NULL };
                 if (dev.is_active)
                     item.Flags |= LIF_SELECTED;
                     
@@ -209,17 +209,12 @@ namespace spotifar
             }
         }
         
-        void PlayerDialog::update_track_info(const std::string& artist_name, const std::string& track_name)
+        void PlayerDialog::update_track_info(const std::wstring &artist_name, const std::wstring &track_name)
         {
 	        NoRedraw nr(hdlg);
-
-            static std::wstring artist_user_name, track_user_name;
-
-            artist_user_name = utils::to_wstring(artist_name);
-            track_user_name = utils::to_wstring(track_name);
             
-            set_control_text(ARTIST_NAME, artist_user_name);
-            set_control_text(TRACK_NAME, track_user_name);
+            set_control_text(ARTIST_NAME, artist_name);
+            set_control_text(TRACK_NAME, track_name);
         }
         
         void PlayerDialog::update_controls_block(const PlaybackState& state)
@@ -236,12 +231,12 @@ namespace spotifar
             //set_control_enabled(PLAY_BTN, state.permissions.skipping_prev);
 
             // update shuffle button
-            shuffle_label = utils::to_wstring(state.shuffle_state ? "Shuffle" : "No shuffle");
+            shuffle_label = utils::utf8_decode(state.shuffle_state ? "Shuffle" : "No shuffle");
             set_control_text(SHUFFLE_BTN, shuffle_label);
             //set_control_enabled(PLAY_BTN, state.permissions.toggling_shuffle);
 
             // update repeat button
-            repeat_label = utils::to_wstring(state.repeat_state);
+            repeat_label = utils::utf8_decode(state.repeat_state);
             set_control_text(REPEAT_BTN, repeat_label);
 
             // update volume

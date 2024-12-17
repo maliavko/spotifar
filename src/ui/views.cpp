@@ -89,11 +89,7 @@ namespace spotifar
             // TODO: tmp code
             Items result;
             for (auto& [id, a]: api.get_artist())
-            {
-                result.push_back({
-                    id, utils::to_wstring(a.name), L""
-                });
-            }
+                result.push_back({id, a.name, L""});
             return result;
         }
 
@@ -115,11 +111,7 @@ namespace spotifar
             // TODO: tmp code
             Items result;
             for (auto& [id, a]: api.get_albums(artist_id))
-            {
-                result.push_back({
-                    id, utils::to_wstring(a.name), L""
-                });
-            }
+                result.push_back({id, a.name, L""});
             return result;	
         }
 
@@ -143,10 +135,8 @@ namespace spotifar
             Items result;
             for (auto& [id, a]: api.get_tracks(album_id))
             {
-                std::string track_user_name = std::format("{:2}. {}", a.track_number, a.name);
-                result.push_back({
-                    id, utils::to_wstring(track_user_name), L""
-                });
+                std::wstring track_user_name = std::format(L"{:02}. {}", a.track_number, a.name);
+                result.push_back({id, track_user_name, L""});
             }
             return result;	
         }
@@ -156,10 +146,9 @@ namespace spotifar
             if (data == nullptr)
                 return create_artist_view(artist_id);
 
-            // TODO: for some reason does not work, worked before
-            //api.start_playback(album_id, data->id);
+            api.start_playback(album_id, data->id);
             
-            return NULL;
+            return nullptr;
         }
         
         PlaylistsView::PlaylistsView():

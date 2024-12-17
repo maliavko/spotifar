@@ -1,4 +1,4 @@
-#include "items.hpp" 
+#include "items.hpp"
 
 namespace spotifar
 {
@@ -6,17 +6,17 @@ namespace spotifar
 	{
 		std::string SimplifiedArtist::to_str() const
 		{
-			return std::format("SimplifiedArtist(name={}, id={})", name, id);
+			return std::format("SimplifiedArtist(name={}, id={})", utils::to_string(name), id);
 		}
 
 		std::string Album::to_str() const
 		{
-			return std::format("Album(name={}, id={})", name, id);
+			return std::format("Album(name={}, id={})", utils::to_string(name), id);
 		}
 
 		std::string Device::to_str() const
 		{
-			return std::format("Device(name={}, id={})", name, id);
+			return std::format("Device(name={}, id={})", utils::to_string(name), id);
 		}
 
 		bool operator==(const Device &lhs, const Device &rhs)
@@ -24,26 +24,69 @@ namespace spotifar
 			return lhs.id == rhs.id;
 		}
 
-		void from_json(const json& j, Device& d)
+		void from_json(const json &j, SimplifiedArtist &a)
+		{
+			j.at("id").get_to(a.id);
+
+			a.name = utils::utf8_decode(j.at("name").get<string>());
+		}
+		
+		void from_json(const json &j, Artist &a)
+		{
+			from_json(j, dynamic_cast<SimplifiedArtist&>(a));
+
+			j.at("popularity").get_to(a.popularity);
+		}
+
+		void from_json(const json &j, Album &t)
+		{
+			j.at("id").get_to(t.id);
+
+			t.name = utils::utf8_decode(j.at("name").get<string>());
+		}
+
+		void from_json(const json &j, SimplifiedTrack &t)
+		{
+			j.at("id").get_to(t.id);
+			j.at("track_number").get_to(t.track_number);
+
+			t.name = utils::utf8_decode(j.at("name").get<string>());
+		}
+		
+		void from_json(const json &j, Track &t)
+		{
+			from_json(j, dynamic_cast<SimplifiedTrack&>(t));
+			try{
+			j.at("album").get_to(t.album);
+			j.at("artists").get_to(t.artists);
+			j.at("duration_ms").get_to(t.duration_ms);
+			} catch (std::exception& e)
+			{
+				auto s = e.what();
+				int i = 0;
+			}
+		}
+
+		void from_json(const json &j, Device &d)
 		{
 			j.at("id").get_to(d.id);
 			j.at("is_active").get_to(d.is_active);
-			j.at("name").get_to(d.name);
 			j.at("type").get_to(d.type);
 			j.at("supports_volume").get_to(d.supports_volume);
 
 			d.volume_percent = j.value("volume_percent", 100);
-			d.user_name = utils::to_wstring(d.name);
+			d.name = utils::utf8_decode(j.at("name").get<string>());
 		}
 		
-		void from_json(const json& j, PlaybackState& p)
+		void from_json(const json &j, PlaybackState &p)
 		{
 			j.at("device").get_to(p.device);
 			j.at("repeat_state").get_to(p.repeat_state);
 			j.at("shuffle_state").get_to(p.shuffle_state);
-			p.progress_ms = j.value("progress_ms", 0);
 			j.at("is_playing").get_to(p.is_playing);
 			j.at("actions").get_to(p.permissions);
+
+			p.progress_ms = j.value("progress_ms", 0);
 
 			if (j.contains("context") && !j.at("context").is_null())
 			{
@@ -58,7 +101,7 @@ namespace spotifar
 			}
 		}
 		
-		void from_json(const json& j, Permissions& p)
+		void from_json(const json &j, Permissions &p)
 		{
 			p.interrupting_playback = j.value("interrupting_playback", false);
 			p.pausing = j.value("pausing", false);

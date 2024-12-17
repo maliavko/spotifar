@@ -40,9 +40,19 @@ namespace spotifar
 
 		std::string generate_random_string(const int);
 
-		std::wstring to_wstring(const std::string& s);
+		/// @brief Converts utf8 encoded string into wide-char one
+		std::wstring utf8_decode(const std::string &s);
+		
+		/// @brief Converts wide-char string into utf8 encoded string
+		std::string utf8_encode(const std::wstring &ws);
 
-		std::string to_string(const std::wstring& ws);
+		/// @brief Bluntly converts char string into wide-char string
+		std::wstring to_wstring(const std::string &s);
+		
+		/// @brief Bluntly converts char string into wide-char string
+		/// NOTE: The function does not care about string encoding, all the multi-byte
+		/// stuff will be broken miserably
+		std::string to_string(const std::wstring &ws);
 
 		void init_logging();
 

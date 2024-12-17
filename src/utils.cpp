@@ -55,16 +55,29 @@ namespace spotifar
 			return text;
 		};
 
-		std::wstring to_wstring(const std::string& s)
+		std::wstring utf8_decode(const std::string &s)
+		{
+			int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), NULL, 0);
+			std::wstring out(len, 0);
+			MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &out[0], len);
+			return out;
+		}
+		
+		std::string utf8_encode(const std::wstring &ws)
+		{
+			int len = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), NULL, 0, NULL, NULL);
+			std::string out(len, 0);
+			WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), &out[0], len, NULL, NULL);
+			return out;
+		}
+
+		std::wstring to_wstring(const std::string &s)
 		{
 			return std::wstring(s.begin(), s.end());
 		}
 		
-		std::string to_string(const std::wstring& ws)
+		std::string to_string(const std::wstring &ws)
 		{
-			// NOTE: the conversion is unsafe, use it only in case you know, that the
-			// wstring does not have any complicated unicode specific symbols, otherwise
-			// it will strip the data
 			#pragma warning(suppress: 4244)  
 			return std::string(ws.begin(), ws.end());
 		}

@@ -6,7 +6,7 @@ namespace spotifar
 {
     namespace ui
     {
-        Panel::Panel(spotify::Api& api):
+        Panel::Panel(spotify::Api &api):
             api(api)
         {
             // TODO: process correctly selected item on the panel
@@ -24,7 +24,7 @@ namespace spotifar
             view = create_root_view();
         }
         
-        void Panel::update_panel_info(OpenPanelInfo* info)
+        void Panel::update_panel_info(OpenPanelInfo *info)
         {
             info->StructSize = sizeof(*info);
             info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
@@ -92,7 +92,7 @@ namespace spotifar
             info->KeyBar = &kbt;
         }
         
-        intptr_t Panel::update_panel_items(GetFindDataInfo* info)
+        intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         {
             auto items = view->get_items(api);
         
@@ -122,7 +122,7 @@ namespace spotifar
             return FALSE;
         }
     
-        void Panel::free_panel_items(const FreeFindDataInfo* info)
+        void Panel::free_panel_items(const FreeFindDataInfo *info)
         {
             for (size_t idx = 0; idx < info->ItemsNumber; idx++)
             {
@@ -132,24 +132,23 @@ namespace spotifar
             free(info->PanelItem);
         }
         
-        void WINAPI Panel::free_user_data(void* const UserData, const FarPanelItemFreeInfo* const Info)
+        void WINAPI Panel::free_user_data(void *const UserData, const FarPanelItemFreeInfo *const Info)
         {
             delete static_cast<const ItemFarUserData*>(UserData);
         }
         
-        intptr_t Panel::select_item(const SetDirectoryInfo* info)
+        intptr_t Panel::select_item(const SetDirectoryInfo *info)
         {
-            const ItemFarUserData* data = NULL;
-            if (info->UserData.Data != NULL)
+            const ItemFarUserData* data = nullptr;
+            if (info->UserData.Data != nullptr)
             	data = static_cast<const ItemFarUserData*>(info->UserData.Data);
 
             std::shared_ptr<View> next_view = view->select_item(api, data);
-            if (next_view != NULL)
+            if (next_view != nullptr)
             {
                 view = next_view;
                 return TRUE;
             }
-
             return TRUE;
         }
     }

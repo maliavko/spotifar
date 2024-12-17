@@ -66,7 +66,7 @@ namespace spotifar
 		}
 		catch (const spdlog::spdlog_ex& ex)
 		{
-			auto err_msg = utils::to_wstring(ex.what());
+			auto err_msg = utils::utf8_decode(ex.what());
 			utils::show_far_error_dlg(MFarMessageErrorLogInit, err_msg);
 
 			return nullptr;

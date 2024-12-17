@@ -53,7 +53,7 @@ namespace spotifar
         protected:
 		    string get_auth_callback_url() const;
             string request_auth_code();
-            void request_available_devices(DevicesList& devices_in);
+            void request_available_devices(DevicesList &devices_in);
             void launch_sync_worker();
             void shutdown_sync_worker();
 
@@ -65,7 +65,7 @@ namespace spotifar
         private:
             std::unique_ptr<Client> endpoint;
             std::shared_ptr<spdlog::logger> logger;
-            std::vector<ApiProtocol*> observers;
+            size_t observers_count;
 
             // cached data
             std::unique_ptr<DevicesList> devices;
@@ -83,9 +83,10 @@ namespace spotifar
         class ApiProtocol: public BaseObserverProtocol
         {
         public:
-            virtual void on_playback_updated(const PlaybackState &state) = 0;
-            virtual void on_playback_sync_finished(const std::string &err_msg = "") = 0;
-            virtual void on_devices_changed(const DevicesList &devices) = 0;
+            virtual void on_playback_updated(const PlaybackState &state) {};
+            virtual void on_playback_sync_finished(const std::string &err_msg = "") {};
+            virtual void on_devices_changed(const DevicesList &devices) {};
+            virtual void on_track_changed(const string &album_id, const string &track_id) {};
         };
     }
 }

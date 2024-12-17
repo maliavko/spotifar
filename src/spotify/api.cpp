@@ -33,12 +33,12 @@ namespace spotifar
             ss  << "An error occured while making an http request: "
                 << std::format("{} {} {}", req.method, req.version, req.path) << query.str() << std::endl;
 
-            // ss << dump_headers(req.headers);
+            //ss << dump_headers(req.headers);
 
             ss << std::endl << "A response received: " << std::endl;
             ss << std::format("{} {}", res.status, res.version) << std::endl;
 
-            // ss << dump_headers(res.headers) << std::endl;
+            //ss << dump_headers(res.headers) << std::endl;
 
             if (!res.body.empty())
                 ss << res.body << std::endl;
@@ -66,6 +66,7 @@ namespace spotifar
         Api::Api(const string &client_id, const string &client_secret, int port,
                 const string &refresh_token):
             endpoint(std::make_unique<Client>(SPOTIFY_API_URL)),
+            observers_count(0),
             port(port),
             client_id(client_id),
             client_secret(client_secret),
@@ -79,6 +80,10 @@ namespace spotifar
             {
                 if (res.status != OK_200 && res.status != NoContent_204)
                     logger->error(dump_http_error(req, res));
+            });
+            
+            endpoint->set_default_headers(httplib::Headers{
+                {"Content-Type", "application/json; charset=utf-8"},
             });
         }
 
@@ -99,14 +104,14 @@ namespace spotifar
         {
             shutdown_sync_worker();
 
-            while (observers.size())
-                stop_listening(*observers.begin());
+            ObserverManager::clear<ApiProtocol>();
+            observers_count = 0;
         }
         
         void Api::start_playback(const std::string &album_id, const std::string &track_id)
         {
             httplib::Params params = {
-                { "device_id", "ce8d71004f9597141d4b5940bd1bb2dc52a35dae" }  // TODO: add a normal detection of device id
+                //{ "device_id", "" }
             };
 
             json o{
@@ -116,7 +121,10 @@ namespace spotifar
                 }}
             };
 
-            auto r = endpoint->Put(httplib::append_query_params("/v1/me/player/play", params), o.dump(), "application/json");
+            auto r = endpoint->Put(httplib::append_query_params(
+                "/v1/me/player/play", params), o.dump(), "application/json");
+            
+            ObserverManager::notify(&ApiProtocol::on_track_changed, album_id, track_id);
         }
         
         void Api::skip_to_next()
@@ -225,7 +233,7 @@ namespace spotifar
                 json data = json::parse(r->body);
                 for (json& tj : data["items"])
                 {
-                    auto t = tj.get<Track>();
+                    auto t = tj.get<SimplifiedTrack>();
                     tracks[t.id] = t;
                 }
 
@@ -417,7 +425,7 @@ namespace spotifar
                         // TODO: handler errors
                         authenticate();
 
-                        if (observers.size())
+                        if (observers_count)
                             resync_caches();
 
                         // for the player to show track time ticking well, each frame starts as precise
@@ -456,16 +464,12 @@ namespace spotifar
         void Api::start_listening(ApiProtocol *observer)
         {
             ObserverManager::subscribe<ApiProtocol>(observer);
-            observers.push_back(observer);
+            observers_count++;
         }
 
         void Api::stop_listening(ApiProtocol *observer)
         {
-            auto it = std::find(observers.begin(), observers.end(), observer);
-            if (it == observers.end())
-                return;
-            
-            observers.erase(it);
+            observers_count--;
             ObserverManager::unsubscribe<ApiProtocol>(observer);
         }
 
@@ -476,7 +480,7 @@ namespace spotifar
             request_available_devices(new_devices);
             bool has_devices_changed = !std::equal(new_devices.begin(), new_devices.end(),
                                                    devices->begin(), devices->end(),
-                                                   [](const auto& a, const auto& b) { return a.id == b.id && a.is_active == b.is_active; });
+                                                   [](const auto &a, const auto &b) { return a.id == b.id && a.is_active == b.is_active; });
             
             if (has_devices_changed)
             {

@@ -32,22 +32,22 @@ namespace spotifar
         api.shutdown();
     }
     
-    void Plugin::update_panel_info(OpenPanelInfo* info)
+    void Plugin::update_panel_info(OpenPanelInfo *info)
     {
         panel->update_panel_info(info);
     }
     
-    intptr_t Plugin::update_panel_items(GetFindDataInfo* info)
+    intptr_t Plugin::update_panel_items(GetFindDataInfo *info)
     {
         return panel->update_panel_items(info);
     }
     
-    void Plugin::free_panel_items(const FreeFindDataInfo* info)
+    void Plugin::free_panel_items(const FreeFindDataInfo *info)
     {
         panel->free_panel_items(info);
     }
     
-    intptr_t Plugin::select_item(const SetDirectoryInfo* info)
+    intptr_t Plugin::select_item(const SetDirectoryInfo *info)
     {
         return panel->select_item(info);
     }

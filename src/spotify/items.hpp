@@ -21,40 +21,37 @@ namespace spotifar
 			virtual std::string to_str() const = 0;
 		};
 
-		struct SimplifiedArtist: ApiDataItem
+		struct SimplifiedArtist: public ApiDataItem
 		{
 			string id;
-			string name;
+			wstring name;
 			
 			virtual std::string to_str() const;
-
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(SimplifiedArtist, id, name);
+			friend void from_json(const json &j, SimplifiedArtist &a);
 		};
 
 		struct Artist: public SimplifiedArtist
 		{
 			size_t popularity;
-			
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Artist, id, name, popularity);
+			friend void from_json(const json &j, Artist &a);
 		};
 
 		struct Album
 		{
 			string id;
-			string name;
+			wstring name;
 			
 			virtual std::string to_str() const;
-
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Album, id, name);
+			friend void from_json(const json &j, Album &t);
 		};
 
 		struct SimplifiedTrack
 		{
 			string id;
-			string name;
+			wstring name;
 			size_t track_number;  // TODO: track number could be duplicated for different discs
 
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(SimplifiedTrack, id, name, track_number);
+			friend void from_json(const json &j, SimplifiedTrack &t);
 		};
 
 		struct Track: public SimplifiedTrack
@@ -63,7 +60,7 @@ namespace spotifar
 			std::vector<SimplifiedArtist> artists;
 			int duration_ms;
 
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Track, id, name, track_number, album, artists, duration_ms);
+			friend void from_json(const json &j, Track &t);
 		};
 
 		struct Permissions
@@ -79,7 +76,7 @@ namespace spotifar
 			bool toggling_shuffle = false;
 			bool trasferring_playback = false;
 
-			friend void from_json(const json& j, Permissions& p);
+			friend void from_json(const json &j, Permissions &p);
 		};
 
 		struct Context
@@ -98,14 +95,12 @@ namespace spotifar
 		{
 			string id;
 			bool is_active = false;
-			string name;
+			wstring name;
 			string type;
 			int volume_percent = 100;
 			bool supports_volume = false;
-			wstring user_name;
 
 			virtual std::string to_str() const;
-			
 			friend bool operator==(const Device &lhs, const Device &rhs);
 			friend void from_json(const json &j, Device &d);
 		};
@@ -127,7 +122,7 @@ namespace spotifar
 			std::shared_ptr<Context> context = nullptr;
 
 			inline bool is_empty() const { return track == nullptr; }
-			friend void from_json(const json& j, PlaybackState& p);
+			friend void from_json(const json &j, PlaybackState &p);
 		};
 
 		typedef map<string, Album> AlbumsCollection;
