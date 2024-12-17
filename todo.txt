@@ -2,11 +2,9 @@ project infrastructure
 - gcc support
 
 bugs
-- not enough memory: it looks like I was too much with usin stack memory, let's reconsider a usage strategy towards heap
-- librespot quite ofte catches the error: Remote connectino ws forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
+- librespot quite often catches the error: Remote connection was forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
 
 refactor
-- add a proper logging
 - all the utils of far move to utils::far:: namespace?
 - consider making http requests async
 
