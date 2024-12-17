@@ -25,8 +25,6 @@ namespace spotifar
 {
 	namespace utils
 	{
-		extern const int KEY_CTRL = 0x100000, KEY_ALT = 0x200000, KEY_SHIFT = 0x400000;
-		
 		int input_record_to_combined_key(const KEY_EVENT_RECORD& kir)
 		{
 			int key = static_cast<int>(kir.wVirtualKeyCode);
@@ -47,7 +45,7 @@ namespace spotifar
 		std::string generate_random_string(const int length)
 		{
 			std::string text = "";
-			const std::string possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+			static const std::string possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 			for (int i = 0; i < length; i++)
 			{

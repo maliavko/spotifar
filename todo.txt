@@ -6,9 +6,9 @@ bugs
 - librespot quite ofte catches the error: Remote connectino ws forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
 
 refactor
-- consider proper MVC, MVP, MVVP framework usage and code refactor to it
 - add a proper logging
 - all the utils of far move to utils::far:: namespace?
+- consider making http requests async
 
 application ideas
 - fair random while playing, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)

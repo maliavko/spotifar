@@ -13,7 +13,7 @@ namespace spotifar
         panel(std::make_unique<ui::Panel>(api)),
         player(std::make_unique<ui::PlayerDialog>(api))
 	{
-		if (api.authenticate())
+		if (api.init())
             panel->gotoRootMenu();
 	}
 

@@ -30,8 +30,9 @@ namespace spotifar
 			CLR_YELLOW,
 			CLR_WHITE
 		} Colors16;
-		
-		static const int KEY_CTRL, KEY_ALT, KEY_SHIFT;
+
+		static const char *LOGGER_GLOBAL = "global", *LOGGER_API = "api";
+		static const int KEY_CTRL = 0x100000, KEY_ALT = 0x200000, KEY_SHIFT = 0x400000;
 
 		int input_record_to_combined_key(const KEY_EVENT_RECORD& kir);
 
