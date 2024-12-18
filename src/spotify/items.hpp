@@ -33,15 +33,32 @@ namespace spotifar
 		struct Artist: public SimplifiedArtist
 		{
 			size_t popularity;
+
 			friend void from_json(const json &j, Artist &a);
 		};
 
-		struct Album
+		struct SimplifiedAlbum
 		{
+			inline static const string ALBUM = "album";
+			inline static const string SINGLE = "single";
+			inline static const string COMP = "compilation";
+			inline static const string APPEARS_ON = "appears_on";
+
 			string id;
 			wstring name;
+			size_t total_tracks;
+			string album_type;
+			string release_date;
+			string release_year;
+			//string album_group;  // suspiciously the attribute is not present in the parent object
 			
 			virtual std::string to_str() const;
+			inline bool is_single() const { return album_type == SINGLE; }
+			friend void from_json(const json &j, SimplifiedAlbum &a);
+		};
+
+		struct Album: public SimplifiedAlbum
+		{
 			friend void from_json(const json &j, Album &t);
 		};
 
@@ -49,6 +66,7 @@ namespace spotifar
 		{
 			string id;
 			wstring name;
+			size_t duration;  // in seconds
 			size_t track_number;  // TODO: track number could be duplicated for different discs
 
 			friend void from_json(const json &j, SimplifiedTrack &t);
@@ -58,7 +76,6 @@ namespace spotifar
 		{
 			Album album;
 			std::vector<SimplifiedArtist> artists;
-			int duration_ms;
 
 			friend void from_json(const json &j, Track &t);
 		};
@@ -115,7 +132,7 @@ namespace spotifar
 			Device device;
 			string repeat_state = REPEAT_OFF;  // off, track, context
 			bool shuffle_state = false;
-			int progress_ms = 0;
+			size_t progress = 0; // in seconds
 			bool is_playing = false;
 			Permissions permissions;
 			std::shared_ptr<Track> track = nullptr;
@@ -125,7 +142,7 @@ namespace spotifar
 			friend void from_json(const json &j, PlaybackState &p);
 		};
 
-		typedef map<string, Album> AlbumsCollection;
+		typedef map<string, SimplifiedAlbum> AlbumsCollection;
 		typedef map<string, Artist> ArtistsCollection;
 		typedef vector<Device> DevicesList;
 	}

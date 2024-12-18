@@ -88,7 +88,7 @@ namespace spotifar
                 { DI_BUTTON,        view_center_x - 7, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerPrevBtn) },
                 { DI_BUTTON,        view_center_x + 4, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerNextBtn) },
                 { DI_BUTTON,        view_x, view_height, 1, 1,                  0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerLikeBtn) },
-                { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     DIF_CENTERTEXT | DIF_NOFOCUS | DIF_BTNNOCLOSE, L"[---%]" },
+                { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     DIF_CENTERTEXT | DIF_NOFOCUS | DIF_BTNNOCLOSE | DIF_RIGHTTEXT, L"[---%]" },
                 { DI_BUTTON,        view_center_x + 9, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerRepeatNoneBtn) },
                 { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE | DIF_RIGHTTEXT, get_msg(MPlayerShuffleBtn) },
                 
@@ -161,6 +161,7 @@ namespace spotifar
                     visible = true;
                     
                     update_devices_list(api.get_available_devices());
+                    // TODO: add a playback state with the cached data
 
                     return true;
                 }
@@ -240,17 +241,16 @@ namespace spotifar
             set_control_text(REPEAT_BTN, repeat_label);
 
             // update volume
-            volume_label = std::format(L"[{:3}%]", state.device.volume_percent);
+            volume_label = std::format(L"[{}%]", state.device.volume_percent);
             set_control_text(VOLUME_LABEL, volume_label);
             //set_control_enabled(VOLUME_LABEL, state.device.supports_volume);
         }
         
         // if @track_total_time is 0, the trackback will be filled empty
-        void PlayerDialog::update_track_bar(int track_total_time, int track_played_time)
+        void PlayerDialog::update_track_bar(size_t track_total_time, size_t track_played_time)
         {
 	        NoRedraw nr(hdlg);
 
-            // TODO: time ticking is stuttering, it is needed to try to implement it on the client side
             static std::wstring track_bar, track_time_str, track_total_time_str;
 
             track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
@@ -356,7 +356,7 @@ namespace spotifar
             if (!state.is_empty())
             {
                 update_track_info(state.track->artists[0].name, state.track->name);
-                update_track_bar(state.track->duration_ms / 1000, state.progress_ms / 1000);
+                update_track_bar(state.track->duration, state.progress);
             }
             else
             {

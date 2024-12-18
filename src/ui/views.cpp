@@ -8,6 +8,18 @@ namespace spotifar
     {
         using config::get_msg;
 
+        
+        ViewItem::ViewItem(const std::string &id, const wstring &name, const wstring &descr,
+                           uintptr_t attrs, size_t duration):
+            id(id),
+            name(utils::strip_invalid_filename_chars(name)),
+            description(descr),
+            file_attrs(attrs),
+            duration(duration)
+        {
+
+        }
+
         std::shared_ptr<RootView> create_root_view()
         {
             return std::make_shared<RootView>();
@@ -23,12 +35,12 @@ namespace spotifar
             return std::make_shared<PlaylistsView>();
         }
 
-        std::shared_ptr<ArtistView> create_artist_view(const std::string& artist_id)
+        std::shared_ptr<ArtistView> create_artist_view(const std::string &artist_id)
         {
             return std::make_shared<ArtistView>(artist_id);
         }
 
-        std::shared_ptr<AlbumView> create_album_view(const std::string& album_id, const std::string& artist_id)
+        std::shared_ptr<AlbumView> create_album_view(const std::string &album_id, const std::string &artist_id)
         {
             return std::make_shared<AlbumView>(album_id, artist_id);
         }
@@ -49,26 +61,28 @@ namespace spotifar
         {
         }
 
-        View::Items RootView::get_items(Api& api) const
+        View::Items RootView::get_items(Api &api) const
         {
             Items result =
             {
                 {
                     ARTISTS_VIEW_ID,
                     get_msg(MPanelArtistsItemLabel),
-                    get_msg(MPanelArtistsItemDescr)
+                    get_msg(MPanelArtistsItemDescr),
+                    TMP_FOLDER_ITEM_ATTRS,
                 },
                 {
                     PLAYLIST_VIEW_ID,
                     get_msg(MPanelPlaylistsItemLabel),
                     get_msg(MPanelPlaylistsItemDescr),
+                    TMP_FOLDER_ITEM_ATTRS,
                 }
             };
 
             return result;
         }
 
-        std::shared_ptr<View> RootView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> RootView::select_item(Api &api, const ItemFarUserData *data)
         {
             if (data->id == ARTISTS_VIEW_ID)
                 return create_artists_view();
@@ -84,16 +98,16 @@ namespace spotifar
         {
         }
 
-        View::Items ArtistsView::get_items(Api& api) const
+        View::Items ArtistsView::get_items(Api &api) const
         {
             // TODO: tmp code
             Items result;
             for (auto& [id, a]: api.get_artist())
-                result.push_back({id, a.name, L""});
+                result.push_back({id, a.name, L"", ARTIST_ITEM_ATTRS});
             return result;
         }
 
-        std::shared_ptr<View> ArtistsView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> ArtistsView::select_item(Api &api, const ItemFarUserData *data)
         {
             if (data == nullptr)
                 return create_root_view();
@@ -108,40 +122,46 @@ namespace spotifar
 
         View::Items ArtistView::get_items(Api& api) const
         {
-            // TODO: tmp code
+            // TODO: split albums and singles into separate directoriess
             Items result;
             for (auto& [id, a]: api.get_albums(artist_id))
-                result.push_back({id, a.name, L""});
+            {
+                std::wstring album_name = std::format(L"[{}] {}", utils::to_wstring(a.release_year), a.name);
+                if (a.is_single())
+                    album_name += L" [EP]";
+                
+                result.push_back({id, album_name, L"", ALBUM_ITEM_ATTRS});
+            }
             return result;	
         }
 
-        std::shared_ptr<View> ArtistView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> ArtistView::select_item(Api &api, const ItemFarUserData *data)
         {
             if (data == nullptr)
                 return create_artists_view();
             return create_album_view(data->id, artist_id);
         }
         
-        AlbumView::AlbumView(const std::string& album_id, const std::string& artist_id):
+        AlbumView::AlbumView(const std::string &album_id, const std::string &artist_id):
             View(get_msg(MPanelAlbumItemLabel)),
             album_id(album_id),
             artist_id(artist_id)
         {
         }
 
-        View::Items AlbumView::get_items(Api& api) const
+        View::Items AlbumView::get_items(Api &api) const
         {
             // TODO: tmp code
             Items result;
-            for (auto& [id, a]: api.get_tracks(album_id))
+            for (auto& [id, track]: api.get_tracks(album_id))
             {
-                std::wstring track_user_name = std::format(L"{:02}. {}", a.track_number, a.name);
-                result.push_back({id, track_user_name, L""});
+                std::wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
+                result.push_back({id, track_name, L"", TRACK_ITEM_ATTRS, track.duration});
             }
-            return result;	
+            return result;
         }
 
-        std::shared_ptr<View> AlbumView::select_item(Api& api, const ItemFarUserData* data)
+        std::shared_ptr<View> AlbumView::select_item(Api &api, const ItemFarUserData *data)
         {
             if (data == nullptr)
                 return create_artist_view(artist_id);
@@ -164,12 +184,14 @@ namespace spotifar
                 {
                     "playlist1",
                     L"Playlist1",
-                    L"Playlist1"
+                    L"Playlist1",
+                    PLAYLIST_ITEM_ATTRS,
                 },
                 {
                     "playlist2",
                     L"Playlist2",
-                    L"Playlist2"
+                    L"Playlist2",
+                    PLAYLIST_ITEM_ATTRS,
                 }
             };
             return result;	

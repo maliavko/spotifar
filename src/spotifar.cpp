@@ -77,12 +77,14 @@ namespace spotifar
 
 	void WINAPI GetOpenPanelInfoW(OpenPanelInfo* info)
 	{
+		// https://api.farmanager.com/ru/structures/openpanelinfo.html
 		auto& plugin = *static_cast<Plugin*>(info->hPanel);
 		plugin.update_panel_info(info);
 	}
 
 	intptr_t WINAPI GetFindDataW(GetFindDataInfo* info)
 	{
+		// https://api.farmanager.com/ru/structures/getfinddatainfo.html
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
 		

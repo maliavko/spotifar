@@ -66,7 +66,6 @@ namespace spotifar
         Api::Api(const string &client_id, const string &client_secret, int port,
                 const string &refresh_token):
             endpoint(std::make_unique<Client>(SPOTIFY_API_URL)),
-            observers_count(0),
             port(port),
             client_id(client_id),
             client_secret(client_secret),
@@ -104,8 +103,8 @@ namespace spotifar
         {
             shutdown_sync_worker();
 
-            ObserverManager::clear<ApiProtocol>();
-            observers_count = 0;
+            ObserverManager::clear<ApiObserver>();
+            active_observers.clear();
         }
         
         void Api::start_playback(const std::string &album_id, const std::string &track_id)
@@ -124,7 +123,7 @@ namespace spotifar
             auto r = endpoint->Put(httplib::append_query_params(
                 "/v1/me/player/play", params), o.dump(), "application/json");
             
-            ObserverManager::notify(&ApiProtocol::on_track_changed, album_id, track_id);
+            ObserverManager::notify(&ApiObserver::on_track_changed, album_id, track_id);
         }
         
         void Api::skip_to_next()
@@ -200,7 +199,7 @@ namespace spotifar
                 json data = json::parse(r->body);
                 for (json& aj : data["items"])
                 {
-                    auto a = aj.get<Album>();
+                    auto a = aj.get<SimplifiedAlbum>();
                     albums[a.id] = a;
                 }
 
@@ -269,7 +268,6 @@ namespace spotifar
                     artists[a.id] = a;
                 }
                 after = data["cursors"]["after"];
-                break; // TODO: remove, used for debugging
             }
             while (!after.is_null());
 
@@ -425,7 +423,7 @@ namespace spotifar
                         // TODO: handler errors
                         authenticate();
 
-                        if (observers_count)
+                        if (active_observers.size())
                             resync_caches();
 
                         // for the player to show track time ticking well, each frame starts as precise
@@ -443,7 +441,7 @@ namespace spotifar
                     exit_msg = ex.what();
                 }
                 
-                ObserverManager::notify(&ApiProtocol::on_playback_sync_finished, exit_msg);
+                ObserverManager::notify(&ApiObserver::on_playback_sync_finished, exit_msg);
             });
 
             is_worker_listening = true;
@@ -461,16 +459,21 @@ namespace spotifar
             logger->info("An API sync worker has been stopped");
         }
     
-        void Api::start_listening(ApiProtocol *observer)
+        void Api::start_listening(ApiObserver *o, bool is_active)
         {
-            ObserverManager::subscribe<ApiProtocol>(observer);
-            observers_count++;
+            ObserverManager::subscribe<ApiObserver>(o);
+
+            if (is_active)
+                active_observers.insert(o);
         }
 
-        void Api::stop_listening(ApiProtocol *observer)
+        void Api::stop_listening(ApiObserver *o)
         {
-            observers_count--;
-            ObserverManager::unsubscribe<ApiProtocol>(observer);
+            auto it = active_observers.find(o);
+            if (it != active_observers.end())
+                active_observers.erase(it);
+            
+            ObserverManager::unsubscribe<ApiObserver>(o);
         }
 
         void Api::resync_caches()
@@ -485,14 +488,14 @@ namespace spotifar
             if (has_devices_changed)
             {
                 devices->assign(new_devices.begin(), new_devices.end());
-                ObserverManager::notify(&ApiProtocol::on_devices_changed, *devices);
+                ObserverManager::notify(&ApiObserver::on_devices_changed, *devices);
             }
     
             // TODO: make a diff and invoke the updates in particular,
             // note: after executing some command like play or set volume the diff can 
             // go to UI right away, to avoid desync artefacts
             auto state = get_playback_state();
-            ObserverManager::notify(&ApiProtocol::on_playback_updated, state);
+            ObserverManager::notify(&ApiObserver::on_playback_updated, state);
         }
         
         std::string Api::get_auth_callback_url() const

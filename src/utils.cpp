@@ -82,6 +82,12 @@ namespace spotifar
 			return std::string(ws.begin(), ws.end());
 		}
 
+		std::wstring strip_invalid_filename_chars(const std::wstring& filename)
+		{
+			static auto r = std::wregex(L"[\?\\\\/:*<>|]");
+			return std::regex_replace(filename, r, L"_");
+		}
+
 		void init_logging()
 		{
 			// TODO: perhaps the plugin folder is not the best for storing logs, clarify with community
@@ -132,7 +138,6 @@ namespace spotifar
 		{
 			config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
 		}
-
 
 		intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message)
 		{

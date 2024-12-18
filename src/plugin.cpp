@@ -13,12 +13,17 @@ namespace spotifar
         panel(std::make_unique<ui::Panel>(api)),
         player(std::make_unique<ui::PlayerDialog>(api))
 	{
+        // TODO: what if not initialized?
 		if (api.init())
+        {
             panel->gotoRootMenu();
+            api.start_listening(this, false);
+        }
 	}
 
 	Plugin::~Plugin()
 	{
+        api.stop_listening(this);
 		config::set_option(cfg.SpotifyRefreshToken, api.get_refresh_token());
 
         panel = nullptr;
@@ -55,5 +60,10 @@ namespace spotifar
     intptr_t Plugin::show_player()
     {
         return player->show();
+    }
+
+    void Plugin::on_track_changed(const std::string &album_id, const std::string &track_id)
+    {
+        show_player();
     }
 }

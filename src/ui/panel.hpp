@@ -2,6 +2,7 @@
 #define PANEL_HPP_A9BFB4E5_8B2C_4800_A7C3_11571828163B
 #pragma once
 
+#include "spotify/api.hpp"
 #include "ui/views.hpp"
 
 namespace spotifar

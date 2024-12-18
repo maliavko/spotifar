@@ -54,6 +54,8 @@ namespace spotifar
 		/// stuff will be broken miserably
 		std::string to_string(const std::wstring &ws);
 
+		std::wstring strip_invalid_filename_chars(const std::wstring &filename);
+
 		void init_logging();
 
 		void fini_logging();

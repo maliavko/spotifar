@@ -12,8 +12,7 @@ namespace spotifar
         using spotify::PlaybackState;
         using spotify::Track;
         
-        // TODO: add links to art with redirection to browser
-        class PlayerDialog: public spotify::ApiProtocol
+        class PlayerDialog: public spotify::ApiObserver
         {
         public:
             friend struct DlgEventsSuppressor;
@@ -59,7 +58,7 @@ namespace spotifar
 	        friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
             bool handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void *param);
 
-            void update_track_bar(int track_total_time = 0, int track_played_time = 0);
+            void update_track_bar(size_t track_total_time = 0, size_t track_played_time = 0);
             void update_controls_block(const PlaybackState &state);
             void update_track_info(const std::wstring &artist_name = L"", const std::wstring &track_name = L"");
             void update_devices_list(const DevicesList &devices);

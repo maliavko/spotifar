@@ -10,8 +10,14 @@ refactor
 
 application ideas
 - fair random while playing, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)
-- playlists management via panels in Far
 - global hotkeys?
-- managing playlists via standard Far functions: create folder, move/remove from panel
-- consider a nice progress icon with unicode symbols https://en.wikipedia.org/wiki/Block_Elements
-- ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
+- panels
+    - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
+    - managing playlists via standard Far functions: create folder, move/remove from panel
+    - while an album or playlist is on the panel and player is shown, update a selection of file in accordance to the playing track
+- player UI
+    - to add an artist main genre
+    - to add an album type postfix, e.g. "Album Name [EP]"
+    - to add clickable links to the artist/albums/tracks HTTP pages
+    - to add a label about the playing context: album, playlist etc.
+    - goto artist, album, playlist etc.

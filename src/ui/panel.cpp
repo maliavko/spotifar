@@ -96,22 +96,23 @@ namespace spotifar
         {
             auto items = view->get_items(api);
         
-            auto* NewPanelItem = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
-            if (NewPanelItem)
+            auto* panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
+            if (panel_item)
             {
             	for (size_t idx = 0; idx < items.size(); idx++)
             	{
             		auto& item = items[idx];
                     
-            		memset(&NewPanelItem[idx], 0, sizeof(PluginPanelItem));
-            		NewPanelItem[idx].FileAttributes = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-            		NewPanelItem[idx].FileName = _wcsdup(item.name.c_str());
-            		NewPanelItem[idx].Description = _wcsdup(item.description.c_str());
-            		NewPanelItem[idx].UserData.Data = new ItemFarUserData(item.id);
-            		NewPanelItem[idx].UserData.FreeData = free_user_data;
+            		memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
+            		panel_item[idx].FileAttributes = item.file_attrs;
+                    panel_item[idx].FileSize = item.duration;
+            		panel_item[idx].FileName = _wcsdup(item.name.c_str());
+            		panel_item[idx].Description = _wcsdup(item.description.c_str());
+            		panel_item[idx].UserData.Data = new ItemFarUserData(item.id);
+            		panel_item[idx].UserData.FreeData = free_user_data;
             	}
 
-            	info->PanelItem = NewPanelItem;
+            	info->PanelItem = panel_item;
             	info->ItemsNumber = items.size();
 
             	return TRUE;

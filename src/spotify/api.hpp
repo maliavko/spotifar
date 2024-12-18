@@ -16,7 +16,7 @@ namespace spotifar
         using namespace std::literals;
         using clock = std::chrono::high_resolution_clock;
 
-        class ApiProtocol;
+        class ApiObserver;
         class Api
         {
         public:
@@ -32,8 +32,8 @@ namespace spotifar
             bool init();
             void shutdown();
 
-            void start_listening(ApiProtocol *observer);
-            void stop_listening(ApiProtocol *observer);
+            void start_listening(ApiObserver *o, bool is_active = true);
+            void stop_listening(ApiObserver *o);
             void resync_caches();
 
             inline const string& get_refresh_token() const { return refresh_token; }
@@ -65,7 +65,7 @@ namespace spotifar
         private:
             std::unique_ptr<Client> endpoint;
             std::shared_ptr<spdlog::logger> logger;
-            size_t observers_count;
+            std::unordered_set<ApiObserver*> active_observers;
 
             // cached data
             std::unique_ptr<DevicesList> devices;
@@ -80,7 +80,7 @@ namespace spotifar
             bool is_worker_listening;
         };
         
-        class ApiProtocol: public BaseObserverProtocol
+        class ApiObserver: public BaseObserverProtocol
         {
         public:
             virtual void on_playback_updated(const PlaybackState &state) {};

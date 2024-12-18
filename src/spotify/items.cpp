@@ -9,11 +9,6 @@ namespace spotifar
 			return std::format("SimplifiedArtist(name={}, id={})", utils::to_string(name), id);
 		}
 
-		std::string Album::to_str() const
-		{
-			return std::format("Album(name={}, id={})", utils::to_string(name), id);
-		}
-
 		std::string Device::to_str() const
 		{
 			return std::format("Device(name={}, id={})", utils::to_string(name), id);
@@ -38,11 +33,32 @@ namespace spotifar
 			j.at("popularity").get_to(a.popularity);
 		}
 
-		void from_json(const json &j, Album &t)
+		void from_json(const json &j, SimplifiedAlbum &a)
 		{
-			j.at("id").get_to(t.id);
+			j.at("id").get_to(a.id);
+			j.at("total_tracks").get_to(a.total_tracks);
+			j.at("album_type").get_to(a.album_type);
+			//j.at("album_group").get_to(a.album_group);
+			j.at("release_date").get_to(a.release_date);
 
-			t.name = utils::utf8_decode(j.at("name").get<string>());
+			static auto r = std::regex("[\\d]{4}");	
+			std::smatch match;
+			if (std::regex_search(a.release_date, match, r))
+				a.release_year = match[0];
+			else
+				a.release_year = "----";
+
+			a.name = utils::utf8_decode(j.at("name").get<string>());
+		}
+
+		std::string SimplifiedAlbum::to_str() const
+		{
+			return std::format("SimplifiedAlbum(name={}, id={})", utils::to_string(name), id);
+		}
+
+		void from_json(const json &j, Album &a)
+		{
+			from_json(j, dynamic_cast<SimplifiedAlbum&>(a));
 		}
 
 		void from_json(const json &j, SimplifiedTrack &t)
@@ -50,21 +66,15 @@ namespace spotifar
 			j.at("id").get_to(t.id);
 			j.at("track_number").get_to(t.track_number);
 
+			t.duration = (size_t)j.at("duration_ms").get<int>() / 1000;
 			t.name = utils::utf8_decode(j.at("name").get<string>());
 		}
 		
 		void from_json(const json &j, Track &t)
 		{
 			from_json(j, dynamic_cast<SimplifiedTrack&>(t));
-			try{
 			j.at("album").get_to(t.album);
 			j.at("artists").get_to(t.artists);
-			j.at("duration_ms").get_to(t.duration_ms);
-			} catch (std::exception& e)
-			{
-				auto s = e.what();
-				int i = 0;
-			}
 		}
 
 		void from_json(const json &j, Device &d)
@@ -86,7 +96,7 @@ namespace spotifar
 			j.at("is_playing").get_to(p.is_playing);
 			j.at("actions").get_to(p.permissions);
 
-			p.progress_ms = j.value("progress_ms", 0);
+			p.progress = j.value("progress_ms", 0) / 1000;
 
 			if (j.contains("context") && !j.at("context").is_null())
 			{
