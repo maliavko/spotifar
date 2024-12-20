@@ -25,6 +25,14 @@ namespace spotifar
 
 			a.name = utils::utf8_decode(j.at("name").get<string>());
 		}
+
+		void to_json(json &j, const SimplifiedArtist &p)
+		{
+			j = json{
+				{ "id", p.id },
+				{ "name", utils::utf8_encode(p.name) },
+			};
+		}
 		
 		void from_json(const json &j, Artist &a)
 		{
@@ -51,6 +59,17 @@ namespace spotifar
 			a.name = utils::utf8_decode(j.at("name").get<string>());
 		}
 
+		void to_json(json &j, const SimplifiedAlbum &a)
+		{
+			j = json{
+				{ "id", a.id },
+				{ "total_tracks", a.total_tracks },
+				{ "album_type", a.album_type },
+				{ "release_date", a.release_date },
+				{ "name", utils::utf8_encode(a.name) },
+			};
+		}
+
 		std::string SimplifiedAlbum::to_str() const
 		{
 			return std::format("SimplifiedAlbum(name={}, id={})", utils::to_string(name), id);
@@ -59,6 +78,12 @@ namespace spotifar
 		void from_json(const json &j, Album &a)
 		{
 			from_json(j, dynamic_cast<SimplifiedAlbum&>(a));
+		}
+
+		void to_json(json &j, const Album &a)
+		{
+			to_json(j, dynamic_cast<const SimplifiedAlbum&>(a));
+			//j.update
 		}
 
 		void from_json(const json &j, SimplifiedTrack &t)
@@ -70,11 +95,31 @@ namespace spotifar
 			t.name = utils::utf8_decode(j.at("name").get<string>());
 		}
 		
+		void to_json(json &j, const SimplifiedTrack &t)
+		{
+			j = json{
+				{ "id", t.id },
+				{ "duration_ms", t.duration * 1000 },
+				{ "track_number", t.track_number },
+				{ "name", utils::utf8_encode(t.name) },
+			};
+		}
+		
 		void from_json(const json &j, Track &t)
 		{
 			from_json(j, dynamic_cast<SimplifiedTrack&>(t));
 			j.at("album").get_to(t.album);
 			j.at("artists").get_to(t.artists);
+		}
+		
+		void to_json(json &j, const Track &t)
+		{
+			to_json(j, dynamic_cast<const SimplifiedTrack&>(t));
+
+			j.update({
+				{"album", t.album},
+				{"artists", t.artists},
+			});
 		}
 
 		void from_json(const json &j, Device &d)
@@ -86,6 +131,20 @@ namespace spotifar
 
 			d.volume_percent = j.value("volume_percent", 100);
 			d.name = utils::utf8_decode(j.at("name").get<string>());
+		}
+		
+		void from_json(const json &j, Permissions &p)
+		{
+			p.interrupting_playback = j.value("interrupting_playback", false);
+			p.pausing = j.value("pausing", false);
+			p.resuming = j.value("resuming", false);
+			p.seeking = j.value("seeking", false);
+			p.skipping_next = j.value("skipping_next", false);
+			p.skipping_prev = j.value("skipping_prev", false);
+			p.toggling_repeat_context = j.value("toggling_repeat_context", false);
+			p.toggling_repeat_track = j.value("toggling_repeat_track", false);
+			p.toggling_shuffle = j.value("toggling_shuffle", false);
+			p.trasferring_playback = j.value("trasferring_playback", false);
 		}
 		
 		void from_json(const json &j, PlaybackState &p)
@@ -111,18 +170,29 @@ namespace spotifar
 			}
 		}
 		
-		void from_json(const json &j, Permissions &p)
+		void from_json(const json &j, SimplifiedPlaylist &p)
 		{
-			p.interrupting_playback = j.value("interrupting_playback", false);
-			p.pausing = j.value("pausing", false);
-			p.resuming = j.value("resuming", false);
-			p.seeking = j.value("seeking", false);
-			p.skipping_next = j.value("skipping_next", false);
-			p.skipping_prev = j.value("skipping_prev", false);
-			p.toggling_repeat_context = j.value("toggling_repeat_context", false);
-			p.toggling_repeat_track = j.value("toggling_repeat_track", false);
-			p.toggling_shuffle = j.value("toggling_shuffle", false);
-			p.trasferring_playback = j.value("trasferring_playback", false);
+			j.at("id").get_to(p.id);
+			j.at("tracks").at("total").get_to(p.tracks_total);
+			
+			p.name = utils::utf8_decode(j.at("name").get<string>());
+			p.description = utils::utf8_decode(j.at("description").get<string>());
+		}
+		
+		void from_json(const json &j, HistoryItem &p)
+		{
+			j.at("played_at").get_to(p.played_at);
+			j.at("context").get_to(p.context);
+			j.at("track").get_to(p.track);
+		}
+
+		void to_json(json &j, const HistoryItem &p)
+		{
+			j = json{
+				{"played_at", p.played_at},
+				{"context", p.context},
+				{"track", p.track},
+			};
 		}
 	}
 }

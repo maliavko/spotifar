@@ -14,7 +14,7 @@ namespace spotifar
         using std::wstring;
         using httplib::Client;
         using namespace std::literals;
-        using clock = std::chrono::high_resolution_clock;
+        using clock = std::chrono::system_clock;
 
         class ApiObserver;
         class Api
@@ -35,11 +35,13 @@ namespace spotifar
             void start_listening(ApiObserver *o, bool is_active = true);
             void stop_listening(ApiObserver *o);
             void resync_caches();
+            void resync_recent_history();
 
             inline const string& get_refresh_token() const { return refresh_token; }
             inline const DevicesList& get_available_devices() { return *devices; }
-            ArtistsCollection get_artist();
+            ArtistsCollection get_artists();
             AlbumsCollection get_albums(const string &artist_id);
+            PlaylistsCollection get_playlists();
             std::map<string, SimplifiedTrack> get_tracks(const std::string &album_id);
             PlaybackState get_playback_state();
 
@@ -69,6 +71,8 @@ namespace spotifar
 
             // cached data
             std::unique_ptr<DevicesList> devices;
+            std::chrono::time_point<clock> recently_played_last_synced;
+            std::unique_ptr<HistoryList> recently_played;
 
             string client_id, client_secret;
             int port;
@@ -84,7 +88,7 @@ namespace spotifar
         {
         public:
             virtual void on_playback_updated(const PlaybackState &state) {};
-            virtual void on_playback_sync_finished(const std::string &err_msg = "") {};
+            virtual void on_playback_sync_finished(const string &err_msg = "") {};
             virtual void on_devices_changed(const DevicesList &devices) {};
             virtual void on_track_changed(const string &album_id, const string &track_id) {};
         };

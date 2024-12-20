@@ -28,6 +28,7 @@ namespace spotifar
 			
 			virtual std::string to_str() const;
 			friend void from_json(const json &j, SimplifiedArtist &a);
+			friend void to_json(json &j, const SimplifiedArtist &p);
 		};
 
 		struct Artist: public SimplifiedArtist
@@ -55,11 +56,13 @@ namespace spotifar
 			virtual std::string to_str() const;
 			inline bool is_single() const { return album_type == SINGLE; }
 			friend void from_json(const json &j, SimplifiedAlbum &a);
+			friend void to_json(json &j, const SimplifiedAlbum &p);
 		};
 
 		struct Album: public SimplifiedAlbum
 		{
 			friend void from_json(const json &j, Album &t);
+			friend void to_json(json &j, const Album &p);
 		};
 
 		struct SimplifiedTrack
@@ -70,6 +73,7 @@ namespace spotifar
 			size_t track_number;  // TODO: track number could be duplicated for different discs
 
 			friend void from_json(const json &j, SimplifiedTrack &t);
+			friend void to_json(json &j, const SimplifiedTrack &t);
 		};
 
 		struct Track: public SimplifiedTrack
@@ -78,6 +82,7 @@ namespace spotifar
 			std::vector<SimplifiedArtist> artists;
 
 			friend void from_json(const json &j, Track &t);
+			friend void to_json(json &j, const Track &p);
 		};
 
 		struct Permissions
@@ -104,8 +109,9 @@ namespace spotifar
 			inline static const string SHOW = "show";
 
 			string type;
+			string uri;
 			
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Context, type);
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Context, type, uri);
 		};
 
 		struct Device
@@ -142,9 +148,31 @@ namespace spotifar
 			friend void from_json(const json &j, PlaybackState &p);
 		};
 
+		struct SimplifiedPlaylist
+		{
+			string id;
+			wstring name;
+			wstring description;
+			size_t tracks_total;
+
+			friend void from_json(const json &j, SimplifiedPlaylist &p);
+		};
+		
+		struct HistoryItem
+		{
+			Track track;
+			Context context;
+			string played_at;
+			
+			friend void from_json(const json &j, HistoryItem &p);
+			friend void to_json(json &j, const HistoryItem &p);
+		};
+		
 		typedef map<string, SimplifiedAlbum> AlbumsCollection;
 		typedef map<string, Artist> ArtistsCollection;
+		typedef map<string, SimplifiedPlaylist> PlaylistsCollection;
 		typedef vector<Device> DevicesList;
+		typedef vector<HistoryItem> HistoryList;
 	}
 }
 

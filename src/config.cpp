@@ -14,11 +14,13 @@ namespace spotifar
 		FarStandardFunctions FSF;
 		Options Opt;
 
-		static const wchar_t* StrAddToDisksMenu = L"AddToDisksMenu";
-		static const wchar_t* StrSpotifyClientID = L"SpotifyClientID";
-		static const wchar_t* StrSpotifyClientSecret = L"SpotifyClientSecret";
-		static const wchar_t* StrSpotifyRefreshToken = L"SpotifyRefreshToken";
-		static const wchar_t* StrLocalhostServicePort = L"LocalhostServicePort";
+		static const wchar_t* add_to_disk_menu_opt = L"AddToDisksMenu";
+		static const wchar_t* spotify_client_id_opt = L"SpotifyClientID";
+		static const wchar_t* spotify_client_secret_opt = L"SpotifyClientSecret";
+		static const wchar_t* spotify_refresh_token_opt = L"SpotifyRefreshToken";
+		static const wchar_t* localhost_service_port_opt = L"LocalhostServicePort";
+		static const wchar_t* history_opt = L"RecentHistory";
+		static const wchar_t* history_timestamp_opt = L"RecentHistoryTimestamp";
 
 		void Options::read(const struct PluginStartupInfo* info)
 		{
@@ -28,11 +30,14 @@ namespace spotifar
 
 			PluginSettings s(MainGuid, PsInfo.SettingsControl);
 
-			Opt.AddToDisksMenu = s.Get(0, StrAddToDisksMenu, true);
-			lstrcpy(Opt.SpotifyClientID, s.Get(0, StrSpotifyClientID, L""));
-			lstrcpy(Opt.SpotifyClientSecret, s.Get(0, StrSpotifyClientSecret, L""));
-			lstrcpy(Opt.SpotifyRefreshToken, s.Get(0, StrSpotifyRefreshToken, L""));
-			Opt.LocalhostServicePort = s.Get(0, StrLocalhostServicePort, int(5050));
+			Opt.AddToDisksMenu = s.Get(0, add_to_disk_menu_opt, true);
+			lstrcpy(Opt.SpotifyClientID, s.Get(0, spotify_client_id_opt, L""));
+			lstrcpy(Opt.SpotifyClientSecret, s.Get(0, spotify_client_secret_opt, L""));
+			lstrcpy(Opt.SpotifyRefreshToken, s.Get(0, spotify_refresh_token_opt, L""));
+			Opt.LocalhostServicePort = s.Get(0, localhost_service_port_opt, int(5050));
+			
+			Opt.RecentHistory = utils::to_string(s.Get(0, history_opt, L""));
+			Opt.RecentHistoryTimestamp = s.Get(0, history_timestamp_opt, (long long)0);
 
 			Opt.PluginStartupFolder = utils::get_plugin_launch_folder(info);
 		}
@@ -41,11 +46,14 @@ namespace spotifar
 		{
 			PluginSettings s(MainGuid, PsInfo.SettingsControl);
 
-			s.Set(0, StrAddToDisksMenu, Opt.AddToDisksMenu);
-			s.Set(0, StrSpotifyClientID, Opt.SpotifyClientID);
-			s.Set(0, StrSpotifyClientSecret, Opt.SpotifyClientSecret);
-			s.Set(0, StrSpotifyRefreshToken, Opt.SpotifyRefreshToken);
-			s.Set(0, StrLocalhostServicePort, Opt.LocalhostServicePort);
+			s.Set(0, add_to_disk_menu_opt, Opt.AddToDisksMenu);
+			s.Set(0, spotify_client_id_opt, Opt.SpotifyClientID);
+			s.Set(0, spotify_client_secret_opt, Opt.SpotifyClientSecret);
+			s.Set(0, spotify_refresh_token_opt, Opt.SpotifyRefreshToken);
+			s.Set(0, localhost_service_port_opt, Opt.LocalhostServicePort);
+			
+			s.Set(0, history_opt, utils::to_wstring(Opt.RecentHistory).c_str());
+			s.Set(0, history_timestamp_opt, Opt.RecentHistoryTimestamp);
 		}
 
 		const wchar_t* get_msg(int msg_id)

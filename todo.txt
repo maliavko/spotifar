@@ -15,6 +15,7 @@ application ideas
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
     - managing playlists via standard Far functions: create folder, move/remove from panel
     - while an album or playlist is on the panel and player is shown, update a selection of file in accordance to the playing track
+    - F3 on folders
 - player UI
     - to add an artist main genre
     - to add an album type postfix, e.g. "Album Name [EP]"

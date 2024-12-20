@@ -13,6 +13,7 @@ namespace spotifar
 		extern PluginStartupInfo PsInfo;
 		extern FarStandardFunctions FSF;
 
+		// TODO: consider converting into something more OOP like
 		extern struct Options
 		{
 			int AddToDisksMenu;
@@ -20,6 +21,9 @@ namespace spotifar
 			wchar_t SpotifyClientSecret[64];
 			wchar_t SpotifyRefreshToken[256];
 			int LocalhostServicePort;
+
+			std::string RecentHistory;
+			long long RecentHistoryTimestamp;
 
 			std::wstring PluginStartupFolder;
 

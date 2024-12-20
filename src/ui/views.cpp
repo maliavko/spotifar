@@ -102,7 +102,7 @@ namespace spotifar
         {
             // TODO: tmp code
             Items result;
-            for (auto& [id, a]: api.get_artist())
+            for (auto& [id, a]: api.get_artists())
                 result.push_back({id, a.name, L"", ARTIST_ITEM_ATTRS});
             return result;
         }
@@ -179,22 +179,10 @@ namespace spotifar
         View::Items PlaylistsView::get_items(Api& api) const
         {
             // TODO: tmp code
-            Items result =
-            {
-                {
-                    "playlist1",
-                    L"Playlist1",
-                    L"Playlist1",
-                    PLAYLIST_ITEM_ATTRS,
-                },
-                {
-                    "playlist2",
-                    L"Playlist2",
-                    L"Playlist2",
-                    PLAYLIST_ITEM_ATTRS,
-                }
-            };
-            return result;	
+            Items result;
+            for (auto& [id, a]: api.get_playlists())
+                result.push_back({id, a.name, L"", ARTIST_ITEM_ATTRS});
+            return result;
         }
 
         std::shared_ptr<View> PlaylistsView::select_item(Api& api, const ItemFarUserData* data)

@@ -8,6 +8,7 @@ namespace spotifar
     {
         using json = nlohmann::json;
         using namespace httplib;
+        using config::Opt;
 
         // TODO: reconsider these functions
         std::string dump_headers(const Headers &headers) {
@@ -48,17 +49,20 @@ namespace spotifar
 
         static string scope =
             "streaming "
+            "playlist-read-private "
+            "playlist-read-collaborative "
+            "playlist-modify-private "
+            "playlist-modify-public "
             "user-read-email "
             "user-read-private "
             "user-read-playback-state "
-            "user-modify-playback-state "
+            "user-read-recently-played "
             "user-read-currently-playing "
+            "user-modify-playback-state "
             "user-follow-read "
             "user-follow-modify "
             "user-library-read "
-            "user-library-modify "
-            "playlist-read-private "
-            "playlist-read-collaborative ";
+            "user-library-modify ";
 
         const string Api::SPOTIFY_AUTH_URL = "https://accounts.spotify.com";
         const string Api::SPOTIFY_API_URL = "https://api.spotify.com";
@@ -70,9 +74,11 @@ namespace spotifar
             client_id(client_id),
             client_secret(client_secret),
             refresh_token(refresh_token),
+            recently_played_last_synced({}),
             access_token_expires_at({}),
             is_worker_listening(false),
             devices(std::make_unique<DevicesList>()),
+            recently_played(std::make_unique<HistoryList>()),
             logger(spdlog::get(utils::LOGGER_API))
         {
             endpoint->set_logger([this](const Request &req, const Response &res)
@@ -89,18 +95,44 @@ namespace spotifar
         Api::~Api()
         {
             devices = nullptr;
+            recently_played = nullptr;
             logger = nullptr;
             endpoint = nullptr;
         }
 
         bool Api::init()
         {
+            if (Opt.RecentHistoryTimestamp)
+                recently_played_last_synced = clock::time_point{ clock::duration(Opt.RecentHistoryTimestamp) };
+
+            if (!Opt.RecentHistory.empty())
+            {
+                auto s = Opt.RecentHistory;
+                try
+                {
+                    json::parse(Opt.RecentHistory).get_to(*recently_played);
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << e.what() << '\n';
+                    Opt.RecentHistory = "";
+                    Opt.write();
+                }
+                
+                
+            }
+
             launch_sync_worker();
+
             return true;
         }
         
         void Api::shutdown()
         {
+            Opt.RecentHistoryTimestamp = recently_played_last_synced.time_since_epoch().count();
+            std::string s = json(*recently_played).dump();
+            Opt.RecentHistory = s;
+            
             shutdown_sync_worker();
 
             ObserverManager::clear<ApiObserver>();
@@ -213,6 +245,38 @@ namespace spotifar
             return albums;
         }
         
+        PlaylistsCollection Api::get_playlists()
+        {
+            PlaylistsCollection playlists;
+
+            httplib::Params params = {
+                { "limit", "50" },
+                { "offset", "0" },
+            };
+
+            std::string request_url = httplib::append_query_params("/v1/me/playlists", params);
+
+            do
+            {
+                auto r = endpoint->Get(request_url);
+
+                json data = json::parse(r->body);
+                for (json& aj : data["items"])
+                {
+                    auto p = aj.get<SimplifiedPlaylist>();
+                    playlists[p.id] = p;
+                }
+
+                json next = data["next"];
+                if (next.is_null())
+                    break;
+                
+                next.get_to(request_url);
+            } while (1);
+
+            return playlists;
+        }
+        
         std::map<string, SimplifiedTrack> Api::get_tracks(const std::string &album_id)
         {
             std::map<string, SimplifiedTrack> tracks;
@@ -246,7 +310,7 @@ namespace spotifar
             return tracks;
         }
         
-        ArtistsCollection Api::get_artist()
+        ArtistsCollection Api::get_artists()
         {
             json after = "";
             ArtistsCollection artists;
@@ -423,6 +487,10 @@ namespace spotifar
                         // TODO: handler errors
                         authenticate();
 
+                        // TODO: errors in this function raises on_playback_sync_finished, which is not valid
+                        // for this situation, come up with some different errors handling
+                        resync_recent_history();
+
                         if (active_observers.size())
                             resync_caches();
 
@@ -459,6 +527,7 @@ namespace spotifar
             logger->info("An API sync worker has been stopped");
         }
     
+        /// @param is_active is given observer should force API to sync up with the server
         void Api::start_listening(ApiObserver *o, bool is_active)
         {
             ObserverManager::subscribe<ApiObserver>(o);
@@ -496,6 +565,27 @@ namespace spotifar
             // go to UI right away, to avoid desync artefacts
             auto state = get_playback_state();
             ObserverManager::notify(&ApiObserver::on_playback_updated, state);
+        }
+
+        void Api::resync_recent_history()
+        {
+            if (clock::now() < recently_played_last_synced + std::chrono::seconds(25))
+                return;
+            
+            httplib::Params params{
+                {"limit", "50"}
+            };
+
+            if (Opt.RecentHistoryTimestamp)
+                params.insert({"after", std::to_string(duration_cast<std::chrono::milliseconds>(recently_played_last_synced.time_since_epoch()).count())});
+
+            std::string request_url = httplib::append_query_params("/v1/me/player/recently-played", params);
+            auto r = endpoint->Get(request_url);
+
+            auto history = json::parse(r->body).at("items").get<HistoryList>();
+            recently_played->insert(recently_played->end(), history.begin(), history.end());
+
+            recently_played_last_synced = clock::now();
         }
         
         std::string Api::get_auth_callback_url() const
