@@ -38,7 +38,7 @@ namespace spotifar
 
             // filling the panel top title label
             static wchar_t title[MAX_PATH];
-            config::FSF.sprintf(title, L" %s: %s", config::get_msg(MPluginUserName), info->CurDir);
+            config::FSF.sprintf(title, L" %s: %s", utils::far3::get_msg(MPluginUserName), info->CurDir);
             info->PanelTitle = title;
 
             // updating the labels of command key bar in the down of the screen
@@ -81,7 +81,7 @@ namespace spotifar
 
             	if (fkeys[i + 2])
             	{
-            		kbl[j].Text = kbl[j].LongText = config::get_msg(fkeys[i + 2]);
+            		kbl[j].Text = kbl[j].LongText = utils::far3::get_msg(fkeys[i + 2]);
             	}
             	else
             	{

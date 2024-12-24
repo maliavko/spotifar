@@ -9,7 +9,7 @@
 
 namespace spotifar
 {
-    class Plugin: public spotify::ApiObserver
+    class Plugin//: public spotify::ApiObserver
     {
     public:
         Plugin();
@@ -23,11 +23,11 @@ namespace spotifar
         intptr_t show_player();
         intptr_t hide_player();
     protected:
-        virtual void on_track_changed(const std::string &album_id, const std::string &track_id);
+        //virtual void on_track_changed(const std::string &album_id, const std::string &track_id);
     private:
         spotify::Api api;
-        std::unique_ptr<ui::Panel> panel;
-        std::unique_ptr<ui::PlayerDialog> player;
+        ui::Panel panel;
+        ui::PlayerDialog player;
     };
 }
 

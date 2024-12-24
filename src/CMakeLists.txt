@@ -13,7 +13,11 @@ add_library(${PROJECT_NAME} SHARED
 	utils.cpp
 	config.cpp
 	spotify/items.cpp
+	spotify/auth.cpp
+	spotify/history.cpp
 	spotify/api.cpp
+	spotify/playback.cpp
+	spotify/devices.cpp
 	ui/panel.cpp
 	ui/views.cpp
 	ui/player_dialog.cpp

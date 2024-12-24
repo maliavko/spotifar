@@ -12,7 +12,9 @@ namespace spotifar
         using spotify::PlaybackState;
         using spotify::Track;
         
-        class PlayerDialog: public spotify::ApiObserver
+        class PlayerDialog:
+            public spotify::PlaybackObserver,
+            public spotify::BasicApiObserver
         {
         public:
             friend struct DlgEventsSuppressor;
@@ -92,7 +94,7 @@ namespace spotifar
             spotify::Api& api;
 
             typedef bool (PlayerDialog::*ControlHandler)(void*);
-            static const std::map<DialogControls, std::map<FARMESSAGE, ControlHandler> > dlg_event_handlers;
+            static const std::map<DialogControls, std::map<FARMESSAGE, ControlHandler>> dlg_event_handlers;
         };
     }
 }

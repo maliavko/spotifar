@@ -2,39 +2,65 @@
 #define CONFIG_HPP_B490198E_23A2_4583_A1B8_80FA1450E83B
 #pragma once
 
+#include <string>
 #include <plugin.hpp>
 #include <PluginSettings.hpp>
-#include <string>
 
 namespace spotifar
 {
 	namespace config
 	{
+		using std::wstring;
+
 		extern PluginStartupInfo PsInfo;
 		extern FarStandardFunctions FSF;
 
-		// TODO: consider converting into something more OOP like
-		extern struct Options
+		struct Settings
 		{
-			int AddToDisksMenu;
-			wchar_t SpotifyClientID[64];
-			wchar_t SpotifyClientSecret[64];
-			wchar_t SpotifyRefreshToken[256];
-			int LocalhostServicePort;
+			bool add_to_disk_menu;
+			int localhost_service_port;
+			std::wstring spotify_client_id, spotify_client_secret;
+			std::wstring plugin_startup_folder;
+		};
 
-			std::string RecentHistory;
-			long long RecentHistoryTimestamp;
+		class SettingsContext
+		{
+		public:
+			SettingsContext();
 
-			std::wstring PluginStartupFolder;
+			bool get_bool(const wstring &name, bool def);
+			std::int64_t get_int64(const wstring &name, std::int64_t def);
+			int get_int(const wstring &name, int def);
+			const wstring get_wstr(const wstring &name, const wstring &def);
+			std::string get_str(const wstring &name, const std::string &def);
+			
+			void set_bool(const wstring &name, bool value);
+			void set_int64(const wstring &name, std::int64_t value);
+			void set_int(const wstring &name, int value);
+			void set_wstr(const wstring &name, const std::wstring &value);
+			void set_str(const wstring &name, const std::string &value);
 
-			static void read(const struct PluginStartupInfo* info);
-			static void write();
-		} Opt;
+			bool delete_value(const wstring& name);
 
-		const wchar_t* get_msg(int msg_id);
-		void set_option(wchar_t* opt, const std::string& s);
+			Settings& get_settings();
+		private:
+			PluginSettings ps;
+		};
 
-		intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
+		std::shared_ptr<SettingsContext> lock_settings();
+
+		void read(const PluginStartupInfo *info);
+		void write();
+		
+		bool is_added_to_disk_menu();
+
+		std::string get_client_id();
+
+		std::string get_client_secret();
+
+		int get_localhost_port();
+
+		const std::wstring& get_plugin_launch_folder();
 	}
 }
 

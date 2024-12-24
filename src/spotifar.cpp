@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "version.hpp"
 #include "guid.hpp"
 #include "config.hpp"
@@ -10,9 +9,11 @@
 
 namespace spotifar
 {
-	void WINAPI GetGlobalInfoW(struct GlobalInfo* info)
+	using utils::far3::get_msg;
+
+	void WINAPI GetGlobalInfoW(GlobalInfo *info)
 	{
-		info->StructSize = sizeof(struct GlobalInfo);
+		info->StructSize = sizeof(GlobalInfo);
 		info->MinFarVersion = MAKEFARVERSION(3, 0, 0, 4400, VS_RELEASE);
 		info->Version = PLUGIN_VERSION;
 		info->Guid = MainGuid;
@@ -21,53 +22,53 @@ namespace spotifar
 		info->Author = PLUGIN_AUTHOR;
 	}
 
-	void WINAPI SetStartupInfoW(const struct PluginStartupInfo* info)
-	{
-		config::Opt.read(info);
-	}
-
-	void WINAPI GetPluginInfoW(struct PluginInfo* info)
+	void WINAPI GetPluginInfoW(PluginInfo *info)
 	{
 		info->StructSize = sizeof(*info);
 		info->Flags = 0;
 
-		if (config::Opt.AddToDisksMenu)
+		if (config::is_added_to_disk_menu())
 		{
-			static const wchar_t* DiskMenuStrings[1];
-			DiskMenuStrings[0] = config::get_msg(MPluginUserName);
+			static const wchar_t *DiskMenuStrings[1];
+			DiskMenuStrings[0] = get_msg(MPluginUserName);
 			info->DiskMenu.Guids = &MenuGuid;
 			info->DiskMenu.Strings = DiskMenuStrings;
 			info->DiskMenu.Count = std::size(DiskMenuStrings);
 		}
 
-		if (TRUE)  // add to plugins menu
+		if (TRUE) // add to plugins menu
 		{
-			static const wchar_t* PluginMenuStrings[1];
-			PluginMenuStrings[0] = config::get_msg(MPluginUserName);
+			static const wchar_t *PluginMenuStrings[1];
+			PluginMenuStrings[0] = get_msg(MPluginUserName);
 			info->PluginMenu.Guids = &MenuGuid;
 			info->PluginMenu.Strings = PluginMenuStrings;
 			info->PluginMenu.Count = std::size(PluginMenuStrings);
 		}
 
 		// add to plugins configuration menu
-		static const wchar_t* PluginCfgStrings[1];
-		PluginCfgStrings[0] = config::get_msg(MPluginUserName);
+		static const wchar_t *PluginCfgStrings[1];
+		PluginCfgStrings[0] = get_msg(MPluginUserName);
 		info->PluginConfig.Guids = &MenuGuid;
 		info->PluginConfig.Strings = PluginCfgStrings;
 		info->PluginConfig.Count = std::size(PluginCfgStrings);
 	}
 
-	HANDLE WINAPI OpenW(const struct OpenInfo* info)
+	void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
+	{
+		config::read(info);
+	}
+
+	HANDLE WINAPI OpenW(const OpenInfo *info)
 	{
 		try 
 		{
-			// note: logger uses config data, which is being initialized above
+			// note: logger uses config data, which is being initialized before
 			utils::init_logging();
 		}
-		catch (const spdlog::spdlog_ex& ex)
+		catch (const spdlog::spdlog_ex &ex)
 		{
-			auto err_msg = utils::utf8_decode(ex.what());
-			utils::show_far_error_dlg(MFarMessageErrorLogInit, err_msg);
+			utils::far3::show_far_error_dlg(
+				MFarMessageErrorLogInit, utils::utf8_decode(ex.what()));
 
 			return nullptr;
 		}
@@ -75,14 +76,14 @@ namespace spotifar
 		return std::make_unique<Plugin>().release();
 	}
 
-	void WINAPI GetOpenPanelInfoW(OpenPanelInfo* info)
+	void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 	{
 		// https://api.farmanager.com/ru/structures/openpanelinfo.html
 		auto& plugin = *static_cast<Plugin*>(info->hPanel);
 		plugin.update_panel_info(info);
 	}
 
-	intptr_t WINAPI GetFindDataW(GetFindDataInfo* info)
+	intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 	{
 		// https://api.farmanager.com/ru/structures/getfinddatainfo.html
 		if (info->OpMode & OPM_FIND)
@@ -91,12 +92,12 @@ namespace spotifar
 		return static_cast<Plugin*>(info->hPanel)->update_panel_items(info);
 	}
 
-	void WINAPI FreeFindDataW(const FreeFindDataInfo* info)
+	void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 	{
 		return static_cast<Plugin*>(info->hPanel)->free_panel_items(info);
 	}
 
-	intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo* info)
+	intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 	{
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
@@ -104,20 +105,20 @@ namespace spotifar
 		return static_cast<Plugin*>(info->hPanel)->select_item(info);
 	}
 
-	intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo* info)
+	intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
 	{
 		return TRUE;
 	}
 
 	// https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
-	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo* info)
+	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 	{
 		auto& plugin = *static_cast<Plugin*>(info->hPanel);
 
 		auto& key_event = info->Rec.Event.KeyEvent;
 		if (key_event.bKeyDown)
 		{
-			int key = utils::input_record_to_combined_key(key_event);
+			int key = utils::far3::input_record_to_combined_key(key_event);
 			switch (key)
 			{
 				case VK_F4:
@@ -130,7 +131,7 @@ namespace spotifar
 		return FALSE;
 	}
 
-	intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo* info)
+	intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 	{
 		auto& plugin = *static_cast<Plugin*>(info->hPanel);
 		
@@ -142,7 +143,7 @@ namespace spotifar
 		return FALSE;
 	}
 
-	intptr_t WINAPI ConfigureW(const ConfigureInfo* info)
+	intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 	{
 		return ui::ConfigDialog().show();
 	}
@@ -152,11 +153,11 @@ namespace spotifar
 		// after auto-variable is destroyed, so is the last ref to plugin
 		std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
 
-		config::Opt.write();
+		config::write();
 		utils::fini_logging();
 	}
 
-	void WINAPI ExitFARW(const struct ExitInfo *Info)
+	void WINAPI ExitFARW(const ExitInfo *Info)
 	{
 	}
 }

@@ -10,23 +10,26 @@ namespace spotifar
 {
 	namespace spotify
 	{
-		using std::map;
-		using std::vector;
 		using std::string;
 		using std::wstring;
 		using json = nlohmann::json;
 
-		struct ApiDataItem
+		struct Auth
 		{
-			virtual std::string to_str() const = 0;
+			string access_token;
+			string scope;
+			int expires_in;
+			string refresh_token;
+			
+			friend void from_json(const json &j, Auth &a);
+			friend void to_json(json &j, const Auth &a);
 		};
 
-		struct SimplifiedArtist: public ApiDataItem
+		struct SimplifiedArtist
 		{
 			string id;
 			wstring name;
 			
-			virtual std::string to_str() const;
 			friend void from_json(const json &j, SimplifiedArtist &a);
 			friend void to_json(json &j, const SimplifiedArtist &p);
 		};
@@ -53,7 +56,6 @@ namespace spotifar
 			string release_year;
 			//string album_group;  // suspiciously the attribute is not present in the parent object
 			
-			virtual std::string to_str() const;
 			inline bool is_single() const { return album_type == SINGLE; }
 			friend void from_json(const json &j, SimplifiedAlbum &a);
 			friend void to_json(json &j, const SimplifiedAlbum &p);
@@ -99,6 +101,7 @@ namespace spotifar
 			bool trasferring_playback = false;
 
 			friend void from_json(const json &j, Permissions &p);
+			friend void to_json(json &j, const Permissions &p);
 		};
 
 		struct Context
@@ -122,10 +125,11 @@ namespace spotifar
 			string type;
 			int volume_percent = 100;
 			bool supports_volume = false;
-
-			virtual std::string to_str() const;
+ 
+			std::string to_str() const;
 			friend bool operator==(const Device &lhs, const Device &rhs);
 			friend void from_json(const json &j, Device &d);
+			friend void to_json(json &j, const Device &d);
 		};
 
 		// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
@@ -146,6 +150,7 @@ namespace spotifar
 
 			inline bool is_empty() const { return track == nullptr; }
 			friend void from_json(const json &j, PlaybackState &p);
+			friend void to_json(json &j, const PlaybackState &p);
 		};
 
 		struct SimplifiedPlaylist
@@ -168,11 +173,11 @@ namespace spotifar
 			friend void to_json(json &j, const HistoryItem &p);
 		};
 		
-		typedef map<string, SimplifiedAlbum> AlbumsCollection;
-		typedef map<string, Artist> ArtistsCollection;
-		typedef map<string, SimplifiedPlaylist> PlaylistsCollection;
-		typedef vector<Device> DevicesList;
-		typedef vector<HistoryItem> HistoryList;
+		typedef std::map<string, SimplifiedAlbum> AlbumsCollection;
+		typedef std::map<string, Artist> ArtistsCollection;
+		typedef std::map<string, SimplifiedPlaylist> PlaylistsCollection;
+		typedef std::vector<Device> DevicesList;
+		typedef std::vector<HistoryItem> HistoryList;
 	}
 }
 

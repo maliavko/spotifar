@@ -6,18 +6,18 @@ namespace spotifar
 {
     namespace ui
     {
-        using config::get_msg;
-        using config::send_dlg_msg;
-        using utils::NoRedraw;
+        using utils::far3::get_msg;
+        using utils::far3::send_dlg_msg;
+        using utils::far3::NoRedraw;
         
         // a helper class to suppress dlg_proc function from handling incoming events,
         // while the instance of the class exists in the particular scope
-        struct [[nodiscard]] DlgEventsSuppressor
+        struct _NODISCARD DlgEventsSuppressor
         {
             bool were_events_suppressed;
             PlayerDialog& dialog;
 
-            DlgEventsSuppressor(PlayerDialog& d):
+            DlgEventsSuppressor(PlayerDialog &d):
                 dialog(d)
             {
                 were_events_suppressed = dialog.are_dlg_events_suppressed;
@@ -30,7 +30,7 @@ namespace spotifar
             }
         };
 
-        const std::map<PlayerDialog::DialogControls, std::map<FARMESSAGE, PlayerDialog::ControlHandler> > PlayerDialog::dlg_event_handlers{
+        const std::map<PlayerDialog::DialogControls, std::map<FARMESSAGE, PlayerDialog::ControlHandler>> PlayerDialog::dlg_event_handlers{
             { PlayerDialog::NO_CONTROL, {
                 { DN_CONTROLINPUT, &PlayerDialog::on_input_received },
             }},
@@ -63,16 +63,16 @@ namespace spotifar
         };
 
         // TODO: save sync data to compare it with the upcoming one and update only the controls changed
-        PlayerDialog::PlayerDialog(spotify::Api& api):
+        PlayerDialog::PlayerDialog(spotify::Api &api):
             api(api)
         {
-            static wchar_t player_title[MAX_PATH];
-            config::FSF.sprintf(player_title, L" %s ", get_msg(MPluginUserName));
+            static std::wstring title(std::format(L" {} ", get_msg(MPluginUserName)));
+            auto BTN_DEF_FLAGS = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
 
             dlg_items_layout.assign({
                 // border
                 { DI_DOUBLEBOX,     0, 0, width, height,                                                DIF_NONE, L"" },  // ID_BOX
-                { DI_TEXT,          view_center_x - 5, 0, 10, 1,                0, nullptr,nullptr,     DIF_CENTERTEXT, player_title }, // ID_TITLE
+                { DI_TEXT,          view_center_x - 5, 0, 10, 1,                0, nullptr,nullptr,     DIF_CENTERTEXT, title.c_str() }, // ID_TITLE
 
                 // trackbar
                 { DI_TEXT,          view_x, view_height - 2, view_width, 1,     0, nullptr,nullptr,     DIF_CENTERTEXT, L"" },  // ID_TRACK_BAR
@@ -84,13 +84,13 @@ namespace spotifar
                 { DI_TEXT,          view_x, view_height - 4, view_width, 1,     0, nullptr,nullptr,     DIF_LEFTTEXT, L"" },  // ID_TRACK_NAME
 
                 // controls
-                { DI_BUTTON,        view_center_x - 2, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerPlayBtn) },
-                { DI_BUTTON,        view_center_x - 7, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerPrevBtn) },
-                { DI_BUTTON,        view_center_x + 4, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerNextBtn) },
-                { DI_BUTTON,        view_x, view_height, 1, 1,                  0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerLikeBtn) },
-                { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     DIF_CENTERTEXT | DIF_NOFOCUS | DIF_BTNNOCLOSE | DIF_RIGHTTEXT, L"[---%]" },
-                { DI_BUTTON,        view_center_x + 9, view_height, 1, 1,       0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE, get_msg(MPlayerRepeatNoneBtn) },
-                { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE | DIF_RIGHTTEXT, get_msg(MPlayerShuffleBtn) },
+                { DI_BUTTON,        view_center_x - 2, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerPlayBtn) },
+                { DI_BUTTON,        view_center_x - 7, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerPrevBtn) },
+                { DI_BUTTON,        view_center_x + 4, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerNextBtn) },
+                { DI_BUTTON,        view_x, view_height, 1, 1,                  0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerLikeBtn) },
+                { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     BTN_DEF_FLAGS | DIF_RIGHTTEXT, L"[---%]" },
+                { DI_BUTTON,        view_center_x + 9, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerRepeatNoneBtn) },
+                { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     BTN_DEF_FLAGS | DIF_RIGHTTEXT, get_msg(MPlayerShuffleBtn) },
                 
                 // devices box
                 { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
@@ -102,7 +102,7 @@ namespace spotifar
             hide();
         }
 	
-        bool PlayerDialog::handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void* param)
+        bool PlayerDialog::handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void *param)
         {
             if (are_dlg_events_suppressed)
                 return false;
@@ -123,7 +123,7 @@ namespace spotifar
             return false;
         }
 
-        intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
+        intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
         {
             static PlayerDialog* dialog = nullptr;
             if (msg == DN_INITDIALOG)
@@ -154,7 +154,8 @@ namespace spotifar
                     &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
                 are_dlg_events_suppressed = false;
                 
-                api.start_listening(this);
+                api.start_listening(dynamic_cast<BasicApiObserver*>(this));
+                api.start_listening(dynamic_cast<PlaybackObserver*>(this));
 
                 if (hdlg != NULL)
                 {
@@ -162,6 +163,7 @@ namespace spotifar
                     
                     update_devices_list(api.get_available_devices());
                     // TODO: add a playback state with the cached data
+                    on_playback_updated(api.get_playback_state());
 
                     return true;
                 }
@@ -173,7 +175,8 @@ namespace spotifar
         {
             if (visible)
             {
-                api.stop_listening(this);
+                api.stop_listening(dynamic_cast<BasicApiObserver*>(this));
+                api.stop_listening(dynamic_cast<PlaybackObserver*>(this));
 
                 if (hdlg != NULL && close_ui)
                     send_dlg_msg(hdlg, DM_CLOSE, -1, 0);
@@ -187,7 +190,7 @@ namespace spotifar
             return false;
         }
         
-        void PlayerDialog::update_devices_list(const DevicesList& devices)
+        void PlayerDialog::update_devices_list(const DevicesList &devices)
         {
 	        NoRedraw nr(hdlg);
             DlgEventsSuppressor s(*this);
@@ -218,7 +221,7 @@ namespace spotifar
             set_control_text(TRACK_NAME, track_name);
         }
         
-        void PlayerDialog::update_controls_block(const PlaybackState& state)
+        void PlayerDialog::update_controls_block(const PlaybackState &state)
         {
 	        NoRedraw nr(hdlg);
 
@@ -269,7 +272,7 @@ namespace spotifar
             set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
         }
 
-        bool PlayerDialog::on_devices_item_selected(void* dialog_item)
+        bool PlayerDialog::on_devices_item_selected(void *dialog_item)
         {
             FarDialogItem* item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
@@ -282,20 +285,18 @@ namespace spotifar
                 api.transfer_playback(device_id, true);
             }
 
-            //update_devices_list(api.get_available_devices());
-
             return true;
         }
 
-        bool PlayerDialog::on_input_received(void* input_record)
+        bool PlayerDialog::on_input_received(void *input_record)
         {
-            INPUT_RECORD* ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+            INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
             switch (ir->EventType)
             {
                 case KEY_EVENT:
                     if (ir->Event.KeyEvent.bKeyDown)
                     {
-                        int key = utils::input_record_to_combined_key(ir->Event.KeyEvent);
+                        int key = utils::far3::input_record_to_combined_key(ir->Event.KeyEvent);
                         switch (key)
                         {
                             case VK_UP:
@@ -314,44 +315,44 @@ namespace spotifar
             return false;
         }
         
-        bool PlayerDialog::on_playback_control_style_applied(void* dialog_item_colors)
+        bool PlayerDialog::on_playback_control_style_applied(void *dialog_item_colors)
         {
             FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-            dic->Colors->BackgroundColor = utils::CLR_DGRAY;
-            dic->Colors->ForegroundColor = utils::CLR_BLACK;
+            dic->Colors->BackgroundColor = utils::far3::CLR_DGRAY;
+            dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
             return true;
         }
         
-        bool PlayerDialog::on_track_bar_style_applied(void* dialog_item_colors)
+        bool PlayerDialog::on_track_bar_style_applied(void *dialog_item_colors)
         {
-            FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-            dic->Colors->ForegroundColor = utils::CLR_BLACK;
+            dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
             return true;
         }
         
-        bool PlayerDialog::on_inactive_control_style_applied(void* dialog_item_colors)
+        bool PlayerDialog::on_inactive_control_style_applied(void *dialog_item_colors)
         {
-            FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-            dic->Colors->ForegroundColor = utils::CLR_DGRAY;
+            dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
             return true;
         }
 
-        bool PlayerDialog::on_skip_to_next_btn_click(void* empty)
+        bool PlayerDialog::on_skip_to_next_btn_click(void *empty)
         {
             api.skip_to_next();
             return true;
         }
 
-        bool PlayerDialog::on_skip_to_previous_btn_click(void* empty)
+        bool PlayerDialog::on_skip_to_previous_btn_click(void *empty)
         {
             api.skip_to_previous();
             return true;
         }
         
-        void PlayerDialog::on_playback_updated(const PlaybackState& state)
+        void PlayerDialog::on_playback_updated(const PlaybackState &state)
         {
             if (!state.is_empty())
             {
@@ -367,20 +368,20 @@ namespace spotifar
             update_controls_block(state);
         }
         
-        void PlayerDialog::on_playback_sync_finished(const std::string& exit_msg)
+        void PlayerDialog::on_playback_sync_finished(const std::string &exit_msg)
         {
             if (!exit_msg.empty())
-                utils::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
+                utils::far3::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
             
             hide();
         }
         
-        void PlayerDialog::on_devices_changed(const DevicesList& devices)
+        void PlayerDialog::on_devices_changed(const DevicesList &devices)
         {
             update_devices_list(devices);
         }
         
-        bool PlayerDialog::check_text_label(int dialog_item_id, const std::wstring& text_to_check) const
+        bool PlayerDialog::check_text_label(int dialog_item_id, const std::wstring &text_to_check) const
         {
             static wchar_t ptrdata[32];
             FarDialogItemData data = { sizeof(FarDialogItemData), 0, ptrdata };

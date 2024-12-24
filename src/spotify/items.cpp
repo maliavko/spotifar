@@ -1,22 +1,27 @@
 #include "items.hpp"
+#include "utils.hpp"
 
 namespace spotifar
 {
 	namespace spotify
 	{
-		std::string SimplifiedArtist::to_str() const
+		void from_json(const json &j, Auth &a)
 		{
-			return std::format("SimplifiedArtist(name={}, id={})", utils::to_string(name), id);
+			j.at("access_token").get_to(a.access_token);
+			j.at("scope").get_to(a.scope);
+			j.at("expires_in").get_to(a.expires_in);
+	
+			a.refresh_token = j.value("refresh_token", "");
 		}
 
-		std::string Device::to_str() const
+		void to_json(json &j, const Auth &a)
 		{
-			return std::format("Device(name={}, id={})", utils::to_string(name), id);
-		}
-
-		bool operator==(const Device &lhs, const Device &rhs)
-		{
-			return lhs.id == rhs.id;
+			j = json{
+				{ "access_token", a.access_token },
+				{ "scope", a.scope },
+				{ "expires_in", a.expires_in },
+				{ "refresh_token", a.refresh_token },
+			};
 		}
 
 		void from_json(const json &j, SimplifiedArtist &a)
@@ -70,11 +75,6 @@ namespace spotifar
 			};
 		}
 
-		std::string SimplifiedAlbum::to_str() const
-		{
-			return std::format("SimplifiedAlbum(name={}, id={})", utils::to_string(name), id);
-		}
-
 		void from_json(const json &j, Album &a)
 		{
 			from_json(j, dynamic_cast<SimplifiedAlbum&>(a));
@@ -122,6 +122,16 @@ namespace spotifar
 			});
 		}
 
+		std::string Device::to_str() const
+		{
+			return std::format("Device(name={}, id={})", utils::to_string(name), id);
+		}
+
+		bool operator==(const Device &lhs, const Device &rhs)
+		{
+			return lhs.id == rhs.id;
+		}
+
 		void from_json(const json &j, Device &d)
 		{
 			j.at("id").get_to(d.id);
@@ -133,8 +143,23 @@ namespace spotifar
 			d.name = utils::utf8_decode(j.at("name").get<string>());
 		}
 		
+		void to_json(json &j, const Device &d)
+		{
+			j = json{
+				{ "id", d.id },
+				{ "is_active", d.is_active },
+				{ "name", utils::utf8_encode(d.name) },
+				{ "type", d.type },
+				{ "volume_percent", d.volume_percent },
+				{ "supports_volume", d.supports_volume },
+			};
+		}
+		
 		void from_json(const json &j, Permissions &p)
 		{
+			if (j.is_null())
+				return;
+			
 			p.interrupting_playback = j.value("interrupting_playback", false);
 			p.pausing = j.value("pausing", false);
 			p.resuming = j.value("resuming", false);
@@ -145,6 +170,12 @@ namespace spotifar
 			p.toggling_repeat_track = j.value("toggling_repeat_track", false);
 			p.toggling_shuffle = j.value("toggling_shuffle", false);
 			p.trasferring_playback = j.value("trasferring_playback", false);
+		}
+		
+		void to_json(json &j, const Permissions &p)
+		{
+			// TODO: unfinished
+			j = json{};
 		}
 		
 		void from_json(const json &j, PlaybackState &p)
@@ -168,6 +199,20 @@ namespace spotifar
 				p.track = std::make_shared<Track>();
 				j.at("item").get_to(*p.track);
 			}
+		}
+		
+		void to_json(json &j, const PlaybackState &p)
+		{
+			j = json{
+				{"device", p.device},
+				{"repeat_state", p.repeat_state},
+				{"shuffle_state", p.shuffle_state},
+				{"progress_ms", p.progress * 1000},
+				{"is_playing", p.is_playing},
+				{"actions", p.permissions},
+				{"item", p.track != nullptr ? json(*p.track) : nullptr},
+				{"context", p.context != nullptr ? json(*p.context) : nullptr},
+			};
 		}
 		
 		void from_json(const json &j, SimplifiedPlaylist &p)

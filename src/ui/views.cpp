@@ -6,7 +6,7 @@ namespace spotifar
 {
     namespace ui
     {
-        using config::get_msg;
+        using utils::far3::get_msg;
 
         
         ViewItem::ViewItem(const std::string &id, const wstring &name, const wstring &descr,

@@ -6,9 +6,9 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
 #include "spdlog/sinks/daily_file_sink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/msvc_sink.h"
 
+#include <format>
 #include <filesystem>
 
 // specific overload for logging far VersionInfo struct
@@ -25,21 +25,70 @@ namespace spotifar
 {
 	namespace utils
 	{
-		int input_record_to_combined_key(const KEY_EVENT_RECORD& kir)
+		namespace far3
 		{
-			int key = static_cast<int>(kir.wVirtualKeyCode);
-			const auto state = kir.dwControlKeyState;
+			NoRedraw::NoRedraw(HANDLE hdlg):
+			hdlg(hdlg)
+			{
+				assert(hdlg);
+				config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, FALSE, 0);
+			}
+
+			NoRedraw::~NoRedraw()
+			{
+				config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
+			}
+
+			int input_record_to_combined_key(const KEY_EVENT_RECORD& kir)
+			{
+				int key = static_cast<int>(kir.wVirtualKeyCode);
+				const auto state = kir.dwControlKeyState;
+				
+				if (state & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED)) key |= KEY_CTRL;
+				if (state & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED)) key |= KEY_ALT;
+				if (state & SHIFT_PRESSED) key |= KEY_SHIFT;
+
+				return key;
+			}
+
+			std::wstring get_plugin_launch_folder(const struct PluginStartupInfo* info)
+			{
+				return std::filesystem::path(info->ModuleName).parent_path().wstring();
+			}
+
+			intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message)
+			{
+				auto err_msg = get_msg(error_msg_id);
+				const wchar_t* msgs[] = {
+					get_msg(MFarMessageErrorTitle),
+					err_msg, extra_message.c_str(),
+					get_msg(MOk),
+				};
+
+				spdlog::error("Far error message dialog is shown, message id {}, {}", error_msg_id,
+					utils::to_string(extra_message));
+				
+				FARMESSAGEFLAGS flags = FMSG_WARNING;
+				if (GetLastError())  // if there's no error code, no need to show it in the dialog
+					flags |= FMSG_ERRORTYPE;
+
+				return config::PsInfo.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
+			}
 			
-			if (state & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED)) key |= KEY_CTRL;
-			if (state & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED)) key |= KEY_ALT;
-			if (state & SHIFT_PRESSED) key |= KEY_SHIFT;
+			intptr_t show_far_error_dlg(int error_msg_id, const std::string& extra_message)
+			{
+				return show_far_error_dlg(error_msg_id, utils::to_wstring(extra_message));
+			}
+			
+			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
+			{
+				return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
+			}
 
-			return key;
-		}
-
-		std::wstring get_plugin_launch_folder(const struct PluginStartupInfo* info)
-		{
-			return std::filesystem::path(info->ModuleName).parent_path().wstring();
+			const wchar_t* get_msg(int msg_id)
+			{
+				return config::PsInfo.GetMsg(&MainGuid, msg_id);
+			}
 		}
 
 		std::string generate_random_string(const int length)
@@ -93,7 +142,7 @@ namespace spotifar
 			// TODO: perhaps the plugin folder is not the best for storing logs, clarify with community
 			
 			// a default sink to the file 
-			auto filepath = std::format(L"{}\\logs\\spotifar.log", config::Opt.PluginStartupFolder);
+			auto filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_launch_folder());
 			auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
 			
 			auto default_logger = std::make_shared<spdlog::logger>("global", daily_sink);
@@ -125,42 +174,6 @@ namespace spotifar
 		{
 			spdlog::log(spdlog::level::off, "Closing plugin\n\n");
 			spdlog::shutdown();
-		}
-
-		NoRedraw::NoRedraw(HANDLE hdlg):
-			hdlg(hdlg)
-		{
-			assert(hdlg);
-			config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, FALSE, 0);
-		}
-
-		NoRedraw::~NoRedraw()
-		{
-			config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
-		}
-
-		intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message)
-		{
-			auto err_msg = config::get_msg(error_msg_id);
-			const wchar_t* msgs[] = {
-				config::get_msg(MFarMessageErrorTitle),
-				err_msg, extra_message.c_str(),
-				config::get_msg(MOk),
-			};
-
-			spdlog::error("Far error message dialog is shown, message id {}, {}", error_msg_id,
-				utils::to_string(extra_message));
-			
-			FARMESSAGEFLAGS flags = FMSG_WARNING;
-			if (GetLastError())  // if there's no error code, no need to show it in the dialog
-				flags |= FMSG_ERRORTYPE;
-
-			return config::PsInfo.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
-		}
-		
-		intptr_t show_far_error_dlg(int error_msg_id, const std::string& extra_message)
-		{
-			return show_far_error_dlg(error_msg_id, utils::to_wstring(extra_message));
 		}
 	}
 }
