@@ -10,6 +10,40 @@ namespace spotifar
         using utils::far3::send_dlg_msg;
         using utils::far3::NoRedraw;
         
+        static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
+        static const wchar_t TRACK_BAR_CHAR_FILLED = 0x2588;
+
+        static const wchar_t *PLAY_BTN_LABEL = L"[ \x25ba ]";
+        static const wchar_t *PAUSE_BTN_LABEL = L"[ ‖ ]";
+        static const wchar_t *NEXT_BTN_LABEL = L"[>>]";
+        static const wchar_t *PREV_BTN_LABEL = L"[<<]";
+        static const wchar_t *LIKE_BTN_LABEL = L"[+]";
+
+        static const int width = 60, height = 10;
+        static const int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
+        static const int view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
+        
+        enum DialogControls
+        {
+            NO_CONTROL = -1,
+            BOX,
+            TITLE,
+            TRACK_BAR,
+            TRACK_TIME,
+            TRACK_TOTAL_TIME,
+            ARTIST_NAME,
+            TRACK_NAME,
+            PLAY_BTN,
+            PREV_BTN,
+            NEXT_BTN,
+            LIKE_BTN,
+            VOLUME_LABEL,
+            REPEAT_BTN,
+            SHUFFLE_BTN,
+            DEVICES_COMBO,
+            TOTAL_ELEMENTS_COUNT,
+        };
+        
         // a helper class to suppress dlg_proc function from handling incoming events,
         // while the instance of the class exists in the particular scope
         struct _NODISCARD DlgEventsSuppressor
@@ -30,71 +64,80 @@ namespace spotifar
             }
         };
 
-        const std::map<PlayerDialog::DialogControls, std::map<FARMESSAGE, PlayerDialog::ControlHandler>> PlayerDialog::dlg_event_handlers{
-            { PlayerDialog::NO_CONTROL, {
+        FarDialogItem control(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
+                              FARDIALOGITEMFLAGS flags, const wchar_t *data = L"")
+        {
+            return FarDialogItem(type, x1, y1, x2, y2, {}, nullptr, nullptr, flags, data);
+        }
+
+        auto btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
+        auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND |
+                            DIF_DROPDOWNLIST | DIF_NOFOCUS;
+    
+        std::vector<FarDialogItem> dlg_items_layout{
+            // border
+            control(DI_DOUBLEBOX,   0, 0, width, height,                        DIF_NONE), // ID_BOX
+            control(DI_TEXT,        view_center_x - 5, 0, 10, 1,                DIF_CENTERTEXT), // ID_TITLE
+
+            // trackbar
+            control(DI_TEXT,        view_x, view_height - 2, view_width, 1,     DIF_CENTERTEXT), // ID_TRACK_BAR
+            control(DI_TEXT,        view_x, view_height - 2, 6, 1,              DIF_LEFTTEXT), // ID_TRACK_TIME
+            control(DI_TEXT,        view_width - 5, view_height - 2, 6, 1,      DIF_RIGHTTEXT), // ID_TRACK_TOTAL_TIME
+            
+            // playing info
+            control(DI_TEXT,        view_x, view_height - 5, view_width, 1,     DIF_LEFTTEXT), // ID_ARTIST_NAME
+            control(DI_TEXT,        view_x, view_height - 4, view_width, 1,     DIF_LEFTTEXT), // ID_TRACK_NAME
+
+            // controls
+            control(DI_BUTTON,      view_center_x - 2, view_height, 1, 1,       btn_flags, PLAY_BTN_LABEL),
+            control(DI_BUTTON,      view_center_x - 7, view_height, 1, 1,       btn_flags, PREV_BTN_LABEL),
+            control(DI_BUTTON,      view_center_x + 4, view_height, 1, 1,       btn_flags, NEXT_BTN_LABEL),
+            control(DI_BUTTON,      view_x, view_height, 1, 1,                  btn_flags, LIKE_BTN_LABEL),
+            control(DI_TEXT,        view_width - 6, view_height, 1, 1,          btn_flags | DIF_RIGHTTEXT, L"[---%]"),
+            control(DI_BUTTON,      view_center_x + 9, view_height, 1, 1,       btn_flags),
+            control(DI_BUTTON,      view_center_x - 15, view_height, 1, 1,      btn_flags | DIF_RIGHTTEXT),
+            
+            // devices box
+            control(DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,           combo_flags),
+        };
+
+        typedef bool (PlayerDialog::*ControlHandler)(void*);
+        const std::map<DialogControls, std::map<FARMESSAGE, ControlHandler>> dlg_event_handlers{
+            { NO_CONTROL, {
                 { DN_CONTROLINPUT, &PlayerDialog::on_input_received },
             }},
-            { PlayerDialog::DEVICES_COMBO, {
+            { DEVICES_COMBO, {
                 { DN_EDITCHANGE, &PlayerDialog::on_devices_item_selected },
             }},
-            { PlayerDialog::NEXT_BTN, {
+            { NEXT_BTN, {
                 { DN_BTNCLICK, &PlayerDialog::on_skip_to_next_btn_click },
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_playback_control_style_applied },
             }},
-            { PlayerDialog::PREV_BTN, {
+            { PREV_BTN, {
                 { DN_BTNCLICK, &PlayerDialog::on_skip_to_previous_btn_click },
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_playback_control_style_applied },
             }},
-            { PlayerDialog::PLAY_BTN, {
+            { PLAY_BTN, {
+                { DN_BTNCLICK, &PlayerDialog::on_play_btn_click },
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_playback_control_style_applied },
             }},
-            { PlayerDialog::TRACK_BAR, {
+            { TRACK_BAR, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_track_bar_style_applied },
             }},
-            { PlayerDialog::ARTIST_NAME, {
+            { ARTIST_NAME, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
             }},
-            { PlayerDialog::LIKE_BTN, {
+            { LIKE_BTN, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
             }},
-            { PlayerDialog::SHUFFLE_BTN, {
+            { SHUFFLE_BTN, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
             }},
         };
 
-        // TODO: save sync data to compare it with the upcoming one and update only the controls changed
         PlayerDialog::PlayerDialog(spotify::Api &api):
             api(api)
         {
-            static std::wstring title(std::format(L" {} ", get_msg(MPluginUserName)));
-            auto BTN_DEF_FLAGS = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
-
-            dlg_items_layout.assign({
-                // border
-                { DI_DOUBLEBOX,     0, 0, width, height,                                                DIF_NONE, L"" },  // ID_BOX
-                { DI_TEXT,          view_center_x - 5, 0, 10, 1,                0, nullptr,nullptr,     DIF_CENTERTEXT, title.c_str() }, // ID_TITLE
-
-                // trackbar
-                { DI_TEXT,          view_x, view_height - 2, view_width, 1,     0, nullptr,nullptr,     DIF_CENTERTEXT, L"" },  // ID_TRACK_BAR
-                { DI_TEXT,          view_x, view_height - 2, 6, 1,              0, nullptr,nullptr,     DIF_LEFTTEXT, L"00:00" },  // ID_TRACK_TIME
-                { DI_TEXT,          view_width - 5, view_height - 2, 6, 1,      0, nullptr,nullptr,     DIF_RIGHTTEXT, L"00:00" },  // ID_TRACK_TOTAL_TIME
-                
-                // playing info
-                { DI_TEXT,          view_x, view_height - 5, view_width, 1,     0, nullptr,nullptr,     DIF_LEFTTEXT, L"" },  // ID_ARTIST_NAME
-                { DI_TEXT,          view_x, view_height - 4, view_width, 1,     0, nullptr,nullptr,     DIF_LEFTTEXT, L"" },  // ID_TRACK_NAME
-
-                // controls
-                { DI_BUTTON,        view_center_x - 2, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerPlayBtn) },
-                { DI_BUTTON,        view_center_x - 7, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerPrevBtn) },
-                { DI_BUTTON,        view_center_x + 4, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerNextBtn) },
-                { DI_BUTTON,        view_x, view_height, 1, 1,                  0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerLikeBtn) },
-                { DI_TEXT,          view_width - 6, view_height, 1, 1,          0, nullptr,nullptr,     BTN_DEF_FLAGS | DIF_RIGHTTEXT, L"[---%]" },
-                { DI_BUTTON,        view_center_x + 9, view_height, 1, 1,       0, nullptr,nullptr,     BTN_DEF_FLAGS, get_msg(MPlayerRepeatNoneBtn) },
-                { DI_BUTTON,        view_center_x - 15, view_height, 1, 1,      0, nullptr,nullptr,     BTN_DEF_FLAGS | DIF_RIGHTTEXT, get_msg(MPlayerShuffleBtn) },
-                
-                // devices box
-                { DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,            {}, nullptr, nullptr,   DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND | DIF_DROPDOWNLIST | DIF_NOFOCUS, L"" },
-            });
         }
 
         PlayerDialog::~PlayerDialog()
@@ -102,17 +145,17 @@ namespace spotifar
             hide();
         }
 	
-        bool PlayerDialog::handle_dlg_proc_event(intptr_t msg_id, DialogControls control_id, void *param)
+        bool PlayerDialog::handle_dlg_proc_event(intptr_t msg_id, intptr_t control_id, void *param)
         {
             if (are_dlg_events_suppressed)
                 return false;
-            
+
             // first, trying to find a handler among the given control id event handers;
             // in negative scenario, trying to search for a hander among global handlers @NO_CONTROL id;
             // otherwise @false return control to the @dlg_proc function
-            for (auto ctrl_id: { control_id, NO_CONTROL })
+            for (auto ctrl: { DialogControls(control_id), NO_CONTROL })
             {
-                auto it = dlg_event_handlers.find(ctrl_id);
+                auto it = dlg_event_handlers.find(ctrl);
                 if (it != dlg_event_handlers.end())
                 {
                     for (auto& [mid, handler]: it->second)
@@ -140,7 +183,7 @@ namespace spotifar
                 return TRUE;
             }
 
-            if (dialog && dialog->handle_dlg_proc_event(msg, (PlayerDialog::DialogControls)param1, param2))
+            if (dialog && dialog->handle_dlg_proc_event(msg, param1, param2))
                 return TRUE;
 
             return config::PsInfo.DefDlgProc(hdlg, msg, param1, param2);
@@ -161,9 +204,17 @@ namespace spotifar
                 {
                     visible = true;
                     
-                    update_devices_list(api.get_available_devices());
-                    // TODO: add a playback state with the cached data
-                    on_playback_updated(api.get_playback_state());
+                    static std::wstring title(std::format(L" {} ", get_msg(MPluginUserName)));
+                    set_control_text(TITLE, title);
+
+                    // initial ui initialization with the cached data
+                    auto &state = api.get_playback_state();
+                    on_track_changed(state.item);
+                    on_track_progress_changed(state.item.duration, state.progress);
+                    on_volume_changed(state.device.volume_percent);
+                    on_playback_state_changed(state.is_playing);
+                    
+                    on_devices_changed(api.get_available_devices());
 
                     return true;
                 }
@@ -189,88 +240,6 @@ namespace spotifar
             }
             return false;
         }
-        
-        void PlayerDialog::update_devices_list(const DevicesList &devices)
-        {
-	        NoRedraw nr(hdlg);
-            DlgEventsSuppressor s(*this);
-
-            send_dlg_msg(this->hdlg, DM_LISTDELETE, DEVICES_COMBO, NULL);
-
-            for (int i = 0; i < devices.size(); i++)
-            {
-                auto& dev = devices[i];
-
-                FarListItem item{ LIF_NONE, dev.name.c_str(), NULL, NULL };
-                if (dev.is_active)
-                    item.Flags |= LIF_SELECTED;
-                    
-                FarList list{ sizeof(FarList), 1, &item };
-                send_dlg_msg(this->hdlg, DM_LISTADD, DEVICES_COMBO, &list);
-                
-                FarListItemData data{sizeof(FarListItemData), i, dev.id.size(), (void*)dev.id.c_str()};
-                send_dlg_msg(this->hdlg, DM_LISTSETDATA, DEVICES_COMBO, &data);
-            }
-        }
-        
-        void PlayerDialog::update_track_info(const std::wstring &artist_name, const std::wstring &track_name)
-        {
-	        NoRedraw nr(hdlg);
-            
-            set_control_text(ARTIST_NAME, artist_name);
-            set_control_text(TRACK_NAME, track_name);
-        }
-        
-        void PlayerDialog::update_controls_block(const PlaybackState &state)
-        {
-	        NoRedraw nr(hdlg);
-
-            static std::wstring volume_label, repeat_label, shuffle_label;
-
-            // TODO: complete permissions, they come always "false"
-
-            // play, next, prev
-            //set_control_enabled(PLAY_BTN, state.permissions.resuming);
-            //set_control_enabled(NEXT_BTN, state.permissions.skipping_next);
-            //set_control_enabled(PLAY_BTN, state.permissions.skipping_prev);
-
-            // update shuffle button
-            shuffle_label = utils::utf8_decode(state.shuffle_state ? "Shuffle" : "No shuffle");
-            set_control_text(SHUFFLE_BTN, shuffle_label);
-            //set_control_enabled(PLAY_BTN, state.permissions.toggling_shuffle);
-
-            // update repeat button
-            repeat_label = utils::utf8_decode(state.repeat_state);
-            set_control_text(REPEAT_BTN, repeat_label);
-
-            // update volume
-            volume_label = std::format(L"[{}%]", state.device.volume_percent);
-            set_control_text(VOLUME_LABEL, volume_label);
-            //set_control_enabled(VOLUME_LABEL, state.device.supports_volume);
-        }
-        
-        // if @track_total_time is 0, the trackback will be filled empty
-        void PlayerDialog::update_track_bar(size_t track_total_time, size_t track_played_time)
-        {
-	        NoRedraw nr(hdlg);
-
-            static std::wstring track_bar, track_time_str, track_total_time_str;
-
-            track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
-            track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track_played_time));
-            track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track_total_time));
-
-            if (track_total_time)
-            {
-                float progress_percent = (float)track_played_time / track_total_time;
-                int progress_chars_length = (int)(track_bar.size() * progress_percent);
-                fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
-            }
-            
-            set_control_text(TRACK_BAR, track_bar);
-            set_control_text(TRACK_TIME, track_time_str);
-            set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
-        }
 
         bool PlayerDialog::on_devices_item_selected(void *dialog_item)
         {
@@ -280,16 +249,16 @@ namespace spotifar
             auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, DEVICES_COMBO, (void*)pos);
             size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, DEVICES_COMBO, (void*)pos);
             if (item_data)
-            {
-                auto device_id = std::string(reinterpret_cast<const char*>(item_data), item_data_size);
-                api.transfer_playback(device_id, true);
-            }
+                api.transfer_playback(
+                    std::string(reinterpret_cast<const char*>(item_data), item_data_size)
+                );
 
             return true;
         }
 
         bool PlayerDialog::on_input_received(void *input_record)
         {
+            auto t = VK_RIGHT & utils::far3::KEY_ALT;
             INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
             switch (ir->EventType)
             {
@@ -308,6 +277,17 @@ namespace spotifar
                                 int i = 0;
                                 return true;
                             }
+                            case VK_SPACE:
+                                on_play_btn_click(nullptr);
+                                return true;
+
+                            case VK_RIGHT + utils::far3::KEY_ALT:
+                                on_skip_to_next_btn_click(nullptr);
+                                return true;
+
+                            case VK_LEFT + utils::far3::KEY_ALT:
+                                on_skip_to_previous_btn_click(nullptr);
+                                return true;
                         }
                     }
                     break;
@@ -351,21 +331,23 @@ namespace spotifar
             api.skip_to_previous();
             return true;
         }
-        
-        void PlayerDialog::on_playback_updated(const PlaybackState &state)
-        {
-            if (!state.is_empty())
-            {
-                update_track_info(state.track->artists[0].name, state.track->name);
-                update_track_bar(state.track->duration, state.progress);
-            }
-            else
-            {
-                update_track_info();
-                update_track_bar();
-            }
 
-            update_controls_block(state);
+        bool PlayerDialog::on_play_btn_click(void *empty)
+        {
+            // TODO: handle errors
+            auto &playback = api.get_playback_state();
+            if (playback.is_playing)
+            {
+                api.pause_playback();
+                return true;
+            }
+            else if (!playback.is_empty())
+            {
+                api.start_playback(playback.context.uri, playback.item.get_uri(),
+                    playback.progress_ms, playback.device.id);
+                return true;
+            }
+            return false;
         }
         
         void PlayerDialog::on_playback_sync_finished(const std::string &exit_msg)
@@ -378,24 +360,105 @@ namespace spotifar
         
         void PlayerDialog::on_devices_changed(const DevicesList &devices)
         {
-            update_devices_list(devices);
+	        NoRedraw nr(hdlg);
+            DlgEventsSuppressor s(*this);
+
+            send_dlg_msg(this->hdlg, DM_LISTDELETE, DEVICES_COMBO, NULL);
+
+            for (int i = 0; i < devices.size(); i++)
+            {
+                auto& dev = devices[i];
+
+                FarListItem item{ LIF_NONE, dev.name.c_str(), NULL, NULL };
+                if (dev.is_active)
+                    item.Flags |= LIF_SELECTED;
+                    
+                FarList list{ sizeof(FarList), 1, &item };
+                send_dlg_msg(this->hdlg, DM_LISTADD, DEVICES_COMBO, &list);
+                
+                FarListItemData data{sizeof(FarListItemData), i, dev.id.size(), (void*)dev.id.c_str()};
+                send_dlg_msg(this->hdlg, DM_LISTSETDATA, DEVICES_COMBO, &data);
+            }
+        }
+
+        void PlayerDialog::on_track_changed(const Track &track)
+        {
+	        NoRedraw nr(hdlg);
+        
+            set_control_text(TRACK_NAME, track.name);
+            set_control_text(ARTIST_NAME, track.artists.size() ? track.artists[0].name : L"");
+        }
+
+        void PlayerDialog::on_track_progress_changed(unsigned int duration, unsigned int progress)
+        {
+	        NoRedraw nr(hdlg);
+
+            static std::wstring track_bar, track_time_str, track_total_time_str;
+
+            track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
+            track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(progress));
+            track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(duration));
+
+            if (duration)
+            {
+                float progress_percent = (float)progress / duration;
+                int progress_chars_length = (int)(track_bar.size() * progress_percent);
+                fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
+            }
+            
+            set_control_text(TRACK_BAR, track_bar);
+            set_control_text(TRACK_TIME, track_time_str);
+            set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
         }
         
-        bool PlayerDialog::check_text_label(int dialog_item_id, const std::wstring &text_to_check) const
+        void PlayerDialog::on_volume_changed(unsigned int volume)
         {
-            static wchar_t ptrdata[32];
-            FarDialogItemData data = { sizeof(FarDialogItemData), 0, ptrdata };
-                send_dlg_msg(hdlg, DM_GETTEXT, dialog_item_id, &data);
-            return text_to_check == data.PtrData;
+	        NoRedraw nr(hdlg);
+
+            static std::wstring volume_label;
+            
+            volume_label = std::format(L"[{}%]", volume);
+            set_control_text(VOLUME_LABEL, volume_label);
+            //set_control_enabled(VOLUME_LABEL, state.device.supports_volume);
+        }
+        
+        void PlayerDialog::on_shuffle_state_changed(bool shuffle_state)
+        {
+	        NoRedraw nr(hdlg);
+
+            static std::wstring shuffle_label;
+
+            shuffle_label = utils::utf8_decode(shuffle_state ? "S" : "No S");
+            set_control_text(SHUFFLE_BTN, shuffle_label);
+            //set_control_enabled(PLAY_BTN, state.permissions.toggling_shuffle);
+        }
+
+        void PlayerDialog::on_repeat_state_changed(const std::string &repeat_state)
+        {
+	        NoRedraw nr(hdlg);
+
+            static std::wstring repeat_label;
+            
+            repeat_label = utils::utf8_decode(repeat_state);
+            set_control_text(REPEAT_BTN, repeat_label);
+            //set_control_enabled(REPEAT_BTN, state.permissions.toggling_repeat_context);
+            //set_control_enabled(REPEAT_BTN, state.permissions.toggling_repeat_track);
+        }
+        
+        void PlayerDialog::on_playback_state_changed(bool is_playing)
+        {
+            set_control_text(PLAY_BTN, is_playing ? PAUSE_BTN_LABEL : PLAY_BTN_LABEL);
         }
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)
         {
+	        NoRedraw nr(hdlg);
             return send_dlg_msg(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
         }
         
         intptr_t PlayerDialog::set_control_enabled(int control_id, bool is_enabled)
         {
+	        NoRedraw nr(hdlg);
             return send_dlg_msg(hdlg, DM_ENABLE, control_id, (void*)is_enabled);
         }
     }

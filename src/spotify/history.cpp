@@ -8,9 +8,9 @@ namespace spotifar
             CachedValue(endpoint, L"PlayedHistory")
             {};
 
-        std::chrono::seconds PlayedHistory::get_sync_interval() const
+        std::chrono::milliseconds PlayedHistory::get_sync_interval() const
         {
-            return std::chrono::seconds(15);
+            return std::chrono::milliseconds(15 * 1000);
         }
 
         bool PlayedHistory::request_data(HistoryList &data)

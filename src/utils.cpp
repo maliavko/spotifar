@@ -39,24 +39,24 @@ namespace spotifar
 				config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
 			}
 
-			int input_record_to_combined_key(const KEY_EVENT_RECORD& kir)
+			int input_record_to_combined_key(const KEY_EVENT_RECORD &kir)
 			{
 				int key = static_cast<int>(kir.wVirtualKeyCode);
 				const auto state = kir.dwControlKeyState;
 				
-				if (state & (RIGHT_CTRL_PRESSED | LEFT_CTRL_PRESSED)) key |= KEY_CTRL;
-				if (state & (RIGHT_ALT_PRESSED | LEFT_ALT_PRESSED)) key |= KEY_ALT;
+				if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= KEY_CTRL;
+				if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= KEY_ALT;
 				if (state & SHIFT_PRESSED) key |= KEY_SHIFT;
 
 				return key;
 			}
 
-			std::wstring get_plugin_launch_folder(const struct PluginStartupInfo* info)
+			std::wstring get_plugin_launch_folder(const struct PluginStartupInfo *info)
 			{
 				return std::filesystem::path(info->ModuleName).parent_path().wstring();
 			}
 
-			intptr_t show_far_error_dlg(int error_msg_id, const std::wstring& extra_message)
+			intptr_t show_far_error_dlg(int error_msg_id, const std::wstring &extra_message)
 			{
 				auto err_msg = get_msg(error_msg_id);
 				const wchar_t* msgs[] = {
@@ -75,12 +75,12 @@ namespace spotifar
 				return config::PsInfo.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
 			}
 			
-			intptr_t show_far_error_dlg(int error_msg_id, const std::string& extra_message)
+			intptr_t show_far_error_dlg(int error_msg_id, const std::string &extra_message)
 			{
 				return show_far_error_dlg(error_msg_id, utils::to_wstring(extra_message));
 			}
 			
-			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2)
+			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 			{
 				return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
 			}
@@ -131,7 +131,7 @@ namespace spotifar
 			return std::string(ws.begin(), ws.end());
 		}
 
-		std::wstring strip_invalid_filename_chars(const std::wstring& filename)
+		std::wstring strip_invalid_filename_chars(const std::wstring &filename)
 		{
 			static auto r = std::wregex(L"[\?\\\\/:*<>|]");
 			return std::regex_replace(filename, r, L"_");

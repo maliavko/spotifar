@@ -6,6 +6,10 @@
 #include "items.hpp"
 #include "abstract/cached_value.hpp"
 #include "abstract/observers.hpp"
+#include "playback.hpp"
+#include "devices.hpp"
+#include "auth.hpp"
+#include "history.hpp"
 
 namespace spotifar
 {
@@ -13,65 +17,61 @@ namespace spotifar
     {
         using std::string;
         using std::wstring;
-        using namespace std::literals;
 
         class Api
         {
         public:
-            const static string SPOTIFY_API_URL;
-            std::chrono::milliseconds SYNC_INTERVAL = 1000ms;
-            
-            enum CacheIdx
-            {
-                Auth = 0,
-                History,
-                Playback,
-                Devices,
-            };
-
-        public:
-            Api(const string &client_id, const string &client_secret, int port);
+            Api();
             virtual ~Api();
 
             bool init();
             void shutdown();
-            void resync_caches();
 
-            template<class T>
-            void start_listening(T *o);
-            template<class T>
-            void stop_listening(T *o);
+            template<class T> void start_listening(T *o);
+            template<class T> void stop_listening(T *o);
 
-            const DevicesList& get_available_devices() const;
-            const PlaybackState& get_playback_state() const;
             ArtistsCollection get_artists();
             AlbumsCollection get_albums(const string &artist_id);
             PlaylistsCollection get_playlists();
             std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
 
-            void start_playback(const string &album_id, const string &track_id);
+            // NOTE: no args means "resume"
+            void start_playback(const string &context_uri = "", const string &track_uri = "",
+                                unsigned int position_ms = 0, const string &device_id = "");
+            void start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track);
+            void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
+            void pause_playback(const string &device_id = "");
             void skip_to_next();
             void skip_to_previous();
             void toggle_shuffle(bool is_on);
             void set_playback_volume(int volume_percent);
             bool transfer_playback(const string &device_id, bool start_playing = false);
 
+            inline const DevicesList& get_available_devices() { return devices->get_data(); }
+            inline const PlaybackState& get_playback_state() { return playback->get_data(); }
+
         protected:
             void launch_sync_worker();
             void shutdown_sync_worker();
 
+            inline PlaybackCache& get_playback_cache() { return *playback; }
+            inline DevicesCache& get_devices_cache() { return *devices; }
+
         private:
-            std::unique_ptr<httplib::Client> endpoint;
-            std::shared_ptr<spdlog::logger> logger;
+            httplib::Client endpoint;
             size_t playback_observers;
 
-            string client_id, client_secret;
-            int port;
-
+            std::shared_ptr<spdlog::logger> logger;
             std::mutex sync_worker_mutex;
             bool is_worker_listening;
 
-            std::vector<std::unique_ptr<ICachedValue>> cache;
+            // caches
+            std::unique_ptr<PlaybackCache> playback;
+            std::unique_ptr<DevicesCache> devices;
+            std::unique_ptr<AuthCache> auth;
+            std::unique_ptr<PlayedHistory> history;
+
+            std::vector<ICachedValue*> caches;
         };
         
         template<class T>
@@ -82,8 +82,8 @@ namespace spotifar
             if (std::is_same<T, PlaybackObserver>::value)
             {
                 bool is_playback_active = ++playback_observers > 0;
-                for (auto idx: {Playback, Devices})
-                    cache[idx]->set_enabled(is_playback_active);
+                playback->set_enabled(is_playback_active);
+                devices->set_enabled(is_playback_active);
             }
         }
 
@@ -93,8 +93,8 @@ namespace spotifar
             if (std::is_same<T, PlaybackObserver>::value)
             {
                 bool is_playback_active = --playback_observers > 0;
-                for (auto idx: {Playback, Devices})
-                    cache[idx]->set_enabled(is_playback_active);
+                playback->set_enabled(is_playback_active);
+                devices->set_enabled(is_playback_active);
             }
             ObserverManager::unsubscribe<T>(o);
         }

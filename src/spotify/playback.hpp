@@ -17,9 +17,9 @@ namespace spotifar
                 {}
 
         protected:
+            virtual void on_data_synced(const PlaybackState &data, const PlaybackState &prev_data);
             virtual bool request_data(PlaybackState &data);
-            virtual void on_data_synced(PlaybackState &data);
-            virtual std::chrono::seconds get_sync_interval() const;
+            virtual std::chrono::milliseconds get_sync_interval() const;
 
         private:
             std::shared_ptr<spdlog::logger> logger;

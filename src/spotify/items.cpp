@@ -46,20 +46,21 @@ namespace spotifar
 			j.at("popularity").get_to(a.popularity);
 		}
 
+		string SimplifiedAlbum::get_release_year() const
+		{
+			static auto r = std::regex("[\\d]{4}");	
+			std::smatch match;
+			if (std::regex_search(release_date, match, r))
+				return match[0];
+			return "----";
+		}
+
 		void from_json(const json &j, SimplifiedAlbum &a)
 		{
 			j.at("id").get_to(a.id);
 			j.at("total_tracks").get_to(a.total_tracks);
 			j.at("album_type").get_to(a.album_type);
-			//j.at("album_group").get_to(a.album_group);
 			j.at("release_date").get_to(a.release_date);
-
-			static auto r = std::regex("[\\d]{4}");	
-			std::smatch match;
-			if (std::regex_search(a.release_date, match, r))
-				a.release_year = match[0];
-			else
-				a.release_year = "----";
 
 			a.name = utils::utf8_decode(j.at("name").get<string>());
 		}
@@ -85,13 +86,19 @@ namespace spotifar
 			to_json(j, dynamic_cast<const SimplifiedAlbum&>(a));
 			//j.update
 		}
+		
+		bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs)
+		{
+			return lhs.id == rhs.id;
+		}
 
 		void from_json(const json &j, SimplifiedTrack &t)
 		{
 			j.at("id").get_to(t.id);
 			j.at("track_number").get_to(t.track_number);
+			j.at("duration_ms").get_to(t.duration_ms);
 
-			t.duration = (size_t)j.at("duration_ms").get<int>() / 1000;
+			t.duration = t.duration_ms / 1000;
 			t.name = utils::utf8_decode(j.at("name").get<string>());
 		}
 		
@@ -99,7 +106,7 @@ namespace spotifar
 		{
 			j = json{
 				{ "id", t.id },
-				{ "duration_ms", t.duration * 1000 },
+				{ "duration_ms", t.duration_ms },
 				{ "track_number", t.track_number },
 				{ "name", utils::utf8_encode(t.name) },
 			};
@@ -155,7 +162,7 @@ namespace spotifar
 			};
 		}
 		
-		void from_json(const json &j, Permissions &p)
+		void from_json(const json &j, Actions &p)
 		{
 			if (j.is_null())
 				return;
@@ -172,7 +179,7 @@ namespace spotifar
 			p.trasferring_playback = j.value("trasferring_playback", false);
 		}
 		
-		void to_json(json &j, const Permissions &p)
+		void to_json(json &j, const Actions &p)
 		{
 			// TODO: unfinished
 			j = json{};
@@ -184,34 +191,29 @@ namespace spotifar
 			j.at("repeat_state").get_to(p.repeat_state);
 			j.at("shuffle_state").get_to(p.shuffle_state);
 			j.at("is_playing").get_to(p.is_playing);
-			j.at("actions").get_to(p.permissions);
-
-			p.progress = j.value("progress_ms", 0) / 1000;
+			j.at("actions").get_to(p.actions);
+ 
+			p.progress_ms = j.value("progress_ms", 0);
+			p.progress = p.progress_ms / 1000;
 
 			if (j.contains("context") && !j.at("context").is_null())
-			{
-				p.context = std::make_shared<Context>();
-				j.at("context").get_to(*p.context);
-			}
+				j.at("context").get_to(p.context);
 
 			if (j.contains("item") && !j.at("item").is_null())
-			{
-				p.track = std::make_shared<Track>();
-				j.at("item").get_to(*p.track);
-			}
+				j.at("item").get_to(p.item);
 		}
 		
 		void to_json(json &j, const PlaybackState &p)
 		{
 			j = json{
-				{"device", p.device},
-				{"repeat_state", p.repeat_state},
-				{"shuffle_state", p.shuffle_state},
-				{"progress_ms", p.progress * 1000},
-				{"is_playing", p.is_playing},
-				{"actions", p.permissions},
-				{"item", p.track != nullptr ? json(*p.track) : nullptr},
-				{"context", p.context != nullptr ? json(*p.context) : nullptr},
+				{ "device", p.device },
+				{ "repeat_state", p.repeat_state },
+				{ "shuffle_state", p.shuffle_state },
+				{ "progress_ms", p.progress_ms },
+				{ "is_playing", p.is_playing },
+				{ "actions", p.actions },
+				{ "item", p.item },
+				{ "context", p.context },
 			};
 		}
 		

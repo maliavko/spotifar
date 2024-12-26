@@ -14,6 +14,8 @@ namespace spotifar
 		using std::wstring;
 		using json = nlohmann::json;
 
+		static const string INVALID_ID = "";
+
 		struct Auth
 		{
 			string access_token;
@@ -27,7 +29,7 @@ namespace spotifar
 
 		struct SimplifiedArtist
 		{
-			string id;
+			string id = INVALID_ID;
 			wstring name;
 			
 			friend void from_json(const json &j, SimplifiedArtist &a);
@@ -48,15 +50,15 @@ namespace spotifar
 			inline static const string COMP = "compilation";
 			inline static const string APPEARS_ON = "appears_on";
 
-			string id;
+			string id = INVALID_ID;
 			wstring name;
 			size_t total_tracks;
 			string album_type;
 			string release_date;
-			string release_year;
-			//string album_group;  // suspiciously the attribute is not present in the parent object
 			
+			inline std::string get_uri() const { return std::format("spotify:album:{}", id); }
 			inline bool is_single() const { return album_type == SINGLE; }
+			string get_release_year() const;
 			friend void from_json(const json &j, SimplifiedAlbum &a);
 			friend void to_json(json &j, const SimplifiedAlbum &p);
 		};
@@ -69,11 +71,14 @@ namespace spotifar
 
 		struct SimplifiedTrack
 		{
-			string id;
+			string id = INVALID_ID;
 			wstring name;
-			size_t duration;  // in seconds
+			unsigned int duration_ms = 0;
+			unsigned int duration = 0;
 			size_t track_number;  // TODO: track number could be duplicated for different discs
 
+			inline std::string get_uri() const { return std::format("spotify:track:{}", id); }
+			friend bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs);
 			friend void from_json(const json &j, SimplifiedTrack &t);
 			friend void to_json(json &j, const SimplifiedTrack &t);
 		};
@@ -87,7 +92,7 @@ namespace spotifar
 			friend void to_json(json &j, const Track &p);
 		};
 
-		struct Permissions
+		struct Actions
 		{
 			bool interrupting_playback = false;
 			bool pausing = false;
@@ -100,8 +105,8 @@ namespace spotifar
 			bool toggling_shuffle = false;
 			bool trasferring_playback = false;
 
-			friend void from_json(const json &j, Permissions &p);
-			friend void to_json(json &j, const Permissions &p);
+			friend void from_json(const json &j, Actions &p);
+			friend void to_json(json &j, const Actions &p);
 		};
 
 		struct Context
@@ -119,7 +124,7 @@ namespace spotifar
 
 		struct Device
 		{
-			string id;
+			string id = INVALID_ID;
 			bool is_active = false;
 			wstring name;
 			string type;
@@ -135,31 +140,29 @@ namespace spotifar
 		// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
 		struct PlaybackState
 		{
-			inline static const string REPEAT_OFF = "off";
-			inline static const string REPEAT_TRACK = "track";
-			inline static const string REPEAT_CONTEXT = "context";
-
 			Device device;
-			string repeat_state = REPEAT_OFF;  // off, track, context
+			string repeat_state = "off";  // off, track, context
 			bool shuffle_state = false;
-			size_t progress = 0; // in seconds
+			unsigned int progress_ms = 0;
+			unsigned int progress = 0;
 			bool is_playing = false;
-			Permissions permissions;
-			std::shared_ptr<Track> track = nullptr;
-			std::shared_ptr<Context> context = nullptr;
+			Actions actions;
+			Track item;
+			Context context;
 
-			inline bool is_empty() const { return track == nullptr; }
+			inline bool is_empty() const { return item.id == INVALID_ID; }
 			friend void from_json(const json &j, PlaybackState &p);
 			friend void to_json(json &j, const PlaybackState &p);
 		};
 
 		struct SimplifiedPlaylist
 		{
-			string id;
+			string id = INVALID_ID;
 			wstring name;
 			wstring description;
 			size_t tracks_total;
 
+			inline std::string get_uri() const { return std::format("spotify:playlist:{}", id); }
 			friend void from_json(const json &j, SimplifiedPlaylist &p);
 		};
 		

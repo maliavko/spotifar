@@ -1,14 +1,11 @@
 #include "api.hpp"
-#include "auth.hpp"
-#include "playback.hpp"
-#include "history.hpp"
-#include "devices.hpp"
 #include "config.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
+        using namespace std::literals;
         using json = nlohmann::json;
         using namespace httplib;
 
@@ -49,49 +46,48 @@ namespace spotifar
             return ss.str();
         }
 
-        const string Api::SPOTIFY_API_URL = "https://api.spotify.com";
+        const string SPOTIFY_API_URL = "https://api.spotify.com";
+        const std::chrono::milliseconds SYNC_INTERVAL = 1000ms;
 
-        Api::Api(const string &client_id, const string &client_secret, int port):
-            endpoint(std::make_unique<Client>(SPOTIFY_API_URL)),
-            port(port),
-            client_id(client_id),
-            client_secret(client_secret),
+        Api::Api():
+            endpoint(SPOTIFY_API_URL),
             is_worker_listening(false),
             logger(spdlog::get(utils::LOGGER_API)),
             playback_observers(0)
         {
-            endpoint->set_logger([this](const Request &req, const Response &res)
+            endpoint.set_logger([this](const Request &req, const Response &res)
             {
-                // TODO: add one-line debug logging for all requests done
+                // TODO: add one-line debug logging for all finished requests
                 if (res.status != OK_200 && res.status != NoContent_204)
                     logger->error(dump_http_error(req, res));
             });
             
-            endpoint->set_default_headers(Headers{
+            endpoint.set_default_headers(Headers{
                 {"Content-Type", "application/json; charset=utf-8"},
             });
 
-            // NOTE: the order should match declared indicies enum CacheIdx
-            cache.push_back(std::make_unique<AuthCache>(
-                endpoint.get(), client_id, client_secret, port
-                ));
-            cache.push_back(std::make_unique<PlayedHistory>(endpoint.get()));
-            cache.push_back(std::make_unique<PlaybackCache>(endpoint.get()));
-            cache.push_back(std::make_unique<DevicesCache>(endpoint.get()));
+            auth = std::make_unique<AuthCache>(
+                &endpoint, config::get_client_id(), config::get_client_secret(),
+                config::get_localhost_port());
+            devices = std::make_unique<DevicesCache>(&endpoint);
+            history = std::make_unique<PlayedHistory>(&endpoint);
+            playback = std::make_unique<PlaybackCache>(&endpoint);
+
+            caches.assign({
+                auth.get(), history.get(), playback.get(), devices.get()
+            });
         }
 
         Api::~Api()
         {
-            cache.clear();
-
+            caches.clear();
             logger = nullptr;
-            endpoint = nullptr;
         }
 
         bool Api::init()
         {
             auto ctx = config::lock_settings();
-            for (auto &c: cache)
+            for (auto &c: caches)
                 c->read(*ctx);
 
             launch_sync_worker();
@@ -102,7 +98,7 @@ namespace spotifar
         void Api::shutdown()
         {
             auto ctx = config::lock_settings();
-            for (auto &c: cache)
+            for (auto &c: caches)
                 c->write(*ctx);
             
             shutdown_sync_worker();
@@ -110,46 +106,80 @@ namespace spotifar
             ObserverManager::clear<ApiObserver>();
         }
         
-        void Api::start_playback(const std::string &album_id, const std::string &track_id)
+        void Api::start_playback(const string &context_uri, const string &track_uri,
+                                 unsigned int position_ms, const string &device_id)
         {
-            Params params = {
-                //{ "device_id", "" }
-            };
+            Params params = {};
 
-            json o{
-                { "context_uri", std::format("spotify:album:{}", album_id) },
-                { "offset", {
-                    { "uri", std::format("spotify:track:{}", track_id)} 
-                }}
-            };
+            if (!device_id.empty())
+                params.insert({ "device_id", device_id });
 
-            auto r = endpoint->Put(append_query_params(
-                "/v1/me/player/play", params), o.dump(), "application/json");
-            
-            //ObserverManager::notify(&ApiObserver::on_track_changed, album_id, track_id);
+            auto request_url = append_query_params("/v1/me/player/play", params);
+
+            if (!context_uri.empty())
+            {
+                // TODO: not tested
+                json o{
+                    { "context_uri", context_uri },
+                    { "position_ms", position_ms },
+                };
+
+                if (!track_uri.empty())
+                    o["offset"] = { { "uri", track_uri }, };
+                
+                auto r = endpoint.Put(request_url, o.dump(), "application/json");
+            }
+            else
+            {
+                auto r = endpoint.Put(request_url);
+                if (r->status == httplib::OK_200)
+                    get_playback_cache().patch_data({ { "is_playing", true } });
+            }
+        }
+        
+        void Api::start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track)
+        {
+            return start_playback(album.get_uri(), track.get_uri());
+        }
+        
+        void Api::start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track)
+        {
+            return start_playback(playlist.get_uri(), track.get_uri());
+        }
+
+        void Api::pause_playback(const string &device_id)
+        {
+            Params params = {};
+
+            if (!device_id.empty())
+                params.insert({ "device_id", device_id });
+
+            auto r = endpoint.Put(append_query_params("/v1/me/player/pause", params));
+            if (r->status == httplib::OK_200)
+                get_playback_cache().patch_data({ { "is_playing", false } });
         }
         
         void Api::skip_to_next()
         {
             // TODO: unfinished
-            auto r = endpoint->Post("/v1/me/player/next");
+            auto r = endpoint.Post("/v1/me/player/next");
         }
 
         void Api::skip_to_previous()
         {
             // TODO: unfinished
-            auto r = endpoint->Post("/v1/me/player/previous");
+            auto r = endpoint.Post("/v1/me/player/previous");
         }
 
         void Api::toggle_shuffle(bool is_on)
         {
-            auto r = endpoint->Put(append_query_params("/v1/me/player/shuffle",
+            auto r = endpoint.Put(append_query_params("/v1/me/player/shuffle",
                 Params{{ "state", is_on ? "true" : "false" }}));
         }
 
         void Api::set_playback_volume(int volume_percent)
         {
-            auto r = endpoint->Put(append_query_params("/v1/me/player/volume",
+            auto r = endpoint.Put(append_query_params("/v1/me/player/volume",
                 Params{{ "volume_percent", std::to_string(volume_percent) }}));
         }
         
@@ -179,7 +209,7 @@ namespace spotifar
             logger->info("Transferring playback to the device {}, autoplay {}",
                 device_it->to_str(), start_playing);
 
-            auto res = endpoint->Put("/v1/me/player", body.dump(), "application/json");
+            auto res = endpoint.Put("/v1/me/player", body.dump(), "application/json");
             return res->status == NoContent_204;
         }
         
@@ -198,7 +228,7 @@ namespace spotifar
 
             do
             {
-                auto r = endpoint->Get(request_url);
+                auto r = endpoint.Get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& aj : data["items"])
@@ -230,7 +260,7 @@ namespace spotifar
 
             do
             {
-                auto r = endpoint->Get(request_url);
+                auto r = endpoint.Get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& aj : data["items"])
@@ -263,7 +293,7 @@ namespace spotifar
 
             do
             {
-                auto r = endpoint->Get(request_url);
+                auto r = endpoint.Get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& tj : data["items"])
@@ -282,16 +312,6 @@ namespace spotifar
             return tracks;
         }
         
-        const DevicesList& Api::get_available_devices() const
-        {
-            return dynamic_cast<DevicesCache&>(*cache[Devices]).get_data();
-        }
-        
-        const PlaybackState& Api::get_playback_state() const
-        {
-            return dynamic_cast<PlaybackCache&>(*cache[Playback]).get_data();
-        }
-        
         ArtistsCollection Api::get_artists()
         {
             json after = "";
@@ -305,7 +325,7 @@ namespace spotifar
                     { "after", after.get<std::string>() },
                 };
 
-                auto r = endpoint->Get("/v1/me/following", params, Headers());
+                auto r = endpoint.Get("/v1/me/following", params, Headers());
                 json data = json::parse(r->body)["artists"];
 
                 for (json& aj : data["items"])
@@ -326,7 +346,7 @@ namespace spotifar
             {
                 std::string exit_msg = "";
                 auto marker = utils::clock::now();
-                std::unique_lock<std::mutex> lock(sync_worker_mutex);
+                const std::lock_guard<std::mutex> worker_lock(sync_worker_mutex);
 
                 try
                 {
@@ -334,7 +354,7 @@ namespace spotifar
                     {
                         // TODO: errors in this function raises on_playback_sync_finished, which is not valid
                         // for this situation, come up with some different errors handling
-                        for (auto &c: cache)
+                        for (auto &c: caches)
                             c->resync();
 
                         // for the player to show track time ticking well, each frame starts as precise
@@ -349,7 +369,7 @@ namespace spotifar
                 }
                 catch (const std::exception &ex)
                 {
-                    // TODO: what if there is an error, but n oplayback is opened
+                    // TODO: what if there is an error, but no playback is opened
                     exit_msg = ex.what();
                     logger->critical("An exception occured while syncing up with an API: {}", exit_msg);
                 }
@@ -368,7 +388,7 @@ namespace spotifar
             
             // trying to acquare a sync worker mutex, giving it time to clean up
             // all the resources
-            std::unique_lock<std::mutex> lk(sync_worker_mutex);
+            const std::lock_guard<std::mutex> worker_lock(sync_worker_mutex);
             logger->info("An API sync worker has been stopped");
         }
     }

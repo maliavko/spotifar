@@ -47,16 +47,19 @@ namespace spotifar
             const time_point& get_last_sync_time() const { return last_sync_time; }
             const time_point get_expires_at() const { return last_sync_time + get_sync_interval(); }
             bool is_valid() const { return get_expires_at() > clock::now(); }
+            void patch_data(json patch);
 
         protected:
             virtual bool request_data(T &data) = 0;
-            virtual std::chrono::seconds get_sync_interval() const = 0;
-            virtual void on_data_synced(T &data) {}
+            virtual std::chrono::milliseconds get_sync_interval() const = 0;
+            virtual void on_data_synced(const T &data, const T &prev_data) {}
+            void reset_data(const T &new_data);
 
         protected:
             httplib::Client *endpoint;
 
         private:
+            std::mutex access_mutext;
             const std::wstring storage_data_key, storage_timestamp_key;
             time_point last_sync_time;
             bool is_enabled;
@@ -95,7 +98,7 @@ namespace spotifar
                 last_sync_time = clock::time_point{ clock::duration(storage_timestamp) };
 
                 if (is_valid())
-                    on_data_synced(data);
+                    on_data_synced(data, data);
             }
             catch(const std::exception &e)
             {
@@ -123,15 +126,39 @@ namespace spotifar
         template<typename T>
         void CachedValue<T>::resync(bool force)
         {
+            std::lock_guard lk(access_mutext);
             // no updates for disabled caches, otherwise only in case the data
             // is invalid or resync is forced
             if (!is_enabled || (!force && is_valid()))
                 return;
 
-            if (request_data(data))
+            T new_data;
+            if (request_data(new_data))
+                reset_data(new_data);
+        }
+
+        template<typename T>
+        void CachedValue<T>::reset_data(const T &new_data)
+        {
+            last_sync_time = clock::now();
+            on_data_synced(new_data, data);
+            data = new_data;
+        }
+
+        template<typename T>
+        void CachedValue<T>::patch_data(json patch)
+        {
+            std::lock_guard lk(access_mutext);
+            try
             {
-                last_sync_time = clock::now();
-                on_data_synced(data);
+                json j(data);
+                j.merge_patch(patch);
+                reset_data(j.get<T>());
+            }
+            catch (const json::exception& ex)
+            {
+                spdlog::error("An error occured while patching cached: {}, patch {}",
+                              ex.what(), patch.dump());
             }
         }
     }

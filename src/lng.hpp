@@ -29,10 +29,6 @@ namespace spotifar
 		MPanelPlaylistsItemLabel,
 		MPanelPlaylistsItemDescr,
 
-		MPlayerPlayBtn,
-		MPlayerPrevBtn,
-		MPlayerNextBtn,
-		MPlayerLikeBtn,
 		MPlayerRepeatNoneBtn,
 		MPlayerRepeatOneBtn,
 		MPlayerRepeatAllBtn,

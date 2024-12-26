@@ -6,7 +6,7 @@
 namespace spotifar
 {
 	Plugin::Plugin():
-		api(config::get_client_id(), config::get_client_secret(), config::get_localhost_port()),
+		api(),
         panel(api),
         player(api)
 	{
@@ -25,7 +25,7 @@ namespace spotifar
 
     void Plugin::shutdown()
     {
-        // let far close ui itself, to avoid memory violation
+        // false is given to let far close ui itself, to avoid memory violation
         player.hide(false);
         api.shutdown();
     }

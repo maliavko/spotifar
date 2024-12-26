@@ -4,7 +4,7 @@ namespace spotifar
 {
     namespace spotify
     {
-        const string AuthCache::SPOTIFY_AUTH_URL = "https://accounts.spotify.com";
+        const string SPOTIFY_AUTH_URL = "https://accounts.spotify.com";
 
         static string scope =
             "streaming "
@@ -33,13 +33,13 @@ namespace spotifar
             logger = spdlog::get(utils::LOGGER_API);
         };
 
-        std::chrono::seconds AuthCache::get_sync_interval() const
+        std::chrono::milliseconds AuthCache::get_sync_interval() const
         {
             // 60 seconds gap to overlap the old and the new tokens seemlessly
             return std::chrono::seconds(get_data().expires_in - 60);
         }
         
-        void AuthCache::on_data_synced(Auth &data)
+        void AuthCache::on_data_synced(const Auth &data, const Auth &prev_data)
         {
             logger->info("A valid access token is found, expires in {}",
                 std::format("{:%T}", get_expires_at() - utils::clock::now()));
@@ -48,17 +48,10 @@ namespace spotifar
 
         bool AuthCache::request_data(Auth &data)
         {
+            auto refresh_token = get_data().refresh_token;
             // TODO: check errors
-            if (!data.refresh_token.empty())
-            {
-                auto auth = auth_with_refresh_token(data.refresh_token);
-
-                // if the response does not containt a refresh token, we are to use the old one
-                if (auth.refresh_token.empty())
-                    auth.refresh_token = data.refresh_token;
-                
-                data = auth;
-            }
+            if (!refresh_token.empty())
+                data = auth_with_refresh_token(refresh_token);
             else
                 data = auth_with_code(request_auth_code());
             return true;
@@ -115,6 +108,8 @@ namespace spotifar
             	{
                     // TODO: add error handling, check "state"
             		result = req.get_param_value("code");
+                    // TODO: consider of not closing the page, but pputting some info there
+                    // e.g. "The login is finished successfully, now you can close the page"
                     // if success, we are closing an empty page automatically
 				    res.set_content("<script>window.close();</script>", "text/html");
             		svr.stop();

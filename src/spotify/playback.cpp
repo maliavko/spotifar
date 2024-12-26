@@ -6,25 +6,52 @@ namespace spotifar
 {
     namespace spotify
     {
-        std::chrono::seconds PlaybackCache::get_sync_interval() const
+        std::chrono::milliseconds PlaybackCache::get_sync_interval() const
         {
-            return std::chrono::seconds(0);
+            return std::chrono::milliseconds(150);
         }
-        
-        void PlaybackCache::on_data_synced(PlaybackState &data)
+    
+        void PlaybackCache::on_data_synced(const PlaybackState &data, const PlaybackState &prev_data)
         {
-            ObserverManager::notify(&PlaybackObserver::on_playback_updated, data);
+            if (data.item != prev_data.item)
+                ObserverManager::notify(&PlaybackObserver::on_track_changed, data.item);
+
+            if (data.progress_ms != prev_data.progress_ms)
+                ObserverManager::notify(&PlaybackObserver::on_track_progress_changed,
+                    data.item.duration, data.progress);
+
+            if (data.device.volume_percent != prev_data.device.volume_percent)
+                ObserverManager::notify(&PlaybackObserver::on_volume_changed, data.device.volume_percent);
+
+            if (data.shuffle_state != prev_data.shuffle_state)
+                ObserverManager::notify(&PlaybackObserver::on_shuffle_state_changed, data.shuffle_state);
+
+            if (data.repeat_state != prev_data.repeat_state)
+                ObserverManager::notify(&PlaybackObserver::on_repeat_state_changed, data.repeat_state);
+
+            if (data.is_playing != prev_data.is_playing)
+                ObserverManager::notify(&PlaybackObserver::on_playback_state_changed, data.is_playing);
+
+            // TODO: send changes in permissions
         }
 
         bool PlaybackCache::request_data(PlaybackState &data)
         {
-            PlaybackState state;  // empty playback by default
+            // TODO: after staying paused awhile, the state comes as empty and it
+            // overwrites the stored previously played data
+            //PlaybackState state;  // TODO: unfinished for the case of empty playback
 
             auto r = endpoint->Get("/v1/me/player");
             if (r->status == httplib::OK_200)
-                state = json::parse(r->body).get<PlaybackState>();
-
-            data = state;
+            {
+                json::parse(r->body).get_to(data);
+            }
+            else if (r->status == httplib::NoContent_204)
+            {
+                // the playback data is empty here, we skip it to continue showing
+                // the last played real data in the player UI
+                return false;
+            }
 
             return true;
         }

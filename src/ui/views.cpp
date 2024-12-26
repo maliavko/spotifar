@@ -126,7 +126,7 @@ namespace spotifar
             Items result;
             for (auto& [id, a]: api.get_albums(artist_id))
             {
-                std::wstring album_name = std::format(L"[{}] {}", utils::to_wstring(a.release_year), a.name);
+                std::wstring album_name = std::format(L"[{}] {}", utils::to_wstring(a.get_release_year()), a.name);
                 if (a.is_single())
                     album_name += L" [EP]";
                 

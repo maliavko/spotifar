@@ -14,16 +14,13 @@ namespace spotifar
         class AuthCache: public CachedValue<Auth>
         {
         public:
-            const static string SPOTIFY_AUTH_URL;
-
-        public:
             AuthCache(httplib::Client *endpoint,
                       const string &client_id, const string &client_secret, int port);
 
         protected:
             virtual bool request_data(Auth &data);
-            virtual std::chrono::seconds get_sync_interval() const;
-            virtual void on_data_synced(Auth &data);
+            virtual std::chrono::milliseconds get_sync_interval() const;
+            virtual void on_data_synced(const Auth &data, const Auth &prev_data);
             
             string request_auth_code();
             Auth auth_with_code(const string &auth_code);

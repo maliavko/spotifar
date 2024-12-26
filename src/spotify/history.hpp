@@ -15,9 +15,10 @@ namespace spotifar
         {
         public:
             PlayedHistory(httplib::Client *endpoint);
+            // TODO: on_data_resync with the observer events
 
         protected:
-            virtual std::chrono::seconds get_sync_interval() const;
+            virtual std::chrono::milliseconds get_sync_interval() const;
             virtual bool request_data(HistoryList &data);
         };
     }
