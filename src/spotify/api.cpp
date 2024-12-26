@@ -110,6 +110,7 @@ namespace spotifar
                                  unsigned int position_ms, const string &device_id)
         {
             Params params = {};
+            Result res;
 
             if (!device_id.empty())
                 params.insert({ "device_id", device_id });
@@ -127,14 +128,15 @@ namespace spotifar
                 if (!track_uri.empty())
                     o["offset"] = { { "uri", track_uri }, };
                 
-                auto r = endpoint.Put(request_url, o.dump(), "application/json");
+                res = endpoint.Put(request_url, o.dump(), "application/json");
             }
             else
             {
-                auto r = endpoint.Put(request_url);
-                if (r->status == httplib::OK_200)
-                    get_playback_cache().patch_data({ { "is_playing", true } });
+                res = endpoint.Put(request_url);
             }
+            
+            if (res->status == OK_200 || res->status == NoContent_204)
+                get_playback_cache().patch_data({ { "is_playing", true } });
         }
         
         void Api::start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track)

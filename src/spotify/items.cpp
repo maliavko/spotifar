@@ -1,5 +1,4 @@
 #include "items.hpp"
-#include "utils.hpp"
 
 namespace spotifar
 {
@@ -161,6 +160,22 @@ namespace spotifar
 				{ "supports_volume", d.supports_volume },
 			};
 		}
+
+		bool operator==(const Actions &lhs, const Actions &rhs)
+		{
+			return (
+				lhs.interrupting_playback == rhs.interrupting_playback &&
+				lhs.pausing == rhs.pausing &&
+				lhs.resuming == rhs.resuming &&
+				lhs.seeking == rhs.seeking &&
+				lhs.skipping_next == rhs.skipping_next &&
+				lhs.skipping_prev == rhs.skipping_prev &&
+				lhs.toggling_repeat_context == rhs.toggling_repeat_context &&
+				lhs.toggling_repeat_track == rhs.toggling_repeat_track &&
+				lhs.toggling_shuffle == rhs.toggling_shuffle &&
+				lhs.trasferring_playback == rhs.trasferring_playback
+			);
+		}
 		
 		void from_json(const json &j, Actions &p)
 		{
@@ -183,6 +198,11 @@ namespace spotifar
 		{
 			// TODO: unfinished
 			j = json{};
+		}
+		
+		bool operator==(const Context &lhs, const Context &rhs)
+		{
+			return lhs.href == rhs.href;
 		}
 		
 		void from_json(const json &j, PlaybackState &p)
@@ -229,8 +249,10 @@ namespace spotifar
 		void from_json(const json &j, HistoryItem &p)
 		{
 			j.at("played_at").get_to(p.played_at);
-			j.at("context").get_to(p.context);
 			j.at("track").get_to(p.track);
+			
+			if (j.contains("context") && !j.at("context").is_null())
+				j.at("context").get_to(p.context);
 		}
 
 		void to_json(json &j, const HistoryItem &p)

@@ -1,6 +1,6 @@
+#include "stdafx.h"
 #include "playback.hpp"
 #include "abstract/observers.hpp"
-#include "ObserverManager.h"
 
 namespace spotifar
 {
@@ -30,7 +30,13 @@ namespace spotifar
                 ObserverManager::notify(&PlaybackObserver::on_repeat_state_changed, data.repeat_state);
 
             if (data.is_playing != prev_data.is_playing)
-                ObserverManager::notify(&PlaybackObserver::on_playback_state_changed, data.is_playing);
+                ObserverManager::notify(&PlaybackObserver::on_state_changed, data.is_playing);
+
+            if (data.context != prev_data.context)
+                ObserverManager::notify(&PlaybackObserver::on_context_changed, data.context);
+
+            if (data.actions != prev_data.actions)
+                ObserverManager::notify(&PlaybackObserver::on_permissions_changed, data.actions);
 
             // TODO: send changes in permissions
         }

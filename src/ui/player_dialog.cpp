@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "ui/player_dialog.hpp"
-#include "config.hpp"
-#include "lng.hpp"
 
 namespace spotifar
 {
@@ -31,6 +30,7 @@ namespace spotifar
             TRACK_BAR,
             TRACK_TIME,
             TRACK_TOTAL_TIME,
+            SOURCE_NAME,
             ARTIST_NAME,
             TRACK_NAME,
             PLAY_BTN,
@@ -85,6 +85,7 @@ namespace spotifar
             control(DI_TEXT,        view_width - 5, view_height - 2, 6, 1,      DIF_RIGHTTEXT), // ID_TRACK_TOTAL_TIME
             
             // playing info
+            control(DI_TEXT,        view_x, 1, view_width, 1,                   DIF_LEFTTEXT), // SOURCE_NAME
             control(DI_TEXT,        view_x, view_height - 5, view_width, 1,     DIF_LEFTTEXT), // ID_ARTIST_NAME
             control(DI_TEXT,        view_x, view_height - 4, view_width, 1,     DIF_LEFTTEXT), // ID_TRACK_NAME
 
@@ -125,6 +126,9 @@ namespace spotifar
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_track_bar_style_applied },
             }},
             { ARTIST_NAME, {
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
+            }},
+            { SOURCE_NAME, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
             }},
             { LIKE_BTN, {
@@ -212,7 +216,8 @@ namespace spotifar
                     on_track_changed(state.item);
                     on_track_progress_changed(state.item.duration, state.progress);
                     on_volume_changed(state.device.volume_percent);
-                    on_playback_state_changed(state.is_playing);
+                    on_state_changed(state.is_playing);
+                    on_context_changed(state.context);
                     
                     on_devices_changed(api.get_available_devices());
 
@@ -419,7 +424,6 @@ namespace spotifar
             
             volume_label = std::format(L"[{}%]", volume);
             set_control_text(VOLUME_LABEL, volume_label);
-            //set_control_enabled(VOLUME_LABEL, state.device.supports_volume);
         }
         
         void PlayerDialog::on_shuffle_state_changed(bool shuffle_state)
@@ -430,7 +434,6 @@ namespace spotifar
 
             shuffle_label = utils::utf8_decode(shuffle_state ? "S" : "No S");
             set_control_text(SHUFFLE_BTN, shuffle_label);
-            //set_control_enabled(PLAY_BTN, state.permissions.toggling_shuffle);
         }
 
         void PlayerDialog::on_repeat_state_changed(const std::string &repeat_state)
@@ -441,14 +444,50 @@ namespace spotifar
             
             repeat_label = utils::utf8_decode(repeat_state);
             set_control_text(REPEAT_BTN, repeat_label);
-            //set_control_enabled(REPEAT_BTN, state.permissions.toggling_repeat_context);
-            //set_control_enabled(REPEAT_BTN, state.permissions.toggling_repeat_track);
         }
         
-        void PlayerDialog::on_playback_state_changed(bool is_playing)
+        void PlayerDialog::on_state_changed(bool is_playing)
         {
             set_control_text(PLAY_BTN, is_playing ? PAUSE_BTN_LABEL : PLAY_BTN_LABEL);
         }
+        
+        void PlayerDialog::on_context_changed(const Context &ctx)
+        {
+            std::wstring source_name = L"";
+            if (ctx.is_collection())
+            {
+                source_name = get_msg(MPlayerSourceCollection);
+            }
+            else if (ctx.is_artist())
+            {
+                // TODO: implement cache for artists and use it here
+                source_name = L"artist";
+            }
+            else if (ctx.is_album())
+            {
+                // TODO: implement cache for albums and use it here
+                source_name = L"album";
+            }
+            else if (ctx.is_playlist())
+            {
+                // TODO: implement cache for playlists and use it here
+                source_name = L"playlist";
+            }
+            
+            static std::wstring source_label;
+            if (!source_name.empty())
+                source_label = std::format(L"{}: {}", get_msg(MPlayerSourceLabel), source_name);
+            else
+                source_label = L"";
+
+            set_control_text(SOURCE_NAME, source_label);
+        }
+        
+        void PlayerDialog::on_permissions_changed(const Actions &actions)
+        {
+            // TODO: finish the content
+        }
+        
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)
         {

@@ -2,9 +2,7 @@
 #define ITEMS_HPP_55A04E12_800F_4468_BD38_54D0CC81EF641
 #pragma once
 
-#include "nlohmann\json.hpp"
-#include <string>
-#include <map>
+#include "stdafx.h"
 
 namespace spotifar
 {
@@ -105,6 +103,7 @@ namespace spotifar
 			bool toggling_shuffle = false;
 			bool trasferring_playback = false;
 
+			friend bool operator==(const Actions &lhs, const Actions &rhs);
 			friend void from_json(const json &j, Actions &p);
 			friend void to_json(json &j, const Actions &p);
 		};
@@ -115,11 +114,20 @@ namespace spotifar
 			inline static const string PLAYLIST = "playlist";
 			inline static const string ARTIST = "artist";
 			inline static const string SHOW = "show";
+			inline static const string COLLECTION = "collection";
 
 			string type;
 			string uri;
-			
-			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Context, type, uri);
+			string href;
+
+			bool is_empty() const { return type == ""; }
+			bool is_artist() const { return type == ARTIST; }
+			bool is_album() const { return type == ALBUM; }
+			bool is_playlist() const { return type == PLAYLIST; }
+			bool is_collection() const { return type == COLLECTION; }
+			friend bool operator==(const Context &lhs, const Context &rhs);
+
+			NLOHMANN_DEFINE_TYPE_INTRUSIVE(Context, type, uri, href);
 		};
 
 		struct Device

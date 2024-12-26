@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "ui/views.hpp"
-#include "lng.hpp"
-#include "config.hpp"
 
 namespace spotifar
 {
@@ -8,6 +7,11 @@ namespace spotifar
     {
         using utils::far3::get_msg;
 
+        const static uintptr_t TMP_FOLDER_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
+        const static uintptr_t ARTIST_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
+        const static uintptr_t PLAYLIST_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
+        const static uintptr_t ALBUM_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
+        const static uintptr_t TRACK_ITEM_ATTRS = FILE_ATTRIBUTE_VIRTUAL;
         
         ViewItem::ViewItem(const std::string &id, const wstring &name, const wstring &descr,
                            uintptr_t attrs, size_t duration):

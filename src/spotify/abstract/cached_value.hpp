@@ -2,11 +2,7 @@
 #define CACHED_VALUE_HPP_BB3452A8_BAEA_45C5_97A9_14A76DC55BE5
 #pragma once
 
-#include "httplib.h"
-#include "nlohmann/json.hpp"
-#include "config.hpp"
-#include "utils.hpp"
-#include <PluginSettings.hpp>
+#include "stdafx.h"
 
 namespace spotifar
 {

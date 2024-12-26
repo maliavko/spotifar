@@ -1,6 +1,6 @@
+#include "stdafx.h"
 #include "devices.hpp"
 #include "abstract/observers.hpp"
-#include "ObserverManager.h"
 
 namespace spotifar
 {

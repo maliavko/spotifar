@@ -29,6 +29,8 @@ namespace spotifar
 		MPanelPlaylistsItemLabel,
 		MPanelPlaylistsItemDescr,
 
+		MPlayerSourceLabel,
+		MPlayerSourceCollection,
 		MPlayerRepeatNoneBtn,
 		MPlayerRepeatOneBtn,
 		MPlayerRepeatAllBtn,

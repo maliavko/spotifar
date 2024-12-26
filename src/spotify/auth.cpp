@@ -51,7 +51,14 @@ namespace spotifar
             auto refresh_token = get_data().refresh_token;
             // TODO: check errors
             if (!refresh_token.empty())
+            {
                 data = auth_with_refresh_token(refresh_token);
+
+                // an api does not return refresh token in case it is still valid,
+                // so putting the old one manually to the data cache
+                if (data.refresh_token.empty())
+                    data.refresh_token = refresh_token;
+            }
             else
                 data = auth_with_code(request_auth_code());
             return true;

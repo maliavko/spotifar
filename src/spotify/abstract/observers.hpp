@@ -24,7 +24,9 @@ namespace spotifar
             virtual void on_volume_changed(unsigned int volume) {};
             virtual void on_shuffle_state_changed(bool shuffle_state) {};
             virtual void on_repeat_state_changed(const std::string &repeat_state) {};
-            virtual void on_playback_state_changed(bool is_playing) {};
+            virtual void on_state_changed(bool is_playing) {};
+            virtual void on_context_changed(const Context &ctx) {};
+            virtual void on_permissions_changed(const Actions &actions) {};
         };
     }
 }

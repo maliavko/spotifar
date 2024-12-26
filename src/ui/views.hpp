@@ -22,12 +22,6 @@ namespace spotifar
         const static string PLAYLISTS_VIEW_ID = "playlists";
         const static string PLAYLIST_VIEW_ID = "playlist";
 
-        const static uintptr_t TMP_FOLDER_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-        const static uintptr_t ARTIST_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-        const static uintptr_t PLAYLIST_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-        const static uintptr_t ALBUM_ITEM_ATTRS = FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL;
-        const static uintptr_t TRACK_ITEM_ATTRS = FILE_ATTRIBUTE_VIRTUAL;
-
         struct ViewItem
         {
             string id;
