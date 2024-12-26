@@ -37,12 +37,13 @@ namespace spotifar
 
             // NOTE: no args means "resume"
             void start_playback(const string &context_uri = "", const string &track_uri = "",
-                                unsigned int position_ms = 0, const string &device_id = "");
+                                int position_ms = 0, const string &device_id = "");
             void start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track);
             void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
             void pause_playback(const string &device_id = "");
             void skip_to_next();
             void skip_to_previous();
+            void seek_to_position(int position_ms, const string &device_id = "");
             void toggle_shuffle(bool is_on);
             void set_playback_volume(int volume_percent);
             bool transfer_playback(const string &device_id, bool start_playing = false);

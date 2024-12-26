@@ -8,7 +8,7 @@ namespace spotifar
     {
         std::chrono::milliseconds PlaybackCache::get_sync_interval() const
         {
-            return std::chrono::milliseconds(150);
+            return std::chrono::milliseconds(1000);
         }
     
         void PlaybackCache::on_data_synced(const PlaybackState &data, const PlaybackState &prev_data)
@@ -46,20 +46,21 @@ namespace spotifar
             // TODO: after staying paused awhile, the state comes as empty and it
             // overwrites the stored previously played data
             //PlaybackState state;  // TODO: unfinished for the case of empty playback
-
             auto r = endpoint->Get("/v1/me/player");
             if (r->status == httplib::OK_200)
             {
                 json::parse(r->body).get_to(data);
+                return true;
             }
             else if (r->status == httplib::NoContent_204)
             {
                 // the playback data is empty here, we skip it to continue showing
                 // the last played real data in the player UI
-                return false;
+                data = get_data();
+                return true;
             }
 
-            return true;
+            return false;
         }
     }
 }

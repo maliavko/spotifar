@@ -8,7 +8,7 @@ namespace spotifar
     {
         std::chrono::milliseconds DevicesCache::get_sync_interval() const
         {
-            return std::chrono::milliseconds(100);
+            return std::chrono::milliseconds(1000);
         }
         
         void DevicesCache::on_data_synced(const DevicesList &data, const DevicesList &prev_data)

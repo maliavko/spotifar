@@ -8,6 +8,7 @@ namespace spotifar
         using utils::far3::get_msg;
         using utils::far3::send_dlg_msg;
         using utils::far3::NoRedraw;
+        using namespace std::literals;
         
         static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
         static const wchar_t TRACK_BAR_CHAR_FILLED = 0x2588;
@@ -17,6 +18,9 @@ namespace spotifar
         static const wchar_t *NEXT_BTN_LABEL = L"[>>]";
         static const wchar_t *PREV_BTN_LABEL = L"[<<]";
         static const wchar_t *LIKE_BTN_LABEL = L"[+]";
+
+        static const unsigned int SEEKING_STEP = 3, VOLUME_STEP = 1;
+        static const std::chrono::milliseconds DELAYED_THRESHOLD = 300ms;
 
         static const int width = 60, height = 10;
         static const int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
@@ -72,34 +76,34 @@ namespace spotifar
 
         auto btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
         auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND |
-                            DIF_DROPDOWNLIST | DIF_NOFOCUS;
+                           DIF_DROPDOWNLIST | DIF_NOFOCUS;
     
         std::vector<FarDialogItem> dlg_items_layout{
             // border
-            control(DI_DOUBLEBOX,   0, 0, width, height,                        DIF_NONE), // ID_BOX
-            control(DI_TEXT,        view_center_x - 5, 0, 10, 1,                DIF_CENTERTEXT), // ID_TITLE
+            control(DI_DOUBLEBOX,   0, 0, width, height,                            DIF_NONE), // BOX
+            control(DI_TEXT,        view_center_x - 5, 0, 10, 1,                    DIF_CENTERTEXT), // TITLE
 
             // trackbar
-            control(DI_TEXT,        view_x, view_height - 2, view_width, 1,     DIF_CENTERTEXT), // ID_TRACK_BAR
-            control(DI_TEXT,        view_x, view_height - 2, 6, 1,              DIF_LEFTTEXT), // ID_TRACK_TIME
-            control(DI_TEXT,        view_width - 5, view_height - 2, 6, 1,      DIF_RIGHTTEXT), // ID_TRACK_TOTAL_TIME
+            control(DI_TEXT,        view_x + 6, view_height - 2, view_width - 6, 1, DIF_CENTERTEXT), // TRACK_BAR
+            control(DI_TEXT,        view_x, view_height - 2, 6, 1,                  DIF_LEFTTEXT), // TRACK_TIME
+            control(DI_TEXT,        view_width - 5, view_height - 2, 6, 1,          DIF_RIGHTTEXT), // TRACK_TOTAL_TIME
             
             // playing info
-            control(DI_TEXT,        view_x, 1, view_width, 1,                   DIF_LEFTTEXT), // SOURCE_NAME
-            control(DI_TEXT,        view_x, view_height - 5, view_width, 1,     DIF_LEFTTEXT), // ID_ARTIST_NAME
-            control(DI_TEXT,        view_x, view_height - 4, view_width, 1,     DIF_LEFTTEXT), // ID_TRACK_NAME
+            control(DI_TEXT,        view_x, 1, view_width, 1,                       DIF_LEFTTEXT), // SOURCE_NAME
+            control(DI_TEXT,        view_x, view_height - 5, view_width, 1,         DIF_LEFTTEXT), // ARTIST_NAME
+            control(DI_TEXT,        view_x, view_height - 4, view_width, 1,         DIF_LEFTTEXT), // TRACK_NAME
 
             // controls
-            control(DI_BUTTON,      view_center_x - 2, view_height, 1, 1,       btn_flags, PLAY_BTN_LABEL),
-            control(DI_BUTTON,      view_center_x - 7, view_height, 1, 1,       btn_flags, PREV_BTN_LABEL),
-            control(DI_BUTTON,      view_center_x + 4, view_height, 1, 1,       btn_flags, NEXT_BTN_LABEL),
-            control(DI_BUTTON,      view_x, view_height, 1, 1,                  btn_flags, LIKE_BTN_LABEL),
-            control(DI_TEXT,        view_width - 6, view_height, 1, 1,          btn_flags | DIF_RIGHTTEXT, L"[---%]"),
-            control(DI_BUTTON,      view_center_x + 9, view_height, 1, 1,       btn_flags),
-            control(DI_BUTTON,      view_center_x - 15, view_height, 1, 1,      btn_flags | DIF_RIGHTTEXT),
+            control(DI_BUTTON,      view_center_x - 2, view_height, 1, 1,           btn_flags, PLAY_BTN_LABEL),
+            control(DI_BUTTON,      view_center_x - 7, view_height, 1, 1,           btn_flags, PREV_BTN_LABEL),
+            control(DI_BUTTON,      view_center_x + 4, view_height, 1, 1,           btn_flags, NEXT_BTN_LABEL),
+            control(DI_BUTTON,      view_x, view_height, 1, 1,                      btn_flags, LIKE_BTN_LABEL),
+            control(DI_TEXT,        view_width - 6, view_height, 1, 1,              btn_flags | DIF_RIGHTTEXT, L"[---%]"),
+            control(DI_BUTTON,      view_center_x + 9, view_height, 1, 1,           btn_flags),
+            control(DI_BUTTON,      view_center_x - 15, view_height, 1, 1,          btn_flags | DIF_RIGHTTEXT),
             
             // devices box
-            control(DI_COMBOBOX,    view_width-13, 1, view_width-1, 0,           combo_flags),
+            control(DI_COMBOBOX,    view_width - 13, 1, view_width - 1, 0,          combo_flags),
         };
 
         typedef bool (PlayerDialog::*ControlHandler)(void*);
@@ -124,6 +128,7 @@ namespace spotifar
             }},
             { TRACK_BAR, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_track_bar_style_applied },
+                { DN_CONTROLINPUT, &PlayerDialog::on_track_bar_input_received },
             }},
             { ARTIST_NAME, {
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
@@ -263,6 +268,7 @@ namespace spotifar
 
         bool PlayerDialog::on_input_received(void *input_record)
         {
+            auto state = api.get_playback_state();
             auto t = VK_RIGHT & utils::far3::KEY_ALT;
             INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
             switch (ir->EventType)
@@ -273,15 +279,6 @@ namespace spotifar
                         int key = utils::far3::input_record_to_combined_key(ir->Event.KeyEvent);
                         switch (key)
                         {
-                            case VK_UP:
-                            case VK_DOWN:
-                            {
-                                // int volume_to_request = dialog->volume_percent += key == VK_UP ? +5 : -5;
-                                // volume_to_request = max(min(volume_to_request, 100), 0);
-                                // dialog->api.set_playback_volume(volume_to_request);
-                                int i = 0;
-                                return true;
-                            }
                             case VK_SPACE:
                                 on_play_btn_click(nullptr);
                                 return true;
@@ -293,6 +290,63 @@ namespace spotifar
                             case VK_LEFT + utils::far3::KEY_ALT:
                                 on_skip_to_previous_btn_click(nullptr);
                                 return true;
+
+                            case VK_LEFT:
+                            case VK_RIGHT:
+                            {
+                                int step = SEEKING_STEP * (key == VK_LEFT ? -1 : 1);
+
+                                // a click to the opposite seeking key while accumulating a position
+                                // resets the offset to 0
+                                if (seek_offset * step < 0) seek_offset = 0;
+                                
+                                seek_offset_time = clock::now();
+                                seek_offset += step;
+                                
+                                auto &state = api.get_playback_state();
+                                if (state.progress + seek_offset <= 0)
+                                    seek_offset = -state.progress;
+
+                                if (state.progress + seek_offset >= state.item.duration)
+                                    seek_offset = state.item.duration - state.progress;
+
+                                {
+                                    // updating the track bar with a temporary position
+                                    std::lock_guard lock(track_bar_mutex);
+                                    auto seek_progress = state.progress + seek_offset;
+                                    update_track_bar(state.item.duration, seek_progress);
+                                }
+
+                                return true;
+                            }
+                            case VK_UP:
+                            case VK_DOWN:
+                            {
+                                int step = VOLUME_STEP * (key == VK_DOWN ? -1 : 1);
+
+                                // a click to the opposite seeking key while accumulating a value
+                                // resets the offset to 0
+                                if (volume_offset * step < 0) volume_offset = 0;
+                                
+                                volume_offset_time = clock::now();
+                                volume_offset += step;
+                                
+                                auto &state = api.get_playback_state();
+                                if (state.device.volume_percent + volume_offset <= 0)
+                                    volume_offset = -state.device.volume_percent;
+
+                                if (state.device.volume_percent + volume_offset >= 100)
+                                    volume_offset = 100 - state.device.volume_percent;
+
+                                {
+                                    // updating the track bar with a temporary position
+                                    std::lock_guard lock(volume_bar_mutex);
+                                    auto volume_percent = state.device.volume_percent + volume_offset;
+                                    spdlog::debug("aaaaaaa {}, {}", volume_offset, volume_percent);
+                                    update_volume_bar(volume_percent);
+                                }
+                                return true;
+                            }
                         }
                     }
                     break;
@@ -314,6 +368,26 @@ namespace spotifar
             FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
             dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+            return true;
+        }
+        
+        bool PlayerDialog::on_track_bar_input_received(void *input_record)
+        {
+            auto &playback = api.get_playback_state();
+            if (playback.is_empty())
+                return false;
+
+            INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+
+            SMALL_RECT dlg_rect;
+            utils::far3::send_dlg_msg(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
+            
+            auto track_bar_layout = dlg_items_layout[TRACK_BAR];
+            auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
+            auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + track_bar_layout.X1);
+            auto progress_percent = (float)click_pos / track_bar_length;
+
+            api.seek_to_position((int)(playback.item.duration_ms * progress_percent));
             return true;
         }
         
@@ -394,20 +468,22 @@ namespace spotifar
             set_control_text(ARTIST_NAME, track.artists.size() ? track.artists[0].name : L"");
         }
 
-        void PlayerDialog::on_track_progress_changed(unsigned int duration, unsigned int progress)
+        void PlayerDialog::update_track_bar(int duration, int progress)
         {
 	        NoRedraw nr(hdlg);
 
             static std::wstring track_bar, track_time_str, track_total_time_str;
 
-            track_bar = std::wstring(view_width - 14, TRACK_BAR_CHAR_UNFILLED);
+            auto track_bar_layout = dlg_items_layout[TRACK_BAR];
+            auto track_bar_size = track_bar_layout.X2 - track_bar_layout.X1;
+            track_bar = std::wstring(track_bar_size, TRACK_BAR_CHAR_UNFILLED);
             track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(progress));
             track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(duration));
 
             if (duration)
             {
                 float progress_percent = (float)progress / duration;
-                int progress_chars_length = (int)(track_bar.size() * progress_percent);
+                int progress_chars_length = (int)(track_bar_size * progress_percent);
                 fill(track_bar.begin(), track_bar.begin() + progress_chars_length, TRACK_BAR_CHAR_FILLED);
             }
             
@@ -415,8 +491,18 @@ namespace spotifar
             set_control_text(TRACK_TIME, track_time_str);
             set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
         }
+
+        void PlayerDialog::on_track_progress_changed(int duration, int progress)
+        {
+            // prevent from updating, in case we are seeking a new track position,
+            // which requires showing a virtual target track bar position
+            if (seek_offset != 0)
+                return;
+
+            return update_track_bar((int)duration, (int)progress);
+        }
         
-        void PlayerDialog::on_volume_changed(unsigned int volume)
+        void PlayerDialog::update_volume_bar(int volume)
         {
 	        NoRedraw nr(hdlg);
 
@@ -424,6 +510,16 @@ namespace spotifar
             
             volume_label = std::format(L"[{}%]", volume);
             set_control_text(VOLUME_LABEL, volume_label);
+        }
+        
+        void PlayerDialog::on_volume_changed(int volume)
+        {
+            // prevent from updating, in case we are seeking a new volume value,
+            // which requires showing a virtual target vlume bar value
+            if (volume_offset != 0)
+                return;
+
+            return update_volume_bar(volume);
         }
         
         void PlayerDialog::on_shuffle_state_changed(bool shuffle_state)
@@ -488,16 +584,55 @@ namespace spotifar
             // TODO: finish the content
         }
         
+        void PlayerDialog::on_sync_thread_tick()
+        {
+            auto now = clock::now();
+            auto &state = api.get_playback_state();
+
+            if (seek_offset != 0)
+            {
+                // if there is an accumulated seeking position offset and the last changed of it
+                // was more than a threshold, so we apply it
+                if (seek_offset_time + DELAYED_THRESHOLD < now)
+                {
+                    std::lock_guard lock(track_bar_mutex);
+
+                    auto new_progress_ms = state.progress_ms + seek_offset * 1000;
+                    
+                    spdlog::debug("Setting a new seeking position, an offset {}, progress_ms {}",
+                        seek_offset, new_progress_ms);
+                    seek_offset = 0;
+
+                    api.seek_to_position(new_progress_ms);
+                }
+            }
+
+            if (volume_offset != 0)
+            {
+                // if there is an accumulated volume value offset and the last changed of it
+                // was more than a threshold, so we apply it
+                if (volume_offset_time + DELAYED_THRESHOLD < now)
+                {
+                    std::lock_guard lock(volume_bar_mutex);
+
+                    auto new_volume = state.device.volume_percent + volume_offset;
+                    
+                    spdlog::debug("Setting a new volume value, an offset {}, new_volume {}",
+                        volume_offset, new_volume);
+                    volume_offset = 0;
+
+                    api.set_playback_volume(new_volume);
+                }
+            }
+        }
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)
         {
-	        NoRedraw nr(hdlg);
             return send_dlg_msg(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
         }
         
         intptr_t PlayerDialog::set_control_enabled(int control_id, bool is_enabled)
         {
-	        NoRedraw nr(hdlg);
             return send_dlg_msg(hdlg, DM_ENABLE, control_id, (void*)is_enabled);
         }
     }

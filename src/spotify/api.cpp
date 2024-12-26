@@ -47,7 +47,6 @@ namespace spotifar
         }
 
         const string SPOTIFY_API_URL = "https://api.spotify.com";
-        const std::chrono::milliseconds SYNC_INTERVAL = 1000ms;
 
         Api::Api():
             endpoint(SPOTIFY_API_URL),
@@ -107,7 +106,7 @@ namespace spotifar
         }
         
         void Api::start_playback(const string &context_uri, const string &track_uri,
-                                 unsigned int position_ms, const string &device_id)
+                                 int position_ms, const string &device_id)
         {
             Params params = {};
             Result res;
@@ -172,6 +171,22 @@ namespace spotifar
             // TODO: unfinished
             auto r = endpoint.Post("/v1/me/player/previous");
         }
+        
+        void Api::seek_to_position(int position_ms, const string &device_id)
+        {
+            // TODO: unfinished
+            Params params = {
+                { "position_ms", std::to_string(position_ms) },
+            };
+
+            if (!device_id.empty())
+                params.insert({ "device_id", device_id });
+
+            auto res = endpoint.Put(append_query_params("/v1/me/player/seek", params));
+
+            if (res->status == OK_200 || res->status == NoContent_204)
+                get_playback_cache().patch_data({ { "progress_ms", position_ms } });
+        }
 
         void Api::toggle_shuffle(bool is_on)
         {
@@ -181,8 +196,15 @@ namespace spotifar
 
         void Api::set_playback_volume(int volume_percent)
         {
-            auto r = endpoint.Put(append_query_params("/v1/me/player/volume",
+            auto res = endpoint.Put(append_query_params("/v1/me/player/volume",
                 Params{{ "volume_percent", std::to_string(volume_percent) }}));
+
+            if (res->status == OK_200 || res->status == NoContent_204)
+                get_playback_cache().patch_data({
+                    { "device", {
+                        { "volume_percent", volume_percent }
+                    } }
+                });
         }
         
         bool Api::transfer_playback(const std::string &device_id, bool start_playing)
@@ -347,7 +369,6 @@ namespace spotifar
             std::packaged_task<void()> task([this]
             {
                 std::string exit_msg = "";
-                auto marker = utils::clock::now();
                 const std::lock_guard<std::mutex> worker_lock(sync_worker_mutex);
 
                 try
@@ -359,14 +380,9 @@ namespace spotifar
                         for (auto &c: caches)
                             c->resync();
 
-                        // for the player to show track time ticking well, each frame starts as precise
-                        // as possible to the 'marker' frame with 1s increment; in case for some reason 
-                        // frame took more time to request and process data, we skip several of them
-                        auto now = utils::clock::now();
-                        while (marker < now)
-                            marker += SYNC_INTERVAL;
+                        ObserverManager::notify(&BasicApiObserver::on_sync_thread_tick);
 
-                        std::this_thread::sleep_until(marker);
+                        std::this_thread::sleep_for(50ms);
                     }
                 }
                 catch (const std::exception &ex)

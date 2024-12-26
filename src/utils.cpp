@@ -28,15 +28,15 @@ namespace spotifar
 		namespace far3
 		{
 			NoRedraw::NoRedraw(HANDLE hdlg):
-			hdlg(hdlg)
+				hdlg(hdlg)
 			{
 				assert(hdlg);
-				config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, FALSE, 0);
+				send_dlg_msg(hdlg, DM_ENABLEREDRAW, FALSE, 0);
 			}
 
 			NoRedraw::~NoRedraw()
 			{
-				config::PsInfo.SendDlgMessage(hdlg, DM_ENABLEREDRAW, TRUE, 0);
+				send_dlg_msg(hdlg, DM_ENABLEREDRAW, TRUE, 0);
 			}
 
 			int input_record_to_combined_key(const KEY_EVENT_RECORD &kir)
@@ -82,6 +82,8 @@ namespace spotifar
 			
 			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 			{
+				static std::mutex m;
+				std::lock_guard lock(m);
 				return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
 			}
 

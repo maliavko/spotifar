@@ -71,8 +71,8 @@ namespace spotifar
 		{
 			string id = INVALID_ID;
 			wstring name;
-			unsigned int duration_ms = 0;
-			unsigned int duration = 0;
+			int duration_ms = 0;
+			int duration = 0;
 			size_t track_number;  // TODO: track number could be duplicated for different discs
 
 			inline std::string get_uri() const { return std::format("spotify:track:{}", id); }
@@ -151,8 +151,8 @@ namespace spotifar
 			Device device;
 			string repeat_state = "off";  // off, track, context
 			bool shuffle_state = false;
-			unsigned int progress_ms = 0;
-			unsigned int progress = 0;
+			int progress_ms = 0;
+			int progress = 0;
 			bool is_playing = false;
 			Actions actions;
 			Track item;
