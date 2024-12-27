@@ -20,7 +20,6 @@ namespace spotifar
         static const wchar_t *LIKE_BTN_LABEL = L"[+]";
 
         static const unsigned int SEEKING_STEP = 3, VOLUME_STEP = 1;
-        static const std::chrono::milliseconds DELAYED_THRESHOLD = 300ms;
 
         static const int width = 60, height = 10;
         static const int view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2;
@@ -47,6 +46,42 @@ namespace spotifar
             DEVICES_COMBO,
             TOTAL_ELEMENTS_COUNT,
         };
+
+        void DelayedIntValue::add_offset(int step)
+        {
+            if (offset * step < 0) offset = 0;
+
+            last_change_time = clock::now();
+            offset += step;
+            
+            if (value + offset <= lower_boundary)
+                offset = lower_boundary - value;
+
+            if (value + offset >= higher_boundary)
+                offset = higher_boundary - value;
+        }
+
+        bool DelayedIntValue::check(std::function<void(int)> delegate)
+        {
+            if (offset != 0)
+            {
+                auto now = clock::now();
+                // if there is an accumulated volume value offset and the last changed of it
+                // was more than a threshold, so we apply it
+                if (last_change_time + DELAYED_THRESHOLD < now)
+                {
+                    auto new_value = value + offset;
+                    
+                    spdlog::debug("Setting a new value, an offset {}, a vlaue {}",
+                        offset, new_value);
+                    offset = 0;
+
+                    delegate(new_value);
+                    return true;
+                }
+            }
+            return false;
+        }
         
         // a helper class to suppress dlg_proc function from handling incoming events,
         // while the instance of the class exists in the particular scope
@@ -145,7 +180,9 @@ namespace spotifar
         };
 
         PlayerDialog::PlayerDialog(spotify::Api &api):
-            api(api)
+            api(api),
+            volume(0, 100),
+            position(0, 0)
         {
         }
 
@@ -294,27 +331,10 @@ namespace spotifar
                             case VK_LEFT:
                             case VK_RIGHT:
                             {
-                                int step = SEEKING_STEP * (key == VK_LEFT ? -1 : 1);
-
-                                // a click to the opposite seeking key while accumulating a position
-                                // resets the offset to 0
-                                if (seek_offset * step < 0) seek_offset = 0;
-                                
-                                seek_offset_time = clock::now();
-                                seek_offset += step;
-                                
-                                auto &state = api.get_playback_state();
-                                if (state.progress + seek_offset <= 0)
-                                    seek_offset = -state.progress;
-
-                                if (state.progress + seek_offset >= state.item.duration)
-                                    seek_offset = state.item.duration - state.progress;
-
+                                position.add_offset(SEEKING_STEP * (key == VK_RIGHT ? 1 : -1));
                                 {
-                                    // updating the track bar with a temporary position
-                                    std::lock_guard lock(track_bar_mutex);
-                                    auto seek_progress = state.progress + seek_offset;
-                                    update_track_bar(state.item.duration, seek_progress);
+                                    std::lock_guard lock(position.access_mutex);
+                                    update_track_bar(position.higher_boundary, position.get_offset_value());
                                 }
 
                                 return true;
@@ -322,29 +342,12 @@ namespace spotifar
                             case VK_UP:
                             case VK_DOWN:
                             {
-                                int step = VOLUME_STEP * (key == VK_DOWN ? -1 : 1);
-
-                                // a click to the opposite seeking key while accumulating a value
-                                // resets the offset to 0
-                                if (volume_offset * step < 0) volume_offset = 0;
-                                
-                                volume_offset_time = clock::now();
-                                volume_offset += step;
-                                
-                                auto &state = api.get_playback_state();
-                                if (state.device.volume_percent + volume_offset <= 0)
-                                    volume_offset = -state.device.volume_percent;
-
-                                if (state.device.volume_percent + volume_offset >= 100)
-                                    volume_offset = 100 - state.device.volume_percent;
-
+                                volume.add_offset(VOLUME_STEP * (key == VK_UP ? 1 : -1));
                                 {
-                                    // updating the track bar with a temporary position
-                                    std::lock_guard lock(volume_bar_mutex);
-                                    auto volume_percent = state.device.volume_percent + volume_offset;
-                                    spdlog::debug("aaaaaaa {}, {}", volume_offset, volume_percent);
-                                    update_volume_bar(volume_percent);
+                                    std::lock_guard lock(volume.access_mutex);
+                                    update_volume_bar(volume.get_offset_value());
                                 }
+
                                 return true;
                             }
                         }
@@ -494,9 +497,12 @@ namespace spotifar
 
         void PlayerDialog::on_track_progress_changed(int duration, int progress)
         {
-            // prevent from updating, in case we are seeking a new track position,
+            position.higher_boundary = duration;
+            position.value = progress;
+            
+            // prevents from updating, in case we are seeking a new track position,
             // which requires showing a virtual target track bar position
-            if (seek_offset != 0)
+            if (position.is_waiting())
                 return;
 
             return update_track_bar((int)duration, (int)progress);
@@ -512,14 +518,16 @@ namespace spotifar
             set_control_text(VOLUME_LABEL, volume_label);
         }
         
-        void PlayerDialog::on_volume_changed(int volume)
+        void PlayerDialog::on_volume_changed(int vol)
         {
-            // prevent from updating, in case we are seeking a new volume value,
+            volume.value = vol;
+
+            // prevents from updating, in case we are seeking a new volume value,
             // which requires showing a virtual target vlume bar value
-            if (volume_offset != 0)
+            if (volume.is_waiting())
                 return;
 
-            return update_volume_bar(volume);
+            return update_volume_bar(vol);
         }
         
         void PlayerDialog::on_shuffle_state_changed(bool shuffle_state)
@@ -589,40 +597,14 @@ namespace spotifar
             auto now = clock::now();
             auto &state = api.get_playback_state();
 
-            if (seek_offset != 0)
             {
-                // if there is an accumulated seeking position offset and the last changed of it
-                // was more than a threshold, so we apply it
-                if (seek_offset_time + DELAYED_THRESHOLD < now)
-                {
-                    std::lock_guard lock(track_bar_mutex);
-
-                    auto new_progress_ms = state.progress_ms + seek_offset * 1000;
-                    
-                    spdlog::debug("Setting a new seeking position, an offset {}, progress_ms {}",
-                        seek_offset, new_progress_ms);
-                    seek_offset = 0;
-
-                    api.seek_to_position(new_progress_ms);
-                }
+                std::lock_guard lock(position.access_mutex);
+                position.check([this](int p) { api.seek_to_position(p * 1000); });
             }
 
-            if (volume_offset != 0)
             {
-                // if there is an accumulated volume value offset and the last changed of it
-                // was more than a threshold, so we apply it
-                if (volume_offset_time + DELAYED_THRESHOLD < now)
-                {
-                    std::lock_guard lock(volume_bar_mutex);
-
-                    auto new_volume = state.device.volume_percent + volume_offset;
-                    
-                    spdlog::debug("Setting a new volume value, an offset {}, new_volume {}",
-                        volume_offset, new_volume);
-                    volume_offset = 0;
-
-                    api.set_playback_volume(new_volume);
-                }
+                std::lock_guard lock(volume.access_mutex);
+                volume.check([this](int v) { api.set_playback_volume(v); });
             }
         }
         

@@ -14,7 +14,29 @@ namespace spotifar
         using spotify::Context;
         using spotify::Actions;
         using utils::clock;
+        using namespace std::literals;
         
+        struct DelayedIntValue
+        {
+            inline static const std::chrono::milliseconds DELAYED_THRESHOLD = 300ms;
+
+            int value = 0, offset = 0;
+            int lower_boundary, higher_boundary;
+
+            clock::time_point last_change_time{};
+            std::mutex access_mutex;
+
+            DelayedIntValue(int low, int high):
+                lower_boundary(low), higher_boundary(high)
+                {}
+
+            bool is_waiting() { return offset != 0; }
+            int get_offset_value() const { return value + offset; }
+
+            void add_offset(int step);
+            bool check(std::function<void(int)> delegate);
+        };
+
         class PlayerDialog:
             public spotify::PlaybackObserver,
             public spotify::BasicApiObserver
@@ -70,10 +92,7 @@ namespace spotifar
             bool visible = false;
             bool are_dlg_events_suppressed = true;
 
-            int seek_offset = 0, volume_offset = 0;
-            clock::time_point seek_offset_time{}, volume_offset_time{};
-
-            std::mutex track_bar_mutex, volume_bar_mutex;
+            DelayedIntValue volume, position;
             
             friend struct DlgEventsSuppressor;
         };
