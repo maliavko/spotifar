@@ -21,7 +21,7 @@ namespace spotifar
             virtual void read(SettingsContext &ctx) = 0;
             virtual void write(SettingsContext &ctx) = 0;
             virtual void clear(SettingsContext &ctx) = 0;
-            virtual void resync(bool force = false) = 0;
+            virtual bool resync(bool force = false) = 0;
             virtual void set_enabled(bool is_enabled) = 0;
         };
         
@@ -36,7 +36,7 @@ namespace spotifar
             virtual void read(SettingsContext &ctx);
             virtual void write(SettingsContext &ctx);
             virtual void clear(SettingsContext &ctx);
-            virtual void resync(bool force = false);
+            virtual bool resync(bool force = false);
 
             void set_enabled(bool is_enabled) { this->is_enabled = is_enabled; }
             const T& get_data() const { return data; }
@@ -49,6 +49,7 @@ namespace spotifar
             virtual bool request_data(T &data) = 0;
             virtual std::chrono::milliseconds get_sync_interval() const = 0;
             virtual void on_data_synced(const T &data, const T &prev_data) {}
+            virtual void on_data_patched(T &data) {}
             void reset_data(const T &new_data);
 
         protected:
@@ -120,14 +121,14 @@ namespace spotifar
         }
 
         template<typename T>
-        void CachedValue<T>::resync(bool force)
+        bool CachedValue<T>::resync(bool force)
         {
             auto sync_time = clock::now();
             std::lock_guard lk(access_mutext);
             // no updates for disabled caches, otherwise only in case the data
             // is invalid or resync is forced
             if (!is_enabled || (!force && is_valid()))
-                return;
+                return false;
 
             T new_data;
             if (request_data(new_data))
@@ -135,6 +136,7 @@ namespace spotifar
                 reset_data(new_data);
                 last_sync_time = sync_time;
             }
+            return true;
         }
 
         template<typename T>
@@ -154,7 +156,10 @@ namespace spotifar
             {
                 json j(data);
                 j.merge_patch(patch);
-                reset_data(j.get<T>());
+
+                auto data = j.get<T>();
+                on_data_patched(data);
+                reset_data(data);
                 last_sync_time = sync_time;
             }
             catch (const json::exception& ex)

@@ -215,6 +215,7 @@ namespace spotifar
 
         void Api::set_repeat_state(const std::string &mode, const string &device_id)
         {
+            auto now = clock::now();
             Params params = {
                 { "state", mode },
             };
@@ -415,9 +416,12 @@ namespace spotifar
 
                         // TODO: errors in this function raises on_playback_sync_finished, which is not valid
                         // for this situation, come up with some different errors handling
+                        // NOTE: very experimental, if any cache is invalidated in this tick, the others are skipped.
+                        // in theory ~20Hz rate should supply all the consumers with enough frames to sync-up
                         for (auto &c: caches)
-                            c->resync();
-                            
+                            if (c->resync())
+                                continue;
+                        
                         ObserverManager::notify(&BasicApiObserver::on_sync_thread_tick);
 
                         #ifdef _DEBUG

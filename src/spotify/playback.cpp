@@ -6,9 +6,11 @@ namespace spotifar
 {
     namespace spotify
     {
+        using namespace std::literals;
+
         std::chrono::milliseconds PlaybackCache::get_sync_interval() const
         {
-            return std::chrono::milliseconds(950);
+            return std::chrono::milliseconds(950ms);
         }
     
         void PlaybackCache::on_data_synced(const PlaybackState &data, const PlaybackState &prev_data)
@@ -64,6 +66,18 @@ namespace spotifar
             }
 
             return false;
+        }
+        
+        void PlaybackCache::on_data_patched(PlaybackState &data)
+        {
+            // patching will mark cache is valid, so it will prevent it from invalidating
+            // for additional time, which is required for smooth track bar ticking.
+            // To improve this case we update timings in cache as it were ticking themselves
+            auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
+                clock::now() - get_last_sync_time()).count();
+            
+            data.progress_ms += (int)delta;
+            data.progress = data.progress_ms / 1000;
         }
     }
 }

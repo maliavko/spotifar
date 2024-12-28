@@ -18,6 +18,7 @@ namespace spotifar
 
         protected:
             virtual void on_data_synced(const PlaybackState &data, const PlaybackState &prev_data);
+            virtual void on_data_patched(PlaybackState &data);
             virtual bool request_data(PlaybackState &data);
             virtual std::chrono::milliseconds get_sync_interval() const;
 
