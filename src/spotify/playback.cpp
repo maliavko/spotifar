@@ -8,7 +8,7 @@ namespace spotifar
     {
         std::chrono::milliseconds PlaybackCache::get_sync_interval() const
         {
-            return std::chrono::milliseconds(1000);
+            return std::chrono::milliseconds(950);
         }
     
         void PlaybackCache::on_data_synced(const PlaybackState &data, const PlaybackState &prev_data)
@@ -18,19 +18,23 @@ namespace spotifar
 
             if (data.progress_ms != prev_data.progress_ms)
                 ObserverManager::notify(&PlaybackObserver::on_track_progress_changed,
-                    data.item.duration, data.progress);
+                                        data.item.duration, data.progress);
 
             if (data.device.volume_percent != prev_data.device.volume_percent)
-                ObserverManager::notify(&PlaybackObserver::on_volume_changed, data.device.volume_percent);
+                ObserverManager::notify(&PlaybackObserver::on_volume_changed,
+                                        data.device.volume_percent);
 
             if (data.shuffle_state != prev_data.shuffle_state)
-                ObserverManager::notify(&PlaybackObserver::on_shuffle_state_changed, data.shuffle_state);
+                ObserverManager::notify(&PlaybackObserver::on_shuffle_state_changed,
+                                        data.shuffle_state);
 
             if (data.repeat_state != prev_data.repeat_state)
-                ObserverManager::notify(&PlaybackObserver::on_repeat_state_changed, data.repeat_state);
+                ObserverManager::notify(&PlaybackObserver::on_repeat_state_changed,
+                                        data.repeat_state);
 
             if (data.is_playing != prev_data.is_playing)
-                ObserverManager::notify(&PlaybackObserver::on_state_changed, data.is_playing);
+                ObserverManager::notify(&PlaybackObserver::on_state_changed,
+                                        data.is_playing);
 
             if (data.context != prev_data.context)
                 ObserverManager::notify(&PlaybackObserver::on_context_changed, data.context);

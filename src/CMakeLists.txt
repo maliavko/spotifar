@@ -22,6 +22,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/views.cpp
 	ui/player_dialog.cpp
 	ui/config_dialog.cpp
+	ui/components.cpp
 	../thirdparty/ObserverManager/ObserverManager/ObserverManager.cpp
 	../thirdparty/ObserverManager/ObserverManager/BaseObserverProtocol.cpp
 	spotifar.vc.def

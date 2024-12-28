@@ -8,6 +8,7 @@ namespace spotifar
         using utils::far3::get_msg;
         using utils::far3::send_dlg_msg;
         using utils::far3::NoRedraw;
+        using spotify::PlaybackState;
         using namespace std::literals;
         
         static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
@@ -98,8 +99,8 @@ namespace spotifar
             control(DI_BUTTON,      view_center_x + 4, view_height, 1, 1,           btn_flags, NEXT_BTN_LABEL),
             control(DI_BUTTON,      view_x, view_height, 1, 1,                      btn_flags, LIKE_BTN_LABEL),
             control(DI_TEXT,        view_width - 6, view_height, 1, 1,              btn_flags | DIF_RIGHTTEXT, L"[---%]"),
-            control(DI_BUTTON,      view_center_x + 9, view_height, 1, 1,           btn_flags),
-            control(DI_BUTTON,      view_center_x - 15, view_height, 1, 1,          btn_flags | DIF_RIGHTTEXT),
+            control(DI_BUTTON,      view_center_x + 9, view_height, 1, 1,           btn_flags),  // REPEAT
+            control(DI_BUTTON,      view_center_x - 15, view_height, 1, 1,          btn_flags),  // SHUFFLE
             
             // devices box
             control(DI_COMBOBOX,    view_width - 13, 1, view_width - 1, 0,          combo_flags),
@@ -139,16 +140,22 @@ namespace spotifar
                 { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
             }},
             { SHUFFLE_BTN, {
-                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_inactive_control_style_applied },
+                { DN_BTNCLICK, &PlayerDialog::on_shuffle_btn_click },
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_shuffle_btn_style_applied },
+            }},
+            { REPEAT_BTN, {
+                { DN_BTNCLICK, &PlayerDialog::on_repeat_btn_click },
+                { DN_CTLCOLORDLGITEM, &PlayerDialog::on_repeat_btn_style_applied },
             }},
         };
 
         PlayerDialog::PlayerDialog(spotify::Api &api):
             api(api),
-            volume({ 0, 100, 1 }),
-            track_progress({ 0, 0, 5 }),
+            volume(0, 100, 1),
+            track_progress(0, 0, 5),
             shuffle_state({ true, false }),
-            repeat_state({ "off", "track", "context" })
+            repeat_state({ PlaybackState::REPEAT_OFF, PlaybackState::REPEAT_TRACK,
+                PlaybackState::REPEAT_CONTEXT })
         {
         }
 
@@ -226,6 +233,8 @@ namespace spotifar
                     on_volume_changed(state.device.volume_percent);
                     on_state_changed(state.is_playing);
                     on_context_changed(state.context);
+                    on_shuffle_state_changed(state.shuffle_state);
+                    on_repeat_state_changed(state.repeat_state);
                     
                     on_devices_changed(api.get_available_devices());
 
@@ -297,33 +306,24 @@ namespace spotifar
                             case VK_LEFT:
                             case VK_RIGHT:
                             {
-                                {
-                                    // std::lock_guard lock(track_progress.access_mutex);
-                                    update_track_bar(track_progress.get_descr().high,
-                                                     key == VK_RIGHT ? track_progress.next() : track_progress.prev());
-                                }
-
+                                update_track_bar(track_progress.get_higher_boundary(),
+                                                    key == VK_RIGHT ? track_progress.next() : track_progress.prev());
                                 return true;
                             }
                             case VK_UP:
                             case VK_DOWN:
                             {
-                                {
-                                    // std::lock_guard lock(volume.access_mutex);
-                                    update_volume_bar(key == VK_UP ? volume.next() : volume.prev());
-                                }
-
+                                update_volume_bar(key == VK_UP ? volume.next() : volume.prev());
                                 return true;
                             }
                             case utils::far3::KEY_R:
                             {
-                                //spdlog::debug("Repeat state changed: {}", repeat_state.offset_next());
-                                // spdlog::debug("Test value changed: {}", test3.next());
+                                update_repeat_btn(repeat_state.next());
                                 return true;
                             }
                             case utils::far3::KEY_S:
                             {
-                                // spdlog::debug("Test value changed: {}", test3.prev());
+                                update_shuffle_btn(shuffle_state.next());
                                 return true;
                             }
                         }
@@ -377,6 +377,36 @@ namespace spotifar
             dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
             return true;
         }
+        
+        bool PlayerDialog::on_shuffle_btn_style_applied(void *dialog_item_colors)
+        {
+            FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            if (shuffle_state.get_offset_value())
+            {
+                dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+            }
+            else
+            {
+                dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
+            }
+            dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+            return true;
+        }
+        
+        bool PlayerDialog::on_repeat_btn_style_applied(void *dialog_item_colors)
+        {
+            FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+            if (repeat_state.get_offset_value() != spotify::PlaybackState::REPEAT_OFF)
+            {
+                dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+            }
+            else
+            {
+                dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
+            }
+            dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+            return true;
+        }
 
         bool PlayerDialog::on_skip_to_next_btn_click(void *empty)
         {
@@ -387,6 +417,18 @@ namespace spotifar
         bool PlayerDialog::on_skip_to_previous_btn_click(void *empty)
         {
             api.skip_to_previous();
+            return true;
+        }
+
+        bool PlayerDialog::on_shuffle_btn_click(void *empty)
+        {
+            update_shuffle_btn(shuffle_state.next());
+            return true;
+        }
+
+        bool PlayerDialog::on_repeat_btn_click(void *empty)
+        {
+            update_repeat_btn(repeat_state.next());
             return true;
         }
 
@@ -442,22 +484,28 @@ namespace spotifar
         void PlayerDialog::on_track_changed(const Track &track)
         {
 	        NoRedraw nr(hdlg);
+
+            static std::wstring track_total_time_str;
+            track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track.duration));
+
+            auto &state = api.get_playback_state();
+            track_progress.set_higher_boundary(track.duration);
         
             set_control_text(TRACK_NAME, track.name);
             set_control_text(ARTIST_NAME, track.artists.size() ? track.artists[0].name : L"");
+            set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
         }
 
         void PlayerDialog::update_track_bar(int duration, int progress)
         {
 	        NoRedraw nr(hdlg);
 
-            static std::wstring track_bar, track_time_str, track_total_time_str;
+            static std::wstring track_bar, track_time_str;
 
             auto track_bar_layout = dlg_items_layout[TRACK_BAR];
             auto track_bar_size = track_bar_layout.X2 - track_bar_layout.X1;
             track_bar = std::wstring(track_bar_size, TRACK_BAR_CHAR_UNFILLED);
             track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(progress));
-            track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(duration));
 
             if (duration)
             {
@@ -468,17 +516,15 @@ namespace spotifar
             
             set_control_text(TRACK_BAR, track_bar);
             set_control_text(TRACK_TIME, track_time_str);
-            set_control_text(TRACK_TOTAL_TIME, track_total_time_str);
         }
 
         void PlayerDialog::on_track_progress_changed(int duration, int progress)
         {
-            track_progress.get_descr().high = duration;
             track_progress.set_value(progress);
             
             // prevents from updating, in case we are seeking a new track position,
             // which requires showing a virtual target track bar position
-            if (track_progress.get_descr().is_waiting())
+            if (track_progress.is_waiting())
                 return;
 
             return update_track_bar((int)duration, (int)progress);
@@ -500,29 +546,50 @@ namespace spotifar
 
             // prevents from updating, in case we are seeking a new volume value,
             // which requires showing a virtual target vlume bar value
-            if (volume.get_descr().is_waiting())
+            if (volume.is_waiting())
                 return;
 
             return update_volume_bar(vol);
         }
         
-        void PlayerDialog::on_shuffle_state_changed(bool shuffle_state)
+        void PlayerDialog::on_shuffle_state_changed(bool state)
+        {
+            shuffle_state.set_value(state);
+
+            if (shuffle_state.is_waiting())
+                return;
+
+            return update_shuffle_btn(state);
+        }
+        
+        void PlayerDialog::update_shuffle_btn(bool is_shuffling)
         {
 	        NoRedraw nr(hdlg);
 
             static std::wstring shuffle_label;
 
-            shuffle_label = utils::utf8_decode(shuffle_state ? "S" : "No S");
+            shuffle_label = utils::utf8_decode("Shuffle");
             set_control_text(SHUFFLE_BTN, shuffle_label);
         }
 
-        void PlayerDialog::on_repeat_state_changed(const std::string &repeat_state)
+        void PlayerDialog::on_repeat_state_changed(const std::string &state)
+        {
+            repeat_state.set_value(state);
+
+            if (repeat_state.is_waiting())
+                return;
+
+            return update_repeat_btn(state);
+        }
+        
+        void PlayerDialog::update_repeat_btn(const std::string &repeate_state)
         {
 	        NoRedraw nr(hdlg);
 
             static std::wstring repeat_label;
             
-            repeat_label = utils::utf8_decode(repeat_state);
+            // TODO: localize?
+            repeat_label = utils::utf8_decode(repeate_state);
             set_control_text(REPEAT_BTN, repeat_label);
         }
         
@@ -570,30 +637,23 @@ namespace spotifar
         
         void PlayerDialog::on_sync_thread_tick()
         {
-            auto now = clock::now();
+            static clock::time_point last_tick_time = clock::now();
+
+            // auto now = clock::now();
+            // auto delta = now - last_tick_time;
             auto &state = api.get_playback_state();
 
-            {
-                // std::lock_guard lock(track_progress.access_mutex);
-                track_progress.check([this, &state](int p) {
-                    spdlog::debug("ApplNew progress: {}", p);
-                    // api.seek_to_position(p * 1000, state.device.id);
-                });
-            }
+            track_progress.check([this, &state](int p) {
+                api.seek_to_position(p * 1000, state.device.id);
+            });
 
-            {
-                // std::lock_guard lock(volume.access_mutex);
-                // volume.check([this](int v) {
-                //     spdlog::debug("New Volume: {}", s);
-                //     // api.set_playback_volume(v);
-                // });
-            }
+            volume.check([this](int v) { api.set_playback_volume(v); });
 
-            {
-                // std::lock_guard lock(volume.access_mutex);
-                // repeat_state.check([this](const std::string &s) { spdlog::debug("Applying new repeat state: {}", s); });
-                // test3.check([this](const std::string &s) { spdlog::debug("Applying new test state: {}", s); });
-            }
+            shuffle_state.check([this](bool v) { api.toggle_shuffle(v); });
+
+            repeat_state.check([this](const std::string &s) { api.set_repeat_state(s); });
+
+            // last_tick_time = now;
         }
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)

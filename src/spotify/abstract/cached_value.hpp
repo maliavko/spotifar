@@ -122,6 +122,7 @@ namespace spotifar
         template<typename T>
         void CachedValue<T>::resync(bool force)
         {
+            auto sync_time = clock::now();
             std::lock_guard lk(access_mutext);
             // no updates for disabled caches, otherwise only in case the data
             // is invalid or resync is forced
@@ -130,26 +131,31 @@ namespace spotifar
 
             T new_data;
             if (request_data(new_data))
+            {
                 reset_data(new_data);
+                last_sync_time = sync_time;
+            }
         }
 
         template<typename T>
         void CachedValue<T>::reset_data(const T &new_data)
         {
-            last_sync_time = clock::now();
-            on_data_synced(new_data, data);
+            auto old_data = data;
             data = new_data;
+            on_data_synced(new_data, old_data);
         }
 
         template<typename T>
         void CachedValue<T>::patch_data(json patch)
         {
+            auto sync_time = clock::now();
             std::lock_guard lk(access_mutext);
             try
             {
                 json j(data);
                 j.merge_patch(patch);
                 reset_data(j.get<T>());
+                last_sync_time = sync_time;
             }
             catch (const json::exception& ex)
             {

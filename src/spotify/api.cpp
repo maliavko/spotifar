@@ -54,10 +54,19 @@ namespace spotifar
             logger(spdlog::get(utils::LOGGER_API)),
             playback_observers(0)
         {
+            static const std::set<std::string> exclude{
+                //"/v1/me/player",
+                "/v1/me/player/devices",
+            };
+
             endpoint.set_logger([this](const Request &req, const Response &res)
             {
-                // TODO: add one-line debug logging for all finished requests
-                if (res.status != OK_200 && res.status != NoContent_204)
+                if (res.status != OK_200 || res.status != NoContent_204)
+                {
+                    if (!exclude.contains(req.path))
+                        logger->debug("A successful HTTP request has been performed: [{}] {}", req.method, req.path);
+                }
+                else
                     logger->error(dump_http_error(req, res));
             });
             
@@ -188,10 +197,36 @@ namespace spotifar
                 get_playback_cache().patch_data({ { "progress_ms", position_ms } });
         }
 
-        void Api::toggle_shuffle(bool is_on)
+        void Api::toggle_shuffle(bool is_on, const string &device_id)
         {
-            auto r = endpoint.Put(append_query_params("/v1/me/player/shuffle",
-                Params{{ "state", is_on ? "true" : "false" }}));
+            Params params = {
+                { "state", is_on ? "true" : "false" },
+            };
+
+            if (!device_id.empty())
+                params.insert({ "device_id", device_id });
+
+            auto res = endpoint.Put(append_query_params("/v1/me/player/shuffle", params));
+            if (res->status == OK_200 || res->status == NoContent_204)
+                get_playback_cache().patch_data({
+                    { "shuffle_state", is_on }
+                });
+        }
+
+        void Api::set_repeat_state(const std::string &mode, const string &device_id)
+        {
+            Params params = {
+                { "state", mode },
+            };
+
+            if (!device_id.empty())
+                params.insert({ "device_id", device_id });
+
+            auto res = endpoint.Put(append_query_params("/v1/me/player/repeat", params));
+            if (res->status == OK_200 || res->status == NoContent_204)
+                get_playback_cache().patch_data({
+                    { "repeat_state", mode }
+                });
         }
 
         void Api::set_playback_volume(int volume_percent)
@@ -368,6 +403,7 @@ namespace spotifar
         {
             std::packaged_task<void()> task([this]
             {
+                clock::time_point now;
                 std::string exit_msg = "";
                 const std::lock_guard<std::mutex> worker_lock(sync_worker_mutex);
 
@@ -375,12 +411,20 @@ namespace spotifar
                 {
                     while (is_worker_listening)
                     {
+                        now = clock::now();
+
                         // TODO: errors in this function raises on_playback_sync_finished, which is not valid
                         // for this situation, come up with some different errors handling
                         for (auto &c: caches)
                             c->resync();
-
+                            
                         ObserverManager::notify(&BasicApiObserver::on_sync_thread_tick);
+
+                        #ifdef _DEBUG
+                        if (clock::now() - now > 500ms)
+                            logger->warn(std::format("Sync thread tick overspend, {:%T}ms",
+                                clock::now() - now));
+                        #endif
 
                         std::this_thread::sleep_for(50ms);
                     }

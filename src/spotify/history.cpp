@@ -4,13 +4,15 @@ namespace spotifar
 {
     namespace spotify
     {
+        using namespace std::literals;
+
         PlayedHistory::PlayedHistory(httplib::Client *endpoint):
             CachedValue(endpoint, L"PlayedHistory")
             {};
 
         std::chrono::milliseconds PlayedHistory::get_sync_interval() const
         {
-            return std::chrono::milliseconds(15 * 1000);
+            return std::chrono::milliseconds(5min);
         }
 
         bool PlayedHistory::request_data(HistoryList &data)

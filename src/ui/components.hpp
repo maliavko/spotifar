@@ -11,82 +11,49 @@ namespace spotifar
         using utils::clock;
         using namespace std::literals;
         
+        template<class T>
+        struct DelayedValueDescriptor
+        {
+            typedef T ValueType;
+
+            virtual void set_value(const T &v) = 0;
+            virtual void clear_offset() = 0;
+            virtual const T get_value() const = 0;
+            virtual const T get_offset_value() const = 0;
+            virtual const T next() = 0;
+            virtual const T prev() = 0;
+            
+            bool is_waiting() const { return get_value() != get_offset_value(); };
+        };
+        
+        // encapsulates logic of a value, which can be changed often within short
+        // period of time, and to avoid spaming of the request to API, accumulates the value
+        // and sends only one request after a short delay of no changes. A DescrT
+        // describes the stored value type and how to work with it
         template<class DescrT>
         class DelayedValue
         {
         public:
+            typedef typename DescrT::ValueType ValueType;
             inline static const std::chrono::milliseconds DELAYED_THRESHOLD = 300ms;
 
         public:
-            DescrT& get_descr() { return descr; }
-            
-            const typename DescrT::ValueType& next(int steps = 1)
-            {
-                last_change_time = clock::now();
+            DelayedValue(DescrT descr): descr(descr) {}
 
-                while (steps-- > 1)
-                    descr.next();
-                
-                return descr.next();
-            }
+            const ValueType next(int steps = 1);
+            const ValueType prev(int steps = 1);
 
-            const typename DescrT::ValueType& prev(int steps = 1)
-            {
-                last_change_time = clock::now();
+            bool is_waiting() const { return descr.is_waiting(); }
+            void set_value(const ValueType &v) { descr.set_value(v); }
+            const ValueType get_offset_value() const { return descr.get_offset_value(); }
 
-                while (steps-- > 1)
-                    descr.prev();
-                
-                return descr.prev();
-            }
+            bool check(std::function<void(ValueType)> delegate);
 
-            void set_value(const typename DescrT::ValueType &v) { descr.set_value(v); }
-            
-            bool check(std::function<void(typename DescrT::ValueType)> delegate)
-            {
-                if (descr.is_waiting())
-                {
-                    auto now = clock::now();
-                    // if there is an accumulated volume value offset and the last changed of it
-                    // was more than a threshold, so we apply it
-                    if (last_change_time + DELAYED_THRESHOLD < now)
-                    {
-                        auto new_value = descr.get_offset_value();
-
-                        spdlog::debug("Setting a new value {}, a current value {}", new_value, descr.get_value());
-                        descr.clear_offset();
-
-                        // TODO: what if delegate finishes with error?
-                        delegate(new_value);
-                        return true;
-                    }
-                }
-                return false;
-            }
-        private:
-            DescrT descr;
+        protected:
             clock::time_point last_change_time{};
-            std::mutex access_mutex{};
+            DescrT descr;
         };
 
-        template<class ValueT>
-        struct DelayedValueDescriptor
-        {
-            typedef ValueT ValueType;
-
-            virtual const ValueT& get_value() const = 0;
-            virtual const ValueT& get_offset_value() const = 0;
-            virtual void set_value(const ValueT &v) = 0;
-            virtual const ValueT& next() = 0;
-            virtual const ValueT& prev() = 0;
-            virtual void clear_offset() = 0;
-            
-            bool is_waiting() const { return get_value() != get_offset_value(); };
-        };
-
-        // encapsulates logic of a value, which can be changed often within short
-        // period of time, and to avoid spam of the request to API, accumulates the value
-        // and sends only one request after a short delay of no changes
         struct SliderIntDescr: public DelayedValueDescriptor<int>
         {
             int value, offset_value, step, high, low;
@@ -95,80 +62,116 @@ namespace spotifar
                 value(0), offset_value(value), step(step), low(low), high(high)
                 {}
 
-            virtual const int& get_value() const { return value; }
-
-            virtual const int& get_offset_value() const { return offset_value; }
-
+            virtual const int get_value() const { return value; }
+            virtual const int get_offset_value() const { return offset_value; }
             virtual void clear_offset() { offset_value = value; }
 
-            virtual const int& next() { return set_offset_value(step); }
-
-            virtual const int& prev() { return set_offset_value(-step); }
+            virtual const int next() { return set_offset_value(step); }
+            virtual const int prev() { return set_offset_value(-step); }
             
-            virtual void set_value(const int &v)
-            {
-                if (offset_value == value)
-                    offset_value = value = v;
-                else
-                    value = v;
-            }
-
-            virtual const int& set_offset_value(const int &s)
-            {
-                if ((offset_value - value) * s < 0)
-                    clear_offset();
-
-                offset_value += s;
-                
-                if (offset_value <= low)
-                    offset_value = low;
-
-                if (offset_value >= high)
-                    offset_value = high;
-
-                return offset_value;
-            }
+            virtual void set_value(const int &v);
+            virtual const int set_offset_value(const int &s);
         };
 
         template<class T>
         struct CycledSetDescr: public DelayedValueDescriptor<T>
         {
-            std::list<T> values;
-            std::list<T>::iterator value_ptr, offset_ptr;
+            const std::vector<T> values;
+            size_t value_idx, offset_idx;
 
-            CycledSetDescr(const std::initializer_list<T> &init):
-                values(init)
+            CycledSetDescr(std::initializer_list<T> l):
+                values(l)
             {
-                value_ptr = offset_ptr = values.begin();
+                value_idx = offset_idx = 0;
             }
 
-            virtual const T& get_value() const { return *value_ptr; }
-
-            virtual const T& get_offset_value() const { return *offset_ptr; }
+            virtual const T get_value() const { return values.at(value_idx); }
+            virtual const T get_offset_value() const { return values.at(offset_idx); }
             
+            virtual void clear_offset() { offset_idx = value_idx; }
             virtual void set_value(const T &v)
             {
-                for (auto it = values.begin(); it != values.end(); it++)
-                    if (*it == v)
-                        value_ptr = it;
+                for (int idx = 0; idx < values.size(); idx++)
+                    if (values[idx] == v)
+                        // if there is offset waiting to be applied, we do not changed it;
+                        // otherwise we change both values: offset and value, to avoid creating
+                        // an offset
+                        if (value_idx == offset_idx)
+                            value_idx = offset_idx = idx;
+                        else
+                            value_idx = idx;
             }
 
-            virtual void clear_offset() { offset_ptr = value_ptr; }
-
-            virtual const T& next()
+            virtual const T next()
             {
-                if (++offset_ptr == values.end())
-                    offset_ptr = values.begin();
-                return *offset_ptr;
+                if (++offset_idx == values.size())
+                    offset_idx = 0;
+                return values.at(offset_idx);
             }
 
-            virtual const T& prev()
+            virtual const T prev()
             {
-                if (offset_ptr == values.begin())
-                    offset_ptr = values.end();
-                return *--offset_ptr;
+                if (offset_idx == 0)
+                    offset_idx = values.size();
+                return values.at(--offset_idx);
             }
         };
+
+        class SliderValue: public DelayedValue<SliderIntDescr>
+        {
+        public:
+            SliderValue(int low, int high, int step):
+                DelayedValue({low, high, step})
+                {}
+
+            int get_higher_boundary() const { return descr.high; }
+            void set_higher_boundary(int high) { descr.high = high; }
+        };
+
+        typedef DelayedValue<CycledSetDescr<bool>> CycledBoolValue;
+        typedef DelayedValue<CycledSetDescr<std::string>> CycledStringValue;
+        
+        template<class DescrT>
+        const DelayedValue<DescrT>::ValueType DelayedValue<DescrT>::next(int steps)
+        {
+            last_change_time = clock::now();
+
+            while (steps-- > 1)
+                descr.next();
+            
+            return descr.next();
+        }
+        
+        template<class DescrT>
+        const DelayedValue<DescrT>::ValueType DelayedValue<DescrT>::prev(int steps)
+        {
+            last_change_time = clock::now();
+
+            while (steps-- > 1)
+                descr.prev();
+            
+            return descr.prev();
+        }
+        
+        template<class DescrT>
+        bool DelayedValue<DescrT>::check(std::function<void(DelayedValue<DescrT>::ValueType)> delegate)
+        {
+            if (descr.is_waiting())
+            {
+                auto now = clock::now();
+                // if there is an accumulated volume value offset and the last changed of it
+                // was more than a threshold, so we apply it
+                if (last_change_time + DELAYED_THRESHOLD < now)
+                {
+                    auto new_value = descr.get_offset_value();
+                    descr.clear_offset();
+
+                    delegate(new_value);
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
 
