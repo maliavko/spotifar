@@ -33,6 +33,7 @@ namespace spotifar
 				CLR_WHITE
 			};
 
+			static const int KEY_R = 0x52, KEY_S = 0x53;
 			static const int KEY_CTRL = 0x100000, KEY_ALT = 0x200000, KEY_SHIFT = 0x400000;
 
 			int input_record_to_combined_key(const KEY_EVENT_RECORD &kir);

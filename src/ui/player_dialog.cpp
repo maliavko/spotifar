@@ -46,42 +46,6 @@ namespace spotifar
             DEVICES_COMBO,
             TOTAL_ELEMENTS_COUNT,
         };
-
-        void DelayedIntValue::add_offset(int step)
-        {
-            if (offset * step < 0) offset = 0;
-
-            last_change_time = clock::now();
-            offset += step;
-            
-            if (value + offset <= lower_boundary)
-                offset = lower_boundary - value;
-
-            if (value + offset >= higher_boundary)
-                offset = higher_boundary - value;
-        }
-
-        bool DelayedIntValue::check(std::function<void(int)> delegate)
-        {
-            if (offset != 0)
-            {
-                auto now = clock::now();
-                // if there is an accumulated volume value offset and the last changed of it
-                // was more than a threshold, so we apply it
-                if (last_change_time + DELAYED_THRESHOLD < now)
-                {
-                    auto new_value = value + offset;
-                    
-                    spdlog::debug("Setting a new value, an offset {}, a vlaue {}",
-                        offset, new_value);
-                    offset = 0;
-
-                    delegate(new_value);
-                    return true;
-                }
-            }
-            return false;
-        }
         
         // a helper class to suppress dlg_proc function from handling incoming events,
         // while the instance of the class exists in the particular scope
@@ -181,8 +145,10 @@ namespace spotifar
 
         PlayerDialog::PlayerDialog(spotify::Api &api):
             api(api),
-            volume(0, 100),
-            position(0, 0)
+            volume({ 0, 100, 1 }),
+            track_progress({ 0, 0, 5 }),
+            shuffle_state({ true, false }),
+            repeat_state({ "off", "track", "context" })
         {
         }
 
@@ -331,10 +297,10 @@ namespace spotifar
                             case VK_LEFT:
                             case VK_RIGHT:
                             {
-                                position.add_offset(SEEKING_STEP * (key == VK_RIGHT ? 1 : -1));
                                 {
-                                    std::lock_guard lock(position.access_mutex);
-                                    update_track_bar(position.higher_boundary, position.get_offset_value());
+                                    // std::lock_guard lock(track_progress.access_mutex);
+                                    update_track_bar(track_progress.get_descr().high,
+                                                     key == VK_RIGHT ? track_progress.next() : track_progress.prev());
                                 }
 
                                 return true;
@@ -342,12 +308,22 @@ namespace spotifar
                             case VK_UP:
                             case VK_DOWN:
                             {
-                                volume.add_offset(VOLUME_STEP * (key == VK_UP ? 1 : -1));
                                 {
-                                    std::lock_guard lock(volume.access_mutex);
-                                    update_volume_bar(volume.get_offset_value());
+                                    // std::lock_guard lock(volume.access_mutex);
+                                    update_volume_bar(key == VK_UP ? volume.next() : volume.prev());
                                 }
 
+                                return true;
+                            }
+                            case utils::far3::KEY_R:
+                            {
+                                //spdlog::debug("Repeat state changed: {}", repeat_state.offset_next());
+                                // spdlog::debug("Test value changed: {}", test3.next());
+                                return true;
+                            }
+                            case utils::far3::KEY_S:
+                            {
+                                // spdlog::debug("Test value changed: {}", test3.prev());
                                 return true;
                             }
                         }
@@ -497,12 +473,12 @@ namespace spotifar
 
         void PlayerDialog::on_track_progress_changed(int duration, int progress)
         {
-            position.higher_boundary = duration;
-            position.value = progress;
+            track_progress.get_descr().high = duration;
+            track_progress.set_value(progress);
             
             // prevents from updating, in case we are seeking a new track position,
             // which requires showing a virtual target track bar position
-            if (position.is_waiting())
+            if (track_progress.get_descr().is_waiting())
                 return;
 
             return update_track_bar((int)duration, (int)progress);
@@ -520,11 +496,11 @@ namespace spotifar
         
         void PlayerDialog::on_volume_changed(int vol)
         {
-            volume.value = vol;
+            volume.set_value(vol);
 
             // prevents from updating, in case we are seeking a new volume value,
             // which requires showing a virtual target vlume bar value
-            if (volume.is_waiting())
+            if (volume.get_descr().is_waiting())
                 return;
 
             return update_volume_bar(vol);
@@ -598,13 +574,25 @@ namespace spotifar
             auto &state = api.get_playback_state();
 
             {
-                std::lock_guard lock(position.access_mutex);
-                position.check([this](int p) { api.seek_to_position(p * 1000); });
+                // std::lock_guard lock(track_progress.access_mutex);
+                track_progress.check([this, &state](int p) {
+                    spdlog::debug("ApplNew progress: {}", p);
+                    // api.seek_to_position(p * 1000, state.device.id);
+                });
             }
 
             {
-                std::lock_guard lock(volume.access_mutex);
-                volume.check([this](int v) { api.set_playback_volume(v); });
+                // std::lock_guard lock(volume.access_mutex);
+                // volume.check([this](int v) {
+                //     spdlog::debug("New Volume: {}", s);
+                //     // api.set_playback_volume(v);
+                // });
+            }
+
+            {
+                // std::lock_guard lock(volume.access_mutex);
+                // repeat_state.check([this](const std::string &s) { spdlog::debug("Applying new repeat state: {}", s); });
+                // test3.check([this](const std::string &s) { spdlog::debug("Applying new test state: {}", s); });
             }
         }
         

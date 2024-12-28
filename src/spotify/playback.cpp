@@ -43,9 +43,6 @@ namespace spotifar
 
         bool PlaybackCache::request_data(PlaybackState &data)
         {
-            // TODO: after staying paused awhile, the state comes as empty and it
-            // overwrites the stored previously played data
-            //PlaybackState state;  // TODO: unfinished for the case of empty playback
             auto r = endpoint->Get("/v1/me/player");
             if (r->status == httplib::OK_200)
             {
@@ -57,6 +54,8 @@ namespace spotifar
                 // the playback data is empty here, we skip it to continue showing
                 // the last played real data in the player UI
                 data = get_data();
+                if (!data.is_empty())
+                    data.is_playing = false;
                 return true;
             }
 
