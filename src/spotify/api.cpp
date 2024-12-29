@@ -55,7 +55,7 @@ namespace spotifar
             playback_observers(0)
         {
             static const std::set<std::string> exclude{
-                //"/v1/me/player",
+                "/v1/me/player",
                 "/v1/me/player/devices",
             };
 
@@ -215,7 +215,6 @@ namespace spotifar
 
         void Api::set_repeat_state(const std::string &mode, const string &device_id)
         {
-            auto now = clock::now();
             Params params = {
                 { "state", mode },
             };

@@ -163,10 +163,9 @@ namespace spotifar
                 // was more than a threshold, so we apply it
                 if (last_change_time + DELAYED_THRESHOLD < now)
                 {
-                    auto new_value = descr.get_offset_value();
+                    delegate(descr.get_offset_value());
                     descr.clear_offset();
 
-                    delegate(new_value);
                     return true;
                 }
             }

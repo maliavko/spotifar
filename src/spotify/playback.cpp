@@ -52,7 +52,8 @@ namespace spotifar
             auto r = endpoint->Get("/v1/me/player");
             if (r->status == httplib::OK_200)
             {
-                json::parse(r->body).get_to(data);
+                auto j = json::parse(r->body);
+                apply_patches(j).get_to(data);
                 return true;
             }
             else if (r->status == httplib::NoContent_204)

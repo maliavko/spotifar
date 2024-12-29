@@ -307,7 +307,7 @@ namespace spotifar
                             case VK_RIGHT:
                             {
                                 update_track_bar(track_progress.get_higher_boundary(),
-                                                    key == VK_RIGHT ? track_progress.next() : track_progress.prev());
+                                                 key == VK_RIGHT ? track_progress.next() : track_progress.prev());
                                 return true;
                             }
                             case VK_UP:

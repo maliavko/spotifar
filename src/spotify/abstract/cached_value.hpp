@@ -8,6 +8,7 @@ namespace spotifar
 {
     namespace spotify
     {
+        using namespace std::literals;
         using clock = utils::clock;
         using time_point = clock::time_point;
         using json = nlohmann::json;
@@ -29,6 +30,9 @@ namespace spotifar
         class CachedValue: public ICachedValue
         {
         public:
+            inline static auto PATCH_EXPIRY_TIME = 1500ms;
+
+        public:
             CachedValue(httplib::Client *endpoint, const std::wstring &storage_key,
                 bool is_enabled = true);
             virtual ~CachedValue();
@@ -43,7 +47,7 @@ namespace spotifar
             const time_point& get_last_sync_time() const { return last_sync_time; }
             const time_point get_expires_at() const { return last_sync_time + get_sync_interval(); }
             bool is_valid() const { return get_expires_at() > clock::now(); }
-            void patch_data(json patch);
+            void patch_data(const json &patch);
 
         protected:
             virtual bool request_data(T &data) = 0;
@@ -51,6 +55,7 @@ namespace spotifar
             virtual void on_data_synced(const T &data, const T &prev_data) {}
             virtual void on_data_patched(T &data) {}
             void reset_data(const T &new_data);
+            json& apply_patches(json &j);
 
         protected:
             httplib::Client *endpoint;
@@ -60,6 +65,7 @@ namespace spotifar
             const std::wstring storage_data_key, storage_timestamp_key;
             time_point last_sync_time;
             bool is_enabled;
+            std::vector<std::pair<time_point, json>> patches;
             T data;
         };
         
@@ -148,25 +154,28 @@ namespace spotifar
         }
 
         template<typename T>
-        void CachedValue<T>::patch_data(json patch)
+        void CachedValue<T>::patch_data(const json &patch)
         {
-            auto sync_time = clock::now();
-            std::lock_guard lk(access_mutext);
-            try
-            {
-                json j(data);
-                j.merge_patch(patch);
+            // patches are saved and applied next time data is resynced
+            patches.push_back(std::make_pair(clock::now(), patch));
 
-                auto data = j.get<T>();
-                on_data_patched(data);
-                reset_data(data);
-                last_sync_time = sync_time;
-            }
-            catch (const json::exception& ex)
+            resync(true);
+        }
+
+        template<typename T>
+        json& CachedValue<T>::apply_patches(json &j)
+        {
+            // removing outdated patches first
+            auto now = clock::now();
+            std::erase_if(patches, [&now](auto &v) { return v.first + PATCH_EXPIRY_TIME < now; });
+            
+            for (auto& [t, p]: patches)
             {
-                spdlog::error("An error occured while patching cached: {}, patch {}",
-                              ex.what(), patch.dump());
+                j.merge_patch(p);
+                spdlog::get(utils::LOGGER_API)->debug("Applying data patch {}", p.dump());
             }
+
+            return j;
         }
     }
 }
