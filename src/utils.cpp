@@ -173,10 +173,18 @@ namespace spotifar
 
 		void init_logging()
 		{
-			// TODO: perhaps the plugin folder is not the best for storing logs, clarify with community
-			
+			std::wstring filepath;
+			PWSTR app_data_path = NULL;
+			HRESULT hres = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &app_data_path);
+
+			// at first, we are trying to create a logs folder in users home directory,
+			// if not possible, trying plugins home directory
+			if (SUCCEEDED(hres))
+				filepath = std::format(L"{}\\spotifar\\spotifar.log", app_data_path);
+			else
+				filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_launch_folder());
+
 			// a default sink to the file 
-			auto filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_launch_folder());
 			auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
 			
 			auto default_logger = std::make_shared<spdlog::logger>("global", daily_sink);

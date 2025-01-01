@@ -286,7 +286,6 @@ namespace spotifar
         bool PlayerDialog::on_input_received(void *input_record)
         {
             auto state = api.get_playback_state();
-            auto t = VK_RIGHT & far3::KEY_ALT;
             INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
             switch (ir->EventType)
             {

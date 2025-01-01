@@ -72,7 +72,6 @@ namespace spotifar
             HANDLE hdlg;
             bool visible = false;
             bool are_dlg_events_suppressed = true;
-            clock::duration one_second_tick_counter{};
 
             SliderValue volume, track_progress;
             CycledBoolValue shuffle_state;

@@ -15,7 +15,8 @@
 #include <chrono>
 #define _WINSOCKAPI_
 #include <windows.h>
-#include <shellapi.h>
+#include <shellapi.h>  // for ShellExecute
+#include <shlobj_core.h>  // for SHGetKnownFolderPath
 
 #include "httplib.h"
 #include "nlohmann/json.hpp"
