@@ -2,10 +2,10 @@
 #define API_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
 #pragma once
 
-#include "httplib.h"
+#include "stdafx.h"
 #include "items.hpp"
-#include "abstract/cached_value.hpp"
 #include "abstract/observers.hpp"
+#include "abstract/interfaces.hpp"
 #include "playback.hpp"
 #include "devices.hpp"
 #include "auth.hpp"
@@ -18,8 +18,12 @@ namespace spotifar
         using std::string;
         using std::wstring;
 
-        class Api
+        class Api: public IApi
         {
+            friend class AuthCache;
+            friend class PlaybackCache;
+            friend class DevicesCache;
+            friend class PlayedHistory;
         public:
             Api();
             virtual ~Api();
@@ -34,6 +38,8 @@ namespace spotifar
             AlbumsCollection get_albums(const string &artist_id);
             PlaylistsCollection get_playlists();
             std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
+            inline const DevicesList& get_available_devices() { return devices->get_data(); }
+            inline const PlaybackState& get_playback_state() { return playback->get_data(); }
 
             // NOTE: no args means "resume"
             void start_playback(const string &context_uri = "", const string &track_uri = "",
@@ -41,16 +47,13 @@ namespace spotifar
             void start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track);
             void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
             void pause_playback(const string &device_id = "");
-            void skip_to_next();
-            void skip_to_previous();
+            void skip_to_next(const string &device_id = "");
+            void skip_to_previous(const string &device_id = "");
             void seek_to_position(int position_ms, const string &device_id = "");
             void toggle_shuffle(bool is_on, const string &device_id = "");
             void set_repeat_state(const std::string &mode, const string &device_id = "");
-            void set_playback_volume(int volume_percent);
-            bool transfer_playback(const string &device_id, bool start_playing = false);
-
-            inline const DevicesList& get_available_devices() { return devices->get_data(); }
-            inline const PlaybackState& get_playback_state() { return playback->get_data(); }
+            void set_playback_volume(int volume_percent, const string &device_id = "");
+            void transfer_playback(const string &device_id, bool start_playing = false);
 
         protected:
             void launch_sync_worker();
@@ -58,9 +61,11 @@ namespace spotifar
 
             inline PlaybackCache& get_playback_cache() { return *playback; }
             inline DevicesCache& get_devices_cache() { return *devices; }
+            BS::thread_pool& get_thread_pool() { return pool; }
 
         private:
-            httplib::Client endpoint;
+            BS::thread_pool pool;
+            httplib::Client client;
             size_t playback_observers;
 
             std::shared_ptr<spdlog::logger> logger;

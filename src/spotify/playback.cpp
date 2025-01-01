@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "playback.hpp"
 #include "abstract/observers.hpp"
+#include "api.hpp"
 
 namespace spotifar
 {
@@ -8,9 +9,9 @@ namespace spotifar
     {
         using namespace std::literals;
 
-        std::chrono::milliseconds PlaybackCache::get_sync_interval() const
+        utils::ms PlaybackCache::get_sync_interval() const
         {
-            return std::chrono::milliseconds(950ms);
+            return utils::ms(950ms);
         }
     
         void PlaybackCache::on_data_synced(const PlaybackState &data, const PlaybackState &prev_data)
@@ -49,17 +50,18 @@ namespace spotifar
 
         bool PlaybackCache::request_data(PlaybackState &data)
         {
-            auto r = endpoint->Get("/v1/me/player");
-            if (r->status == httplib::OK_200)
+            auto api_ptr = dynamic_cast<Api*>(api);
+            auto res = api_ptr->client.Get("/v1/me/player");
+            if (res->status == httplib::OK_200)
             {
-                auto j = json::parse(r->body);
+                auto j = json::parse(res->body);
                 apply_patches(j).get_to(data);
                 return true;
             }
-            else if (r->status == httplib::NoContent_204)
+            else if (res->status == httplib::NoContent_204)
             {
-                // the playback data is empty here, we skip it to continue showing
-                // the last played real data in the player UI
+                // we make sure that the stored last played data has "is_playing = false",
+                // not to confuse anybody with the UI status
                 data = get_data();
                 if (!data.is_empty())
                     data.is_playing = false;
@@ -67,18 +69,6 @@ namespace spotifar
             }
 
             return false;
-        }
-        
-        void PlaybackCache::on_data_patched(PlaybackState &data)
-        {
-            // patching will mark cache is valid, so it will prevent it from invalidating
-            // for additional time, which is required for smooth track bar ticking.
-            // To improve this case we update timings in cache as it were ticking themselves
-            auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(
-                clock::now() - get_last_sync_time()).count();
-            
-            data.progress_ms += (int)delta;
-            data.progress = data.progress_ms / 1000;
         }
     }
 }

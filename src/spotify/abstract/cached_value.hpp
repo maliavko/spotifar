@@ -3,6 +3,8 @@
 #pragma once
 
 #include "stdafx.h"
+#include "interfaces.hpp"
+#include "utils.hpp"
 
 namespace spotifar
 {
@@ -12,19 +14,6 @@ namespace spotifar
         using clock = utils::clock;
         using time_point = clock::time_point;
         using json = nlohmann::json;
-        using SettingsContext = config::SettingsContext;
-
-        class ICachedValue
-        {
-        public:
-            virtual ~ICachedValue() {};
-
-            virtual void read(SettingsContext &ctx) = 0;
-            virtual void write(SettingsContext &ctx) = 0;
-            virtual void clear(SettingsContext &ctx) = 0;
-            virtual bool resync(bool force = false) = 0;
-            virtual void set_enabled(bool is_enabled) = 0;
-        };
         
         template<typename T>
         class CachedValue: public ICachedValue
@@ -33,13 +22,12 @@ namespace spotifar
             inline static auto PATCH_EXPIRY_TIME = 1500ms;
 
         public:
-            CachedValue(httplib::Client *endpoint, const std::wstring &storage_key,
-                bool is_enabled = true);
+            CachedValue(const std::wstring &storage_key, bool is_enabled = true);
             virtual ~CachedValue();
 
-            virtual void read(SettingsContext &ctx);
-            virtual void write(SettingsContext &ctx);
-            virtual void clear(SettingsContext &ctx);
+            virtual void read(SettingsCtx &ctx);
+            virtual void write(SettingsCtx &ctx);
+            virtual void clear(SettingsCtx &ctx);
             virtual bool resync(bool force = false);
 
             void set_enabled(bool is_enabled) { this->is_enabled = is_enabled; }
@@ -51,17 +39,14 @@ namespace spotifar
 
         protected:
             virtual bool request_data(T &data) = 0;
-            virtual std::chrono::milliseconds get_sync_interval() const = 0;
+            virtual utils::ms get_sync_interval() const = 0;
             virtual void on_data_synced(const T &data, const T &prev_data) {}
             virtual void on_data_patched(T &data) {}
             void reset_data(const T &new_data);
             json& apply_patches(json &j);
 
-        protected:
-            httplib::Client *endpoint;
-
         private:
-            std::mutex access_mutext;
+            std::mutex patch_mutex;
             const std::wstring storage_data_key, storage_timestamp_key;
             time_point last_sync_time;
             bool is_enabled;
@@ -70,9 +55,7 @@ namespace spotifar
         };
         
         template<typename T>
-        CachedValue<T>::CachedValue(httplib::Client* endpoint, const std::wstring &storage_key,
-                                    bool is_enabled):
-            endpoint(endpoint),
+        CachedValue<T>::CachedValue(const std::wstring &storage_key, bool is_enabled):
             last_sync_time{},
             storage_data_key(storage_key),
             storage_timestamp_key(storage_key + L"Time"),
@@ -83,11 +66,10 @@ namespace spotifar
         template<typename T>
         CachedValue<T>::~CachedValue()
         {
-            endpoint = nullptr;
         }
 
         template<typename T>
-        void CachedValue<T>::read(SettingsContext &ctx)
+        void CachedValue<T>::read(SettingsCtx &ctx)
         {
             auto storage_value = ctx.get_str(storage_data_key, "");
             auto storage_timestamp = ctx.get_int64(storage_timestamp_key, 0LL);
@@ -113,14 +95,14 @@ namespace spotifar
         }
 
         template<typename T>
-        void CachedValue<T>::write(SettingsContext &ctx)
+        void CachedValue<T>::write(SettingsCtx &ctx)
         {
             ctx.set_str(storage_data_key, json(data).dump());
             ctx.set_int64(storage_timestamp_key, last_sync_time.time_since_epoch().count());
         }
 
         template<typename T>
-        void CachedValue<T>::clear(SettingsContext &ctx)
+        void CachedValue<T>::clear(SettingsCtx &ctx)
         {
             ctx.delete_value(storage_data_key);
             ctx.delete_value(storage_timestamp_key);
@@ -130,7 +112,6 @@ namespace spotifar
         bool CachedValue<T>::resync(bool force)
         {
             auto sync_time = clock::now();
-            std::lock_guard lk(access_mutext);
             // no updates for disabled caches, otherwise only in case the data
             // is invalid or resync is forced
             if (!is_enabled || (!force && is_valid()))
@@ -139,8 +120,8 @@ namespace spotifar
             T new_data;
             if (request_data(new_data))
             {
-                reset_data(new_data);
                 last_sync_time = sync_time;
+                reset_data(new_data);
             }
             return true;
         }
@@ -157,9 +138,8 @@ namespace spotifar
         void CachedValue<T>::patch_data(const json &patch)
         {
             // patches are saved and applied next time data is resynced
+            std::lock_guard lock(patch_mutex);
             patches.push_back(std::make_pair(clock::now(), patch));
-
-            resync(true);
         }
 
         template<typename T>
@@ -172,9 +152,8 @@ namespace spotifar
             for (auto& [t, p]: patches)
             {
                 j.merge_patch(p);
-                spdlog::get(utils::LOGGER_API)->debug("Applying data patch {}", p.dump());
+                // spdlog::get(utils::LOGGER_API)->debug("Applying data patch {}", p.dump());
             }
-
             return j;
         }
     }

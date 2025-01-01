@@ -1,5 +1,4 @@
 #include "api.hpp"
-#include "config.hpp"
 
 namespace spotifar
 {
@@ -8,6 +7,11 @@ namespace spotifar
         using namespace std::literals;
         using json = nlohmann::json;
         using namespace httplib;
+
+        bool is_success(int status)
+        {
+            return status == OK_200 || status == NoContent_204;
+        }
 
         // TODO: reconsider these functions
         std::string dump_headers(const Headers &headers) {
@@ -49,40 +53,42 @@ namespace spotifar
         const string SPOTIFY_API_URL = "https://api.spotify.com";
 
         Api::Api():
-            endpoint(SPOTIFY_API_URL),
+            client(SPOTIFY_API_URL),
             is_worker_listening(false),
             logger(spdlog::get(utils::LOGGER_API)),
-            playback_observers(0)
+            playback_observers(0),
+            pool(4)
         {
             static const std::set<std::string> exclude{
                 "/v1/me/player",
                 "/v1/me/player/devices",
             };
 
-            endpoint.set_logger([this](const Request &req, const Response &res)
-            {
-                if (res.status != OK_200 || res.status != NoContent_204)
+            client.set_logger(
+                [this](const Request &req, const Response &res)
                 {
-                    if (!exclude.contains(req.path))
-                        logger->debug("A successful HTTP request has been performed: [{}] {}", req.method, req.path);
-                }
-                else
-                    logger->error(dump_http_error(req, res));
-            });
+                    if (is_success(res.status))
+                    {
+                        if (!exclude.contains(req.path))
+                            logger->debug("A successful HTTP request has been performed: [{}] {}", req.method, req.path);
+                    }
+                    else
+                        logger->error(dump_http_error(req, res));
+                });
             
-            endpoint.set_default_headers(Headers{
+            client.set_default_headers(Headers{
                 {"Content-Type", "application/json; charset=utf-8"},
             });
 
             auth = std::make_unique<AuthCache>(
-                &endpoint, config::get_client_id(), config::get_client_secret(),
+                this, config::get_client_id(), config::get_client_secret(),
                 config::get_localhost_port());
-            devices = std::make_unique<DevicesCache>(&endpoint);
-            history = std::make_unique<PlayedHistory>(&endpoint);
-            playback = std::make_unique<PlaybackCache>(&endpoint);
+            devices = std::make_unique<DevicesCache>(this);
+            // history = std::make_unique<PlayedHistory>(this);
+            playback = std::make_unique<PlaybackCache>(this);
 
             caches.assign({
-                auth.get(), history.get(), playback.get(), devices.get()
+                auth.get(), playback.get(), devices.get()//, history.get(),
             });
         }
 
@@ -118,16 +124,12 @@ namespace spotifar
                                  int position_ms, const string &device_id)
         {
             Params params = {};
-            Result res;
-
             if (!device_id.empty())
                 params.insert({ "device_id", device_id });
 
-            auto request_url = append_query_params("/v1/me/player/play", params);
-
+            string body = ""; 
             if (!context_uri.empty())
             {
-                // TODO: not tested
                 json o{
                     { "context_uri", context_uri },
                     { "position_ms", position_ms },
@@ -136,15 +138,25 @@ namespace spotifar
                 if (!track_uri.empty())
                     o["offset"] = { { "uri", track_uri }, };
                 
-                res = endpoint.Put(request_url, o.dump(), "application/json");
+                body = o.dump();
             }
-            else
-            {
-                res = endpoint.Put(request_url);
-            }
-            
-            if (res->status == OK_200 || res->status == NoContent_204)
-                get_playback_cache().patch_data({ { "is_playing", true } });
+
+            pool.detach_task(
+                [
+                    &c = this->client, &cache = get_playback_cache(),
+                    dev_id = std::as_const(device_id), body,
+                    request_url = append_query_params("/v1/me/player/play", params)
+                ]
+                {
+                    Result res;
+                    if (body.empty())
+                        res = c.Put(request_url);
+                    else
+                        res = c.Put(request_url, body, "application/json");
+
+                    if (is_success(res))
+                        cache.patch_data({ { "is_playing", true } });
+                });
         }
         
         void Api::start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track)
@@ -159,117 +171,148 @@ namespace spotifar
 
         void Api::pause_playback(const string &device_id)
         {
-            Params params = {};
+            pool.detach_task(
+                [&c = this->client, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                {
+                    Params params = {};
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
 
-            if (!device_id.empty())
-                params.insert({ "device_id", device_id });
-
-            auto r = endpoint.Put(append_query_params("/v1/me/player/pause", params));
-            if (r->status == httplib::OK_200)
-                get_playback_cache().patch_data({ { "is_playing", false } });
+                    auto r = c.Put(append_query_params("/v1/me/player/pause", params));
+                    if (r->status == httplib::OK_200)
+                        cache.patch_data({ { "is_playing", false } });
+                });
         }
         
-        void Api::skip_to_next()
+        void Api::skip_to_next(const string &device_id)
         {
-            // TODO: unfinished
-            auto r = endpoint.Post("/v1/me/player/next");
+            pool.detach_task(
+                [&c = this->client, dev_id = std::as_const(device_id)]
+                {
+                    Params params = {};
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
+
+                    return c.Post("/v1/me/player/next", params);
+                });
         }
 
-        void Api::skip_to_previous()
+        void Api::skip_to_previous(const string &device_id)
         {
-            // TODO: unfinished
-            auto r = endpoint.Post("/v1/me/player/previous");
+            pool.detach_task(
+                [&c = this->client, dev_id = std::as_const(device_id)]
+                {
+                    Params params = {};
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
+                    
+                    return c.Post("/v1/me/player/previous", params);
+                });
         }
         
         void Api::seek_to_position(int position_ms, const string &device_id)
         {
-            // TODO: unfinished
-            Params params = {
-                { "position_ms", std::to_string(position_ms) },
-            };
+            pool.detach_task(
+                [&c = this->client, position_ms, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                {
+                    Params params = {
+                        { "position_ms", std::to_string(position_ms) },
+                    };
 
-            if (!device_id.empty())
-                params.insert({ "device_id", device_id });
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
 
-            auto res = endpoint.Put(append_query_params("/v1/me/player/seek", params));
-
-            if (res->status == OK_200 || res->status == NoContent_204)
-                get_playback_cache().patch_data({ { "progress_ms", position_ms } });
+                    auto res = c.Put(append_query_params("/v1/me/player/seek", params));
+                    if (is_success(res->status))
+                        cache.patch_data({ { "progress_ms", position_ms } });
+                });
         }
 
         void Api::toggle_shuffle(bool is_on, const string &device_id)
         {
-            Params params = {
-                { "state", is_on ? "true" : "false" },
-            };
+            pool.detach_task(
+                [&c = this->client, is_on, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                {
+                    Params params = {
+                        { "state", is_on ? "true" : "false" },
+                    };
 
-            if (!device_id.empty())
-                params.insert({ "device_id", device_id });
-
-            auto res = endpoint.Put(append_query_params("/v1/me/player/shuffle", params));
-            if (res->status == OK_200 || res->status == NoContent_204)
-                get_playback_cache().patch_data({
-                    { "shuffle_state", is_on }
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
+                    
+                    auto res = c.Put(append_query_params("/v1/me/player/shuffle", params));
+                    if (is_success(res->status))
+                        cache.patch_data({
+                            { "shuffle_state", is_on }
+                        });
                 });
         }
 
         void Api::set_repeat_state(const std::string &mode, const string &device_id)
         {
-            Params params = {
-                { "state", mode },
-            };
+            pool.detach_task(
+                [&c = this->client, mode, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                {
+                    Params params = {
+                        { "state", mode },
+                    };
 
-            if (!device_id.empty())
-                params.insert({ "device_id", device_id });
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
 
-            auto res = endpoint.Put(append_query_params("/v1/me/player/repeat", params));
-            if (res->status == OK_200 || res->status == NoContent_204)
-                get_playback_cache().patch_data({
-                    { "repeat_state", mode }
+                    auto res = c.Put(append_query_params("/v1/me/player/repeat", params));
+                    if (is_success(res->status))
+                        cache.patch_data({
+                            { "repeat_state", mode }
+                        });
                 });
         }
 
-        void Api::set_playback_volume(int volume_percent)
+        void Api::set_playback_volume(int volume_percent, const string &device_id)
         {
-            auto res = endpoint.Put(append_query_params("/v1/me/player/volume",
-                Params{{ "volume_percent", std::to_string(volume_percent) }}));
+            pool.detach_task(
+                [&c = this->client, volume_percent, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                {
+                    Params params = {
+                        { "volume_percent", std::to_string(volume_percent) },
+                    };
 
-            if (res->status == OK_200 || res->status == NoContent_204)
-                get_playback_cache().patch_data({
-                    { "device", {
-                        { "volume_percent", volume_percent }
-                    } }
+                    if (!dev_id.empty())
+                        params.insert({ "device_id", dev_id });
+
+                    auto res = c.Put(append_query_params("/v1/me/player/volume", params));
+                    if (is_success(res->status))
+                        cache.patch_data({
+                            { "device", {
+                                { "volume_percent", volume_percent }
+                            } }
+                        });
                 });
         }
         
-        bool Api::transfer_playback(const std::string &device_id, bool start_playing)
+        void Api::transfer_playback(const std::string &device_id, bool start_playing)
         {   
             auto devices = get_available_devices();
             auto device_it = std::find_if(devices.begin(), devices.end(),
                 [&device_id](auto &d) { return d.id == device_id; });
 
             if (device_it == devices.end())
-            {
-                logger->error("There is no devices with the given id={}", device_id);
-                return false;
-            }
+                return logger->error("There is no devices with the given id={}", device_id);
 
             if (device_it->is_active)
-            {
-                logger->warn("The given device is already active {}", device_it->to_str());
-                return true;
-            }
+                return logger->warn("The given device is already active {}", device_it->to_str());
+            
+            pool.detach_task(
+                [&c = this->client, start_playing, dev_id = std::as_const(device_id)]
+                {
+                    json body{
+                        { "device_ids", { dev_id } },
+                        { "play", start_playing },
+                    };
 
-            json body{
-                { "device_ids", { device_id } },
-                { "play", start_playing },
-            };
-
-            logger->info("Transferring playback to the device {}, autoplay {}",
-                device_it->to_str(), start_playing);
-
-            auto res = endpoint.Put("/v1/me/player", body.dump(), "application/json");
-            return res->status == NoContent_204;
+                    auto res = c.Put("/v1/me/player", body.dump(), "application/json");
+                    // TODO: handle errors
+                });
         }
         
         AlbumsCollection Api::get_albums(const std::string &artist_id)
@@ -287,7 +330,7 @@ namespace spotifar
 
             do
             {
-                auto r = endpoint.Get(request_url);
+                auto r = client.Get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& aj : data["items"])
@@ -319,7 +362,7 @@ namespace spotifar
 
             do
             {
-                auto r = endpoint.Get(request_url);
+                auto r = client.Get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& aj : data["items"])
@@ -352,7 +395,7 @@ namespace spotifar
 
             do
             {
-                auto r = endpoint.Get(request_url);
+                auto r = client.Get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& tj : data["items"])
@@ -384,7 +427,7 @@ namespace spotifar
                     { "after", after.get<std::string>() },
                 };
 
-                auto r = endpoint.Get("/v1/me/following", params, Headers());
+                auto r = client.Get("/v1/me/following", params, Headers());
                 json data = json::parse(r->body)["artists"];
 
                 for (json& aj : data["items"])
@@ -403,31 +446,25 @@ namespace spotifar
         {
             std::packaged_task<void()> task([this]
             {
-                clock::time_point now;
+                // clock::time_point now;
                 std::string exit_msg = "";
-                const std::lock_guard<std::mutex> worker_lock(sync_worker_mutex);
+                const std::lock_guard worker_lock(sync_worker_mutex);
 
                 try
                 {
                     while (is_worker_listening)
                     {
-                        now = clock::now();
-
-                        // TODO: errors in this function raises on_playback_sync_finished, which is not valid
-                        // for this situation, come up with some different errors handling
-                        // NOTE: very experimental, if any cache is invalidated in this tick, the others are skipped.
-                        // in theory ~20Hz rate should supply all the consumers with enough frames to sync-up
-                        for (auto &c: caches)
-                            if (c->resync())
-                                continue;
+                        pool.detach_loop(0ULL, caches.size(),
+                            [&caches = this->caches](const std::size_t idx) {
+                                caches[idx]->resync();
+                            }, BS::pr::high);
+                        
+                        // if (pool.get_tasks_total() > 0)
+                        //     logger->debug("{} tasks total, {}  tasks running, {} tasks queued",
+                        //         pool.get_tasks_total(), pool.get_tasks_running(), pool.get_tasks_queued());
+                        pool.wait();
                         
                         ObserverManager::notify(&BasicApiObserver::on_sync_thread_tick);
-
-                        #ifdef _DEBUG
-                        if (clock::now() - now > 500ms)
-                            logger->warn(std::format("Sync thread tick overspend, {:%T}ms",
-                                clock::now() - now));
-                        #endif
 
                         std::this_thread::sleep_for(50ms);
                     }
@@ -453,7 +490,7 @@ namespace spotifar
             
             // trying to acquare a sync worker mutex, giving it time to clean up
             // all the resources
-            const std::lock_guard<std::mutex> worker_lock(sync_worker_mutex);
+            const std::lock_guard worker_lock(sync_worker_mutex);
             logger->info("An API sync worker has been stopped");
         }
     }

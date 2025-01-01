@@ -6,6 +6,8 @@ find_package(OpenSSL REQUIRED)
 set(SPDLOG_WCHAR_FILENAMES ON)
 find_package(spdlog CONFIG REQUIRED)
 
+find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
+
 
 add_library(${PROJECT_NAME} SHARED
 	spotifar.cpp
@@ -39,7 +41,8 @@ target_include_directories(${PROJECT_NAME}
 		${PROJECT_SOURCE_DIR}/src
 		${PROJECT_SOURCE_DIR}/thirdparty/ObserverManager/ObserverManager
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common
-		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode)
+		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode
+		${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE

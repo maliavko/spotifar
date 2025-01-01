@@ -2,10 +2,8 @@
 #define VIEWS_HPP_5219FA27_4DE8_44C0_BF79_6A1310E4805F
 #pragma once
 
+#include "stdafx.h"
 #include "spotify/api.hpp"
-#include <string>
-#include <vector>
-#include <plugin.hpp>
 
 namespace spotifar
 {

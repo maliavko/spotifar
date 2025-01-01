@@ -1,14 +1,14 @@
-#include "stdafx.h"
 #include "ui/player_dialog.hpp"
 
 namespace spotifar
 {
     namespace ui
     {
-        using utils::far3::get_msg;
-        using utils::far3::send_dlg_msg;
-        using utils::far3::NoRedraw;
-        using spotify::PlaybackState;
+        namespace far3 = utils::far3;
+        using far3::get_msg;
+        using far3::send_dlg_msg;
+        using far3::NoRedraw;
+        using far3::push_synchro_task;
         using namespace std::literals;
         
         static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
@@ -75,8 +75,8 @@ namespace spotifar
         }
 
         auto btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
-        auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_LISTNOAMPERSAND |
-                           DIF_DROPDOWNLIST | DIF_NOFOCUS;
+        auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE |
+                           DIF_DROPDOWNLIST;
     
         std::vector<FarDialogItem> dlg_items_layout{
             // border
@@ -149,7 +149,7 @@ namespace spotifar
             }},
         };
 
-        PlayerDialog::PlayerDialog(spotify::Api &api):
+        PlayerDialog::PlayerDialog(Api &api):
             api(api),
             volume(0, 100, 1),
             track_progress(0, 0, 5),
@@ -226,6 +226,8 @@ namespace spotifar
                     static std::wstring title(std::format(L" {} ", get_msg(MPluginUserName)));
                     set_control_text(TITLE, title);
 
+                    // TODO: all the updates are coming from sync-thread, this one is in the main one,
+                    // which can create memory racing situation. Reconsider the logic here
                     // initial ui initialization with the cached data
                     auto &state = api.get_playback_state();
                     on_track_changed(state.item);
@@ -271,35 +273,38 @@ namespace spotifar
             auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, DEVICES_COMBO, (void*)pos);
             size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, DEVICES_COMBO, (void*)pos);
             if (item_data)
+            {
+                auto &state = api.get_playback_state();
                 api.transfer_playback(
-                    std::string(reinterpret_cast<const char*>(item_data), item_data_size)
+                    std::string(reinterpret_cast<const char*>(item_data), item_data_size),
+                    state.is_playing
                 );
-
+            }
             return true;
         }
 
         bool PlayerDialog::on_input_received(void *input_record)
         {
             auto state = api.get_playback_state();
-            auto t = VK_RIGHT & utils::far3::KEY_ALT;
+            auto t = VK_RIGHT & far3::KEY_ALT;
             INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
             switch (ir->EventType)
             {
                 case KEY_EVENT:
                     if (ir->Event.KeyEvent.bKeyDown)
                     {
-                        int key = utils::far3::input_record_to_combined_key(ir->Event.KeyEvent);
+                        int key = far3::input_record_to_combined_key(ir->Event.KeyEvent);
                         switch (key)
                         {
                             case VK_SPACE:
                                 on_play_btn_click(nullptr);
                                 return true;
 
-                            case VK_RIGHT + utils::far3::KEY_ALT:
+                            case VK_RIGHT + far3::KEY_ALT:
                                 on_skip_to_next_btn_click(nullptr);
                                 return true;
 
-                            case VK_LEFT + utils::far3::KEY_ALT:
+                            case VK_LEFT + far3::KEY_ALT:
                                 on_skip_to_previous_btn_click(nullptr);
                                 return true;
 
@@ -316,14 +321,19 @@ namespace spotifar
                                 update_volume_bar(key == VK_UP ? volume.next() : volume.prev());
                                 return true;
                             }
-                            case utils::far3::KEY_R:
+                            case far3::KEY_R:
                             {
                                 update_repeat_btn(repeat_state.next());
                                 return true;
                             }
-                            case utils::far3::KEY_S:
+                            case far3::KEY_S:
                             {
                                 update_shuffle_btn(shuffle_state.next());
+                                return true;
+                            }
+                            case far3::KEY_D + far3::KEY_ALT:
+                            {
+                                send_dlg_msg(hdlg, DM_SETDROPDOWNOPENED, DEVICES_COMBO, (void*)TRUE);
                                 return true;
                             }
                         }
@@ -337,8 +347,8 @@ namespace spotifar
         {
             FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-            dic->Colors->BackgroundColor = utils::far3::CLR_DGRAY;
-            dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+            dic->Colors->BackgroundColor = far3::CLR_DGRAY;
+            dic->Colors->ForegroundColor = far3::CLR_BLACK;
             return true;
         }
         
@@ -346,7 +356,7 @@ namespace spotifar
         {
             FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-            dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+            dic->Colors->ForegroundColor = far3::CLR_BLACK;
             return true;
         }
         
@@ -359,7 +369,7 @@ namespace spotifar
             INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
 
             SMALL_RECT dlg_rect;
-            utils::far3::send_dlg_msg(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
+            far3::send_dlg_msg(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
             
             auto track_bar_layout = dlg_items_layout[TRACK_BAR];
             auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
@@ -374,7 +384,7 @@ namespace spotifar
         {
             FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
-            dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
+            dic->Colors->ForegroundColor = far3::CLR_DGRAY;
             return true;
         }
         
@@ -383,11 +393,11 @@ namespace spotifar
             FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
             if (shuffle_state.get_offset_value())
             {
-                dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+                dic->Colors->ForegroundColor = far3::CLR_BLACK;
             }
             else
             {
-                dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
+                dic->Colors->ForegroundColor = far3::CLR_DGRAY;
             }
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
             return true;
@@ -396,13 +406,13 @@ namespace spotifar
         bool PlayerDialog::on_repeat_btn_style_applied(void *dialog_item_colors)
         {
             FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
-            if (repeat_state.get_offset_value() != spotify::PlaybackState::REPEAT_OFF)
+            if (repeat_state.get_offset_value() != PlaybackState::REPEAT_OFF)
             {
-                dic->Colors->ForegroundColor = utils::far3::CLR_BLACK;
+                dic->Colors->ForegroundColor = far3::CLR_BLACK;
             }
             else
             {
-                dic->Colors->ForegroundColor = utils::far3::CLR_DGRAY;
+                dic->Colors->ForegroundColor = far3::CLR_DGRAY;
             }
             dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
             return true;
@@ -453,7 +463,7 @@ namespace spotifar
         void PlayerDialog::on_playback_sync_finished(const std::string &exit_msg)
         {
             if (!exit_msg.empty())
-                utils::far3::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
+                far3::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
             
             hide();
         }
@@ -637,26 +647,31 @@ namespace spotifar
         
         void PlayerDialog::on_sync_thread_tick()
         {
-            static clock::time_point last_tick_time = clock::now();
+            // here we process delayed controls like seeking position or volume, as they require
+            // timer for perform smoothly. But the final operation is executed through the far main
+            // thread to avoid threads clashes, plus to process the task through the thread pool
 
-            // auto now = clock::now();
-            // auto delta = now - last_tick_time;
-            auto &state = api.get_playback_state();
-
-            track_progress.check([this, &state](int p) {
-                api.seek_to_position(p * 1000, state.device.id);
+            track_progress.check([this](int p) {
+                push_synchro_task([&api = this->api, p]() {
+                    auto &state = api.get_playback_state();
+                    api.seek_to_position(p * 1000, state.device.id);
+                });
             });
 
-            volume.check([this](int v) { api.set_playback_volume(v); });
+            volume.check([this](int v) {
+                push_synchro_task([&api = this->api, v]() { api.set_playback_volume(v); });
+            });
 
-            shuffle_state.check([this](bool v) { api.toggle_shuffle(v); });
+            shuffle_state.check([this](bool v) {
+                push_synchro_task([&api = this->api, v]() { api.toggle_shuffle(v); });
+            });
 
-            repeat_state.check([this](const std::string &s) { api.set_repeat_state(s); });
-
-            // last_tick_time = now;
+            repeat_state.check([this](const std::string &s) {
+                push_synchro_task([&api = this->api, s]() { api.set_repeat_state(s); });
+            });
         }
         
-        intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring& text)
+        intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring &text)
         {
             return send_dlg_msg(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
         }

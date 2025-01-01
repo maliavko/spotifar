@@ -2,8 +2,8 @@
 #define OBSERVERS_HPP_BA79594B_1DE9_4C81_9F0A_DC8D83671F70
 #pragma once
 
+#include "stdafx.h"
 #include "items.hpp"
-#include "ObserverManager.h"
 
 namespace spotifar
 {

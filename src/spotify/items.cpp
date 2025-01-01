@@ -1,4 +1,5 @@
 #include "items.hpp"
+#include "utils.hpp"
 
 namespace spotifar
 {

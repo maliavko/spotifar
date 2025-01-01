@@ -9,20 +9,15 @@ namespace spotifar
 {
     namespace ui
     {
-        using spotify::DevicesList;
-        using spotify::PlaybackState;
-        using spotify::Track;
-        using spotify::Context;
-        using spotify::Actions;
-        using utils::clock;
+        using namespace spotify;
         using namespace std::literals;
 
         class PlayerDialog:
-            public spotify::PlaybackObserver,
-            public spotify::BasicApiObserver
+            public PlaybackObserver,
+            public BasicApiObserver
         {
         public:
-            PlayerDialog(spotify::Api &api);
+            PlayerDialog(Api &api);
             virtual ~PlayerDialog();
 
             bool show();

@@ -1,6 +1,5 @@
 #include "plugin.h"
 #include "config.hpp"
-#include "ui/player_dialog.hpp"
 #include "ui/config_dialog.hpp"
 
 namespace spotifar

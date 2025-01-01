@@ -3,6 +3,7 @@
 #pragma once
 
 #include "abstract/cached_value.hpp"
+#include "abstract/interfaces.hpp"
 #include "items.hpp"
 
 namespace spotifar
@@ -12,17 +13,21 @@ namespace spotifar
         class DevicesCache: public CachedValue<DevicesList>
         {
         public:
-            DevicesCache(httplib::Client *endpoint):
-                CachedValue(endpoint, L"DevicesList", false)
+            DevicesCache(IApi *api):
+                CachedValue(L"DevicesList", false),
+                api(api)
                 {}
+
+            virtual ~DevicesCache() { api = nullptr; }
 
         protected:
             virtual bool request_data(DevicesList &data);
             virtual void on_data_synced(const DevicesList &data, const DevicesList &prev_data);
-            virtual std::chrono::milliseconds get_sync_interval() const;
+            virtual utils::ms get_sync_interval() const;
 
         private:
             std::shared_ptr<spdlog::logger> logger;
+            IApi *api;
         };
     }
 }

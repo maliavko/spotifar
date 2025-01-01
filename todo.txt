@@ -2,8 +2,8 @@ project infrastructure
 - gcc support
 
 refactor
-- consider making http requests async
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
+- consider reformatting code to the style like in thread-pool library e.g.
 
 application ideas
 - fair random while playing with shuffle, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)
@@ -23,8 +23,7 @@ application ideas
 
 bugs
 - librespot quite often catches the error: Remote connection was forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
-- sometimes when closing player window an assert happens
-Assertion failed!
+- when changing the volume, if some offset is about to be applied and change it one more time, it does not increment from the last offset, but from some another value
 
 Program: ...anager\_build\vc\_output\product\Debug.x64\Far.exe
 File: D:\develops\spotifar\thirdparty\Farmanage...\manager.cpp

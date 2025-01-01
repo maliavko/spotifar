@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "config.hpp"
 #include "ui/config_dialog.hpp"
 
 namespace spotifar

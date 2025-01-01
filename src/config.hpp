@@ -2,9 +2,7 @@
 #define CONFIG_HPP_B490198E_23A2_4583_A1B8_80FA1450E83B
 #pragma once
 
-#include <string>
-#include <plugin.hpp>
-#include <PluginSettings.hpp>
+#include "stdafx.h"
 
 namespace spotifar
 {

@@ -1,14 +1,15 @@
 #include "stdafx.h"
 #include "devices.hpp"
 #include "abstract/observers.hpp"
+#include "api.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
-        std::chrono::milliseconds DevicesCache::get_sync_interval() const
+        utils::ms DevicesCache::get_sync_interval() const
         {
-            return std::chrono::milliseconds(1000);
+            return utils::ms(1000);
         }
         
         void DevicesCache::on_data_synced(const DevicesList &data, const DevicesList &prev_data)
@@ -23,8 +24,10 @@ namespace spotifar
 
         bool DevicesCache::request_data(DevicesList &data)
         {
-            if (auto r = endpoint->Get("/v1/me/player/devices"))
-                json::parse(r->body).at("devices").get_to(data);
+            auto api_ptr = dynamic_cast<Api*>(api);
+            auto res = api_ptr->client.Get("/v1/me/player/devices");
+            if (res->status == httplib::OK_200)
+                json::parse(res->body).at("devices").get_to(data);
 
             return true;
         }

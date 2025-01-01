@@ -1,11 +1,8 @@
-#include "version.hpp"
-#include "guid.hpp"
+#include "stdafx.h"
 #include "config.hpp"
-#include "lng.hpp"
 #include "plugin.h"
 #include "ui/config_dialog.hpp"
-
-#include <plugin.hpp>
+#include "spotify/abstract/observers.hpp"
 
 namespace spotifar
 {
@@ -155,9 +152,20 @@ namespace spotifar
 
 		config::write();
 		utils::fini_logging();
+		utils::far3::clear_synchro_events();
 	}
 
-	void WINAPI ExitFARW(const ExitInfo *Info)
+	intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
+	{
+		if (info->Event == SE_COMMONSYNCHRO)
+		{
+			utils::far3::process_synchro_event((intptr_t)info->Param);
+			return NULL;
+		}
+		return NULL;
+	}
+
+	void WINAPI ExitFARW(const ExitInfo *info)
 	{
 	}
 }

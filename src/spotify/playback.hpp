@@ -12,18 +12,21 @@ namespace spotifar
         class PlaybackCache: public CachedValue<PlaybackState>
         {
         public:
-            PlaybackCache(httplib::Client *endpoint):
-                CachedValue(endpoint, L"PlaybackState", false)
+            PlaybackCache(IApi *api):
+                CachedValue(L"PlaybackState", false),
+                api(api)
                 {}
+
+            virtual ~PlaybackCache() { api = nullptr; }
 
         protected:
             virtual void on_data_synced(const PlaybackState &data, const PlaybackState &prev_data);
-            virtual void on_data_patched(PlaybackState &data);
             virtual bool request_data(PlaybackState &data);
-            virtual std::chrono::milliseconds get_sync_interval() const;
+            virtual utils::ms get_sync_interval() const;
 
         private:
             std::shared_ptr<spdlog::logger> logger;
+            IApi *api;
         };
     }
 }

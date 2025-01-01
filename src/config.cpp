@@ -1,8 +1,4 @@
-﻿#include "stdafx.h"
-
-#include "config.hpp"
-#include "guid.hpp"
-#include "lng.hpp"
+﻿#include "config.hpp"
 #include "utils.hpp"
 
 namespace spotifar

@@ -2,14 +2,14 @@
 #define UTILS_HPP_64E82CD1_3EFD_41A4_BD43_6FC38FE138A8
 #pragma once
 
-#include <plugin.hpp>
-#include <string>
+#include "stdafx.h"
 
 namespace spotifar
 {
 	namespace utils
 	{
 		using clock = std::chrono::system_clock;
+		using ms = std::chrono::milliseconds;
 
 		namespace far3
 		{
@@ -33,8 +33,14 @@ namespace spotifar
 				CLR_WHITE
 			};
 
-			static const int KEY_R = 0x52, KEY_S = 0x53;
-			static const int KEY_CTRL = 0x100000, KEY_ALT = 0x200000, KEY_SHIFT = 0x400000;
+			static const int
+				KEY_A = 0x41,
+				KEY_D = 0x44,
+				KEY_R = 0x52,
+				KEY_S = 0x53,
+				KEY_CTRL = 0x100000,
+				KEY_ALT = 0x200000,
+				KEY_SHIFT = 0x400000;
 
 			int input_record_to_combined_key(const KEY_EVENT_RECORD &kir);
 
@@ -55,6 +61,11 @@ namespace spotifar
 			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
 			
 			const wchar_t* get_msg(int msg_id);
+		
+			typedef std::function<void(void)> SynchroTaskT;
+			void push_synchro_task(SynchroTaskT task);
+			void process_synchro_event(intptr_t task_id);
+			void clear_synchro_events();
 		}
 
 		std::string generate_random_string(const int);

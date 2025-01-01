@@ -14,12 +14,12 @@ namespace spotifar
         class AuthCache: public CachedValue<Auth>
         {
         public:
-            AuthCache(httplib::Client *endpoint,
-                      const string &client_id, const string &client_secret, int port);
+            AuthCache(IApi *api, const string &client_id, const string &client_secret, int port);
+            virtual ~AuthCache() { api = nullptr; }
 
         protected:
             virtual bool request_data(Auth &data);
-            virtual std::chrono::milliseconds get_sync_interval() const;
+            virtual utils::ms get_sync_interval() const;
             virtual void on_data_synced(const Auth &data, const Auth &prev_data);
             
             string request_auth_code();
@@ -33,6 +33,7 @@ namespace spotifar
             int port;
             
             std::shared_ptr<spdlog::logger> logger;
+            IApi *api;
         };
     }
 }

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ui/views.hpp"
 
 namespace spotifar

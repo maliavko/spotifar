@@ -1,4 +1,5 @@
 #include "auth.hpp"
+#include "api.hpp"
 
 namespace spotifar
 {
@@ -23,17 +24,18 @@ namespace spotifar
             "user-library-read "
             "user-library-modify ";
 
-        AuthCache::AuthCache(httplib::Client *endpoint,
-                             const string &client_id, const string &client_secret, int port):
-            CachedValue(endpoint, L"AccessToken"),
+        AuthCache::AuthCache(IApi *api, const string &client_id, const string &client_secret,
+                             int port):
+            CachedValue(L"AccessToken"),
             client_id(client_id),
             client_secret(client_secret),
-            port(port)
+            port(port),
+            api(api),
+            logger(spdlog::get(utils::LOGGER_API))
         {
-            logger = spdlog::get(utils::LOGGER_API);
         };
 
-        std::chrono::milliseconds AuthCache::get_sync_interval() const
+        utils::ms AuthCache::get_sync_interval() const
         {
             // 60 seconds gap to overlap the old and the new tokens seemlessly
             return std::chrono::seconds(get_data().expires_in - 60);
@@ -41,9 +43,10 @@ namespace spotifar
         
         void AuthCache::on_data_synced(const Auth &data, const Auth &prev_data)
         {
+            auto api_ptr = dynamic_cast<Api*>(api);
             logger->info("A valid access token is found, expires in {}",
                 std::format("{:%T}", get_expires_at() - utils::clock::now()));
-            endpoint->set_bearer_token_auth(data.access_token);
+            api_ptr->client.set_bearer_token_auth(data.access_token);
         }
 
         bool AuthCache::request_data(Auth &data)
@@ -94,14 +97,14 @@ namespace spotifar
             httplib::Headers headers{
                 { "Authorization", "Basic " + httplib::detail::base64_encode(client_id + ":" + client_secret) }
             };
-
+            
             httplib::Client auth_endpoint(SPOTIFY_AUTH_URL);
-            auto r = auth_endpoint.Post(
+            auto res = auth_endpoint.Post(
                 "/api/token", headers, httplib::detail::params_to_query_str(params),
                 "application/x-www-form-urlencoded");
 
             // TODO: error handling
-           return json::parse(r->body).get<Auth>();
+            return json::parse(res->body).get<Auth>();
         }
         
         string AuthCache::request_auth_code()

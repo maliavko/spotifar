@@ -1,4 +1,5 @@
 #include "history.hpp"
+#include "api.hpp"
 
 namespace spotifar
 {
@@ -6,18 +7,19 @@ namespace spotifar
     {
         using namespace std::literals;
 
-        PlayedHistory::PlayedHistory(httplib::Client *endpoint):
-            CachedValue(endpoint, L"PlayedHistory")
+        PlayedHistory::PlayedHistory(IApi *api):
+            CachedValue(L"PlayedHistory"),
+            api(api)
             {};
 
-        std::chrono::milliseconds PlayedHistory::get_sync_interval() const
+        utils::ms PlayedHistory::get_sync_interval() const
         {
-            return std::chrono::milliseconds(5min);
+            return utils::ms(5min);
         }
 
         bool PlayedHistory::request_data(HistoryList &data)
         {
-            auto last_sync_time = duration_cast<std::chrono::milliseconds>(
+            auto last_sync_time = duration_cast<utils::ms>(
                 get_last_sync_time().time_since_epoch()).count();
             
             // TODO: error handling
@@ -27,9 +29,11 @@ namespace spotifar
             };
 
             std::string request_url = httplib::append_query_params("/v1/me/player/recently-played", params);
-            auto r = endpoint->Get(request_url);
 
-            auto history = json::parse(r->body).at("items").get<HistoryList>();
+            auto api_ptr = dynamic_cast<Api*>(api);
+            auto res = api_ptr->client.Get(httplib::append_query_params(
+                "/v1/me/player/recently-played", params));
+            auto history = json::parse(res->body).at("items").get<HistoryList>();
             data.insert(data.begin(), history.begin(), history.end());
             return true;
         }

@@ -26,7 +26,7 @@ namespace spotifar
             bool is_waiting() const { return get_value() != get_offset_value(); };
         };
         
-        // encapsulates logic of a value, which can be changed often within short
+        // encapsulates the logic of a value, which can be changed often within short
         // period of time, and to avoid spaming of the request to API, accumulates the value
         // and sends only one request after a short delay of no changes. A DescrT
         // describes the stored value type and how to work with it
@@ -35,7 +35,7 @@ namespace spotifar
         {
         public:
             typedef typename DescrT::ValueType ValueType;
-            inline static const std::chrono::milliseconds DELAYED_THRESHOLD = 300ms;
+            inline static const utils::ms DELAYED_THRESHOLD = 300ms;
 
         public:
             DelayedValue(DescrT descr): descr(descr) {}

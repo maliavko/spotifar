@@ -1,15 +1,10 @@
-﻿#include "stdafx.h"
-#include "utils.hpp"
+﻿#include "utils.hpp"
 #include "config.hpp"
-#include "lng.hpp"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
-
-#include <format>
-#include <filesystem>
 
 // specific overload for logging far VersionInfo struct
 std::ostream& operator<<(std::ostream& os, const VersionInfo& c)
@@ -90,6 +85,43 @@ namespace spotifar
 			const wchar_t* get_msg(int msg_id)
 			{
 				return config::PsInfo.GetMsg(&MainGuid, msg_id);
+			}
+		
+			static std::unordered_map<intptr_t, SynchroTaskT> synchro_tasks;
+			
+			void push_synchro_task(SynchroTaskT task)
+			{
+				static intptr_t task_id = 0;
+
+				synchro_tasks[++task_id] = task;
+				config::PsInfo.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)task_id);
+			}
+			
+			void process_synchro_event(intptr_t task_id)
+			{
+				auto it = synchro_tasks.find(task_id);
+				if (it == synchro_tasks.end())
+					return spdlog::error("There is no far synchro task registered with the given id, {}", task_id);
+
+				try
+				{
+					it->second();
+					synchro_tasks.erase(it);
+				}
+				catch (const std::exception &ex)
+				{
+					spdlog::error("There is an error while processing far synchro event, {}",
+								  ex.what());
+				}
+			}
+
+			void clear_synchro_events()
+			{
+				if (synchro_tasks.size() > 0)
+					spdlog::error("Unexpected far synchro tasks are stuck in the queue, {}",
+								  synchro_tasks.size());
+
+				synchro_tasks.clear();
 			}
 		}
 
