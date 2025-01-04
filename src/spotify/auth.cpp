@@ -1,5 +1,4 @@
 #include "auth.hpp"
-#include "api.hpp"
 
 namespace spotifar
 {
@@ -26,7 +25,8 @@ namespace spotifar
 
         AuthCache::AuthCache(IApi *api, const string &client_id, const string &client_secret,
                              int port):
-            CachedValue(L"AccessToken"),
+            // CachedValue(L"AccessToken"),
+            CachedItem(L"AccessToken"),
             client_id(client_id),
             client_secret(client_secret),
             port(port),
@@ -38,20 +38,19 @@ namespace spotifar
         utils::ms AuthCache::get_sync_interval() const
         {
             // 60 seconds gap to overlap the old and the new tokens seemlessly
-            return std::chrono::seconds(get_data().expires_in - 60);
+            return std::chrono::seconds(get().expires_in - 60);
         }
         
         void AuthCache::on_data_synced(const Auth &data, const Auth &prev_data)
         {
-            auto api_ptr = dynamic_cast<Api*>(api);
             logger->info("A valid access token is found, expires in {}",
                 std::format("{:%T}", get_expires_at() - utils::clock::now()));
-            api_ptr->client.set_bearer_token_auth(data.access_token);
+            api->get_client().set_bearer_token_auth(data.access_token);
         }
 
         bool AuthCache::request_data(Auth &data)
         {
-            auto refresh_token = get_data().refresh_token;
+            auto refresh_token = get().refresh_token;
             // TODO: check errors
             if (!refresh_token.empty())
             {

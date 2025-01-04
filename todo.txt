@@ -4,6 +4,7 @@ project infrastructure
 refactor
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
 - consider reformatting code to the style like in thread-pool library e.g.
+- replace Api class with IApi interface everywhere is possible
 
 application ideas
 - fair random while playing with shuffle, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)
@@ -23,15 +24,3 @@ application ideas
 
 bugs
 - librespot quite often catches the error: Remote connection was forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
-- when changing the volume, if some offset is about to be applied and change it one more time, it does not increment from the last offset, but from some another value
-
-Program: ...anager\_build\vc\_output\product\Debug.x64\Far.exe
-File: D:\develops\spotifar\thirdparty\Farmanage...\manager.cpp
-Line: 1024
-
-Expression: ChangedIndex == m_windows_changed.size()
-
-For information on how your program can cause an assertion
-failure, see the Visual C++ documentation on asserts
-
-(Press Retry to debug the application - JIT must be enabled)

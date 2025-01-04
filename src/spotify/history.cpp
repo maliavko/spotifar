@@ -1,5 +1,4 @@
 #include "history.hpp"
-#include "api.hpp"
 
 namespace spotifar
 {
@@ -8,7 +7,7 @@ namespace spotifar
         using namespace std::literals;
 
         PlayedHistory::PlayedHistory(IApi *api):
-            CachedValue(L"PlayedHistory"),
+            CachedItem(L"PlayedHistory"),
             api(api)
             {};
 
@@ -30,8 +29,7 @@ namespace spotifar
 
             std::string request_url = httplib::append_query_params("/v1/me/player/recently-played", params);
 
-            auto api_ptr = dynamic_cast<Api*>(api);
-            auto res = api_ptr->client.Get(httplib::append_query_params(
+            auto res = api->get_client().Get(httplib::append_query_params(
                 "/v1/me/player/recently-played", params));
             auto history = json::parse(res->body).at("items").get<HistoryList>();
             data.insert(data.begin(), history.begin(), history.end());

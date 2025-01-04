@@ -530,7 +530,7 @@ namespace spotifar
         void PlayerDialog::on_track_progress_changed(int duration, int progress)
         {
             track_progress.set_value(progress);
-            
+
             // prevents from updating, in case we are seeking a new track position,
             // which requires showing a virtual target track bar position
             if (track_progress.is_waiting())
@@ -651,22 +651,22 @@ namespace spotifar
             // thread to avoid threads clashes, plus to process the task through the thread pool
 
             track_progress.check([this](int p) {
-                push_synchro_task([&api = this->api, p]() {
+                push_synchro_task([&api = this->api, p] {
                     auto &state = api.get_playback_state();
                     api.seek_to_position(p * 1000, state.device.id);
                 });
             });
 
             volume.check([this](int v) {
-                push_synchro_task([&api = this->api, v]() { api.set_playback_volume(v); });
+                push_synchro_task([&api = this->api, v] { api.set_playback_volume(v); });
             });
 
             shuffle_state.check([this](bool v) {
-                push_synchro_task([&api = this->api, v]() { api.toggle_shuffle(v); });
+                push_synchro_task([&api = this->api, v] { api.toggle_shuffle(v); });
             });
 
             repeat_state.check([this](const std::string &s) {
-                push_synchro_task([&api = this->api, s]() { api.set_repeat_state(s); });
+                push_synchro_task([&api = this->api, s] { api.set_repeat_state(s); });
             });
         }
         

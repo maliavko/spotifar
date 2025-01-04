@@ -2,19 +2,19 @@
 #define DEVICES_HPP_C39A5DF6_0432_4CF0_ADA2_10DA51FB40DC
 #pragma once
 
-#include "abstract/cached_value.hpp"
-#include "abstract/interfaces.hpp"
+#include "cached_value.hpp"
+#include "interfaces.hpp"
 #include "items.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
-        class DevicesCache: public CachedValue<DevicesList>
+        class DevicesCache: public CachedItem<DevicesList>
         {
         public:
             DevicesCache(IApi *api):
-                CachedValue(L"DevicesList", false),
+                CachedItem(L"DevicesList", false),
                 api(api)
                 {}
 

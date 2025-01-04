@@ -2,18 +2,18 @@
 #define PLAYBACK_HPP_1E84D5C4_F3BB_4BCA_8719_1995E4AF0ED7
 #pragma once
 
-#include "abstract/cached_value.hpp"
+#include "cached_value.hpp"
 #include "items.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
-        class PlaybackCache: public CachedValue<PlaybackState>
+        class PlaybackCache: public CachedItem<PlaybackState>
         {
         public:
             PlaybackCache(IApi *api):
-                CachedValue(L"PlaybackState", false),
+                CachedItem(L"PlaybackState", false),
                 api(api)
                 {}
 

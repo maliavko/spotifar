@@ -2,7 +2,7 @@
 #define AUTH_HPP_EB78B9BD_C144_43F0_9A9F_EB678C5C23AA
 #pragma once
 
-#include "abstract/cached_value.hpp"
+#include "cached_value.hpp"
 #include "items.hpp"
 
 namespace spotifar
@@ -11,7 +11,7 @@ namespace spotifar
     {
         using std::string;
         
-        class AuthCache: public CachedValue<Auth>
+        class AuthCache: public CachedItem<Auth>
         {
         public:
             AuthCache(IApi *api, const string &client_id, const string &client_secret, int port);

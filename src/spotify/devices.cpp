@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "devices.hpp"
-#include "abstract/observers.hpp"
-#include "api.hpp"
+#include "observers.hpp"
 
 namespace spotifar
 {
@@ -24,8 +23,7 @@ namespace spotifar
 
         bool DevicesCache::request_data(DevicesList &data)
         {
-            auto api_ptr = dynamic_cast<Api*>(api);
-            auto res = api_ptr->client.Get("/v1/me/player/devices");
+            auto res = api->get_client().Get("/v1/me/player/devices");
             if (res->status == httplib::OK_200)
                 json::parse(res->body).at("devices").get_to(data);
 

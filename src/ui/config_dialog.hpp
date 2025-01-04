@@ -2,7 +2,7 @@
 #define CONFIG_DIALOG_HPP_54DC8C7D_6C6A_4A6E_A947_501B698CBB0C
 #pragma once
 
-#include <DlgBuilder.hpp>
+#include "stdafx.h"
 
 namespace spotifar
 {

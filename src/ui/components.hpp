@@ -24,21 +24,30 @@ namespace spotifar
             virtual const T prev() = 0;
             
             bool is_waiting() const { return get_value() != get_offset_value(); };
+
+            ValueType apply_offset()
+            {
+                set_value(get_offset_value());
+                clear_offset();
+                return get_value();
+            }
         };
         
         // encapsulates the logic of a value, which can be changed often within short
         // period of time, and to avoid spaming of the request to API, accumulates the value
-        // and sends only one request after a short delay of no changes. A DescrT
+        // and sends only one request after a short delay of no changes. A DescrType
         // describes the stored value type and how to work with it
-        template<class DescrT>
+        template<class DescrType>
         class DelayedValue
         {
         public:
-            typedef typename DescrT::ValueType ValueType;
+            typedef typename DescrType::ValueType ValueType;
+            typedef std::function<void(ValueType)> DelegateType;
+
             inline static const utils::ms DELAYED_THRESHOLD = 300ms;
 
         public:
-            DelayedValue(DescrT descr): descr(descr) {}
+            DelayedValue(DescrType descr): descr(descr) {}
 
             const ValueType next(int steps = 1);
             const ValueType prev(int steps = 1);
@@ -47,29 +56,29 @@ namespace spotifar
             void set_value(const ValueType &v) { descr.set_value(v); }
             const ValueType get_offset_value() const { return descr.get_offset_value(); }
 
-            bool check(std::function<void(ValueType)> delegate);
+            bool check(DelegateType delegate);
 
         protected:
             clock::time_point last_change_time{};
-            DescrT descr;
+            DescrType descr;
         };
 
         struct SliderIntDescr: public DelayedValueDescriptor<int>
         {
-            int value, offset_value, step, high, low;
+            int value, offset, step, high, low;
 
             SliderIntDescr(int low, int high, int step):
-                value(0), offset_value(value), step(step), low(low), high(high)
+                value(0), offset(0), step(step), low(low), high(high)
                 {}
 
             virtual const int get_value() const { return value; }
-            virtual const int get_offset_value() const { return offset_value; }
-            virtual void clear_offset() { offset_value = value; }
+            virtual const int get_offset_value() const { return value + offset; }
+            virtual void clear_offset() { offset = 0; }
 
             virtual const int next() { return set_offset_value(step); }
             virtual const int prev() { return set_offset_value(-step); }
             
-            virtual void set_value(const int &v);
+            virtual void set_value(const int &v) { value = v; }
             virtual const int set_offset_value(const int &s);
         };
 
@@ -131,8 +140,8 @@ namespace spotifar
         typedef DelayedValue<CycledSetDescr<bool>> CycledBoolValue;
         typedef DelayedValue<CycledSetDescr<std::string>> CycledStringValue;
         
-        template<class DescrT>
-        const DelayedValue<DescrT>::ValueType DelayedValue<DescrT>::next(int steps)
+        template<class DescrType>
+        auto DelayedValue<DescrType>::next(int steps) -> const DelayedValue<DescrType>::ValueType
         {
             last_change_time = clock::now();
 
@@ -142,8 +151,8 @@ namespace spotifar
             return descr.next();
         }
         
-        template<class DescrT>
-        const DelayedValue<DescrT>::ValueType DelayedValue<DescrT>::prev(int steps)
+        template<class DescrType>
+        auto DelayedValue<DescrType>::prev(int steps) -> const DelayedValue<DescrType>::ValueType
         {
             last_change_time = clock::now();
 
@@ -153,19 +162,16 @@ namespace spotifar
             return descr.prev();
         }
         
-        template<class DescrT>
-        bool DelayedValue<DescrT>::check(std::function<void(DelayedValue<DescrT>::ValueType)> delegate)
+        template<class DescrType>
+        bool DelayedValue<DescrType>::check(DelayedValue<DescrType>::DelegateType delegate)
         {
             if (descr.is_waiting())
             {
-                auto now = clock::now();
                 // if there is an accumulated volume value offset and the last changed of it
                 // was more than a threshold, so we apply it
-                if (last_change_time + DELAYED_THRESHOLD < now)
+                if (last_change_time + DELAYED_THRESHOLD < clock::now())
                 {
-                    delegate(descr.get_offset_value());
-                    descr.clear_offset();
-
+                    delegate(descr.apply_offset());
                     return true;
                 }
             }

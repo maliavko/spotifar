@@ -5,13 +5,13 @@
 #include "stdafx.h"
 #include "items.hpp"
 #include "config.hpp"
-#include "abstract/cached_value.hpp"
+#include "cached_value.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
-        class PlayedHistory: public CachedValue<HistoryList>
+        class PlayedHistory: public CachedItem<HistoryList>
         {
         public:
             PlayedHistory(IApi *api);

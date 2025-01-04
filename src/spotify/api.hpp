@@ -4,12 +4,13 @@
 
 #include "stdafx.h"
 #include "items.hpp"
-#include "abstract/observers.hpp"
-#include "abstract/interfaces.hpp"
+#include "observers.hpp"
+#include "interfaces.hpp"
 #include "playback.hpp"
 #include "devices.hpp"
 #include "auth.hpp"
 #include "history.hpp"
+#include "library.hpp"
 
 namespace spotifar
 {
@@ -38,8 +39,9 @@ namespace spotifar
             AlbumsCollection get_albums(const string &artist_id);
             PlaylistsCollection get_playlists();
             std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
-            inline const DevicesList& get_available_devices() { return devices->get_data(); }
-            inline const PlaybackState& get_playback_state() { return playback->get_data(); }
+            inline const DevicesList& get_available_devices() { return devices->get(); }
+            inline const PlaybackState& get_playback_state() { return playback->get(); }
+            inline virtual httplib::Client& get_client() { return client; }
 
             // NOTE: no args means "resume"
             void start_playback(const string &context_uri = "", const string &track_uri = "",
@@ -66,19 +68,20 @@ namespace spotifar
         private:
             BS::thread_pool pool;
             httplib::Client client;
-            size_t playback_observers;
+            size_t playback_observers = 0;
 
             std::shared_ptr<spdlog::logger> logger;
             std::mutex sync_worker_mutex;
-            bool is_worker_listening;
+            bool is_worker_listening = false;
 
             // caches
             std::unique_ptr<PlaybackCache> playback;
             std::unique_ptr<DevicesCache> devices;
             std::unique_ptr<AuthCache> auth;
             std::unique_ptr<PlayedHistory> history;
+            std::unique_ptr<LibraryCache> library;
 
-            std::vector<ICachedValue*> caches;
+            std::vector<ICachedData*> caches;
         };
         
         template<class T>
@@ -89,8 +92,8 @@ namespace spotifar
             if (std::is_same<T, PlaybackObserver>::value)
             {
                 bool is_playback_active = ++playback_observers > 0;
-                playback->set_enabled(is_playback_active);
-                devices->set_enabled(is_playback_active);
+                playback->enable(is_playback_active);
+                devices->enable(is_playback_active);
             }
         }
 
@@ -100,8 +103,8 @@ namespace spotifar
             if (std::is_same<T, PlaybackObserver>::value)
             {
                 bool is_playback_active = --playback_observers > 0;
-                playback->set_enabled(is_playback_active);
-                devices->set_enabled(is_playback_active);
+                playback->enable(is_playback_active);
+                devices->enable(is_playback_active);
             }
             ObserverManager::unsubscribe<T>(o);
         }

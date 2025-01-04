@@ -2,7 +2,7 @@
 #include "config.hpp"
 #include "plugin.h"
 #include "ui/config_dialog.hpp"
-#include "spotify/abstract/observers.hpp"
+#include "spotify/observers.hpp"
 
 namespace spotifar
 {

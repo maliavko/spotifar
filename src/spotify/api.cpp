@@ -54,9 +54,7 @@ namespace spotifar
 
         Api::Api():
             client(SPOTIFY_API_URL),
-            is_worker_listening(false),
             logger(spdlog::get(utils::LOGGER_API)),
-            playback_observers(0),
             pool(4)
         {
             static const std::set<std::string> exclude{
@@ -86,9 +84,10 @@ namespace spotifar
             devices = std::make_unique<DevicesCache>(this);
             // history = std::make_unique<PlayedHistory>(this);
             playback = std::make_unique<PlaybackCache>(this);
+            library = std::make_unique<LibraryCache>(this);
 
             caches.assign({
-                auth.get(), playback.get(), devices.get()//, history.get(),
+                auth.get(), playback.get(), devices.get(), library.get()//, history.get(),
             });
         }
 
@@ -143,9 +142,8 @@ namespace spotifar
 
             pool.detach_task(
                 [
-                    &c = this->client, &cache = get_playback_cache(),
-                    dev_id = std::as_const(device_id), body,
-                    request_url = append_query_params("/v1/me/player/play", params)
+                    &c = this->client, &cache = *playback, dev_id = std::as_const(device_id),
+                    request_url = append_query_params("/v1/me/player/play", params), body
                 ]
                 {
                     Result res;
@@ -155,7 +153,7 @@ namespace spotifar
                         res = c.Put(request_url, body, "application/json");
 
                     if (is_success(res))
-                        cache.patch_data({ { "is_playing", true } });
+                        cache.patch({ { "is_playing", true } });
                 });
         }
         
@@ -172,7 +170,7 @@ namespace spotifar
         void Api::pause_playback(const string &device_id)
         {
             pool.detach_task(
-                [&c = this->client, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                [&c = this->client, &cache = *playback, dev_id = std::as_const(device_id)]
                 {
                     Params params = {};
                     if (!dev_id.empty())
@@ -180,7 +178,7 @@ namespace spotifar
 
                     auto r = c.Put(append_query_params("/v1/me/player/pause", params));
                     if (r->status == httplib::OK_200)
-                        cache.patch_data({ { "is_playing", false } });
+                        cache.patch({ { "is_playing", false } });
                 });
         }
         
@@ -213,7 +211,7 @@ namespace spotifar
         void Api::seek_to_position(int position_ms, const string &device_id)
         {
             pool.detach_task(
-                [&c = this->client, position_ms, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                [&c = this->client, position_ms, &cache = *playback, dev_id = std::as_const(device_id)]
                 {
                     Params params = {
                         { "position_ms", std::to_string(position_ms) },
@@ -224,14 +222,14 @@ namespace spotifar
 
                     auto res = c.Put(append_query_params("/v1/me/player/seek", params));
                     if (is_success(res->status))
-                        cache.patch_data({ { "progress_ms", position_ms } });
+                        cache.patch({ { "progress_ms", position_ms } });
                 });
         }
 
         void Api::toggle_shuffle(bool is_on, const string &device_id)
         {
             pool.detach_task(
-                [&c = this->client, is_on, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                [&c = this->client, is_on, &cache = *playback, dev_id = std::as_const(device_id)]
                 {
                     Params params = {
                         { "state", is_on ? "true" : "false" },
@@ -242,7 +240,7 @@ namespace spotifar
                     
                     auto res = c.Put(append_query_params("/v1/me/player/shuffle", params));
                     if (is_success(res->status))
-                        cache.patch_data({
+                        cache.patch({
                             { "shuffle_state", is_on }
                         });
                 });
@@ -251,7 +249,7 @@ namespace spotifar
         void Api::set_repeat_state(const std::string &mode, const string &device_id)
         {
             pool.detach_task(
-                [&c = this->client, mode, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                [&c = this->client, mode, &cache = *playback, dev_id = std::as_const(device_id)]
                 {
                     Params params = {
                         { "state", mode },
@@ -262,7 +260,7 @@ namespace spotifar
 
                     auto res = c.Put(append_query_params("/v1/me/player/repeat", params));
                     if (is_success(res->status))
-                        cache.patch_data({
+                        cache.patch({
                             { "repeat_state", mode }
                         });
                 });
@@ -271,7 +269,7 @@ namespace spotifar
         void Api::set_playback_volume(int volume_percent, const string &device_id)
         {
             pool.detach_task(
-                [&c = this->client, volume_percent, &cache = get_playback_cache(), dev_id = std::as_const(device_id)]
+                [&c = this->client, volume_percent, &cache = *playback, dev_id = std::as_const(device_id)]
                 {
                     Params params = {
                         { "volume_percent", std::to_string(volume_percent) },
@@ -282,7 +280,7 @@ namespace spotifar
 
                     auto res = c.Put(append_query_params("/v1/me/player/volume", params));
                     if (is_success(res->status))
-                        cache.patch_data({
+                        cache.patch({
                             { "device", {
                                 { "volume_percent", volume_percent }
                             } }

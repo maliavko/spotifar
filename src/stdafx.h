@@ -26,6 +26,7 @@
 
 #include <plugin.hpp>
 #include <PluginSettings.hpp>
+#include <DlgBuilder.hpp>
 
 #include "lng.hpp"
 #include "guid.hpp"

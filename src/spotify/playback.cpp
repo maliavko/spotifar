@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "playback.hpp"
-#include "abstract/observers.hpp"
-#include "api.hpp"
+#include "observers.hpp"
 
 namespace spotifar
 {
@@ -50,21 +49,21 @@ namespace spotifar
 
         bool PlaybackCache::request_data(PlaybackState &data)
         {
-            auto api_ptr = dynamic_cast<Api*>(api);
-            auto res = api_ptr->client.Get("/v1/me/player");
+            auto res = api->get_client().Get("/v1/me/player");
             if (res->status == httplib::OK_200)
             {
-                auto j = json::parse(res->body);
-                apply_patches(j).get_to(data);
+                json::parse(res->body).get_to(data);
                 return true;
             }
             else if (res->status == httplib::NoContent_204)
             {
                 // we make sure that the stored last played data has "is_playing = false",
                 // not to confuse anybody with the UI status
-                data = get_data();
+                data = get();
                 if (!data.is_empty())
+                {
                     data.is_playing = false;
+                }
                 return true;
             }
 
