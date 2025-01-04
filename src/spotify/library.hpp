@@ -18,9 +18,12 @@ namespace spotifar
         public:
             LibraryCache(IApi *api);
 
+            // storage interface
             virtual void read(SettingsCtx &ctx);
             virtual void write(SettingsCtx &ctx);
             virtual void clear(SettingsCtx &ctx);
+
+            // cache interface
             virtual void resync(bool force = false);
 
         private:

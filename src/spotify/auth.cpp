@@ -25,7 +25,6 @@ namespace spotifar
 
         AuthCache::AuthCache(IApi *api, const string &client_id, const string &client_secret,
                              int port):
-            // CachedValue(L"AccessToken"),
             CachedItem(L"AccessToken"),
             client_id(client_id),
             client_secret(client_secret),

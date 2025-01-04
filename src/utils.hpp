@@ -71,13 +71,13 @@ namespace spotifar
 
 			std::wstring get_plugin_launch_folder(const PluginStartupInfo *psInfo);
 
-			class _NODISCARD NoRedraw
+			struct _NODISCARD NoRedraw
 			{
-			public:
 				NoRedraw(HANDLE hdlg);
 				~NoRedraw();
-			private:
+				
 				HANDLE hdlg;
+				inline static std::mutex mutex{};
 			};
 
 			intptr_t show_far_error_dlg(int error_msg_id, const std::wstring &extra_message = L"");

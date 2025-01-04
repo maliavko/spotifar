@@ -26,11 +26,13 @@ namespace spotifar
 				hdlg(hdlg)
 			{
 				assert(hdlg);
+				std::lock_guard lock(mutex);
 				send_dlg_msg(hdlg, DM_ENABLEREDRAW, FALSE, 0);
 			}
 
 			NoRedraw::~NoRedraw()
 			{
+				std::lock_guard lock(mutex);
 				send_dlg_msg(hdlg, DM_ENABLEREDRAW, TRUE, 0);
 			}
 
@@ -77,8 +79,6 @@ namespace spotifar
 			
 			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 			{
-				static std::mutex m;
-				std::lock_guard lock(m);
 				return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
 			}
 
