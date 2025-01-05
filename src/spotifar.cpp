@@ -102,11 +102,6 @@ namespace spotifar
 		return static_cast<Plugin*>(info->hPanel)->select_item(info);
 	}
 
-	intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
-	{
-		return TRUE;
-	}
-
 	// https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
 	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 	{
@@ -121,6 +116,13 @@ namespace spotifar
 				case VK_F4:
 				{
 					return plugin.show_player();
+				}
+				case VK_F3:
+				{
+					config::PsInfo.PanelControl(PANEL_PASSIVE, FCTL_SETVIEWMODE, 2, NULL);
+					spdlog::debug("F3");
+					//config::PsInfo.PanelControl(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, NULL);
+					return TRUE;
 				}
 			}
 		}
@@ -165,7 +167,32 @@ namespace spotifar
 		return NULL;
 	}
 
+	HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
+	{
+		spdlog::debug("HANDLE WINAPI AnalyseW(const AnalyseInfo *info)");
+		return NULL;
+	}
+
+	intptr_t WINAPI GetFilesW(GetFilesInfo *Info)
+	{
+		spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *Info)");
+		
+		auto file = std::format(L"{}\\{}.txt", Info->DestPath, Info->PanelItem[0].FileName);
+		std::ofstream fout(file, std::ios::trunc);
+		fout << "Test data" << std::endl;
+		fout.close();
+
+		return TRUE;
+	}
+
+	intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
+	{
+		spdlog::debug("intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)");
+		return TRUE;
+	}
+
 	void WINAPI ExitFARW(const ExitInfo *info)
 	{
+		// spdlog::debug("void WINAPI ExitFARW(const ExitInfo *info)");
 	}
 }

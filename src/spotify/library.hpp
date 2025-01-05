@@ -17,19 +17,22 @@ namespace spotifar
         {
         public:
             LibraryCache(IApi *api);
+            virtual ~LibraryCache();
 
-            // storage interface
+            // storable data interface
             virtual void read(SettingsCtx &ctx);
             virtual void write(SettingsCtx &ctx);
             virtual void clear(SettingsCtx &ctx);
 
-            // cache interface
+            // cached data interface
             virtual void resync(bool force = false);
 
         private:
             std::shared_ptr<spdlog::logger> logger;
-            JsonStorageValue<ArtistsCollection> artists;
             IApi *api;
+            
+            std::vector<IStorableData*> storages;
+            JsonStorageValue<ArtistsCollection> artists;
         };
     }
 }

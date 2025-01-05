@@ -25,20 +25,42 @@ namespace spotifar
         
         void Panel::update_panel_info(OpenPanelInfo *info)
         {
+            // PanelInfo PInfo;
+            // config::PsInfo.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&PInfo);
+            // spdlog::debug("Panel::update_panel_info {}/{}", PInfo.CurrentItem, PInfo.ItemsNumber);
+            // spdlog::debug("Panel::update_panel_info {}", config::PsInfo.PanelControl(this, FCTL_GETCURRENTPANELITEM, 0, NULL));
+
             info->StructSize = sizeof(*info);
             info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
+
+            wchar_t FileName[MAX_PATH];
+            config::PsInfo.FSF->MkTemp(FileName, std::size(FileName), L"");
+
+            static InfoPanelLine lines[3]{
+                { L"Test0", L"Data0" },
+                { L"Test1", L"Data1" },
+                { L"Test2", L"Data2" },
+            };
+
+            info->InfoLines = lines;
+            info->InfoLinesNumber = 3;
+
+            static wchar_t *descrs[1];
+            descrs[0] = FileName;
+            info->DescrFiles = descrs;
+            info->DescrFilesNumber = 1;
 
             // FAR has a special logic when ".." folder is hit in the panel:
             // if CurDir is empty, it closes the plugin's panel. As plugin does not operate with
             // folders, but spotify items, just in case the current view name is handed over,
             // which equals empty string for the root view
             // TODO: should I free this pointer?
-            info->CurDir = _wcsdup(view->get_name().c_str());
+            info->CurDir = view->get_name().c_str();
 
             // filling the panel top title label
-            static wchar_t title[MAX_PATH];
-            config::FSF.sprintf(title, L" %s: %s", utils::far3::get_msg(MPluginUserName), info->CurDir);
-            info->PanelTitle = title;
+            static wstring title;
+            title = std::format(L" {}: {} ", utils::far3::get_msg(MPluginUserName), info->CurDir);
+            info->PanelTitle = title.c_str();
 
             // updating the labels of command key bar in the down of the screen
             // the approach is copied from Network plugin, every third value represents a label,
@@ -93,6 +115,7 @@ namespace spotifar
         
         intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         {
+            spdlog::debug("Panel::update_panel_items");
             auto items = view->get_items(api);
         
             auto* panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
@@ -105,8 +128,9 @@ namespace spotifar
             		memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
             		panel_item[idx].FileAttributes = item.file_attrs;
                     panel_item[idx].FileSize = item.duration;
+                    panel_item[idx].Flags = PPIF_PROCESSDESCR;
             		panel_item[idx].FileName = _wcsdup(item.name.c_str());
-            		panel_item[idx].Description = _wcsdup(item.description.c_str());
+            		panel_item[idx].Description = NULL; //_wcsdup(item.description.c_str());
             		panel_item[idx].UserData.Data = new ItemFarUserData(item.id);
             		panel_item[idx].UserData.FreeData = free_user_data;
             	}

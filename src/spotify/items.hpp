@@ -14,24 +14,13 @@ namespace spotifar
 
         static const string INVALID_ID = "";
 
-        struct Auth
-        {
-            string access_token;
-            string scope;
-            int expires_in;
-            string refresh_token;
-            
-            friend void from_json(const json &j, Auth &a);
-            friend void to_json(json &j, const Auth &a);
-        };
-
         struct SimplifiedArtist
         {
             string id = INVALID_ID;
             wstring name;
             
             friend void from_json(const json &j, SimplifiedArtist &a);
-            friend void to_json(json &j, const SimplifiedArtist &p);
+            friend void to_json(json &j, const SimplifiedArtist &a);
         };
 
         struct Artist: public SimplifiedArtist
@@ -88,6 +77,28 @@ namespace spotifar
 
             friend void from_json(const json &j, Track &t);
             friend void to_json(json &j, const Track &p);
+        };
+
+        struct SimplifiedPlaylist
+        {
+            string id = INVALID_ID;
+            wstring name;
+            wstring description;
+            size_t tracks_total;
+
+            inline std::string get_uri() const { return std::format("spotify:playlist:{}", id); }
+            friend void from_json(const json &j, SimplifiedPlaylist &p);
+        };
+
+        struct Auth
+        {
+            string access_token;
+            string scope;
+            int expires_in;
+            string refresh_token;
+            
+            friend void from_json(const json &j, Auth &a);
+            friend void to_json(json &j, const Auth &a);
         };
 
         struct Actions
@@ -165,17 +176,6 @@ namespace spotifar
             inline bool is_empty() const { return item.id == INVALID_ID; }
             friend void from_json(const json &j, PlaybackState &p);
             friend void to_json(json &j, const PlaybackState &p);
-        };
-
-        struct SimplifiedPlaylist
-        {
-            string id = INVALID_ID;
-            wstring name;
-            wstring description;
-            size_t tracks_total;
-
-            inline std::string get_uri() const { return std::format("spotify:playlist:{}", id); }
-            friend void from_json(const json &j, SimplifiedPlaylist &p);
         };
         
         struct HistoryItem

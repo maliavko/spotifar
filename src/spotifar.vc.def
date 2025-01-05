@@ -8,9 +8,11 @@ EXPORTS
   GetOpenPanelInfoW
   SetDirectoryW
   ConfigureW
-  DeleteFilesW
   ClosePanelW
   ProcessPanelInputW
   ProcessPanelEventW
   ProcessSynchroEventW
+  AnalyseW
+  GetFilesW
+  DeleteFilesW
   ExitFARW
