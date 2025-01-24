@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ui/panel.hpp"
+#include "ui/views/root.hpp"
 
 namespace spotifar
 {
@@ -20,53 +21,42 @@ namespace spotifar
  
         void Panel::gotoRootMenu()
         {
-            view = create_root_view();
+            view = RootView::create_view(&api);
         }
         
         void Panel::update_panel_info(OpenPanelInfo *info)
         {
-            // PanelInfo PInfo;
-            // config::PsInfo.PanelControl(PANEL_ACTIVE,FCTL_GETPANELINFO,0,&PInfo);
-            // spdlog::debug("Panel::update_panel_info {}/{}", PInfo.CurrentItem, PInfo.ItemsNumber);
-            // spdlog::debug("Panel::update_panel_info {}", config::PsInfo.PanelControl(this, FCTL_GETCURRENTPANELITEM, 0, NULL));
-
             info->StructSize = sizeof(*info);
             info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
-            wchar_t FileName[MAX_PATH];
-            config::PsInfo.FSF->MkTemp(FileName, std::size(FileName), L"");
+            // wchar_t FileName[MAX_PATH];
+            // config::PsInfo.FSF->MkTemp(FileName, std::size(FileName), L"");
 
-            static InfoPanelLine lines[3]{
-                { L"Test0", L"Data0" },
-                { L"Test1", L"Data1" },
-                { L"Test2", L"Data2" },
-            };
+            // static InfoPanelLine lines[3]{
+            //     { L"Test0", L"Data0" },
+            //     { L"Test1", L"Data1" },
+            //     { L"Test2", L"Data2" },
+            // };
 
-            info->InfoLines = lines;
-            info->InfoLinesNumber = 3;
-
-            static wchar_t *descrs[1];
-            descrs[0] = FileName;
-            info->DescrFiles = descrs;
-            info->DescrFilesNumber = 1;
+            // info->InfoLines = lines;
+            // info->InfoLinesNumber = 3;
 
             // FAR has a special logic when ".." folder is hit in the panel:
             // if CurDir is empty, it closes the plugin's panel. As plugin does not operate with
             // folders, but spotify items, just in case the current view name is handed over,
-            // which equals empty string for the root view
-            // TODO: should I free this pointer?
+            // which equals empty string for the root views
             info->CurDir = view->get_name().c_str();
 
             // filling the panel top title label
-            static wstring title;
-            title = std::format(L" {}: {} ", utils::far3::get_msg(MPluginUserName), info->CurDir);
-            info->PanelTitle = title.c_str();
+            static wchar_t title[MAX_PATH];
+            config::FSF.sprintf(title, L" %s: %s ", utils::far3::get_msg(MPluginUserName), info->CurDir);
+            info->PanelTitle = title;
 
             // updating the labels of command key bar in the down of the screen
             // the approach is copied from Network plugin, every third value represents a label,
             // if it is "0", the label will be empty
             static WORD fkeys[] =
-            {
+            {   
             	VK_F3, 0, 0,  // view
             	VK_F4, 0, MKeyBarF4,  // edit -> show player
             	VK_F5, 0, 0,  // copy
@@ -111,12 +101,14 @@ namespace spotifar
             }
 
             info->KeyBar = &kbt;
+
+            if (view)
+                view->on_panel_updated(info);
         }
         
         intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         {
-            spdlog::debug("Panel::update_panel_items");
-            auto items = view->get_items(api);
+            const auto &items = view->get_items();
         
             auto* panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
             if (panel_item)
@@ -167,7 +159,7 @@ namespace spotifar
             if (info->UserData.Data != nullptr)
             	data = static_cast<const ItemFarUserData*>(info->UserData.Data);
 
-            std::shared_ptr<View> next_view = view->select_item(api, data);
+            std::shared_ptr<View> next_view = view->select_item(data);
             if (next_view != nullptr)
             {
                 view = next_view;

@@ -24,6 +24,8 @@ namespace spotifar
             virtual void write(SettingsCtx &ctx);
             virtual void clear(SettingsCtx &ctx);
 
+            std::generator<ArtistsT> get_followed_artist(size_t limit);
+
             // cached data interface
             virtual void resync(bool force = false);
 

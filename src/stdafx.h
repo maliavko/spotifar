@@ -14,6 +14,10 @@
 #include <list>
 #include <chrono>
 #define _WINSOCKAPI_
+#ifndef NOMINMAX
+# define NOMINMAX
+#endif
+#include <generator>
 #include <windows.h>
 #include <shellapi.h>  // for ShellExecute
 #include <shlobj_core.h>  // for SHGetKnownFolderPath

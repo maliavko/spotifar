@@ -414,28 +414,11 @@ namespace spotifar
         
         ArtistsCollection Api::get_artists()
         {
-            json after = "";
             ArtistsCollection artists;
 
-            do
-            {
-                Params params = {
-                    { "type", "artist" },
-                    { "limit", "50" },
-                    { "after", after.get<std::string>() },
-                };
-
-                auto r = client.Get("/v1/me/following", params, Headers());
-                json data = json::parse(r->body)["artists"];
-
-                for (json& aj : data["items"])
-                {
-                    auto a = aj.get<Artist>();
+            for (const auto &v: library->get_followed_artist(50))
+                for (const auto &a: v)
                     artists[a.id] = a;
-                }
-                after = data["cursors"]["after"];
-            }
-            while (!after.is_null());
 
             return artists;
         }
@@ -456,12 +439,10 @@ namespace spotifar
                             [&caches = this->caches](const std::size_t idx) {
                                 caches[idx]->resync();
                             }, BS::pr::high);
-                        
-                        // if (pool.get_tasks_total() > 0)
-                        //     logger->debug("{} tasks total, {}  tasks running, {} tasks queued",
-                        //         pool.get_tasks_total(), pool.get_tasks_running(), pool.get_tasks_queued());
                         pool.wait();
                         
+                        // notify listeners that they can perform some aux operations in a
+                        // background thread
                         ObserverManager::notify(&BasicApiObserver::on_sync_thread_tick);
 
                         std::this_thread::sleep_for(50ms);

@@ -13,6 +13,7 @@ namespace spotifar
         {
             virtual ~IApi() {}
             virtual httplib::Client& get_client() = 0;
+            virtual BS::thread_pool& get_thread_pool() = 0;
         };
 
         struct ICachedData: public utils::far3::IStorableData

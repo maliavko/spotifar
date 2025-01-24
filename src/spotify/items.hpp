@@ -190,6 +190,7 @@ namespace spotifar
         
         typedef std::map<string, SimplifiedAlbum> AlbumsCollection;
         typedef std::map<string, Artist> ArtistsCollection;
+        typedef std::vector<Artist> ArtistsT;
         typedef std::map<string, SimplifiedPlaylist> PlaylistsCollection;
         typedef std::vector<Device> DevicesList;
         typedef std::vector<HistoryItem> HistoryList;

@@ -41,7 +41,10 @@ namespace spotifar
             std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
             inline const DevicesList& get_available_devices() { return devices->get(); }
             inline const PlaybackState& get_playback_state() { return playback->get(); }
+
             inline virtual httplib::Client& get_client() { return client; }
+            inline virtual BS::thread_pool& get_thread_pool() { return pool; }
+            LibraryCache& get_library() { return *library; }
 
             // NOTE: no args means "resume"
             void start_playback(const string &context_uri = "", const string &track_uri = "",
@@ -60,10 +63,6 @@ namespace spotifar
         protected:
             void launch_sync_worker();
             void shutdown_sync_worker();
-
-            inline PlaybackCache& get_playback_cache() { return *playback; }
-            inline DevicesCache& get_devices_cache() { return *devices; }
-            BS::thread_pool& get_thread_pool() { return pool; }
 
         private:
             BS::thread_pool pool;

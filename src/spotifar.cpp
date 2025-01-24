@@ -59,7 +59,7 @@ namespace spotifar
 	{
 		try 
 		{
-			// note: logger uses config data, which is being initialized before
+			// note: logger uses config data, which should be initialized before
 			utils::init_logging();
 		}
 		catch (const spdlog::spdlog_ex &ex)
@@ -116,13 +116,6 @@ namespace spotifar
 				case VK_F4:
 				{
 					return plugin.show_player();
-				}
-				case VK_F3:
-				{
-					config::PsInfo.PanelControl(PANEL_PASSIVE, FCTL_SETVIEWMODE, 2, NULL);
-					spdlog::debug("F3");
-					//config::PsInfo.PanelControl(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, NULL);
-					return TRUE;
 				}
 			}
 		}

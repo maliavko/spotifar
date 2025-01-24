@@ -22,10 +22,15 @@ add_library(${PROJECT_NAME} SHARED
 	spotify/devices.cpp
 	spotify/library.cpp
 	ui/panel.cpp
-	ui/views.cpp
 	ui/player_dialog.cpp
 	ui/config_dialog.cpp
 	ui/components.cpp
+	ui/views/view.cpp
+	ui/views/root.cpp
+	ui/views/artists.cpp
+	ui/views/playlists.cpp
+	ui/views/artist.cpp
+	ui/views/album.cpp
 	../thirdparty/ObserverManager/ObserverManager/ObserverManager.cpp
 	../thirdparty/ObserverManager/ObserverManager/BaseObserverProtocol.cpp
 	spotifar.vc.def
@@ -41,6 +46,7 @@ target_include_directories(${PROJECT_NAME}
 		${PROJECT_BINARY_DIR}  # required for being able to include CMake generated version file
 		${PROJECT_SOURCE_DIR}/src
 		${PROJECT_SOURCE_DIR}/thirdparty/ObserverManager/ObserverManager
+		${PROJECT_SOURCE_DIR}/thirdparty/generator/include
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common
 		${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode
 		${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})

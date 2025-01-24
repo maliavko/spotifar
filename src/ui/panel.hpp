@@ -3,7 +3,7 @@
 #pragma once
 
 #include "spotify/api.hpp"
-#include "ui/views.hpp"
+#include "ui/views/view.hpp"
 
 namespace spotifar
 {
