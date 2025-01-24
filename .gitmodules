@@ -10,3 +10,6 @@
 [submodule "thirdparty/librespot"]
 	path = thirdparty/librespot
 	url = https://github.com/librespot-org/librespot.git
+[submodule "thirdparty/generator"]
+	path = thirdparty/generator
+	url = https://github.com/lewissbaker/generator.git
