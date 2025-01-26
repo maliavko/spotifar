@@ -14,11 +14,14 @@ namespace spotifar
             virtual ~IApi() {}
             virtual httplib::Client& get_client() = 0;
             virtual BS::thread_pool& get_thread_pool() = 0;
+            virtual bool is_authenticated() const = 0;
+            virtual size_t get_playback_observers_count() const = 0;
         };
 
         struct ICachedData: public utils::far3::IStorableData
         {
             virtual void resync(bool force = false) = 0;
+            virtual bool is_enabled() const { return true; }
         };
     }
 }

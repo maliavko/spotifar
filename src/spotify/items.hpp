@@ -8,11 +8,9 @@ namespace spotifar
 {
     namespace spotify
     {
-        using std::string;
-        using std::wstring;
-        using json = nlohmann::json;
-
         static const string INVALID_ID = "";
+
+        string make_item_uri(const string &item_type_name, const string &id);
 
         struct SimplifiedArtist
         {
@@ -28,6 +26,7 @@ namespace spotifar
             size_t popularity;
 
             friend void from_json(const json &j, Artist &a);
+            friend void to_json(json &j, const Artist &a);
         };
 
         struct SimplifiedAlbum
@@ -42,8 +41,10 @@ namespace spotifar
             size_t total_tracks;
             string album_type;
             string release_date;
+
+            static string make_uri(const string &id) { return make_item_uri("album", id); }
             
-            inline std::string get_uri() const { return std::format("spotify:album:{}", id); }
+            inline string get_uri() const { return make_uri(id); }
             inline bool is_single() const { return album_type == SINGLE; }
             string get_release_year() const;
             friend void from_json(const json &j, SimplifiedAlbum &a);
@@ -64,7 +65,9 @@ namespace spotifar
             int duration = 0;
             size_t track_number;  // TODO: track number could be duplicated for different discs
 
-            inline std::string get_uri() const { return std::format("spotify:track:{}", id); }
+            static string make_uri(const string &id) { return make_item_uri("track", id); }
+
+            inline std::string get_uri() const { return make_uri(id); }
             friend bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs);
             friend void from_json(const json &j, SimplifiedTrack &t);
             friend void to_json(json &j, const SimplifiedTrack &t);
@@ -86,7 +89,9 @@ namespace spotifar
             wstring description;
             size_t tracks_total;
 
-            inline std::string get_uri() const { return std::format("spotify:playlist:{}", id); }
+            static string make_uri(const string &id) { return make_item_uri("playlist", id); }
+
+            inline std::string get_uri() const { return make_uri(id); }
             friend void from_json(const json &j, SimplifiedPlaylist &p);
         };
 

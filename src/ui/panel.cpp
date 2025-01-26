@@ -167,5 +167,12 @@ namespace spotifar
             }
             return TRUE;
         }
+
+        intptr_t Panel::process_input(const ProcessPanelInputInfo *info)
+        {   
+            if (view)
+                return view->process_input(info);
+            return FALSE;
+        }
     }
 }

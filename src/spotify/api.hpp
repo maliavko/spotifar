@@ -21,10 +21,6 @@ namespace spotifar
 
         class Api: public IApi
         {
-            friend class AuthCache;
-            friend class PlaybackCache;
-            friend class DevicesCache;
-            friend class PlayedHistory;
         public:
             Api();
             virtual ~Api();
@@ -35,12 +31,13 @@ namespace spotifar
             template<class T> void start_listening(T *o);
             template<class T> void stop_listening(T *o);
 
-            ArtistsCollection get_artists();
             AlbumsCollection get_albums(const string &artist_id);
             PlaylistsCollection get_playlists();
             std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
             inline const DevicesList& get_available_devices() { return devices->get(); }
             inline const PlaybackState& get_playback_state() { return playback->get(); }
+            inline virtual bool is_authenticated() const { return auth->is_authenticated(); }
+            inline virtual size_t get_playback_observers_count() const { return playback_observers; }
 
             inline virtual httplib::Client& get_client() { return client; }
             inline virtual BS::thread_pool& get_thread_pool() { return pool; }
@@ -87,25 +84,16 @@ namespace spotifar
         void Api::start_listening(T *o)
         {
             ObserverManager::subscribe<T>(o);
-
             if (std::is_same<T, PlaybackObserver>::value)
-            {
-                bool is_playback_active = ++playback_observers > 0;
-                playback->enable(is_playback_active);
-                devices->enable(is_playback_active);
-            }
+                ++playback_observers;
         }
 
         template<class T>
         void Api::stop_listening(T *o)
         {
-            if (std::is_same<T, PlaybackObserver>::value)
-            {
-                bool is_playback_active = --playback_observers > 0;
-                playback->enable(is_playback_active);
-                devices->enable(is_playback_active);
-            }
             ObserverManager::unsubscribe<T>(o);
+            if (std::is_same<T, PlaybackObserver>::value)
+                --playback_observers;
         }
     }
 }

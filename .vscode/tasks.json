@@ -113,7 +113,7 @@
             "group": {
                 "kind": "build"
             }
-        }
+        },
         {
             "label": "Create Spotifar plugin folder",
             "type": "shell",

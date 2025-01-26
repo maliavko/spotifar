@@ -10,7 +10,7 @@ namespace spotifar
 
         bool is_success(int status)
         {
-            return status == OK_200 || status == NoContent_204;
+            return status == OK_200 || status == NoContent_204 || status == NotModified_304;
         }
 
         // TODO: reconsider these functions
@@ -68,7 +68,8 @@ namespace spotifar
                     if (is_success(res.status))
                     {
                         if (!exclude.contains(req.path))
-                            logger->debug("A successful HTTP request has been performed: [{}] {}", req.method, req.path);
+                            logger->debug("A successful HTTP request has been performed (code={}): [{}] {}",
+                                          res.status, req.method, req.path);
                     }
                     else
                         logger->error(dump_http_error(req, res));
@@ -410,17 +411,6 @@ namespace spotifar
             } while (1);
 
             return tracks;
-        }
-        
-        ArtistsCollection Api::get_artists()
-        {
-            ArtistsCollection artists;
-
-            for (const auto &v: library->get_followed_artist(50))
-                for (const auto &a: v)
-                    artists[a.id] = a;
-
-            return artists;
         }
 
         void Api::launch_sync_worker()

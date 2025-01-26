@@ -76,7 +76,7 @@ namespace spotifar
 	void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 	{
 		// https://api.farmanager.com/ru/structures/openpanelinfo.html
-		auto& plugin = *static_cast<Plugin*>(info->hPanel);
+		auto &plugin = *static_cast<Plugin*>(info->hPanel);
 		plugin.update_panel_info(info);
 	}
 
@@ -102,30 +102,15 @@ namespace spotifar
 		return static_cast<Plugin*>(info->hPanel)->select_item(info);
 	}
 
-	// https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
 	intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 	{
-		auto& plugin = *static_cast<Plugin*>(info->hPanel);
-
-		auto& key_event = info->Rec.Event.KeyEvent;
-		if (key_event.bKeyDown)
-		{
-			int key = utils::far3::input_record_to_combined_key(key_event);
-			switch (key)
-			{
-				case VK_F4:
-				{
-					return plugin.show_player();
-				}
-			}
-		}
-
-		return FALSE;
+		auto &plugin = *static_cast<Plugin*>(info->hPanel);
+		return static_cast<Plugin*>(info->hPanel)->process_input(info);
 	}
 
 	intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 	{
-		auto& plugin = *static_cast<Plugin*>(info->hPanel);
+		auto &plugin = *static_cast<Plugin*>(info->hPanel);
 		
 		if (info->Event == FE_CLOSE)
 		{
@@ -162,10 +147,11 @@ namespace spotifar
 
 	HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 	{
-		spdlog::debug("HANDLE WINAPI AnalyseW(const AnalyseInfo *info)");
+		// spdlog::debug("HANDLE WINAPI AnalyseW(const AnalyseInfo *info)");
 		return NULL;
 	}
 
+	// it is also called when file on the panel is being copied to the other panel
 	intptr_t WINAPI GetFilesW(GetFilesInfo *Info)
 	{
 		spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *Info)");

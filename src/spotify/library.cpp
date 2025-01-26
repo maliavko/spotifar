@@ -8,10 +8,12 @@ namespace spotifar
         LibraryCache::LibraryCache(IApi *api):
             logger(spdlog::get(utils::LOGGER_API)),
             api(api),
-            artists(L"Artists")
+            followed_artists(L"FollowedArtists"),
+            followed_artists_etags(L"FollowedArtistsETags")
         {
             storages.assign({
-                &artists
+                &followed_artists,
+                &followed_artists_etags,
             });
         }
 
@@ -24,6 +26,7 @@ namespace spotifar
         {
             for (auto &s: storages)
                 s->read(ctx);
+            //followed_artists_etags.set({});
         }
 
         void LibraryCache::write(SettingsCtx &ctx)
@@ -40,42 +43,63 @@ namespace spotifar
 
         void LibraryCache::resync(bool force)
         {
+            if (!api->is_authenticated())
+                return;
 
-        }
-        
-        std::generator<ArtistsT> LibraryCache::get_followed_artist(size_t limit)
-        {
-            json after = "";
-
-            do
+            if (!is_initialized)
             {
-                auto future = api->get_thread_pool().submit_task(
-                    [&limit, &after, &client = api->get_client()] {
-                        auto request_url = httplib::append_query_params("/v1/me/following", {
-                            { "type", "artist" },
-                            { "limit", std::to_string(limit) },
-                            { "after", after.get<std::string>() },
-                            { "sort", "alpha" },
-                        });
-                        
-                        ArtistsT result;
-                        if (auto r = client.Get(request_url))
-                        {
-                            json data = json::parse(r->body)["artists"];
-                            for (auto [n,h]: r->headers)
-                            {
-                                if (n == "etag")
-                                    spdlog::debug("etag {}", h);
-                            }
-                            after = data["cursors"]["after"];
-                            data["items"].get_to(result);
-                        }
-                        return result;
+                is_initialized = true;
+
+                logger->debug("Library initialization");
+
+                json after = "";
+                auto etags = followed_artists_etags.get();
+                ArtistsT result;
+                size_t offset = 0;
+
+                do
+                {
+                    auto request_url = httplib::append_query_params("/v1/me/following", {
+                        { "type", "artist" },
+                        { "limit", std::to_string(50) },
+                        { "after", after.get<string>() },
                     });
 
-                co_yield future.get();
+                    string etag = "";
+                    if (etags.contains(after.get<string>()))
+                        etag = etags.at(after.get<string>());
+                    
+                    if (auto r = api->get_client().Get(request_url, {{ "If-None-Match", etag }}))
+                    {
+                        if (r->status == httplib::NotModified_304)
+                        {
+                            const auto &cached = followed_artists.get();
+                            size_t count = std::min(cached.size() - offset, 50ULL);
+                            result.insert(result.end(), cached.begin() + offset, cached.begin() + offset + count);
+                            offset += count;
+
+                            if (offset == cached.size())
+                                after = nullptr;
+                            else
+                                after = result.back().id;
+                        }
+                        else if (r->status == httplib::OK_200)
+                        {
+                            json data = json::parse(r->body)["artists"];
+                            etags[after.get<string>()] = r->get_header_value("etag");
+                            after = data["cursors"]["after"];
+
+                            const auto &artists = data["items"].get<ArtistsT>();
+                            result.insert(result.end(), artists.begin(), artists.end());
+                            offset += artists.size();
+                        }
+                    }
+                }
+                while (!after.is_null());
+
+                followed_artists.set(result);
+                followed_artists_etags.set(etags);
             }
-            while (!after.is_null());
         }
     }
 }

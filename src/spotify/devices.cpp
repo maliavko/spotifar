@@ -6,6 +6,11 @@ namespace spotifar
 {
     namespace spotify
     {
+        bool DevicesCache::is_enabled() const
+        {
+            return api->is_authenticated() && api->get_playback_observers_count() > 0;
+        }
+
         utils::ms DevicesCache::get_sync_interval() const
         {
             return utils::ms(1000);

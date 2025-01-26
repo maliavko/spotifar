@@ -8,19 +8,18 @@
 
 namespace spotifar
 {
-    class Plugin//: public spotify::ApiObserver
+    class Plugin
     {
     public:
         Plugin();
         virtual ~Plugin();
         void shutdown();
 
-        void update_panel_info(OpenPanelInfo* info);
-        intptr_t update_panel_items(GetFindDataInfo* info);
-        void free_panel_items(const FreeFindDataInfo* info);
-        intptr_t select_item(const SetDirectoryInfo* info);
-        intptr_t show_player();
-        intptr_t hide_player();
+        void update_panel_info(OpenPanelInfo *info);
+        intptr_t update_panel_items(GetFindDataInfo *info);
+        void free_panel_items(const FreeFindDataInfo *info);
+        intptr_t select_item(const SetDirectoryInfo *info);
+        intptr_t process_input(const ProcessPanelInputInfo *info);
     protected:
         //virtual void on_track_changed(const std::string &album_id, const std::string &track_id);
     private:

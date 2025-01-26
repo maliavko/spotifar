@@ -102,9 +102,12 @@ namespace spotifar
 				virtual void clear(SettingsCtx &ctx) = 0;
 			};
 			
-			template<class DataType>
+			template<class T>
 			class StorageValue: public IStorableData
 			{
+			public:
+            	typedef typename T ValueType;
+
 			public:
 				StorageValue(const std::wstring &storage_key);
 
@@ -112,16 +115,16 @@ namespace spotifar
 				virtual void write(SettingsCtx &ctx);
 				virtual void clear(SettingsCtx &ctx);
 
-				const DataType& get() const { return data; }
-				void set(const DataType &d) { data = d; }
+				const ValueType& get() const { return data; }
+				void set(const ValueType &d) { data = d; }
 
 			protected:
-				virtual void read_from_settings(SettingsCtx &ctx, const std::wstring &key, DataType& data) = 0;
-				virtual void write_to_settings(SettingsCtx &ctx, const std::wstring &key, DataType& data) = 0;
+				virtual void read_from_settings(SettingsCtx &ctx, const std::wstring &key, ValueType &data) = 0;
+				virtual void write_to_settings(SettingsCtx &ctx, const std::wstring &key, ValueType &data) = 0;
 
 			private:
 				const std::wstring storage_key;
-				DataType data;
+				ValueType data;
 			};
 			
 			template<class T>

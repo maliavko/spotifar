@@ -23,6 +23,7 @@ namespace spotifar
 
             virtual Items get_items();
             virtual std::shared_ptr<View> select_item(const ItemFarUserData *data);
+            virtual intptr_t process_input(const ProcessPanelInputInfo *info);
 
             static std::shared_ptr<ArtistView> create_view(
                 spotify::Api *api,const std::string &artist_id);

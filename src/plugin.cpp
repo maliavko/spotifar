@@ -13,13 +13,11 @@ namespace spotifar
 		if (api.init())
         {
             panel.gotoRootMenu();
-            //api.start_listening(this);
         }
 	}
 
 	Plugin::~Plugin()
 	{
-        //api.stop_listening(this);
 	}
 
     void Plugin::shutdown()
@@ -49,13 +47,20 @@ namespace spotifar
         return panel.select_item(info);
     }
 
-    intptr_t Plugin::show_player()
+    intptr_t Plugin::process_input(const ProcessPanelInputInfo *info)
     {
-        return player.show();
+        auto& key_event = info->Rec.Event.KeyEvent;
+        if (key_event.bKeyDown)
+        {
+            int key = utils::far3::input_record_to_combined_key(key_event);
+            switch (key)
+            {
+                case VK_F3:
+                {
+                    return player.show();
+                }
+            }
+        }
+        return panel.process_input(info);
     }
-
-    // void Plugin::on_track_changed(const std::string &album_id, const std::string &track_id)
-    // {
-    //     show_player();
-    // }
 }

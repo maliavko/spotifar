@@ -40,6 +40,7 @@ namespace spotifar
             inline const wstring& get_name() const { return name; }
 
             virtual void on_panel_updated(OpenPanelInfo *info) {}
+            virtual intptr_t process_input(const ProcessPanelInputInfo *info) { return FALSE; }
             virtual Items get_items() = 0;
             virtual std::shared_ptr<View> select_item(const ItemFarUserData *data) = 0;
 

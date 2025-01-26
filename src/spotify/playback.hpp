@@ -13,11 +13,12 @@ namespace spotifar
         {
         public:
             PlaybackCache(IApi *api):
-                CachedItem(L"PlaybackState", false),
+                CachedItem(L"PlaybackState"),
                 api(api)
                 {}
 
             virtual ~PlaybackCache() { api = nullptr; }
+            virtual bool is_enabled() const;
 
         protected:
             virtual void on_data_synced(const PlaybackState &data, const PlaybackState &prev_data);

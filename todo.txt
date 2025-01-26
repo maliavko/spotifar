@@ -24,3 +24,4 @@ application ideas
 
 bugs
 - librespot quite often catches the error: Remote connection was forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
+- still some memory racing happens when player just works

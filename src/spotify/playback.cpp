@@ -7,6 +7,11 @@ namespace spotifar
     namespace spotify
     {
         using namespace std::literals;
+        
+        bool PlaybackCache::is_enabled() const
+        {
+            return api->is_authenticated() && api->get_playback_observers_count() > 0;
+        }
 
         utils::ms PlaybackCache::get_sync_interval() const
         {

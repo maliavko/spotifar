@@ -22,6 +22,7 @@ namespace spotifar
             intptr_t update_panel_items(GetFindDataInfo *info);
             void free_panel_items(const FreeFindDataInfo *info);
             intptr_t select_item(const SetDirectoryInfo *info);
+            intptr_t process_input(const ProcessPanelInputInfo *info);
         protected:
             static void WINAPI free_user_data(void *const UserData, const FarPanelItemFreeInfo *const Info);
         private:

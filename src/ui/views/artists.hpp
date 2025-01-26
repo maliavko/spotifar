@@ -24,18 +24,12 @@ namespace spotifar
 
             virtual Items get_items();
             virtual std::shared_ptr<View> select_item(const ItemFarUserData *data);
-            virtual void on_panel_updated(OpenPanelInfo *info);
             
             static std::shared_ptr<ArtistsView> create_view(spotify::Api *api);
-
-        protected:
-            void next_page();
 
         private:
             ArtistsT artists;
             spotify::Api *api;
-            std::generator<ArtistsT> paginator;
-            std::generator<ArtistsT>::iterator paginator_it;
         };
     }
 }

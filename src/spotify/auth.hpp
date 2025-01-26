@@ -17,6 +17,8 @@ namespace spotifar
             AuthCache(IApi *api, const string &client_id, const string &client_secret, int port);
             virtual ~AuthCache() { api = nullptr; }
 
+            bool is_authenticated() const { return is_logged_in; }
+
         protected:
             virtual bool request_data(Auth &data);
             virtual utils::ms get_sync_interval() const;
@@ -29,6 +31,7 @@ namespace spotifar
 		    string get_auth_callback_url() const;
 
         private:
+            bool is_logged_in = false;
             const std::string client_id, client_secret;
             int port;
             

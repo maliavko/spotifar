@@ -45,6 +45,7 @@ namespace spotifar
             logger->info("A valid access token is found, expires in {}",
                 std::format("{:%T}", get_expires_at() - utils::clock::now()));
             api->get_client().set_bearer_token_auth(data.access_token);
+            is_logged_in = true;
         }
 
         bool AuthCache::request_data(Auth &data)

@@ -21,7 +21,7 @@ namespace spotifar
         class JsonStorageValue: public StorageValue<JsonItemType>
         {
         public:
-            using StorageValue<JsonItemType>::StorageValue;
+            using StorageValue<JsonItemType>::StorageValue; // default ctor
 
         protected:
             virtual void read_from_settings(SettingsCtx &ctx, const std::wstring &key, JsonItemType &data)
@@ -40,18 +40,62 @@ namespace spotifar
         class TimestampStorageValue: public StorageValue<time_point>
         {
         public:
-            using StorageValue<time_point>::StorageValue;
+            using StorageValue<time_point>::StorageValue; // default ctor
 
         protected:
             virtual void read_from_settings(SettingsCtx &ctx, const std::wstring &key, time_point &data)
             {
                 auto storage_timestamp = ctx.get_int64(key, 0LL);
-                data = clock::time_point{ clock::duration(storage_timestamp) };
+                data = time_point{ clock::duration(storage_timestamp) };
             }
 
             virtual void write_to_settings(SettingsCtx &ctx, const std::wstring &key, time_point &data)
             {
                 ctx.set_int64(key, data.time_since_epoch().count());
+            }
+        };
+        
+        class StringStorageValue: public StorageValue<std::string>
+        {
+        public:
+            using StorageValue<std::string>::StorageValue; // default ctor
+
+        protected:
+            virtual void read_from_settings(SettingsCtx &ctx, const wstring &key, string &data)
+            {
+                data = ctx.get_str(key, "");
+            }
+
+            virtual void write_to_settings(SettingsCtx &ctx, const wstring &key, string &data)
+            {
+                ctx.set_str(key, data);
+            }
+        };
+        
+        template<class KeyT, class ValueT>
+        class MapStorageValue: public StorageValue<std::unordered_map<KeyT, ValueT>>
+        {
+        public:
+            using StorageValue<std::unordered_map<KeyT, ValueT>>::StorageValue; // default ctor
+
+        protected:
+            virtual void read_from_settings(SettingsCtx &ctx, const wstring &key, std::unordered_map<KeyT, ValueT> &data)
+            {
+                auto storage_value = ctx.get_str(key, "");
+                if (!storage_value.empty())
+                {
+                    json j = json::parse(storage_value);
+                    for (const auto &[k, v]: j.items())
+                        data[k] = v;
+                }
+            }
+
+            virtual void write_to_settings(SettingsCtx &ctx, const std::wstring &key, std::unordered_map<KeyT, ValueT> &data)
+            {
+                json j;
+                for (const auto &[k, v]: data)
+                    j[k] = v;
+                ctx.set_str(key, j.dump());
             }
         };
 
@@ -62,7 +106,7 @@ namespace spotifar
             inline static auto PATCH_EXPIRY_DELAY = 1500ms;
 
         public:
-            CachedItem(const std::wstring &storage_key, bool is_enabled = true);
+            CachedItem(const std::wstring &storage_key);
 
             // storable data interface
             virtual void read(SettingsCtx &ctx);
@@ -73,7 +117,6 @@ namespace spotifar
             virtual void resync(bool force = false);
 
             void patch(const json &patch);
-            void enable(bool enabled) { is_enabled = enabled; }
 
             const JsonItemType& get() const { return data.get(); }
             const time_point& get_last_sync_time() const { return last_sync_time.get(); }
@@ -92,17 +135,15 @@ namespace spotifar
         private:
             JsonStorageValue<JsonItemType> data;
             TimestampStorageValue last_sync_time;
-            bool is_enabled;
 
             std::mutex patch_mutex;
             std::vector<std::pair<time_point, json>> patches;
         };
         
         template<typename T>
-        CachedItem<T>::CachedItem(const std::wstring &storage_key, bool is_enabled):
+        CachedItem<T>::CachedItem(const std::wstring &storage_key):
             data(storage_key),
-            last_sync_time(storage_key + L"Time"),
-            is_enabled(is_enabled)
+            last_sync_time(storage_key + L"Time")
         {
         }
 
@@ -138,7 +179,7 @@ namespace spotifar
             auto sync_time = clock::now();
             // no updates for disabled caches, otherwise only in case the data
             // is invalid or resync is forced
-            if (!is_enabled || (!force && is_valid()))
+            if (!is_enabled() || (!force && is_valid()))
                 return;
 
             T new_data;

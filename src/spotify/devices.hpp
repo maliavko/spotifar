@@ -14,11 +14,12 @@ namespace spotifar
         {
         public:
             DevicesCache(IApi *api):
-                CachedItem(L"DevicesList", false),
+                CachedItem(L"DevicesList"),
                 api(api)
                 {}
 
             virtual ~DevicesCache() { api = nullptr; }
+            virtual bool is_enabled() const;
 
         protected:
             virtual bool request_data(DevicesList &data);

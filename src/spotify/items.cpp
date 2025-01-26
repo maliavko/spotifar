@@ -5,6 +5,11 @@ namespace spotifar
 {
     namespace spotify
     {
+        string make_item_uri(const string &item_type_name, const string &id)
+        {
+            return std::format("spotify:{}:{}", item_type_name, id);
+        }
+        
         void from_json(const json &j, Auth &a)
         {
             j.at("access_token").get_to(a.access_token);
@@ -31,11 +36,11 @@ namespace spotifar
             a.name = utils::utf8_decode(j.at("name").get<string>());
         }
 
-        void to_json(json &j, const SimplifiedArtist &p)
+        void to_json(json &j, const SimplifiedArtist &a)
         {
             j = json{
-                { "id", p.id },
-                { "name", utils::utf8_encode(p.name) },
+                { "id", a.id },
+                { "name", utils::utf8_encode(a.name) },
             };
         }
         
@@ -44,6 +49,15 @@ namespace spotifar
             from_json(j, dynamic_cast<SimplifiedArtist&>(a));
 
             j.at("popularity").get_to(a.popularity);
+        }
+
+        void to_json(json &j, const Artist &a)
+        {
+            to_json(j, dynamic_cast<const SimplifiedArtist&>(a));
+
+            j.update({
+                { "popularity", a.popularity },
+            });
         }
 
         string SimplifiedAlbum::get_release_year() const

@@ -24,17 +24,20 @@ namespace spotifar
             virtual void write(SettingsCtx &ctx);
             virtual void clear(SettingsCtx &ctx);
 
-            std::generator<ArtistsT> get_followed_artist(size_t limit);
+            const ArtistsT& get_followed_artist() { return followed_artists.get(); }
 
             // cached data interface
             virtual void resync(bool force = false);
 
         private:
+            bool is_initialized = false;
             std::shared_ptr<spdlog::logger> logger;
             IApi *api;
             
             std::vector<IStorableData*> storages;
-            JsonStorageValue<ArtistsCollection> artists;
+
+            JsonStorageValue<ArtistsT> followed_artists;
+            MapStorageValue<string, string> followed_artists_etags;
         };
     }
 }
