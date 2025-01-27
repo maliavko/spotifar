@@ -8,10 +8,10 @@ namespace spotifar
     {
         using utils::far3::get_msg;
         
-        ArtistView::ArtistView(spotify::Api *api, const std::string& artist_id):
-            View(get_msg(MPanelArtistItemLabel)),
+        ArtistView::ArtistView(Api *api, const Artist &artist):
+            View(artist.name),
             api(api),
-            artist_id(artist_id)
+            artist(artist)
         {
         }
 
@@ -19,7 +19,7 @@ namespace spotifar
         {
             // TODO: split albums and singles into separate directoriess
             Items result;
-            for (auto &[id, a]: api->get_albums(artist_id))
+            for (auto &[id, a]: api->get_albums(artist.id))
             {
                 std::wstring album_name = std::format(L"[{}] {}", utils::to_wstring(a.get_release_year()), a.name);
                 if (a.is_single())
@@ -34,7 +34,7 @@ namespace spotifar
         {
             if (data == nullptr)
                 return ArtistsView::create_view(api);
-            return AlbumView::create_view(api, data->id, artist_id);
+            return AlbumView::create_view(api, data->id, artist.id);
         }
         
         intptr_t ArtistView::process_input(const ProcessPanelInputInfo *info)
@@ -58,8 +58,8 @@ namespace spotifar
                             if (PPI->UserData.Data != nullptr)
                             {
                                 data = static_cast<const ItemFarUserData*>(PPI->UserData.Data);
-                                spdlog::debug("current item {}", spotify::Album::make_uri(data->id));
-                                api->start_playback(spotify::Album::make_uri(data->id));
+                                spdlog::debug("current item {}", Album::make_uri(data->id));
+                                api->start_playback(Album::make_uri(data->id));
                             }
                             
                             free(PPI);
@@ -72,10 +72,9 @@ namespace spotifar
             return FALSE;
         }
 
-        std::shared_ptr<ArtistView> ArtistView::create_view(
-            spotify::Api *api, const std::string &artist_id)
+        std::shared_ptr<ArtistView> ArtistView::create_view(Api *api, const Artist &artist)
         {
-            return std::make_shared<ArtistView>(api, artist_id);
+            return std::make_shared<ArtistView>(api, artist);
         }
     }
 }

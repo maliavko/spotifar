@@ -26,7 +26,10 @@ namespace spotifar
         {
             if (data == nullptr)
                 return RootView::create_view(api);
-            return ArtistView::create_view(api, data->id);
+            // TODO: tmp, cache a mapping in library and use it
+            const auto &artists = api->get_library().get_followed_artist();
+            const auto artist = std::find_if(artists.begin(), artists.end(), [&data](const auto &a) { return a.id == data->id; });
+            return ArtistView::create_view(api, *artist);
         }
         
         std::shared_ptr<ArtistsView> ArtistsView::create_view(spotify::Api *api)

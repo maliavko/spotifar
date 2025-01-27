@@ -31,7 +31,12 @@ namespace spotifar
         std::shared_ptr<View> AlbumView::select_item(const ItemFarUserData *data)
         {
             if (data == nullptr)
-                return ArtistView::create_view(api, artist_id);
+            {
+                // TODO: tmp, cache a mapping in library and use it
+                const auto &artists = api->get_library().get_followed_artist();
+                const auto artist = std::find_if(artists.begin(), artists.end(), [this](const auto &a) { return a.id == artist_id; });
+                return ArtistView::create_view(api, *artist);
+            }
 
             api->start_playback(album_id, data->id);
             
