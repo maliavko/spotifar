@@ -104,6 +104,10 @@ namespace spotifar
             for (auto &c: caches)
                 c->read(*ctx);
 
+            auto s = ctx->get_str(L"requests", "");
+            if (!s.empty())
+                requests_cache = json::parse(s);
+
             launch_sync_worker();
 
             return true;
@@ -114,6 +118,8 @@ namespace spotifar
             auto ctx = config::lock_settings();
             for (auto &c: caches)
                 c->write(*ctx);
+
+            ctx->set_str(L"requests", requests_cache.dump());
             
             shutdown_sync_worker();
 
@@ -329,7 +335,8 @@ namespace spotifar
 
             do
             {
-                auto r = client.Get(request_url);
+                //auto r = client.Get(request_url);
+                auto r = get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& aj : data["items"])
@@ -394,7 +401,8 @@ namespace spotifar
 
             do
             {
-                auto r = client.Get(request_url);
+                //auto r = client.Get(request_url);
+                auto r = get(request_url);
 
                 json data = json::parse(r->body);
                 for (json& tj : data["items"])
@@ -461,6 +469,47 @@ namespace spotifar
             // all the resources
             const std::lock_guard worker_lock(sync_worker_mutex);
             logger->info("An API sync worker has been stopped");
+        }
+        
+        httplib::Result Api::get(const string &request_url)
+        {
+            auto cache_it = requests_cache.find(request_url);
+
+            string cached_etag = "";
+            if (cache_it != requests_cache.end())
+                cached_etag = cache_it->at("etag");
+
+            if (auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }}))
+            {
+                if (r->status == httplib::OK_200)
+                {
+                    auto etag = r->get_header_value("etag", "");
+                    if (!etag.empty())
+                    {
+                        requests_cache[request_url] = {
+                            { "body", r->body },
+                            { "etag", etag },
+                        };
+                    }
+
+                    auto cache_control = r->get_header_value("cache-control", "");
+                    if (!cache_control.empty() && !cache_control.ends_with("max-age=0"))
+                    {
+                        spdlog::debug("Cache control found in the response {}", cache_control);
+                    }
+
+                    return r;
+                }
+                else if (r->status == httplib::NotModified_304)
+                {
+                    httplib::Result result(std::make_unique<httplib::Response>(), httplib::Error::Success);
+                    result.value().status = httplib::OK_200;
+                    result.value().body = cache_it->at("body");
+
+                    return result;
+                }
+            }
+            return httplib::Result();
         }
     }
 }

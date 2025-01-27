@@ -38,6 +38,7 @@ namespace spotifar
             inline const PlaybackState& get_playback_state() { return playback->get(); }
             inline virtual bool is_authenticated() const { return auth->is_authenticated(); }
             inline virtual size_t get_playback_observers_count() const { return playback_observers; }
+            virtual httplib::Result get(const string &request_url);
 
             inline virtual httplib::Client& get_client() { return client; }
             inline virtual BS::thread_pool& get_thread_pool() { return pool; }
@@ -60,6 +61,7 @@ namespace spotifar
         protected:
             void launch_sync_worker();
             void shutdown_sync_worker();
+            httplib::Result http_get(const string &request_url);
 
         private:
             BS::thread_pool pool;
@@ -69,6 +71,8 @@ namespace spotifar
             std::shared_ptr<spdlog::logger> logger;
             std::mutex sync_worker_mutex;
             bool is_worker_listening = false;
+
+            json requests_cache;
 
             // caches
             std::unique_ptr<PlaybackCache> playback;

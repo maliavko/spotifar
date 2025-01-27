@@ -69,7 +69,8 @@ namespace spotifar
                     if (etags.contains(after.get<string>()))
                         etag = etags.at(after.get<string>());
                     
-                    if (auto r = api->get_client().Get(request_url, {{ "If-None-Match", etag }}))
+                    //if (auto r = api->get_client().Get(request_url, {{ "If-None-Match", etag }}))
+                    if (auto r = api->get(request_url))
                     {
                         if (r->status == httplib::NotModified_304)
                         {
@@ -99,6 +100,24 @@ namespace spotifar
 
                 followed_artists.set(result);
                 followed_artists_etags.set(etags);
+
+                json request_url = httplib::append_query_params("/v1/me/tracks", {
+                    { "limit", std::to_string(50) },
+                    { "offset", std::to_string(2000) },
+                });
+                do
+                {
+                    if (auto r = api->get(request_url))
+                    {
+                        json data = json::parse(r->body);
+                        request_url = data["next"];
+                    }
+                    else
+                    {
+                        request_url = "";
+                    }
+                }
+                while (!request_url.is_null());
             }
         }
     }

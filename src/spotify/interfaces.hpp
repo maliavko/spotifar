@@ -16,6 +16,7 @@ namespace spotifar
             virtual BS::thread_pool& get_thread_pool() = 0;
             virtual bool is_authenticated() const = 0;
             virtual size_t get_playback_observers_count() const = 0;
+            virtual httplib::Result get(const string &request_url) = 0;
         };
 
         struct ICachedData: public utils::far3::IStorableData
