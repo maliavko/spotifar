@@ -31,4 +31,5 @@ namespace spotifar
         };
     }
 }
+
 #endif // ARTIST_HPP_505486D2_3FE3_4140_BF0A_76B2ACB22E61

@@ -34,12 +34,13 @@ namespace spotifar
             AlbumsCollection get_albums(const string &artist_id);
             PlaylistsCollection get_playlists();
             std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
+            
             inline const DevicesList& get_available_devices() { return devices->get(); }
             inline const PlaybackState& get_playback_state() { return playback->get(); }
             inline virtual bool is_authenticated() const { return auth->is_authenticated(); }
             inline virtual size_t get_playback_observers_count() const { return playback_observers; }
-            virtual httplib::Result get(const string &request_url);
 
+            virtual httplib::Result get(const string &request_url, utils::clock::duration cache_for = {});
             inline virtual httplib::Client& get_client() { return client; }
             inline virtual BS::thread_pool& get_thread_pool() { return pool; }
             LibraryCache& get_library() { return *library; }
@@ -72,7 +73,7 @@ namespace spotifar
             std::mutex sync_worker_mutex;
             bool is_worker_listening = false;
 
-            json requests_cache;
+            json responses_cache;
 
             // caches
             std::unique_ptr<PlaybackCache> playback;

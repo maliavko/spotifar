@@ -6,6 +6,7 @@ namespace spotifar
     {
         using namespace std::literals;
         using json = nlohmann::json;
+        using clock = utils::clock;
         using namespace httplib;
 
         bool is_success(int status)
@@ -104,9 +105,9 @@ namespace spotifar
             for (auto &c: caches)
                 c->read(*ctx);
 
-            auto s = ctx->get_str(L"requests", "");
+            auto s = ctx->get_str(L"responses", "");
             if (!s.empty())
-                requests_cache = json::parse(s);
+                responses_cache = json::parse(s);
 
             launch_sync_worker();
 
@@ -119,7 +120,7 @@ namespace spotifar
             for (auto &c: caches)
                 c->write(*ctx);
 
-            ctx->set_str(L"requests", requests_cache.dump());
+            ctx->set_str(L"responses", responses_cache.dump());
             
             shutdown_sync_worker();
 
@@ -471,43 +472,51 @@ namespace spotifar
             logger->info("An API sync worker has been stopped");
         }
         
-        httplib::Result Api::get(const string &request_url)
+        httplib::Result Api::get(const string &request_url, clock::duration cache_for)
         {
-            auto cache_it = requests_cache.find(request_url);
+            auto &cache = responses_cache[request_url];
 
             string cached_etag = "";
-            if (cache_it != requests_cache.end())
-                cached_etag = cache_it->at("etag");
+            if (!cache.is_null())
+            {
+                auto cached_until = clock::time_point{ clock::duration(
+                    (std::int64_t)cache.value("cached-until", 0LL)) };
+
+                // if caching time is specified and still valid - returning cached result
+                if (clock::now() < cached_until)
+                {
+                    httplib::Result res(std::make_unique<httplib::Response>(), httplib::Error::Success);
+                    res->status = httplib::OK_200;
+                    res->body = cache.value("body", "");
+                    return res;
+                }
+
+                cached_etag = cache.value("etag", "");
+            }
 
             if (auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }}))
             {
+                // collecting valid-until timestamp
+                if (cache_for > clock::duration::zero())
+                {
+                    cache["cached-until"] = (clock::now() + cache_for).time_since_epoch().count();
+                }
+
                 if (r->status == httplib::OK_200)
                 {
-                    auto etag = r->get_header_value("etag", "");
-                    if (!etag.empty())
-                    {
-                        requests_cache[request_url] = {
-                            { "body", r->body },
-                            { "etag", etag },
-                        };
-                    }
-
-                    auto cache_control = r->get_header_value("cache-control", "");
-                    if (!cache_control.empty() && !cache_control.ends_with("max-age=0"))
-                    {
-                        spdlog::debug("Cache control found in the response {}", cache_control);
-                    }
-
-                    return r;
+                    if (r->has_header("etag"))
+                        cache["etag"] = r->get_header_value("etag");
                 }
                 else if (r->status == httplib::NotModified_304)
                 {
-                    httplib::Result result(std::make_unique<httplib::Response>(), httplib::Error::Success);
-                    result.value().status = httplib::OK_200;
-                    result.value().body = cache_it->at("body");
-
-                    return result;
+                    r->body = cache.value("body", "");
                 }
+
+                // if either cache-until or etag is present - caching body as well
+                if (!cache.empty())
+                    cache["body"] = r->body;
+                
+                return r;
             }
             return httplib::Result();
         }

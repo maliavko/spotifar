@@ -29,8 +29,7 @@ namespace spotifar
             client_id(client_id),
             client_secret(client_secret),
             port(port),
-            api(api),
-            logger(spdlog::get(utils::LOGGER_API))
+            api(api)
         {
         };
 

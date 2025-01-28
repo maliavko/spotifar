@@ -37,7 +37,6 @@ namespace spotifar
             std::vector<IStorableData*> storages;
 
             JsonStorageValue<ArtistsT> followed_artists;
-            MapStorageValue<string, string> followed_artists_etags;
         };
     }
 }
