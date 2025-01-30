@@ -6,9 +6,9 @@ namespace spotifar
     namespace spotify
     {
         using namespace std::literals;
+        using namespace utils;
 
         LibraryCache::LibraryCache(IApi *api):
-            logger(spdlog::get(utils::LOGGER_API)),
             api(api),
             followed_artists(L"FollowedArtists")
         {
@@ -49,7 +49,7 @@ namespace spotifar
             {
                 is_initialized = true;
 
-                logger->debug("Library initialization");
+                log::api->debug("Library initialization");
 
                 ArtistsT result;
                 json request_artists_url = httplib::append_query_params("/v1/me/following", {

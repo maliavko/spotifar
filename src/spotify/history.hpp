@@ -23,7 +23,6 @@ namespace spotifar
             virtual bool request_data(HistoryList &data);
 
         private:
-            std::shared_ptr<spdlog::logger> logger;
             IApi *api;
         };
     }

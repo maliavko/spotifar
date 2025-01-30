@@ -16,9 +16,6 @@ namespace spotifar
 {
     namespace spotify
     {
-        using std::string;
-        using std::wstring;
-
         class Api: public IApi
         {
         public:
@@ -69,7 +66,6 @@ namespace spotifar
             httplib::Client client;
             size_t playback_observers = 0;
 
-            std::shared_ptr<spdlog::logger> logger;
             std::mutex sync_worker_mutex;
             bool is_worker_listening = false;
 

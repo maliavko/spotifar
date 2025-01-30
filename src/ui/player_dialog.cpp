@@ -170,7 +170,7 @@ namespace spotifar
                 return false;
 
             // first, trying to find a handler among the given control id event handers;
-            // in negative scenario, trying to search for a hander among global handlers @NO_CONTROL id;
+            // in negative scenario, trying to search for a handler among global handlers @NO_CONTROL id;
             // otherwise @false return control to the @dlg_proc function
             for (auto ctrl: { DialogControls(control_id), NO_CONTROL })
             {

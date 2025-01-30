@@ -8,6 +8,17 @@ namespace spotifar
     {
         using namespace std::literals;
         
+        PlaybackCache::PlaybackCache(IApi *api):
+            CachedItem(L"PlaybackState"),
+            api(api),
+            is_super_shuffle_active(false)
+        {}
+
+        PlaybackCache::~PlaybackCache()
+        {
+            api = nullptr;
+        }
+        
         bool PlaybackCache::is_enabled() const
         {
             return api->is_authenticated() && api->get_playback_observers_count() > 0;
@@ -24,8 +35,12 @@ namespace spotifar
                 ObserverManager::notify(&PlaybackObserver::on_track_changed, data.item);
 
             if (data.progress_ms != prev_data.progress_ms)
+            {
                 ObserverManager::notify(&PlaybackObserver::on_track_progress_changed,
                                         data.item.duration, data.progress);
+                if (data.item.duration_ms - data.progress_ms < 2000)
+                    spdlog::debug("track is about to change");
+            }
 
             if (data.device.volume_percent != prev_data.device.volume_percent)
                 ObserverManager::notify(&PlaybackObserver::on_volume_changed,
@@ -73,6 +88,13 @@ namespace spotifar
             }
 
             return false;
+        }
+        
+        void PlaybackCache::activate_super_shuffle(bool is_active)
+        {
+            is_super_shuffle_active = is_active;
+
+            //data.get().context.uri
         }
     }
 }

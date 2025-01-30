@@ -31,7 +31,6 @@ namespace spotifar
 
         private:
             bool is_initialized = false;
-            std::shared_ptr<spdlog::logger> logger;
             IApi *api;
             
             std::vector<IStorableData*> storages;

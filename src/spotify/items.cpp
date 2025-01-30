@@ -214,6 +214,15 @@ namespace spotifar
             // TODO: unfinished
             j = json{};
         }
+
+        string Context::get_item_id() const
+        {
+            static auto r = std::regex("(\\w+):(\\w+):(\\w+)");	
+            std::smatch match;
+            if (std::regex_search(uri, match, r))
+                return match[3];
+            return "";
+        }
         
         bool operator==(const Context &lhs, const Context &rhs)
         {

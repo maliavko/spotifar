@@ -4,6 +4,8 @@ namespace spotifar
 {
     namespace spotify
     {
+        using namespace utils;
+
         const string SPOTIFY_AUTH_URL = "https://accounts.spotify.com";
 
         static string scope =
@@ -41,8 +43,8 @@ namespace spotifar
         
         void AuthCache::on_data_synced(const Auth &data, const Auth &prev_data)
         {
-            logger->info("A valid access token is found, expires in {}",
-                std::format("{:%T}", get_expires_at() - utils::clock::now()));
+            log::api->info("A valid access token is found, expires in {}",
+                std::format("{:%T}", get_expires_at() - clock::now()));
             api->get_client().set_bearer_token_auth(data.access_token);
             is_logged_in = true;
         }
@@ -67,7 +69,7 @@ namespace spotifar
         
         Auth AuthCache::auth_with_code(const string &auth_code)
         {
-            logger->info("Trying to obtain a spotify access token with auth code");
+            log::api->info("Trying to obtain a spotify access token with auth code");
             return auth(
                 httplib::Params{
                     { "grant_type", "authorization_code" },
@@ -79,7 +81,7 @@ namespace spotifar
 
         Auth AuthCache::auth_with_refresh_token(const string &refresh_token)
         {
-            logger->info("Trying to obtain a spotify access token with stored refresh token");
+            log::api->info("Trying to obtain a spotify access token with stored refresh token");
             return auth(
                 httplib::Params{
                     { "grant_type", "refresh_token" },
@@ -140,7 +142,7 @@ namespace spotifar
             string redirect_url = httplib::append_query_params(
                 SPOTIFY_AUTH_URL + "/authorize/", params);
 
-            logger->info("Requesting spotify auth code, redirecting to the external browser");
+            log::api->info("Requesting spotify auth code, redirecting to the external browser");
             ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
 
             return a.get();

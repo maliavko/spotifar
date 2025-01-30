@@ -13,28 +13,33 @@ namespace spotifar
 		using ms = std::chrono::milliseconds;
         using SettingsCtx = config::SettingsContext;
 
-		std::string generate_random_string(const int);
+		string generate_random_string(const int);
 
 		/// @brief Converts utf8 encoded string into wide-char one
-		std::wstring utf8_decode(const std::string &s);
+		wstring utf8_decode(const string &s);
 		
 		/// @brief Converts wide-char string into utf8 encoded string
-		std::string utf8_encode(const std::wstring &ws);
+		string utf8_encode(const wstring &ws);
 
 		/// @brief Bluntly converts char string into wide-char string
-		std::wstring to_wstring(const std::string &s);
+		wstring to_wstring(const string &s);
 		
 		/// @brief Bluntly converts char string into wide-char string
 		/// NOTE: The function does not care about string encoding, all the multi-byte
 		/// stuff will be broken miserably
-		std::string to_string(const std::wstring &ws);
+		string to_string(const wstring &ws);
 
-		std::wstring strip_invalid_filename_chars(const std::wstring &filename);
+		wstring strip_invalid_filename_chars(const wstring &filename);
 
-		static const char *LOGGER_GLOBAL = "global", *LOGGER_API = "api";
+		namespace log
+		{
+			static const char *_LOGGER_GLOBAL = "global", *_LOGGER_API = "api";
 
-		void init_logging();
-		void fini_logging();
+        	extern std::shared_ptr<spdlog::logger> global, api;
+
+			void init();
+			void fini();
+		}
 
 		namespace far3
 		{
@@ -69,7 +74,7 @@ namespace spotifar
 
 			int input_record_to_combined_key(const KEY_EVENT_RECORD &kir);
 
-			std::wstring get_plugin_launch_folder(const PluginStartupInfo *psInfo);
+			wstring get_plugin_launch_folder(const PluginStartupInfo *psInfo);
 
 			struct _NODISCARD NoRedraw
 			{
@@ -80,8 +85,8 @@ namespace spotifar
 				inline static std::mutex mutex{};
 			};
 
-			intptr_t show_far_error_dlg(int error_msg_id, const std::wstring &extra_message = L"");
-			intptr_t show_far_error_dlg(int error_msg_id, const std::string &extra_message = "");
+			intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message = L"");
+			intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message = "");
 			
 			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
 			
@@ -109,7 +114,7 @@ namespace spotifar
             	typedef typename T ValueType;
 
 			public:
-				StorageValue(const std::wstring &storage_key);
+				StorageValue(const wstring &storage_key);
 
 				virtual void read(SettingsCtx &ctx);
 				virtual void write(SettingsCtx &ctx);
@@ -119,16 +124,16 @@ namespace spotifar
 				void set(const ValueType &d) { data = d; }
 
 			protected:
-				virtual void read_from_settings(SettingsCtx &ctx, const std::wstring &key, ValueType &data) = 0;
-				virtual void write_to_settings(SettingsCtx &ctx, const std::wstring &key, ValueType &data) = 0;
+				virtual void read_from_settings(SettingsCtx &ctx, const wstring &key, ValueType &data) = 0;
+				virtual void write_to_settings(SettingsCtx &ctx, const wstring &key, ValueType &data) = 0;
 
 			private:
-				const std::wstring storage_key;
+				const wstring storage_key;
 				ValueType data;
 			};
 			
 			template<class T>
-			StorageValue<T>::StorageValue(const std::wstring &storage_key):
+			StorageValue<T>::StorageValue(const wstring &storage_key):
 				storage_key(storage_key)
 				{}
 

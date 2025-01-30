@@ -27,7 +27,6 @@ namespace spotifar
             virtual utils::ms get_sync_interval() const;
 
         private:
-            std::shared_ptr<spdlog::logger> logger;
             IApi *api;
         };
     }

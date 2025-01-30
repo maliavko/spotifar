@@ -25,16 +25,16 @@ namespace spotifar
 
             inline bool is_visible() const { return visible; }
         
-            // control event handlers
-            bool on_skip_to_next_btn_click(void *empty);
-            bool on_skip_to_previous_btn_click(void *empty);
-            bool on_play_btn_click(void *empty);
-            bool on_shuffle_btn_click(void *empty);
-            bool on_repeat_btn_click(void *empty);
-            bool on_devices_item_selected(void *dialog_item);
+            // controls' event handlers
+            bool on_skip_to_next_btn_click(void*);
+            bool on_skip_to_previous_btn_click(void*);
+            bool on_play_btn_click(void*);
+            bool on_shuffle_btn_click(void*);
+            bool on_repeat_btn_click(void*);
+            bool on_devices_item_selected(void*dialog_item);
             bool on_input_received(void *input_record);
 
-            // control styles
+            // controls' styles
             bool on_playback_control_style_applied(void *dialog_item_colors);
             bool on_track_bar_style_applied(void *dialog_item_colors);
             bool on_track_bar_input_received(void *input_record);
@@ -48,23 +48,23 @@ namespace spotifar
             void update_track_bar(int duration, int progress);
             void update_volume_bar(int volume);
             void update_shuffle_btn(bool is_shuffling);
-            void update_repeat_btn(const std::string &repeate_state);
+            void update_repeat_btn(const string &repeate_state);
 
             // api even handlers
-            virtual void on_playback_sync_finished(const std::string &err_msg);
+            virtual void on_playback_sync_finished(const string &err_msg);
             virtual void on_devices_changed(const DevicesList &devices);
             virtual void on_track_changed(const Track &track);
             virtual void on_track_progress_changed(int duration, int progress);
             virtual void on_volume_changed(int volume);
             virtual void on_shuffle_state_changed(bool state);
-            virtual void on_repeat_state_changed(const std::string &state);
+            virtual void on_repeat_state_changed(const string &state);
             virtual void on_state_changed(bool is_playing);
             virtual void on_context_changed(const Context &ctx);
             virtual void on_permissions_changed(const Actions &actions);
             virtual void on_sync_thread_tick();
 
             // helpers
-            intptr_t set_control_text(int control_id, const std::wstring &text);
+            intptr_t set_control_text(int control_id, const wstring &text);
             intptr_t set_control_enabled(int control_id, bool is_enabled);
 
         private:

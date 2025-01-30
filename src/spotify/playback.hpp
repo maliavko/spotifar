@@ -12,13 +12,12 @@ namespace spotifar
         class PlaybackCache: public CachedItem<PlaybackState>
         {
         public:
-            PlaybackCache(IApi *api):
-                CachedItem(L"PlaybackState"),
-                api(api)
-                {}
+            PlaybackCache(IApi *api);
+            virtual ~PlaybackCache();
 
-            virtual ~PlaybackCache() { api = nullptr; }
             virtual bool is_enabled() const;
+
+            void activate_super_shuffle(bool is_active);
 
         protected:
             virtual void on_data_synced(const PlaybackState &data, const PlaybackState &prev_data);
@@ -26,8 +25,10 @@ namespace spotifar
             virtual utils::ms get_sync_interval() const;
 
         private:
-            std::shared_ptr<spdlog::logger> logger;
             IApi *api;
+
+            bool is_super_shuffle_active;
+            
         };
     }
 }

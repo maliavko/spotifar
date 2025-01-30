@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "utils.hpp"
 #include "config.hpp"
+#include "observers.hpp"
 
 namespace spotifar
 {

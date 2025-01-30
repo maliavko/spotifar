@@ -60,7 +60,7 @@ namespace spotifar
 		try 
 		{
 			// note: logger uses config data, which should be initialized before
-			utils::init_logging();
+			utils::log::init();
 		}
 		catch (const spdlog::spdlog_ex &ex)
 		{
@@ -131,7 +131,7 @@ namespace spotifar
 		std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
 
 		config::write();
-		utils::fini_logging();
+		utils::log::fini();
 		utils::far3::clear_synchro_events();
 	}
 

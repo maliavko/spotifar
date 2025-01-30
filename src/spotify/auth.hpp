@@ -9,8 +9,6 @@ namespace spotifar
 {
     namespace spotify
     {
-        using std::string;
-        
         class AuthCache: public CachedItem<Auth>
         {
         public:
@@ -35,7 +33,6 @@ namespace spotifar
             const std::string client_id, client_secret;
             int port;
             
-            std::shared_ptr<spdlog::logger> logger;
             IApi *api;
         };
     }

@@ -4,11 +4,10 @@ namespace spotifar
 {
     namespace spotify
     {
-        using namespace std::literals;
-        using json = nlohmann::json;
-        using clock = utils::clock;
         using namespace httplib;
-
+        using namespace std::literals;
+        using namespace utils;
+        
         bool is_success(int status)
         {
             return status == OK_200 || status == NoContent_204 || status == NotModified_304;
@@ -55,7 +54,6 @@ namespace spotifar
 
         Api::Api():
             client(SPOTIFY_API_URL),
-            logger(spdlog::get(utils::LOGGER_API)),
             pool(4)
         {
             static const std::set<std::string> exclude{
@@ -69,11 +67,11 @@ namespace spotifar
                     if (is_success(res.status))
                     {
                         if (!exclude.contains(req.path))
-                            logger->debug("A successful HTTP request has been performed (code={}): [{}] {}",
+                            log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
                                           res.status, req.method, req.path);
                     }
                     else
-                        logger->error(dump_http_error(req, res));
+                        log::api->error(dump_http_error(req, res));
                 });
             
             client.set_default_headers(Headers{
@@ -96,7 +94,6 @@ namespace spotifar
         Api::~Api()
         {
             caches.clear();
-            logger = nullptr;
         }
 
         bool Api::init()
@@ -303,10 +300,10 @@ namespace spotifar
                 [&device_id](auto &d) { return d.id == device_id; });
 
             if (device_it == devices.end())
-                return logger->error("There is no devices with the given id={}", device_id);
+                return log::api->error("There is no devices with the given id={}", device_id);
 
             if (device_it->is_active)
-                return logger->warn("The given device is already active {}", device_it->to_str());
+                return log::api->warn("The given device is already active {}", device_it->to_str());
             
             pool.detach_task(
                 [&c = this->client, start_playing, dev_id = std::as_const(device_id)]
@@ -451,7 +448,7 @@ namespace spotifar
                 {
                     // TODO: what if there is an error, but no playback is opened
                     exit_msg = ex.what();
-                    logger->critical("An exception occured while syncing up with an API: {}", exit_msg);
+                    log::api->critical("An exception occured while syncing up with an API: {}", exit_msg);
                 }
                 
                 ObserverManager::notify(&BasicApiObserver::on_playback_sync_finished, exit_msg);
@@ -459,7 +456,7 @@ namespace spotifar
 
             is_worker_listening = true;
             std::thread(std::move(task)).detach();
-            logger->info("An API sync worker has been launched");
+            log::api->info("An API sync worker has been launched");
         }
 
         void Api::shutdown_sync_worker()
@@ -469,7 +466,7 @@ namespace spotifar
             // trying to acquare a sync worker mutex, giving it time to clean up
             // all the resources
             const std::lock_guard worker_lock(sync_worker_mutex);
-            logger->info("An API sync worker has been stopped");
+            log::api->info("An API sync worker has been stopped");
         }
         
         httplib::Result Api::get(const string &request_url, clock::duration cache_for)

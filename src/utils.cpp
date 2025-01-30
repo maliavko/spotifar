@@ -48,12 +48,12 @@ namespace spotifar
 				return key;
 			}
 
-			std::wstring get_plugin_launch_folder(const struct PluginStartupInfo *info)
+			wstring get_plugin_launch_folder(const struct PluginStartupInfo *info)
 			{
 				return std::filesystem::path(info->ModuleName).parent_path().wstring();
 			}
 
-			intptr_t show_far_error_dlg(int error_msg_id, const std::wstring &extra_message)
+			intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
 			{
 				auto err_msg = get_msg(error_msg_id);
 				const wchar_t* msgs[] = {
@@ -72,7 +72,7 @@ namespace spotifar
 				return config::PsInfo.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
 			}
 			
-			intptr_t show_far_error_dlg(int error_msg_id, const std::string &extra_message)
+			intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message)
 			{
 				return show_far_error_dlg(error_msg_id, utils::to_wstring(extra_message));
 			}
@@ -125,10 +125,62 @@ namespace spotifar
 			}
 		}
 
-		std::string generate_random_string(const int length)
+		namespace log
 		{
-			std::string text = "";
-			static const std::string possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        	std::shared_ptr<spdlog::logger> global = nullptr, api  = nullptr;
+
+			void init()
+			{
+				wstring filepath;
+				PWSTR app_data_path = NULL;
+				HRESULT hres = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &app_data_path);
+
+				// at first, we are trying to create a logs folder in users home directory,
+				// if not possible, trying plugins home directory
+				if (SUCCEEDED(hres))
+					filepath = std::format(L"{}\\spotifar\\spotifar.log", app_data_path);
+				else
+					filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_launch_folder());
+
+				// a default sink to the file 
+				auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
+				
+				auto default_logger = global = std::make_shared<spdlog::logger>(_LOGGER_GLOBAL, daily_sink);
+				spdlog::set_default_logger(default_logger);
+
+				// specific logger for spotify api communication
+				auto api_logger = api = std::make_shared<spdlog::logger>(_LOGGER_API, daily_sink);
+				spdlog::register_logger(api_logger);
+
+				#ifdef _DEBUG
+					spdlog::set_level(spdlog::level::debug);
+					
+					// for debugging in VS Code this sink helps seeing the messages in the Debug Console view
+					auto msvc_debug_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+					spdlog::apply_all([&msvc_debug_sink](const auto &logger)
+					{
+						logger->sinks().push_back(msvc_debug_sink);
+					});
+				#else
+					spdlog::set_level(spdlog::level::info);
+				#endif
+
+				spdlog::log(spdlog::level::off, "Plugin logging system is initialized, log level: {}",
+					spdlog::level::to_string_view(spdlog::get_level()));
+				spdlog::info("Plugin version: {}", PLUGIN_VERSION);
+			}
+
+			void fini()
+			{
+				spdlog::log(spdlog::level::off, "Closing plugin\n\n");
+				spdlog::shutdown();
+			}
+		}
+
+		string generate_random_string(const int length)
+		{
+			string text = "";
+			static const string possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 			for (int i = 0; i < length; i++)
 			{
@@ -138,84 +190,37 @@ namespace spotifar
 			return text;
 		};
 
-		std::wstring utf8_decode(const std::string &s)
+		wstring utf8_decode(const string &s)
 		{
 			int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), NULL, 0);
-			std::wstring out(len, 0);
+			wstring out(len, 0);
 			MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), &out[0], len);
 			return out;
 		}
 		
-		std::string utf8_encode(const std::wstring &ws)
+		string utf8_encode(const wstring &ws)
 		{
 			int len = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), NULL, 0, NULL, NULL);
-			std::string out(len, 0);
+			string out(len, 0);
 			WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), &out[0], len, NULL, NULL);
 			return out;
 		}
 
-		std::wstring to_wstring(const std::string &s)
+		wstring to_wstring(const string &s)
 		{
-			return std::wstring(s.begin(), s.end());
+			return wstring(s.begin(), s.end());
 		}
 		
-		std::string to_string(const std::wstring &ws)
+		string to_string(const wstring &ws)
 		{
 			#pragma warning(suppress: 4244)  
-			return std::string(ws.begin(), ws.end());
+			return string(ws.begin(), ws.end());
 		}
 
-		std::wstring strip_invalid_filename_chars(const std::wstring &filename)
+		wstring strip_invalid_filename_chars(const wstring &filename)
 		{
 			static auto r = std::wregex(L"[\?\\\\/:*<>|]");
 			return std::regex_replace(filename, r, L"_");
-		}
-
-		void init_logging()
-		{
-			std::wstring filepath;
-			PWSTR app_data_path = NULL;
-			HRESULT hres = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &app_data_path);
-
-			// at first, we are trying to create a logs folder in users home directory,
-			// if not possible, trying plugins home directory
-			if (SUCCEEDED(hres))
-				filepath = std::format(L"{}\\spotifar\\spotifar.log", app_data_path);
-			else
-				filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_launch_folder());
-
-			// a default sink to the file 
-			auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
-			
-			auto default_logger = std::make_shared<spdlog::logger>("global", daily_sink);
-			spdlog::set_default_logger(default_logger);
-
-			// specific logger for spotify api communication
-			auto api_logger = std::make_shared<spdlog::logger>("api", daily_sink);
-			spdlog::register_logger(api_logger);
-
-			#ifdef _DEBUG
-				spdlog::set_level(spdlog::level::debug);
-				
-				// for debugging in VS Code this sink helps seeing the messages in the Debug Console view
-				auto msvc_debug_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-				spdlog::apply_all([&msvc_debug_sink](const auto& logger)
-				{
-					logger->sinks().push_back(msvc_debug_sink);
-				});
-			#else
-				spdlog::set_level(spdlog::level::info);
-			#endif
-
-			spdlog::log(spdlog::level::off, "Plugin logging system is initialized, log level: {}",
-				spdlog::level::to_string_view(spdlog::get_level()));
-			spdlog::info("Plugin version: {}", PLUGIN_VERSION);
-		}
-
-		void fini_logging()
-		{
-			spdlog::log(spdlog::level::off, "Closing plugin\n\n");
-			spdlog::shutdown();
 		}
 	}
 }

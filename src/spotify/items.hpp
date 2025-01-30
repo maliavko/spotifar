@@ -141,6 +141,8 @@ namespace spotifar
             bool is_album() const { return type == ALBUM; }
             bool is_playlist() const { return type == PLAYLIST; }
             bool is_collection() const { return type == COLLECTION; }
+            string get_item_id() const;
+
             friend bool operator==(const Context &lhs, const Context &rhs);
 
             NLOHMANN_DEFINE_TYPE_INTRUSIVE(Context, type, uri, href);
