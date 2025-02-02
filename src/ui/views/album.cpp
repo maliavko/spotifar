@@ -20,10 +20,10 @@ namespace spotifar
         {
             // TODO: tmp code
             Items result;
-            for (auto& [id, track]: api->get_tracks(album_id))
+            for (const auto &track: api->get_album_tracks(album_id))
             {
                 std::wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
-                result.push_back({id, track_name, L"", FILE_ATTRIBUTE_VIRTUAL, (size_t)track.duration});
+                result.push_back({track.id, track_name, L"", FILE_ATTRIBUTE_VIRTUAL, (size_t)track.duration});
             }
             return result;
         }

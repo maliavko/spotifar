@@ -8,15 +8,9 @@ namespace spotifar
 {
     namespace ui
     {
-        class ConfigDialog
+        struct ConfigDialog
         {
-        public:
-            ConfigDialog();
-            ~ConfigDialog();
-
-            bool show();
-        private:
-            std::unique_ptr<PluginDialogBuilder> builder;
+            static bool show();
         };
     }
 }

@@ -28,9 +28,11 @@ namespace spotifar
             template<class T> void start_listening(T *o);
             template<class T> void stop_listening(T *o);
 
+            SimplifiedTracksT get_album_tracks(const string &album_id);
+            PlaylistTracksT get_playlist_tracks(const string &playlist_id);
+            TracksT get_artist_top_tracks(const string &artist_id);
             AlbumsCollection get_albums(const string &artist_id);
             PlaylistsCollection get_playlists();
-            std::map<string, SimplifiedTrack> get_tracks(const string &album_id);
             
             inline const DevicesList& get_available_devices() { return devices->get(); }
             inline const PlaybackState& get_playback_state() { return playback->get(); }
@@ -42,24 +44,27 @@ namespace spotifar
             inline virtual BS::thread_pool& get_thread_pool() { return pool; }
             LibraryCache& get_library() { return *library; }
 
-            // NOTE: no args means "resume"
-            void start_playback(const string &context_uri = "", const string &track_uri = "",
+            void start_playback(const string &context_uri, const string &track_uri = "",
                                 int position_ms = 0, const string &device_id = "");
+            void start_playback(const std::vector<string> &uris, const string &device_id = "");
             void start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track);
             void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
+            void resume_playback(const string &device_id = "");
             void pause_playback(const string &device_id = "");
             void skip_to_next(const string &device_id = "");
             void skip_to_previous(const string &device_id = "");
             void seek_to_position(int position_ms, const string &device_id = "");
             void toggle_shuffle(bool is_on, const string &device_id = "");
-            void set_repeat_state(const std::string &mode, const string &device_id = "");
+            void toggle_shuffle_plus(bool is_on);
+            void set_repeat_state(const string &mode, const string &device_id = "");
             void set_playback_volume(int volume_percent, const string &device_id = "");
             void transfer_playback(const string &device_id, bool start_playing = false);
 
         protected:
             void launch_sync_worker();
             void shutdown_sync_worker();
-            httplib::Result http_get(const string &request_url);
+            
+            void start_playback(const json &body, const string &device_id);
 
         private:
             BS::thread_pool pool;
@@ -67,7 +72,7 @@ namespace spotifar
             size_t playback_observers = 0;
 
             std::mutex sync_worker_mutex;
-            bool is_worker_listening = false;
+            bool is_worker_listening = false; // TODO: std::atomic<bool> ?
 
             json responses_cache;
 

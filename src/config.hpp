@@ -17,8 +17,8 @@ namespace spotifar
 		{
 			bool add_to_disk_menu;
 			int localhost_service_port;
-			std::wstring spotify_client_id, spotify_client_secret;
-			std::wstring plugin_startup_folder;
+			wchar_t spotify_client_id[40], spotify_client_secret[40];
+			wstring plugin_startup_folder;
 		};
 
 		class SettingsContext
@@ -30,13 +30,13 @@ namespace spotifar
 			std::int64_t get_int64(const wstring &name, std::int64_t def);
 			int get_int(const wstring &name, int def);
 			const wstring get_wstr(const wstring &name, const wstring &def);
-			std::string get_str(const wstring &name, const std::string &def);
+			string get_str(const wstring &name, const string &def);
 			
 			void set_bool(const wstring &name, bool value);
 			void set_int64(const wstring &name, std::int64_t value);
 			void set_int(const wstring &name, int value);
-			void set_wstr(const wstring &name, const std::wstring &value);
-			void set_str(const wstring &name, const std::string &value);
+			void set_wstr(const wstring &name, const wstring &value);
+			void set_str(const wstring &name, const string &value);
 
 			bool delete_value(const wstring& name);
 
@@ -52,13 +52,13 @@ namespace spotifar
 		
 		bool is_added_to_disk_menu();
 
-		std::string get_client_id();
+		string get_client_id();
 
-		std::string get_client_secret();
+		string get_client_secret();
 
 		int get_localhost_port();
 
-		const std::wstring& get_plugin_launch_folder();
+		const wstring& get_plugin_launch_folder();
 	}
 }
 

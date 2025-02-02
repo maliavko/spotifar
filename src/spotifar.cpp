@@ -122,7 +122,7 @@ namespace spotifar
 
 	intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 	{
-		return ui::ConfigDialog().show();
+		return ui::ConfigDialog::show();
 	}
 
 	void WINAPI ClosePanelW(const ClosePanelInfo* info)

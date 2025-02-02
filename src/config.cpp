@@ -39,12 +39,12 @@ namespace spotifar
 			return ps.Get(0, name.c_str(), def);
 		}
 
-		const std::wstring SettingsContext::get_wstr(const wstring &name, const std::wstring &def)
+		const wstring SettingsContext::get_wstr(const wstring &name, const wstring &def)
 		{
 			return ps.Get(0, name.c_str(), def.c_str());
 		}
 
-		std::string SettingsContext::get_str(const wstring &name, const std::string &def)
+		string SettingsContext::get_str(const wstring &name, const string &def)
 		{
 			return utils::to_string(get_wstr(name, utils::to_wstring(def)));
 		}
@@ -64,12 +64,12 @@ namespace spotifar
 			ps.Set(0, name.c_str(), value);
 		}
 		
-		void SettingsContext::set_wstr(const wstring &name, const std::wstring &value)
+		void SettingsContext::set_wstr(const wstring &name, const wstring &value)
 		{
 			ps.Set(0, name.c_str(), value.c_str());
 		}
 		
-		void SettingsContext::set_str(const wstring &name, const std::string &value)
+		void SettingsContext::set_str(const wstring &name, const string &value)
 		{
 			set_wstr(name, utils::to_wstring(value));
 		}
@@ -93,8 +93,8 @@ namespace spotifar
 			auto ctx = lock_settings();
 			
 			settings.add_to_disk_menu = ctx->get_bool(ADD_TO_DISK_MENU_OPT, true);
-			settings.spotify_client_id = ctx->get_wstr(SPOTIFY_CLIENT_ID_OPT, L"");
-			settings.spotify_client_secret = ctx->get_wstr(SPOTIFY_CLIENT_SECRET_OPT, L"");
+			wcscpy_s(settings.spotify_client_id, ctx->get_wstr(SPOTIFY_CLIENT_ID_OPT, L"").c_str());
+			wcscpy_s(settings.spotify_client_secret, ctx->get_wstr(SPOTIFY_CLIENT_SECRET_OPT, L"").c_str());
 			settings.localhost_service_port = ctx->get_int(LOCALHOST_SERVICE_PORT_OPT, 5050);
 			settings.plugin_startup_folder = utils::far3::get_plugin_launch_folder(info);
 		}
@@ -114,12 +114,12 @@ namespace spotifar
 			return settings.add_to_disk_menu;
 		}
 
-		std::string get_client_id()
+		string get_client_id()
 		{
 			return utils::to_string(settings.spotify_client_id);
 		}
 
-		std::string get_client_secret()
+		string get_client_secret()
 		{
 			return utils::to_string(settings.spotify_client_secret);
 		}
@@ -129,7 +129,7 @@ namespace spotifar
 			return settings.localhost_service_port;
 		}
 		
-		const std::wstring& get_plugin_launch_folder()
+		const wstring& get_plugin_launch_folder()
 		{
 			return settings.plugin_startup_folder;
 		}

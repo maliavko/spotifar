@@ -14,8 +14,8 @@ namespace spotifar
         }
 
         // TODO: reconsider these functions
-        std::string dump_headers(const Headers &headers) {
-            std::string s;
+        string dump_headers(const Headers &headers) {
+            string s;
             char buf[BUFSIZ];
 
             for (auto it = headers.begin(); it != headers.end(); ++it) {
@@ -27,7 +27,7 @@ namespace spotifar
             return s;
         }
 
-        std::string dump_http_error(const Request &req, const Response &res)
+        string dump_http_error(const Request &req, const Response &res)
         {
             std::stringstream ss, query;
             
@@ -56,7 +56,7 @@ namespace spotifar
             client(SPOTIFY_API_URL),
             pool(4)
         {
-            static const std::set<std::string> exclude{
+            static const std::set<string> exclude{
                 "/v1/me/player",
                 "/v1/me/player/devices",
             };
@@ -67,8 +67,15 @@ namespace spotifar
                     if (is_success(res.status))
                     {
                         if (!exclude.contains(req.path))
+                        {
+                            // clearing domain from path, just for log readability
+                            auto req_path = req.path;
+                            if (req_path.starts_with(SPOTIFY_API_URL))
+                                req_path.erase(req_path.begin(), req_path.begin() + SPOTIFY_API_URL.size());
+                            
                             log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
-                                          res.status, req.method, req.path);
+                                            res.status, req.method, req_path);
+                        }
                     }
                     else
                         log::api->error(dump_http_error(req, res));
@@ -108,6 +115,16 @@ namespace spotifar
 
             launch_sync_worker();
 
+            // pool.detach_task(
+            //     [&run = this->is_worker_listening]
+            //     {
+            //         while (run)
+            //         {
+            //             log::api->debug("hello from detached thread");
+            //             std::this_thread::sleep_for(1s);
+            //         }
+            //     });
+
             return true;
         }
         
@@ -120,46 +137,37 @@ namespace spotifar
             ctx->set_str(L"responses", responses_cache.dump());
             
             shutdown_sync_worker();
+            pool.purge();
 
             ObserverManager::clear<ApiObserver>();
         }
         
+        // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
         void Api::start_playback(const string &context_uri, const string &track_uri,
                                  int position_ms, const string &device_id)
         {
-            Params params = {};
-            if (!device_id.empty())
-                params.insert({ "device_id", device_id });
+            json body{
+                { "context_uri", context_uri },
+            };
 
-            string body = ""; 
-            if (!context_uri.empty())
-            {
-                json o{
-                    { "context_uri", context_uri },
+            if (!track_uri.empty())
+                body.update({
+                    { "offset", { "uri", track_uri } },
                     { "position_ms", position_ms },
-                };
-
-                if (!track_uri.empty())
-                    o["offset"] = { { "uri", track_uri }, };
-                
-                body = o.dump();
-            }
-
-            pool.detach_task(
-                [
-                    &c = this->client, &cache = *playback, dev_id = std::as_const(device_id),
-                    request_url = append_query_params("/v1/me/player/play", params), body
-                ]
-                {
-                    Result res;
-                    if (body.empty())
-                        res = c.Put(request_url);
-                    else
-                        res = c.Put(request_url, body, "application/json");
-
-                    if (is_success(res))
-                        cache.patch({ { "is_playing", true } });
                 });
+            
+            start_playback(body, device_id);
+        }
+        
+        void Api::start_playback(const std::vector<string> &uris, const string &device_id)
+        {
+            assert(uris.size() > 0);
+
+            json body{
+                { "uris", uris }
+            };
+            
+            start_playback(body, device_id);
         }
         
         void Api::start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track)
@@ -170,6 +178,11 @@ namespace spotifar
         void Api::start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track)
         {
             return start_playback(playlist.get_uri(), track.get_uri());
+        }
+        
+        void Api::resume_playback(const string &device_id)
+        {
+            return start_playback(json(), device_id);
         }
 
         void Api::pause_playback(const string &device_id)
@@ -251,7 +264,35 @@ namespace spotifar
                 });
         }
 
-        void Api::set_repeat_state(const std::string &mode, const string &device_id)
+        void Api::toggle_shuffle_plus(bool is_on)
+        {
+            if (is_on)
+            {
+                std::vector<string> uris;
+                auto &state = get_playback_state();
+                if (state.context.is_album())
+                {
+                    const auto &tracks = get_album_tracks(state.context.get_item_id());
+                    std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
+                                   [](const auto &t) { return t.get_uri(); });
+                }
+                else if (state.context.is_playlist())
+                {
+                    const auto &tracks = get_playlist_tracks(state.context.get_item_id());
+                    std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
+                                   [](const auto &t) { return t.track.get_uri(); });
+                }
+                else if (state.context.is_artist())
+                {
+                    const auto &tracks = get_artist_top_tracks(state.context.get_item_id());
+                    std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
+                                   [](const auto &t) { return t.get_uri(); });
+                }
+                playback->activate_super_shuffle(uris);
+            }
+        }
+
+        void Api::set_repeat_state(const string &mode, const string &device_id)
         {
             pool.detach_task(
                 [&c = this->client, mode, &cache = *playback, dev_id = std::as_const(device_id)]
@@ -293,7 +334,7 @@ namespace spotifar
                 });
         }
         
-        void Api::transfer_playback(const std::string &device_id, bool start_playing)
+        void Api::transfer_playback(const string &device_id, bool start_playing)
         {   
             auto devices = get_available_devices();
             auto device_it = std::find_if(devices.begin(), devices.end(),
@@ -317,8 +358,76 @@ namespace spotifar
                     // TODO: handle errors
                 });
         }
+
+        SimplifiedTracksT Api::get_album_tracks(const string &album_id)
+        {
+            SimplifiedTracksT result;
+            
+            json request_url = httplib::append_query_params(
+                std::format("/v1/albums/{}/tracks", album_id), {
+                    { "limit", std::to_string(50) },
+                });
+                
+            do
+            {
+                if (auto r = get(request_url))
+                {
+                    json data = json::parse(r->body);
+                    request_url = data["next"];
+
+                    const auto &tracks = data["items"].get<SimplifiedTracksT>();
+                    result.insert(result.end(), tracks.begin(), tracks.end());
+                }
+            }
+            while (!request_url.is_null());
+
+            return result;
+        }
+
+        PlaylistTracksT Api::get_playlist_tracks(const string &playlist_id)
+        {
+            PlaylistTracksT result;
+            
+            static string fields = std::format("items({}),next", PlaylistTrack::get_fields_filter());
+            json request_url = httplib::append_query_params(
+                std::format("/v1/playlists/{}/tracks", playlist_id), {
+                    { "limit", std::to_string(50) },
+                    { "additional_types", "track" },
+                    { "fields", fields },
+                });
+
+            int idx = 0;
+                
+            do
+            {
+                if (auto r = get(request_url))
+                {
+                    json data = json::parse(r->body);
+                    request_url = data["next"];
+
+                    const auto &tracks = data["items"].get<PlaylistTracksT>();
+                    result.insert(result.end(), tracks.begin(), tracks.end());
+                }
+                if (idx++ > 3)
+                    break; // TODO: remove, tmp code to speed up a development
+            }
+            while (!request_url.is_null());
+
+            return result;
+        }
+
+        TracksT Api::get_artist_top_tracks(const string &artist_id)
+        {
+            json request_url = std::format("/v1/artists/{}/top-tracks", artist_id);
+            if (auto r = get(request_url))
+            {
+                json data = json::parse(r->body);
+                return data["tracks"].get<TracksT>();
+            }
+            return {};
+        }
         
-        AlbumsCollection Api::get_albums(const std::string &artist_id)
+        AlbumsCollection Api::get_albums(const string &artist_id)
         {
             AlbumsCollection albums;
 
@@ -328,7 +437,7 @@ namespace spotifar
                 { "include_groups", "album" }
             };
 
-            std::string request_url = append_query_params(
+            string request_url = append_query_params(
                 std::format("/v1/artists/{}/albums", artist_id), params);
 
             do
@@ -362,7 +471,7 @@ namespace spotifar
                 { "offset", "0" },
             };
 
-            std::string request_url = append_query_params("/v1/me/playlists", params);
+            string request_url = append_query_params("/v1/me/playlists", params);
 
             do
             {
@@ -384,48 +493,32 @@ namespace spotifar
 
             return playlists;
         }
-        
-        std::map<string, SimplifiedTrack> Api::get_tracks(const std::string &album_id)
-        {
-            std::map<string, SimplifiedTrack> tracks;
-
-            Params params = {
-                { "limit", "50" },
-                { "offset", "0" }
-            };
-
-            std::string request_url = append_query_params(
-                std::format("/v1/albums/{}/tracks", album_id), params);
-
-            do
-            {
-                //auto r = client.Get(request_url);
-                auto r = get(request_url);
-
-                json data = json::parse(r->body);
-                for (json& tj : data["items"])
-                {
-                    auto t = tj.get<SimplifiedTrack>();
-                    tracks[t.id] = t;
-                }
-
-                json next = data["next"];
-                if (next.is_null())
-                    break;
-                
-                next.get_to(request_url);
-            } while (1);
-
-            return tracks;
-        }
 
         void Api::launch_sync_worker()
         {
             std::packaged_task<void()> task([this]
             {
                 // clock::time_point now;
-                std::string exit_msg = "";
+                string exit_msg = "";
                 const std::lock_guard worker_lock(sync_worker_mutex);
+
+                // MSG msg = {0};
+                // RegisterHotKey(NULL, 333, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x53);
+                // RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
+                // auto s = RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
+                
+                // LPVOID lpMsgBuf;
+                // DWORD dw = GetLastError();
+                // FormatMessage(
+                //     FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+                //     FORMAT_MESSAGE_FROM_SYSTEM |
+                //     FORMAT_MESSAGE_IGNORE_INSERTS,
+                //     NULL,
+                //     dw,
+                //     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                //     (LPTSTR) &lpMsgBuf,
+                //     0, NULL);
+                // LPCTSTR str = (LPCTSTR)lpMsgBuf;
 
                 try
                 {
@@ -436,6 +529,17 @@ namespace spotifar
                                 caches[idx]->resync();
                             }, BS::pr::high);
                         pool.wait();
+
+                        // auto t = GetMessage(&msg, NULL, 0, 0);
+                        // if (msg.message == WM_HOTKEY)
+                        // {
+                        //     switch (LOWORD(msg.wParam))
+                        //     {
+                        //         case 333:
+                        //         case 334:
+                        //             log::api->debug("hotkey received {}", LOWORD(msg.wParam));
+                        //     }
+                        // }
                         
                         // notify listeners that they can perform some aux operations in a
                         // background thread
@@ -467,6 +571,29 @@ namespace spotifar
             // all the resources
             const std::lock_guard worker_lock(sync_worker_mutex);
             log::api->info("An API sync worker has been stopped");
+        }
+        
+        void Api::start_playback(const json &body, const string &device_id)
+        {
+            Params params = {};
+            if (!device_id.empty())
+                params.insert({ "device_id", device_id });
+
+            pool.detach_task(
+                [
+                    &c = this->client, &cache = *playback, dev_id = std::as_const(device_id),
+                    request_url = append_query_params("/v1/me/player/play", params), body
+                ]
+                {
+                    Result res;
+                    if (body.empty())
+                        res = c.Put(request_url);
+                    else
+                        res = c.Put(request_url, body.dump(), "application/json");
+
+                    if (is_success(res))
+                        cache.patch({ { "is_playing", true } });
+                });
         }
         
         httplib::Result Api::get(const string &request_url, clock::duration cache_for)

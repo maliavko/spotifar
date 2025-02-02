@@ -1,17 +1,18 @@
 #include "stdafx.h"
 #include "playback.hpp"
 #include "observers.hpp"
+#include "api.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
         using namespace std::literals;
+        using namespace utils;
         
         PlaybackCache::PlaybackCache(IApi *api):
             CachedItem(L"PlaybackState"),
-            api(api),
-            is_super_shuffle_active(false)
+            api(api)
         {}
 
         PlaybackCache::~PlaybackCache()
@@ -90,11 +91,18 @@ namespace spotifar
             return false;
         }
         
-        void PlaybackCache::activate_super_shuffle(bool is_active)
+        void PlaybackCache::activate_super_shuffle(const std::vector<string> &tracks_uris)
         {
-            is_super_shuffle_active = is_active;
+            log::api->debug("activate_super_shuffle, traks number: {}", tracks_uris.size());
 
-            //data.get().context.uri
+            auto uris = tracks_uris;
+            std::random_device rd{}; 
+            std::default_random_engine rng{ rd() };
+            std::ranges::shuffle(uris, rng);
+
+            uris.resize(100); // soft-cap for now, just first 100 tracks
+            Api* a = dynamic_cast<Api*>(api);
+            a->start_playback(uris);
         }
     }
 }

@@ -267,7 +267,7 @@ namespace spotifar
 
         bool PlayerDialog::on_devices_item_selected(void *dialog_item)
         {
-            FarDialogItem* item = reinterpret_cast<FarDialogItem*>(dialog_item);
+            FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
             size_t pos = send_dlg_msg(hdlg, DM_LISTGETCURPOS, DEVICES_COMBO, NULL);
             auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, DEVICES_COMBO, (void*)pos);
@@ -328,6 +328,11 @@ namespace spotifar
                             case far3::KEY_S:
                             {
                                 update_shuffle_btn(shuffle_state.next());
+                                return true;
+                            }
+                            case far3::KEY_S + far3::KEY_SHIFT:
+                            {
+                                api.toggle_shuffle_plus(true);
                                 return true;
                             }
                             case far3::KEY_D + far3::KEY_ALT:
@@ -452,8 +457,11 @@ namespace spotifar
             }
             else if (!playback.is_empty())
             {
-                api.start_playback(playback.context.uri, playback.item.get_uri(),
-                    playback.progress_ms, playback.device.id);
+                if (!playback.context.uri.empty())
+                    api.start_playback(playback.context.uri, playback.item.get_uri(),
+                        playback.progress_ms, playback.device.id);
+                else
+                    api.resume_playback(playback.device.id);
                 return true;
             }
             return false;

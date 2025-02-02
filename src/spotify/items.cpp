@@ -100,6 +100,12 @@ namespace spotifar
             to_json(j, dynamic_cast<const SimplifiedAlbum&>(a));
             //j.update
         }
+
+        const string& SimplifiedTrack::get_fields_filter()
+        {
+            static string fields = "id,name,duration_ms,track_number";
+            return fields;
+        }
         
         bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs)
         {
@@ -124,6 +130,12 @@ namespace spotifar
                 { "track_number", t.track_number },
                 { "name", utils::utf8_encode(t.name) },
             };
+        }
+
+        const string& Track::get_fields_filter()
+        {
+            static string fields = std::format("{},album,artists", SimplifiedTrack::get_fields_filter());
+            return fields;
         }
         
         void from_json(const json &j, Track &t)
@@ -268,6 +280,12 @@ namespace spotifar
             
             p.name = utils::utf8_decode(j.at("name").get<string>());
             p.description = utils::utf8_decode(j.at("description").get<string>());
+        }
+        
+        const string& PlaylistTrack::get_fields_filter()
+        {
+            static string fields = std::format("added_at,track({})", Track::get_fields_filter());
+            return fields;
         }
         
         void from_json(const json &j, HistoryItem &p)

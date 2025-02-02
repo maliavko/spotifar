@@ -66,7 +66,7 @@ namespace spotifar
             size_t track_number;  // TODO: track number could be duplicated for different discs
 
             static string make_uri(const string &id) { return make_item_uri("track", id); }
-
+            static const string& get_fields_filter();
             inline std::string get_uri() const { return make_uri(id); }
             friend bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs);
             friend void from_json(const json &j, SimplifiedTrack &t);
@@ -78,6 +78,7 @@ namespace spotifar
             Album album;
             std::vector<SimplifiedArtist> artists;
 
+            static const string& get_fields_filter();
             friend void from_json(const json &j, Track &t);
             friend void to_json(json &j, const Track &p);
         };
@@ -93,6 +94,16 @@ namespace spotifar
 
             inline std::string get_uri() const { return make_uri(id); }
             friend void from_json(const json &j, SimplifiedPlaylist &p);
+        };
+
+        struct PlaylistTrack
+        {
+            string added_at;
+            Track track;
+            
+            static const string& get_fields_filter();
+            
+            NLOHMANN_DEFINE_TYPE_INTRUSIVE(PlaylistTrack, added_at, track);
         };
 
         struct Auth
@@ -198,6 +209,9 @@ namespace spotifar
         typedef std::map<string, SimplifiedAlbum> AlbumsCollection;
         typedef std::map<string, Artist> ArtistsCollection;
         typedef std::vector<Artist> ArtistsT;
+        typedef std::vector<Track> TracksT;
+        typedef std::vector<PlaylistTrack> PlaylistTracksT;
+        typedef std::vector<SimplifiedTrack> SimplifiedTracksT;
         typedef std::map<string, SimplifiedPlaylist> PlaylistsCollection;
         typedef std::vector<Device> DevicesList;
         typedef std::vector<HistoryItem> HistoryList;

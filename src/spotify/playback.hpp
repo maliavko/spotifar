@@ -17,7 +17,7 @@ namespace spotifar
 
             virtual bool is_enabled() const;
 
-            void activate_super_shuffle(bool is_active);
+            void activate_super_shuffle(const std::vector<string> &tracks_uris);
 
         protected:
             virtual void on_data_synced(const PlaybackState &data, const PlaybackState &prev_data);
@@ -26,9 +26,6 @@ namespace spotifar
 
         private:
             IApi *api;
-
-            bool is_super_shuffle_active;
-            
         };
     }
 }
