@@ -68,17 +68,17 @@ namespace spotifar
             }
         };
 
-        FarDialogItem control(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
+        static FarDialogItem control(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
                               FARDIALOGITEMFLAGS flags, const wchar_t *data = L"")
         {
             return FarDialogItem(type, x1, y1, x2, y2, {}, nullptr, nullptr, flags, data);
         }
 
-        auto btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
-        auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE |
+        static auto btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE;
+        static auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE |
                            DIF_DROPDOWNLIST;
     
-        std::vector<FarDialogItem> dlg_items_layout{
+        static std::vector<FarDialogItem> dlg_items_layout{
             // border
             control(DI_DOUBLEBOX,   0, 0, width, height,                            DIF_NONE), // BOX
             control(DI_TEXT,        view_center_x - 5, 0, 10, 1,                    DIF_CENTERTEXT), // TITLE
@@ -177,7 +177,7 @@ namespace spotifar
                 auto it = dlg_event_handlers.find(ctrl);
                 if (it != dlg_event_handlers.end())
                 {
-                    for (auto& [mid, handler]: it->second)
+                    for (auto &[mid, handler]: it->second)
                         if (mid == msg_id)
                             return (this->*handler)(param);
                 }
