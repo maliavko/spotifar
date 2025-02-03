@@ -14,7 +14,6 @@ namespace spotifar
         struct BasicApiObserver: public ApiObserver
         {
             virtual void on_playback_sync_finished(const string &err_msg = "") {};
-            virtual void on_sync_thread_tick() {};
         };
 
         struct PlaybackObserver: public ApiObserver

@@ -5,7 +5,6 @@ namespace spotifar
     namespace spotify
     {
         using namespace httplib;
-        using namespace std::literals;
         using namespace utils;
         
         bool is_success(int status)
@@ -52,9 +51,9 @@ namespace spotifar
 
         const string SPOTIFY_API_URL = "https://api.spotify.com";
 
-        Api::Api():
+        Api::Api(BS::thread_pool &pool):
             client(SPOTIFY_API_URL),
-            pool(4)
+            pool(pool)
         {
             static const std::set<string> exclude{
                 "/v1/me/player",
@@ -103,27 +102,18 @@ namespace spotifar
             caches.clear();
         }
 
-        bool Api::init()
+        bool Api::start()
         {
             auto ctx = config::lock_settings();
             for (auto &c: caches)
                 c->read(*ctx);
 
+            // TODO: this caches is definitely a tmp solution
             auto s = ctx->get_str(L"responses", "");
             if (!s.empty())
                 responses_cache = json::parse(s);
 
-            launch_sync_worker();
-
-            // pool.detach_task(
-            //     [&run = this->is_worker_listening]
-            //     {
-            //         while (run)
-            //         {
-            //             log::api->debug("hello from detached thread");
-            //             std::this_thread::sleep_for(1s);
-            //         }
-            //     });
+            //launch_sync_worker();
 
             return true;
         }
@@ -136,10 +126,18 @@ namespace spotifar
 
             ctx->set_str(L"responses", responses_cache.dump());
             
-            shutdown_sync_worker();
-            pool.purge();
+            //shutdown_sync_worker();
+            //pool.purge();
 
             ObserverManager::clear<ApiObserver>();
+        }
+
+        void Api::tick()
+        {
+            pool.detach_loop(0ULL, caches.size(),
+                [&caches = this->caches](const std::size_t idx) {
+                    caches[idx]->resync();
+                }, BS::pr::high);
         }
         
         // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
@@ -194,9 +192,11 @@ namespace spotifar
                     if (!dev_id.empty())
                         params.insert({ "device_id", dev_id });
 
-                    auto r = c.Put(append_query_params("/v1/me/player/pause", params));
-                    if (r->status == httplib::OK_200)
-                        cache.patch({ { "is_playing", false } });
+                    auto res = c.Put(append_query_params("/v1/me/player/pause", params));
+                    if (is_success(res))
+                        cache.patch({
+                            { "is_playing", false }
+                        });
                 });
         }
         
@@ -240,7 +240,9 @@ namespace spotifar
 
                     auto res = c.Put(append_query_params("/v1/me/player/seek", params));
                     if (is_success(res->status))
-                        cache.patch({ { "progress_ms", position_ms } });
+                        cache.patch({
+                            { "progress_ms", position_ms }
+                        });
                 });
         }
 
@@ -493,85 +495,6 @@ namespace spotifar
 
             return playlists;
         }
-
-        void Api::launch_sync_worker()
-        {
-            std::packaged_task<void()> task([this]
-            {
-                // clock::time_point now;
-                string exit_msg = "";
-                const std::lock_guard worker_lock(sync_worker_mutex);
-
-                // MSG msg = {0};
-                // RegisterHotKey(NULL, 333, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x53);
-                // RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
-                // auto s = RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
-                
-                // LPVOID lpMsgBuf;
-                // DWORD dw = GetLastError();
-                // FormatMessage(
-                //     FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-                //     FORMAT_MESSAGE_FROM_SYSTEM |
-                //     FORMAT_MESSAGE_IGNORE_INSERTS,
-                //     NULL,
-                //     dw,
-                //     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                //     (LPTSTR) &lpMsgBuf,
-                //     0, NULL);
-                // LPCTSTR str = (LPCTSTR)lpMsgBuf;
-
-                try
-                {
-                    while (is_worker_listening)
-                    {
-                        pool.detach_loop(0ULL, caches.size(),
-                            [&caches = this->caches](const std::size_t idx) {
-                                caches[idx]->resync();
-                            }, BS::pr::high);
-                        pool.wait();
-
-                        // auto t = GetMessage(&msg, NULL, 0, 0);
-                        // if (msg.message == WM_HOTKEY)
-                        // {
-                        //     switch (LOWORD(msg.wParam))
-                        //     {
-                        //         case 333:
-                        //         case 334:
-                        //             log::api->debug("hotkey received {}", LOWORD(msg.wParam));
-                        //     }
-                        // }
-                        
-                        // notify listeners that they can perform some aux operations in a
-                        // background thread
-                        ObserverManager::notify(&BasicApiObserver::on_sync_thread_tick);
-
-                        std::this_thread::sleep_for(50ms);
-                    }
-                }
-                catch (const std::exception &ex)
-                {
-                    // TODO: what if there is an error, but no playback is opened
-                    exit_msg = ex.what();
-                    log::api->critical("An exception occured while syncing up with an API: {}", exit_msg);
-                }
-                
-                ObserverManager::notify(&BasicApiObserver::on_playback_sync_finished, exit_msg);
-            });
-
-            is_worker_listening = true;
-            std::thread(std::move(task)).detach();
-            log::api->info("An API sync worker has been launched");
-        }
-
-        void Api::shutdown_sync_worker()
-        {
-            is_worker_listening = false;
-            
-            // trying to acquare a sync worker mutex, giving it time to clean up
-            // all the resources
-            const std::lock_guard worker_lock(sync_worker_mutex);
-            log::api->info("An API sync worker has been stopped");
-        }
         
         void Api::start_playback(const json &body, const string &device_id)
         {
@@ -592,7 +515,9 @@ namespace spotifar
                         res = c.Put(request_url, body.dump(), "application/json");
 
                     if (is_success(res))
-                        cache.patch({ { "is_playing", true } });
+                        cache.patch({
+                            { "is_playing", true }
+                        });
                 });
         }
         

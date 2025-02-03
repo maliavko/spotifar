@@ -59,8 +59,12 @@ namespace spotifar
 	{
 		try 
 		{
-			// note: logger uses config data, which should be initialized before
 			utils::log::init();
+
+			auto plugin = std::make_unique<Plugin>();
+			plugin->start();
+
+			return plugin.release();
 		}
 		catch (const spdlog::spdlog_ex &ex)
 		{
@@ -69,20 +73,18 @@ namespace spotifar
 
 			return nullptr;
 		}
-
-		return std::make_unique<Plugin>().release();
 	}
 
+	// https://api.farmanager.com/ru/structures/openpanelinfo.html
 	void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 	{
-		// https://api.farmanager.com/ru/structures/openpanelinfo.html
 		auto &plugin = *static_cast<Plugin*>(info->hPanel);
 		plugin.update_panel_info(info);
 	}
 
+	// https://api.farmanager.com/ru/structures/getfinddatainfo.html
 	intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 	{
-		// https://api.farmanager.com/ru/structures/getfinddatainfo.html
 		if (info->OpMode & OPM_FIND)
 			return FALSE;
 		
@@ -114,7 +116,7 @@ namespace spotifar
 		
 		if (info->Event == FE_CLOSE)
 		{
-			static_cast<Plugin*>(info->hPanel)->shutdown();
+			plugin.shutdown();
 		}
 
 		return FALSE;
@@ -125,7 +127,7 @@ namespace spotifar
 		return ui::ConfigDialog::show();
 	}
 
-	void WINAPI ClosePanelW(const ClosePanelInfo* info)
+	void WINAPI ClosePanelW(const ClosePanelInfo *info)
 	{
 		// after auto-variable is destroyed, so is the last ref to plugin
 		std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
@@ -152,11 +154,11 @@ namespace spotifar
 	}
 
 	// it is also called when file on the panel is being copied to the other panel
-	intptr_t WINAPI GetFilesW(GetFilesInfo *Info)
+	intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 	{
-		spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *Info)");
+		spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *info)");
 		
-		auto file = std::format(L"{}\\{}.txt", Info->DestPath, Info->PanelItem[0].FileName);
+		auto file = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[0].FileName);
 		std::ofstream fout(file, std::ios::trunc);
 		fout << "Test data" << std::endl;
 		fout.close();

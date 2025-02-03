@@ -264,6 +264,32 @@ namespace spotifar
             }
             return false;
         }
+        
+        void PlayerDialog::tick()
+        {
+            // here we process delayed controls like seeking position or volume, as they require
+            // timer for perform smoothly. But the final operation is executed through the far main
+            // thread to avoid threads clashes, plus to process the task through the thread pool
+
+            track_progress.check([this](int p) {
+                push_synchro_task([&api = this->api, p] {
+                    auto &state = api.get_playback_state();
+                    api.seek_to_position(p * 1000, state.device.id);
+                });
+            });
+
+            volume.check([this](int v) {
+                push_synchro_task([&api = this->api, v] { api.set_playback_volume(v); });
+            });
+
+            shuffle_state.check([this](bool v) {
+                push_synchro_task([&api = this->api, v] { api.toggle_shuffle(v); });
+            });
+
+            repeat_state.check([this](const std::string &s) {
+                push_synchro_task([&api = this->api, s] { api.set_repeat_state(s); });
+            });
+        }
 
         bool PlayerDialog::on_devices_item_selected(void *dialog_item)
         {
@@ -650,32 +676,6 @@ namespace spotifar
         void PlayerDialog::on_permissions_changed(const Actions &actions)
         {
             // TODO: finish the content
-        }
-        
-        void PlayerDialog::on_sync_thread_tick()
-        {
-            // here we process delayed controls like seeking position or volume, as they require
-            // timer for perform smoothly. But the final operation is executed through the far main
-            // thread to avoid threads clashes, plus to process the task through the thread pool
-
-            track_progress.check([this](int p) {
-                push_synchro_task([&api = this->api, p] {
-                    auto &state = api.get_playback_state();
-                    api.seek_to_position(p * 1000, state.device.id);
-                });
-            });
-
-            volume.check([this](int v) {
-                push_synchro_task([&api = this->api, v] { api.set_playback_volume(v); });
-            });
-
-            shuffle_state.check([this](bool v) {
-                push_synchro_task([&api = this->api, v] { api.toggle_shuffle(v); });
-            });
-
-            repeat_state.check([this](const std::string &s) {
-                push_synchro_task([&api = this->api, s] { api.set_repeat_state(s); });
-            });
         }
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring &text)

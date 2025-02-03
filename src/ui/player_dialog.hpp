@@ -22,6 +22,7 @@ namespace spotifar
 
             bool show();
             bool hide(bool close_ui = true);
+            void tick();
 
             inline bool is_visible() const { return visible; }
         
@@ -61,7 +62,6 @@ namespace spotifar
             virtual void on_state_changed(bool is_playing);
             virtual void on_context_changed(const Context &ctx);
             virtual void on_permissions_changed(const Actions &actions);
-            virtual void on_sync_thread_tick();
 
             // helpers
             intptr_t set_control_text(int control_id, const wstring &text);

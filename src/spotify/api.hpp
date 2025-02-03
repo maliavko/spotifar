@@ -19,11 +19,12 @@ namespace spotifar
         class Api: public IApi
         {
         public:
-            Api();
+            Api(BS::thread_pool &pool);
             virtual ~Api();
 
-            bool init();
+            bool start();
             void shutdown();
+            void tick();
 
             template<class T> void start_listening(T *o);
             template<class T> void stop_listening(T *o);
@@ -61,18 +62,12 @@ namespace spotifar
             void transfer_playback(const string &device_id, bool start_playing = false);
 
         protected:
-            void launch_sync_worker();
-            void shutdown_sync_worker();
-            
             void start_playback(const json &body, const string &device_id);
 
         private:
-            BS::thread_pool pool;
+            BS::thread_pool &pool;
             httplib::Client client;
             size_t playback_observers = 0;
-
-            std::mutex sync_worker_mutex;
-            bool is_worker_listening = false; // TODO: std::atomic<bool> ?
 
             json responses_cache;
 
