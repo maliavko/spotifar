@@ -6,60 +6,74 @@
 
 namespace spotifar
 {
-	namespace config
-	{
-		using std::wstring;
+    namespace config
+    {
+        extern PluginStartupInfo PsInfo;
+        extern FarStandardFunctions FSF;
 
-		extern PluginStartupInfo PsInfo;
-		extern FarStandardFunctions FSF;
+        enum HotkeyID
+        {
+            PLAY,
+            SKIP_NEXT,
+            SKIP_PREV,
+            SEEK_FORWARD,
+            SEEK_BACKWARD,
+            VOLUME_UP,
+            VOLUME_DOWN,
+            LAST
+        };
 
-		struct Settings
-		{
-			bool add_to_disk_menu;
-			int localhost_service_port;
-			wstring spotify_client_id, spotify_client_secret;
-			wstring plugin_startup_folder;
-		};
+        struct Settings
+        {
+            bool add_to_disk_menu;
+            int localhost_service_port;
+            wstring spotify_client_id, spotify_client_secret;
+            wstring plugin_startup_folder;
 
-		class SettingsContext
-		{
-		public:
-			SettingsContext();
+            std::unordered_map<HotkeyID, std::pair<WORD, WORD>> hotkeys;
+        };
 
-			bool get_bool(const wstring &name, bool def);
-			std::int64_t get_int64(const wstring &name, std::int64_t def);
-			int get_int(const wstring &name, int def);
-			const wstring get_wstr(const wstring &name, const wstring &def);
-			string get_str(const wstring &name, const string &def);
-			
-			void set_bool(const wstring &name, bool value);
-			void set_int64(const wstring &name, std::int64_t value);
-			void set_int(const wstring &name, int value);
-			void set_wstr(const wstring &name, const wstring &value);
-			void set_str(const wstring &name, const string &value);
+        class SettingsContext
+        {
+        public:
+            SettingsContext();
 
-			bool delete_value(const wstring& name);
+            bool get_bool(const wstring &name, bool def);
+            std::int64_t get_int64(const wstring &name, std::int64_t def);
+            int get_int(const wstring &name, int def);
+            const wstring get_wstr(const wstring &name, const wstring &def);
+            string get_str(const wstring &name, const string &def);
+            
+            void set_bool(const wstring &name, bool value);
+            void set_int64(const wstring &name, std::int64_t value);
+            void set_int(const wstring &name, int value);
+            void set_wstr(const wstring &name, const wstring &value);
+            void set_str(const wstring &name, const string &value);
 
-			Settings& get_settings();
-		private:
-			PluginSettings ps;
-		};
+            bool delete_value(const wstring &name);
 
-		std::shared_ptr<SettingsContext> lock_settings();
+            Settings& get_settings();
+        private:
+            PluginSettings ps;
+        };
 
-		void read(const PluginStartupInfo *info);
-		void write();
-		
-		bool is_added_to_disk_menu();
+        std::shared_ptr<SettingsContext> lock_settings();
 
-		string get_client_id();
+        void read(const PluginStartupInfo *info);
+        void write();
+        
+        bool is_added_to_disk_menu();
 
-		string get_client_secret();
+        string get_client_id();
 
-		int get_localhost_port();
+        string get_client_secret();
 
-		const wstring& get_plugin_launch_folder();
-	}
+        int get_localhost_port();
+
+        const wstring& get_plugin_launch_folder();
+
+        std::pair<WORD, WORD>* get_hotkey(HotkeyID key);
+    }
 }
 
 #endif //CONFIG_HPP_B490198E_23A2_4583_A1B8_80FA1450E83B

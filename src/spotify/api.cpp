@@ -113,8 +113,6 @@ namespace spotifar
             if (!s.empty())
                 responses_cache = json::parse(s);
 
-            //launch_sync_worker();
-
             return true;
         }
         
