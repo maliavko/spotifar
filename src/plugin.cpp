@@ -59,7 +59,7 @@ namespace spotifar
 
     intptr_t Plugin::process_input(const ProcessPanelInputInfo *info)
     {
-        auto& key_event = info->Rec.Event.KeyEvent;
+        auto &key_event = info->Rec.Event.KeyEvent;
         if (key_event.bKeyDown)
         {
             int key = utils::far3::input_record_to_combined_key(key_event);

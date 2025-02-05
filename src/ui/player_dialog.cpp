@@ -254,7 +254,7 @@ namespace spotifar
                 api.stop_listening(dynamic_cast<PlaybackObserver*>(this));
 
                 if (hdlg != NULL && close_ui)
-                    send_dlg_msg(hdlg, DM_CLOSE, -1, 0);
+                    far3::send_dlg_close(hdlg);
                 
                 hdlg = NULL;
                 visible = false;
@@ -295,9 +295,12 @@ namespace spotifar
         {
             FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
-            size_t pos = send_dlg_msg(hdlg, DM_LISTGETCURPOS, DEVICES_COMBO, NULL);
+            size_t pos = far3::get_list_current_pos(hdlg, DEVICES_COMBO);
             auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, DEVICES_COMBO, (void*)pos);
             size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, DEVICES_COMBO, (void*)pos);
+
+            auto s = far3::get_list_item_data<string>(hdlg, DEVICES_COMBO, pos);
+
             if (item_data)
             {
                 auto &state = api.get_playback_state();

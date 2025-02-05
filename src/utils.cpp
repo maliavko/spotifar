@@ -81,6 +81,37 @@ namespace spotifar
 			{
 				return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
 			}
+			
+			intptr_t send_dlg_close(HANDLE hdlg)
+			{
+				return send_dlg_msg(hdlg, DM_CLOSE, -1, 0);
+			}
+		
+			intptr_t set_checkbox(HANDLE hdlg, int ctrl_id, bool is_checked)
+			{
+				auto param2 = is_checked ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+				return send_dlg_msg(hdlg, DM_SETCHECK, ctrl_id, reinterpret_cast<void*>(param2));
+			}
+			
+			intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const wstring &text)
+			{
+				return send_dlg_msg(hdlg, DM_SETTEXTPTR, ctrl_id, (void*)text.c_str());
+			}
+			
+			intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const string &text)
+			{
+				return set_textptr(hdlg, ctrl_id, to_wstring(text));
+			}
+
+			wstring get_textptr(HANDLE hdlg, int ctrl_id)
+			{
+				return wstring((const wchar_t *)send_dlg_msg(hdlg, DM_GETCONSTTEXTPTR, ctrl_id, NULL));
+			}
+			
+			size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
+			{
+				return send_dlg_msg(hdlg, DM_LISTGETCURPOS, ctrl_id, NULL);
+			}
 
 			const wchar_t* get_msg(int msg_id)
 			{

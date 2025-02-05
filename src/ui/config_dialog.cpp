@@ -7,7 +7,7 @@ namespace spotifar
 {
     namespace ui
     {
-        using utils::far3::send_dlg_msg;
+        using namespace utils::far3;
 
         enum DialogControls
         {
@@ -87,71 +87,71 @@ namespace spotifar
         }
     
         static std::vector<FarDialogItem> dlg_items_layout{
-            control(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,                 DIF_NONE, L"Spotify settings"),
+            control(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,                 DIF_NONE, L"Spotifar settings"),
 
             // global settings
-            control(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,             DIF_LEFTTEXT, L"Add to disk menu"),
+            control(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,              DIF_LEFTTEXT, L"Add to disk menu"),
             
             // api settings
-            control(DI_TEXT,   box_x1, api_box_y, box_x2, box_y2,          DIF_SEPARATOR),
-            control(DI_TEXT,        view_x1, api_box_y+1, view_x1+15, 1,          DIF_LEFTTEXT, L"Client ID"),
-            control(DI_EDIT,        view_x1+15, api_box_y+1, view_x2, 1,          DIF_LEFTTEXT),
-            control(DI_TEXT,        view_x1, api_box_y+2, view_x1+15, 1,          DIF_LEFTTEXT, L"Client secret"),
-            control(DI_EDIT,        view_x1+15, api_box_y+2, view_x2, 1,          DIF_LEFTTEXT),
-            control(DI_TEXT,        view_x1, api_box_y+3, view_x1+15, 1,          DIF_LEFTTEXT, L"Localhost port"),
-            control(DI_EDIT,        view_x1+15, api_box_y+3, view_x2, 1,          DIF_LEFTTEXT),
+            control(DI_TEXT,        box_x1, api_box_y, box_x2, box_y2,              DIF_SEPARATOR),
+            control(DI_TEXT,        view_x1, api_box_y+1, view_x1+15, 1,            DIF_LEFTTEXT, L"Client ID"),
+            control(DI_EDIT,        view_x1+15, api_box_y+1, view_x2, 1,            DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, api_box_y+2, view_x1+15, 1,            DIF_LEFTTEXT, L"Client secret"),
+            control(DI_EDIT,        view_x1+15, api_box_y+2, view_x2, 1,            DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, api_box_y+3, view_x1+15, 1,            DIF_LEFTTEXT, L"Localhost port"),
+            control(DI_EDIT,        view_x1+15, api_box_y+3, view_x2, 1,            DIF_LEFTTEXT),
 
             // global hotkeys settings block   
-            control(DI_TEXT,   box_x1, hotkeys_box_y, box_x2, box_y2,          DIF_SEPARATOR),         
-            control(DI_CHECKBOX,    view_center_x-8, hotkeys_box_y, view_center_x+8, 1,       DIF_CENTERTEXT, L"Global hotkeys"),
-            control(DI_TEXT,        view_x1+34, hotkeys_box_y+1, view_x2, 1,             DIF_LEFTTEXT, L"Ctrl  Shift   Alt"),
+            control(DI_TEXT,        box_x1, hotkeys_box_y, box_x2, box_y2,          DIF_SEPARATOR),         
+            control(DI_CHECKBOX,    view_center_x-8, hotkeys_box_y, view_center_x+8, 1, DIF_CENTERTEXT, L"Global hotkeys"),
+            control(DI_TEXT,        view_x1+34, hotkeys_box_y+1, view_x2, 1,        DIF_LEFTTEXT, L"Ctrl  Shift   Alt"),
             // play/pause hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+2, view_x1+15, 1,             DIF_LEFTTEXT, L"play/pause"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+2, view_x1+30, 1,             DIF_LEFTTEXT, L"Space"),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+2, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+2, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+2, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+2, view_x1+15, 1,        DIF_LEFTTEXT, L"play/pause"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+2, view_x1+30, 1,     DIF_LEFTTEXT, L"Space"),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+2, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+2, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+2, 1, 1,              DIF_LEFTTEXT),
             // skip to next hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+3, view_x1+15, 1,             DIF_LEFTTEXT, L"skip to next"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+3, view_x1+30, 1,             DIF_LEFTTEXT, L"]"),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+3, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+3, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+3, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+3, view_x1+15, 1,        DIF_LEFTTEXT, L"skip to next"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+3, view_x1+30, 1,     DIF_LEFTTEXT, L"]"),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+3, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+3, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+3, 1, 1,              DIF_LEFTTEXT),
             // skip to prev hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+4, view_x1+15, 1,             DIF_LEFTTEXT, L"skip to prev"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+4, view_x1+30, 1,             DIF_LEFTTEXT, L"["),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+4, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+4, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+4, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+4, view_x1+15, 1,        DIF_LEFTTEXT, L"skip to prev"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+4, view_x1+30, 1,     DIF_LEFTTEXT, L"["),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+4, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+4, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+4, 1, 1,              DIF_LEFTTEXT),
             // seek forward hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+5, view_x1+15, 1,             DIF_LEFTTEXT, L"seek forward"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+5, view_x1+30, 1,             DIF_LEFTTEXT, L"Right"),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+5, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+5, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+5, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+5, view_x1+15, 1,        DIF_LEFTTEXT, L"seek forward"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+5, view_x1+30, 1,     DIF_LEFTTEXT, L"Right"),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+5, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+5, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+5, 1, 1,              DIF_LEFTTEXT),
             // seek backward hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+6, view_x1+15, 1,             DIF_LEFTTEXT, L"seek backward"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+6, view_x1+30, 1,             DIF_LEFTTEXT, L"Left"),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+6, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+6, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+6, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+6, view_x1+15, 1,        DIF_LEFTTEXT, L"seek backward"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+6, view_x1+30, 1,     DIF_LEFTTEXT, L"Left"),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+6, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+6, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+6, 1, 1,              DIF_LEFTTEXT),
             // volume up hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+7, view_x1+15, 1,             DIF_LEFTTEXT, L"volume up"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+7, view_x1+30, 1,             DIF_LEFTTEXT, L"Up"),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+7, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+7, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+7, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+7, view_x1+15, 1,        DIF_LEFTTEXT, L"volume up"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+7, view_x1+30, 1,     DIF_LEFTTEXT, L"Up"),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+7, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+7, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+7, 1, 1,              DIF_LEFTTEXT),
             // volume down hotkey
-            control(DI_TEXT,        view_x1, hotkeys_box_y+8, view_x1+15, 1,             DIF_LEFTTEXT, L"volume down"),
-            control(DI_EDIT,        view_x1+15, hotkeys_box_y+8, view_x1+30, 1,             DIF_LEFTTEXT, L"Down"),
-            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+8, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+8, 1, 1,             DIF_LEFTTEXT),
-            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+8, 1, 1,             DIF_LEFTTEXT),
+            control(DI_TEXT,        view_x1, hotkeys_box_y+8, view_x1+15, 1,        DIF_LEFTTEXT, L"volume down"),
+            control(DI_EDIT,        view_x1+15, hotkeys_box_y+8, view_x1+30, 1,     DIF_LEFTTEXT, L"Down"),
+            control(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
+            control(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
 
             // buttons block
-            control(DI_TEXT,   box_x1, buttons_box_y, box_x2, box_y2,          DIF_SEPARATOR),
-            control(DI_BUTTON,   box_x1, buttons_box_y+1, box_x2, box_y2,          DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
-            control(DI_BUTTON,   box_x1, buttons_box_y+1, box_x2, box_y2,          DIF_CENTERGROUP, L"Cancel"),
+            control(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,          DIF_SEPARATOR),
+            control(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
+            control(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP, L"Cancel"),
 
         };
 
@@ -159,16 +159,23 @@ namespace spotifar
         {
             if (msg == DN_CONTROLINPUT && hotkey_edits.contains((DialogControls)param1))
             {
-                const INPUT_RECORD *record=(const INPUT_RECORD*)param2;
-                if (record->EventType==KEY_EVENT && record->Event.KeyEvent.bKeyDown)
+                auto *record = (const INPUT_RECORD*)param2;
+                auto &key_event = record->Event.KeyEvent;
+                if (record->EventType == KEY_EVENT && key_event.bKeyDown)
                 {
-                    WORD Key=record->Event.KeyEvent.wVirtualKeyCode;
-                    if (Key!=VK_ESCAPE)
+                    int key = utils::far3::input_record_to_combined_key(key_event);
+                    if (key != VK_ESCAPE)
                     {
                         wchar_t buf[32]{};
-                        GetKeyNameTextW(record->Event.KeyEvent.wVirtualScanCode << 16, buf, sizeof(buf));
+                        // TODO: some keys like page-down do not have a proper text representation
+                        GetKeyNameTextW(key_event.wVirtualScanCode << 16, buf, sizeof(buf));
 
-                        utils::far3::send_dlg_msg(hdlg, DM_SETTEXTPTR, param1, (void*)buf);
+                        // disallowing to pick the already selected key
+                        for (auto ctrl_id: hotkey_edits)
+                            if (get_textptr(hdlg, ctrl_id) == buf)
+                                return TRUE;
+
+                        set_textptr(hdlg, (int)param1, buf);
                         return TRUE;
                     }
                 }
@@ -182,11 +189,10 @@ namespace spotifar
             auto hdlg = config::PsInfo.DialogInit(&MainGuid, &ConfigDialogGuid, -1, -1, width, height, 0,
                 &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_NONE, &dlg_proc, nullptr);
 
-            auto is_added_to_disk = config::is_added_to_disk_menu() ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-            send_dlg_msg(hdlg, DM_SETCHECK, ADD_TO_DISK_CHECKBOX, reinterpret_cast<void*>(is_added_to_disk));
-            send_dlg_msg(hdlg, DM_SETTEXTPTR, API_CLIENT_ID_EDIT, (void*)utils::to_wstring(config::get_client_id()).c_str());
-            send_dlg_msg(hdlg, DM_SETTEXTPTR, API_CLIENT_SECRET_EDIT, (void*)utils::to_wstring(config::get_client_secret()).c_str());
-            send_dlg_msg(hdlg, DM_SETTEXTPTR, API_PORT_EDIT, (void*)std::to_wstring(config::get_localhost_port()).c_str());
+            set_checkbox(hdlg, ADD_TO_DISK_CHECKBOX, config::is_added_to_disk_menu());
+            set_textptr(hdlg, API_CLIENT_ID_EDIT, config::get_client_id());
+            set_textptr(hdlg, API_CLIENT_SECRET_EDIT, config::get_client_secret());
+            set_textptr(hdlg, API_PORT_EDIT, std::to_string(config::get_localhost_port()));
 
             auto ExitCode=config::PsInfo.DialogRun(hdlg);
             if (ExitCode == 1) // OK

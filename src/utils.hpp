@@ -89,9 +89,18 @@ namespace spotifar
 			intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message = "");
 			
 			intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void* param2);
+			intptr_t send_dlg_close(HANDLE hdlg);
+			intptr_t set_checkbox(HANDLE hdlg, int ctrl_id, bool is_checked);
+			intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const wstring &text);
+			intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const string &text);
+			wstring get_textptr(HANDLE hdlg, int ctrl_id);
+			size_t get_list_current_pos(HANDLE hdlg, int ctrl_id);
+			template<class DataType> DataType get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
+			template<> string get_list_item_data<string>(HANDLE hdlg, int ctrl_id, size_t item_idx);
 			
 			const wchar_t* get_msg(int msg_id);
 		
+			// ProcessSynchroEventW mechanism
 			typedef std::function<void(void)> SynchroTaskT;
 			void push_synchro_task(SynchroTaskT task);
 			void process_synchro_event(intptr_t task_id);
@@ -163,6 +172,23 @@ namespace spotifar
 			void StorageValue<T>::clear(SettingsCtx &ctx)
 			{
 				ctx.delete_value(storage_key);
+			}
+			
+			template<class DataType>
+			DataType* get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx)
+			{
+				auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
+				size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
+				assert(sizeof(DataType) == item_data_size);
+				return reinterpret_cast<DataType*>(item_data);
+			}
+				
+			template<>
+			string get_list_item_data<string>(HANDLE hdlg, int ctrl_id, size_t item_idx)
+			{
+				auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
+				size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
+				return string(reinterpret_cast<const char*>(item_data), item_data_size);
 			}
 		}
 	}
