@@ -254,7 +254,7 @@ namespace spotifar
                 api.stop_listening(dynamic_cast<PlaybackObserver*>(this));
 
                 if (hdlg != NULL && close_ui)
-                    far3::send_dlg_close(hdlg);
+                    far3::close_dlg(hdlg);
                 
                 hdlg = NULL;
                 visible = false;
@@ -296,18 +296,12 @@ namespace spotifar
             FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
             size_t pos = far3::get_list_current_pos(hdlg, DEVICES_COMBO);
-            auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, DEVICES_COMBO, (void*)pos);
-            size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, DEVICES_COMBO, (void*)pos);
+            auto device_id = far3::get_list_item_data<string>(hdlg, DEVICES_COMBO, pos);
 
-            auto s = far3::get_list_item_data<string>(hdlg, DEVICES_COMBO, pos);
-
-            if (item_data)
+            if (!device_id.empty())
             {
                 auto &state = api.get_playback_state();
-                api.transfer_playback(
-                    std::string(reinterpret_cast<const char*>(item_data), item_data_size),
-                    state.is_playing
-                );
+                api.transfer_playback(device_id, state.is_playing);
             }
             return true;
         }
@@ -366,7 +360,7 @@ namespace spotifar
                             }
                             case far3::KEY_D + far3::KEY_ALT:
                             {
-                                send_dlg_msg(hdlg, DM_SETDROPDOWNOPENED, DEVICES_COMBO, (void*)TRUE);
+                                far3::open_dropdown(hdlg, DEVICES_COMBO, true);
                                 return true;
                             }
                         }
@@ -509,21 +503,23 @@ namespace spotifar
 	        NoRedraw nr(hdlg);
             DlgEventsSuppressor s(*this);
 
-            send_dlg_msg(this->hdlg, DM_LISTDELETE, DEVICES_COMBO, NULL);
+            far3::clear_list(hdlg, DEVICES_COMBO);
 
             for (int i = 0; i < devices.size(); i++)
             {
-                auto& dev = devices[i];
+                auto &dev = devices[i];
+                far3::add_list_item(hdlg, DEVICES_COMBO, dev.name, i,
+                                    (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
 
-                FarListItem item{ LIF_NONE, dev.name.c_str(), NULL, NULL };
-                if (dev.is_active)
-                    item.Flags |= LIF_SELECTED;
+                // FarListItem item{ LIF_NONE, dev.name.c_str(), NULL, NULL };
+                // if (dev.is_active)
+                //     item.Flags |= LIF_SELECTED;
                     
-                FarList list{ sizeof(FarList), 1, &item };
-                send_dlg_msg(this->hdlg, DM_LISTADD, DEVICES_COMBO, &list);
+                // FarList list{ sizeof(FarList), 1, &item };
+                // send_dlg_msg(this->hdlg, DM_LISTADD, DEVICES_COMBO, &list);
                 
-                FarListItemData data{sizeof(FarListItemData), i, dev.id.size(), (void*)dev.id.c_str()};
-                send_dlg_msg(this->hdlg, DM_LISTSETDATA, DEVICES_COMBO, &data);
+                // FarListItemData data{sizeof(FarListItemData), i, dev.id.size(), (void*)dev.id.c_str()};
+                // send_dlg_msg(this->hdlg, DM_LISTSETDATA, DEVICES_COMBO, &data);
             }
         }
 
@@ -683,12 +679,12 @@ namespace spotifar
         
         intptr_t PlayerDialog::set_control_text(int control_id, const std::wstring &text)
         {
-            return send_dlg_msg(hdlg, DM_SETTEXTPTR, control_id, (void*)text.c_str());
+            return far3::set_textptr(hdlg, control_id, text);
         }
         
         intptr_t PlayerDialog::set_control_enabled(int control_id, bool is_enabled)
         {
-            return send_dlg_msg(hdlg, DM_ENABLE, control_id, (void*)is_enabled);
+            return far3::set_enabled(hdlg, control_id, is_enabled);
         }
     }
 }

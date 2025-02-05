@@ -93,8 +93,8 @@ namespace spotifar
 			auto ctx = lock_settings();
 			
 			settings.add_to_disk_menu = ctx->get_bool(ADD_TO_DISK_MENU_OPT, true);
-			wcscpy_s(settings.spotify_client_id, ctx->get_wstr(SPOTIFY_CLIENT_ID_OPT, L"").c_str());
-			wcscpy_s(settings.spotify_client_secret, ctx->get_wstr(SPOTIFY_CLIENT_SECRET_OPT, L"").c_str());
+			settings.spotify_client_id = ctx->get_wstr(SPOTIFY_CLIENT_ID_OPT, L"");
+			settings.spotify_client_secret = ctx->get_wstr(SPOTIFY_CLIENT_SECRET_OPT, L"");
 			settings.localhost_service_port = ctx->get_int(LOCALHOST_SERVICE_PORT_OPT, 5050);
 			settings.plugin_startup_folder = utils::far3::get_plugin_launch_folder(info);
 		}

@@ -163,7 +163,7 @@ namespace spotifar
                 auto &key_event = record->Event.KeyEvent;
                 if (record->EventType == KEY_EVENT && key_event.bKeyDown)
                 {
-                    int key = utils::far3::input_record_to_combined_key(key_event);
+                    int key = input_record_to_combined_key(key_event);
                     if (key != VK_ESCAPE)
                     {
                         wchar_t buf[32]{};
@@ -194,10 +194,19 @@ namespace spotifar
             set_textptr(hdlg, API_CLIENT_SECRET_EDIT, config::get_client_secret());
             set_textptr(hdlg, API_PORT_EDIT, std::to_string(config::get_localhost_port()));
 
-            auto ExitCode=config::PsInfo.DialogRun(hdlg);
-            if (ExitCode == 1) // OK
+            auto ExitCode = config::PsInfo.DialogRun(hdlg);
+            if (ExitCode == OK_BUTTON)
             {
-                // различные вызовы Info.SendDlgMessage() для получения нужных выходных данных из диалога
+                {
+                    auto ctx = config::lock_settings();
+                    auto &s = ctx->get_settings();
+
+                    s.add_to_disk_menu = get_checkbox(hdlg, ADD_TO_DISK_CHECKBOX);
+                    s.spotify_client_id = get_textptr(hdlg, API_CLIENT_ID_EDIT);
+                    s.spotify_client_secret = get_textptr(hdlg, API_CLIENT_SECRET_EDIT);
+                    s.localhost_service_port = std::stoi(get_textptr(hdlg, API_PORT_EDIT));
+                }
+			    config::write();
             }
             config::PsInfo.DialogFree(hdlg);
 

@@ -56,8 +56,8 @@ namespace spotifar
             pool(8)
         {
             static const std::set<string> exclude{
-                //"/v1/me/player",
-                //"/v1/me/player/devices",
+                "/v1/me/player",
+                "/v1/me/player/devices",
             };
 
             client.set_logger(

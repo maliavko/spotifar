@@ -82,15 +82,25 @@ namespace spotifar
 				return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
 			}
 			
-			intptr_t send_dlg_close(HANDLE hdlg)
+			intptr_t close_dlg(HANDLE hdlg)
 			{
 				return send_dlg_msg(hdlg, DM_CLOSE, -1, 0);
+			}
+			
+			intptr_t set_enabled(HANDLE hdlg, int ctrl_id, bool is_enabled)
+			{
+				return send_dlg_msg(hdlg, DM_ENABLE, ctrl_id, (void*)is_enabled);
 			}
 		
 			intptr_t set_checkbox(HANDLE hdlg, int ctrl_id, bool is_checked)
 			{
 				auto param2 = is_checked ? BSTATE_CHECKED : BSTATE_UNCHECKED;
 				return send_dlg_msg(hdlg, DM_SETCHECK, ctrl_id, reinterpret_cast<void*>(param2));
+			}
+
+			bool get_checkbox(HANDLE hdlg, int ctrl_id)
+			{
+				return send_dlg_msg(hdlg, DM_GETCHECK, ctrl_id, NULL) == BSTATE_CHECKED;
 			}
 			
 			intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const wstring &text)
@@ -111,6 +121,43 @@ namespace spotifar
 			size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
 			{
 				return send_dlg_msg(hdlg, DM_LISTGETCURPOS, ctrl_id, NULL);
+			}
+
+			intptr_t clear_list(HANDLE hdlg, int ctrl_id)
+			{
+				return send_dlg_msg(hdlg, DM_LISTDELETE, ctrl_id, NULL);
+			}
+			
+			intptr_t open_dropdown(HANDLE hdlg, int ctrl_id, bool is_opened)
+			{
+				intptr_t param2 = is_opened ? TRUE : FALSE;
+				return send_dlg_msg(hdlg, DM_SETDROPDOWNOPENED, ctrl_id, (void*)param2);
+			}
+			
+			intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
+								   void *data, size_t data_size, bool is_selected)
+			{
+                FarListItem item{ LIF_NONE, label.c_str(), NULL, NULL };
+                if (is_selected)
+                    item.Flags |= LIF_SELECTED;
+                    
+                FarList list{ sizeof(FarList), 1, &item };
+                auto r = send_dlg_msg(hdlg, DM_LISTADD, ctrl_id, &list);
+                
+				if (data != nullptr)
+				{
+					FarListItemData item_data{ sizeof(FarListItemData), index, data_size, data };
+					send_dlg_msg(hdlg, DM_LISTSETDATA, ctrl_id, &item_data);
+				}
+				return r;
+			}
+	
+			template<>
+			string get_list_item_data<string>(HANDLE hdlg, int ctrl_id, size_t item_idx)
+			{
+				auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
+				size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
+				return string(reinterpret_cast<const char*>(item_data), item_data_size);
 			}
 
 			const wchar_t* get_msg(int msg_id)

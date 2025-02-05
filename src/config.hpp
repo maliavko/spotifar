@@ -17,7 +17,7 @@ namespace spotifar
 		{
 			bool add_to_disk_menu;
 			int localhost_service_port;
-			wchar_t spotify_client_id[40], spotify_client_secret[40];
+			wstring spotify_client_id, spotify_client_secret;
 			wstring plugin_startup_folder;
 		};
 
