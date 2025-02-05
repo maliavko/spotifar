@@ -51,13 +51,13 @@ namespace spotifar
 
         const string SPOTIFY_API_URL = "https://api.spotify.com";
 
-        Api::Api(BS::thread_pool &pool):
+        Api::Api():
             client(SPOTIFY_API_URL),
-            pool(pool)
+            pool(8)
         {
             static const std::set<string> exclude{
-                "/v1/me/player",
-                "/v1/me/player/devices",
+                //"/v1/me/player",
+                //"/v1/me/player/devices",
             };
 
             client.set_logger(
@@ -126,8 +126,7 @@ namespace spotifar
 
             ctx->set_str(L"responses", responses_cache.dump());
             
-            //shutdown_sync_worker();
-            //pool.purge();
+            pool.purge();
 
             ObserverManager::clear<ApiObserver>();
         }
@@ -138,6 +137,7 @@ namespace spotifar
                 [&caches = this->caches](const std::size_t idx) {
                     caches[idx]->resync();
                 }, BS::pr::high);
+            pool.wait();
         }
         
         // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback

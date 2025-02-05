@@ -19,7 +19,7 @@ namespace spotifar
         class Api: public IApi
         {
         public:
-            Api(BS::thread_pool &pool);
+            Api();
             virtual ~Api();
 
             bool start();
@@ -65,7 +65,7 @@ namespace spotifar
             void start_playback(const json &body, const string &device_id);
 
         private:
-            BS::thread_pool &pool;
+            BS::thread_pool pool;
             httplib::Client client;
             size_t playback_observers = 0;
 

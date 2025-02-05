@@ -8,8 +8,7 @@ namespace spotifar
     using namespace std::literals;
 
 	Plugin::Plugin():
-        pool(8),
-		api(pool),
+		api(),
         panel(api),
         player(api)
 	{
@@ -32,8 +31,6 @@ namespace spotifar
     void Plugin::shutdown()
     {
         shutdown_sync_worker();
-
-        pool.purge();
 
         // when shutting down, Far closes ui itself
         player.hide(false);
@@ -109,8 +106,6 @@ namespace spotifar
                 {
                     api.tick();
                     player.tick();
-                    
-                    pool.wait();
 
                     std::this_thread::sleep_for(50ms);
                 }

@@ -29,7 +29,6 @@ namespace spotifar
         void check_global_hotkeys();
 
     private:
-        BS::thread_pool pool;
         std::mutex sync_worker_mutex;
         std::atomic<bool> is_worker_listening = false;
 

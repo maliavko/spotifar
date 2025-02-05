@@ -36,12 +36,8 @@ namespace spotifar
                 ObserverManager::notify(&PlaybackObserver::on_track_changed, data.item);
 
             if (data.progress_ms != prev_data.progress_ms)
-            {
                 ObserverManager::notify(&PlaybackObserver::on_track_progress_changed,
                                         data.item.duration, data.progress);
-                if (data.item.duration_ms - data.progress_ms < 2000)
-                    spdlog::debug("track is about to change");
-            }
 
             if (data.device.volume_percent != prev_data.device.volume_percent)
                 ObserverManager::notify(&PlaybackObserver::on_volume_changed,
