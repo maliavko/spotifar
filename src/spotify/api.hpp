@@ -51,6 +51,7 @@ namespace spotifar
             void start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track);
             void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
             void resume_playback(const string &device_id = "");
+            void toggle_playback(const string &device_id = "");
             void pause_playback(const string &device_id = "");
             void skip_to_next(const string &device_id = "");
             void skip_to_previous(const string &device_id = "");

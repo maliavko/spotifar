@@ -112,7 +112,7 @@ namespace spotifar
             // global hotkeys settings block   
             control(DI_TEXT,        box_x1, hotkeys_box_y, box_x2, box_y2,          DIF_SEPARATOR),         
             control(DI_CHECKBOX,    view_center_x-8, hotkeys_box_y, view_center_x+8, 1, DIF_CENTERTEXT, L"Global hotkeys"),
-            control(DI_TEXT,        view_x1+34, hotkeys_box_y+1, view_x2, 1,        DIF_LEFTTEXT, L"Ctrl  Shift   Alt"),
+            control(DI_TEXT,        view_x1+26, hotkeys_box_y+1, view_x2, 1,        DIF_LEFTTEXT, L"VKey    Ctrl  Shift   Alt"),
             // play/pause hotkey
             control(DI_TEXT,        view_x1, hotkeys_box_y+2, view_x1+15, 1,        DIF_LEFTTEXT, L"play/pause"),
             control(DI_EDIT,        view_x1+15, hotkeys_box_y+2, view_x1+22, 1,     DIF_CENTERTEXT),
@@ -170,9 +170,10 @@ namespace spotifar
 
         };
 
-        static wstring get_key_name(WORD scan_code)
+        static wstring get_key_name(WORD virtual_key_code)
         {
             wchar_t buf[32]{};
+            auto scan_code = MapVirtualKeyA(virtual_key_code, MAPVK_VK_TO_VSC);
             GetKeyNameTextW(scan_code << 16, buf, sizeof(buf));
 
             if (!wcscmp(buf, L"Num 2")) return L"Down";
@@ -206,8 +207,8 @@ namespace spotifar
                     }
                     else if (key != VK_ESCAPE)
                     {
-                        auto key_name = get_key_name(key_event.wVirtualScanCode);
-                        auto scan_code = std::to_wstring(key_event.wVirtualScanCode);
+                        auto key_name = get_key_name(key_event.wVirtualKeyCode);
+                        auto key_code = std::to_wstring(key_event.wVirtualKeyCode);
 
                         // disallowing to pick the already selected key
                         for (auto &[ctrl_id, hotkey_id]: hotkey_edits)
@@ -215,7 +216,7 @@ namespace spotifar
                                 return TRUE;
 
                         set_textptr(hdlg, edit_id, key_name);
-                        set_textptr(hdlg, edit_id + 1, scan_code);
+                        set_textptr(hdlg, edit_id + 1, key_code);
                         return TRUE;
                     }
                 }
@@ -230,6 +231,7 @@ namespace spotifar
                 &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_NONE, &dlg_proc, nullptr);
 
             set_checkbox(hdlg, ADD_TO_DISK_CHECKBOX, config::is_added_to_disk_menu());
+            set_checkbox(hdlg, HOTKEYS_CHECKBOX, config::is_global_hotkeys_enabled());
             set_textptr(hdlg, API_CLIENT_ID_EDIT, config::get_client_id());
             set_textptr(hdlg, API_CLIENT_SECRET_EDIT, config::get_client_secret());
             set_textptr(hdlg, API_PORT_EDIT, std::to_string(config::get_localhost_port()));
@@ -255,6 +257,7 @@ namespace spotifar
                     auto &s = ctx->get_settings();
 
                     s.add_to_disk_menu = get_checkbox(hdlg, ADD_TO_DISK_CHECKBOX);
+                    s.is_global_hotkeys_enabled = get_checkbox(hdlg, HOTKEYS_CHECKBOX);
                     s.spotify_client_id = get_textptr(hdlg, API_CLIENT_ID_EDIT);
                     s.spotify_client_secret = get_textptr(hdlg, API_CLIENT_SECRET_EDIT);
                     s.localhost_service_port = std::stoi(get_textptr(hdlg, API_PORT_EDIT));

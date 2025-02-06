@@ -8,7 +8,8 @@
 
 namespace spotifar
 {
-    class Plugin
+    class Plugin:
+        public config::ConfigObserver
     {
     public:
         Plugin();
@@ -27,6 +28,8 @@ namespace spotifar
         void launch_sync_worker();
         void shutdown_sync_worker();
         void check_global_hotkeys();
+
+        virtual void on_global_hotkeys_setting_changed(bool is_enabled);
 
     private:
         std::mutex sync_worker_mutex;

@@ -10,10 +10,15 @@ namespace spotifar
     {
         extern PluginStartupInfo PsInfo;
         extern FarStandardFunctions FSF;
+        
+        struct ConfigObserver: public BaseObserverProtocol
+        {
+            virtual void on_global_hotkeys_setting_changed(bool is_enabled) {};
+        };
 
         enum HotkeyID
         {
-            PLAY,
+            PLAY = 333,
             SKIP_NEXT,
             SKIP_PREV,
             SEEK_FORWARD,
@@ -26,10 +31,11 @@ namespace spotifar
         struct Settings
         {
             bool add_to_disk_menu;
+            bool is_global_hotkeys_enabled;
             int localhost_service_port;
             wstring spotify_client_id, spotify_client_secret;
             wstring plugin_startup_folder;
-
+            // pair(key_virtual_code, key_modifiers)
             std::unordered_map<HotkeyID, std::pair<WORD, WORD>> hotkeys;
         };
 
@@ -37,6 +43,7 @@ namespace spotifar
         {
         public:
             SettingsContext();
+            ~SettingsContext();
 
             bool get_bool(const wstring &name, bool def);
             std::int64_t get_int64(const wstring &name, std::int64_t def);
@@ -55,6 +62,7 @@ namespace spotifar
             Settings& get_settings();
         private:
             PluginSettings ps;
+            Settings settings_copy;
         };
 
         std::shared_ptr<SettingsContext> lock_settings();
@@ -63,6 +71,8 @@ namespace spotifar
         void write();
         
         bool is_added_to_disk_menu();
+
+        bool is_global_hotkeys_enabled();
 
         string get_client_id();
 

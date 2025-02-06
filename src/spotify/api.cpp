@@ -178,6 +178,15 @@ namespace spotifar
         
         void Api::resume_playback(const string &device_id)
         {
+            auto &state = playback->get();
+            if (!state.is_playing)
+                return start_playback(json(), device_id);
+            else
+                return pause_playback(device_id);
+        }
+        
+        void Api::toggle_playback(const string &device_id)
+        {
             return start_playback(json(), device_id);
         }
 

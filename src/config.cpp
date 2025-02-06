@@ -9,6 +9,7 @@ namespace spotifar
 
         static const wchar_t
             *ADD_TO_DISK_MENU_OPT = L"AddToDisksMenu",
+            *ACTIVATE_GLOBAL_HOTKEYS_OPT = L"ActivateGlobalHotkeys",
             *SPOTIFY_CLIENT_ID_OPT = L"SpotifyClientID",
             *SPOTIFY_CLIENT_SECRET_OPT = L"SpotifyClientSecret",
             *LOCALHOST_SERVICE_PORT_OPT = L"LocalhostServicePort";
@@ -18,8 +19,16 @@ namespace spotifar
         Settings settings;
         
         SettingsContext::SettingsContext():
-            ps(MainGuid, PsInfo.SettingsControl)
+            ps(MainGuid, PsInfo.SettingsControl),
+            settings_copy(settings)
         {}
+
+        SettingsContext::~SettingsContext()
+        {
+            if (settings.is_global_hotkeys_enabled != settings_copy.is_global_hotkeys_enabled)
+                ObserverManager::notify(&ConfigObserver::on_global_hotkeys_setting_changed,
+                                        settings.is_global_hotkeys_enabled);
+        }
         
         Settings& SettingsContext::get_settings()
         {
@@ -100,6 +109,7 @@ namespace spotifar
             auto ctx = lock_settings();
             
             settings.add_to_disk_menu = ctx->get_bool(ADD_TO_DISK_MENU_OPT, true);
+            settings.is_global_hotkeys_enabled = ctx->get_bool(ACTIVATE_GLOBAL_HOTKEYS_OPT, true);
             settings.spotify_client_id = ctx->get_wstr(SPOTIFY_CLIENT_ID_OPT, L"");
             settings.spotify_client_secret = ctx->get_wstr(SPOTIFY_CLIENT_SECRET_OPT, L"");
             settings.localhost_service_port = ctx->get_int(LOCALHOST_SERVICE_PORT_OPT, 5050);
@@ -118,6 +128,7 @@ namespace spotifar
             auto ctx = lock_settings();
 
             ctx->set_bool(ADD_TO_DISK_MENU_OPT, settings.add_to_disk_menu);
+            ctx->set_bool(ACTIVATE_GLOBAL_HOTKEYS_OPT, settings.is_global_hotkeys_enabled);
             ctx->set_wstr(SPOTIFY_CLIENT_ID_OPT, settings.spotify_client_id);
             ctx->set_wstr(SPOTIFY_CLIENT_SECRET_OPT, settings.spotify_client_secret);
             ctx->set_int(LOCALHOST_SERVICE_PORT_OPT, settings.localhost_service_port);
@@ -129,6 +140,11 @@ namespace spotifar
         bool is_added_to_disk_menu()
         {
             return settings.add_to_disk_menu;
+        }
+
+        bool is_global_hotkeys_enabled()
+        {
+            return settings.is_global_hotkeys_enabled;
         }
 
         string get_client_id()

@@ -1,11 +1,13 @@
 #include "plugin.h"
 #include "config.hpp"
+#include "utils.hpp"
 #include "ui/config_dialog.hpp"
 
 namespace spotifar
 {
     using namespace utils;
     using namespace std::literals;
+    using config::HotkeyID;
 
 	Plugin::Plugin():
 		api(),
@@ -17,10 +19,16 @@ namespace spotifar
         {
             panel.gotoRootMenu();
         }
+
+        on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+
+        ObserverManager::subscribe<config::ConfigObserver>(this);
 	}
 
 	Plugin::~Plugin()
 	{
+        on_global_hotkeys_setting_changed(false);
+        ObserverManager::unsubscribe<config::ConfigObserver>(this);
 	}
 
     void Plugin::start()
@@ -78,15 +86,11 @@ namespace spotifar
     {
         std::packaged_task<void()> task([this]
         {
-            // clock::time_point now;
             string exit_msg = "";
             const std::lock_guard worker_lock(sync_worker_mutex);
-
-            // MSG msg = {0};
-            // RegisterHotKey(NULL, 333, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x53);
-            // RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
-            // auto s = RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
             
+            //on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+
             // LPVOID lpMsgBuf;
             // DWORD dw = GetLastError();
             // FormatMessage(
@@ -106,6 +110,8 @@ namespace spotifar
                 {
                     api.tick();
                     player.tick();
+
+                    check_global_hotkeys();
 
                     std::this_thread::sleep_for(50ms);
                 }
@@ -135,23 +141,48 @@ namespace spotifar
         log::api->info("An API sync worker has been stopped");
     }
     
+    void Plugin::on_global_hotkeys_setting_changed(bool is_enabled)
+    {
+        log::global->info("Changing global hotkeys state: {}", is_enabled);
+
+        for (int idx = HotkeyID::PLAY; idx != HotkeyID::LAST; idx++)
+        {
+            HotkeyID hotkey_id = static_cast<HotkeyID>(idx);
+            if (is_enabled)
+            {
+                auto *hotkey = config::get_hotkey(hotkey_id);
+                if (hotkey != nullptr && hotkey->first != far3::KEY_NONE)
+                {
+                    if (RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
+                    {
+                        log::global->debug("A global hotkey is registered, {}, {}", hotkey->first, hotkey->second);
+                    }
+                }
+            }
+            else
+            {
+                UnregisterHotKey(NULL, hotkey_id);
+            }
+        }
+    }
+    
     void Plugin::check_global_hotkeys()
     {
-        // MSG msg = {0};
-        // RegisterHotKey(NULL, 333, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x53);
-        // RegisterHotKey(NULL, 334, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, 0x44);
+        if (!config::is_global_hotkeys_enabled())
+            return;
 
-        // if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_HOTKEY)
-        // {
-        //     switch (LOWORD(msg.wParam))
-        //     {
-        //         case 333:
-        //         case 334:
-        //             log::api->debug("hotkey received {}", LOWORD(msg.wParam));
-        //     }
-        // }
-
-        // UnregisterHotKey(NULL, 333);
-        // UnregisterHotKey(NULL, 334);
+        MSG msg = {0};
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) && msg.message == WM_HOTKEY)
+        {
+            switch (LOWORD(msg.wParam))
+            {
+                case HotkeyID::PLAY:
+                    log::api->debug("toggle playback");
+                    return;
+                case HotkeyID::SKIP_NEXT:
+                    log::api->debug("skip next");
+                    return;
+            }
+        }
     }
 }
