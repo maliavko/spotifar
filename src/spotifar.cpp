@@ -134,14 +134,14 @@ namespace spotifar
 
 		config::write();
 		utils::log::fini();
-		utils::far3::clear_synchro_events();
+		utils::far3::synchro_tasks::clear();
 	}
 
 	intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 	{
 		if (info->Event == SE_COMMONSYNCHRO)
 		{
-			utils::far3::process_synchro_event((intptr_t)info->Param);
+			utils::far3::synchro_tasks::process((intptr_t)info->Param);
 			return NULL;
 		}
 		return NULL;

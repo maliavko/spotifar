@@ -10,11 +10,6 @@ namespace spotifar
     {
         extern PluginStartupInfo PsInfo;
         extern FarStandardFunctions FSF;
-        
-        struct ConfigObserver: public BaseObserverProtocol
-        {
-            virtual void on_global_hotkeys_setting_changed(bool is_enabled) {};
-        };
 
         enum HotkeyID
         {
@@ -26,6 +21,12 @@ namespace spotifar
             VOLUME_UP,
             VOLUME_DOWN,
             LAST
+        };
+        
+        struct ConfigObserver: public BaseObserverProtocol
+        {
+            virtual void on_global_hotkeys_setting_changed(bool is_enabled) {};
+            virtual void on_global_hotkey_changed(HotkeyID hotkey_id, WORD virtual_key, WORD modifiers) {};
         };
 
         struct Settings

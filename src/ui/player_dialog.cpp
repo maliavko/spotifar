@@ -5,10 +5,10 @@ namespace spotifar
     namespace ui
     {
         namespace far3 = utils::far3;
+        namespace synchro_tasks = far3::synchro_tasks;
         using far3::get_msg;
         using far3::send_dlg_msg;
         using far3::NoRedraw;
-        using far3::push_synchro_task;
         using namespace std::literals;
         
         static const wchar_t TRACK_BAR_CHAR_UNFILLED = 0x2591;
@@ -272,22 +272,22 @@ namespace spotifar
             // thread to avoid threads clashes, plus to process the task through the thread pool
 
             track_progress.check([this](int p) {
-                push_synchro_task([&api = this->api, p] {
+                synchro_tasks::push([&api = this->api, p] {
                     auto &state = api.get_playback_state();
                     api.seek_to_position(p * 1000, state.device.id);
                 });
             });
 
             volume.check([this](int v) {
-                push_synchro_task([&api = this->api, v] { api.set_playback_volume(v); });
+                synchro_tasks::push([&api = this->api, v] { api.set_playback_volume(v); });
             });
 
             shuffle_state.check([this](bool v) {
-                push_synchro_task([&api = this->api, v] { api.toggle_shuffle(v); });
+                synchro_tasks::push([&api = this->api, v] { api.toggle_shuffle(v); });
             });
 
             repeat_state.check([this](const std::string &s) {
-                push_synchro_task([&api = this->api, s] { api.set_repeat_state(s); });
+                synchro_tasks::push([&api = this->api, s] { api.set_repeat_state(s); });
             });
         }
 
@@ -471,23 +471,24 @@ namespace spotifar
 
         bool PlayerDialog::on_play_btn_click(void *empty)
         {
-            // TODO: handle errors
-            auto &playback = api.get_playback_state();
-            if (playback.is_playing)
-            {
-                api.pause_playback();
-                return true;
-            }
-            else if (!playback.is_empty())
-            {
-                if (!playback.context.uri.empty())
-                    api.start_playback(playback.context.uri, playback.item.get_uri(),
-                        playback.progress_ms, playback.device.id);
-                else
-                    api.resume_playback(playback.device.id);
-                return true;
-            }
-            return false;
+            // // TODO: handle errors
+            // auto &playback = api.get_playback_state();
+            // if (playback.is_playing)
+            // {
+            //     api.pause_playback();
+            //     return true;
+            // }
+            // else if (!playback.is_empty())
+            // {
+            //     if (!playback.context.uri.empty())
+            //         api.start_playback(playback.context.uri, playback.item.get_uri(),
+            //             playback.progress_ms, playback.device.id);
+            //     else
+            //         api.resume_playback(playback.device.id);
+            //     return true;
+            // }
+            api.toggle_playback();
+            return true;
         }
         
         void PlayerDialog::on_playback_sync_finished(const std::string &exit_msg)

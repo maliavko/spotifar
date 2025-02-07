@@ -165,41 +165,25 @@ namespace spotifar
                 return config::PsInfo.GetMsg(&MainGuid, msg_id);
             }
         
-            static std::unordered_map<intptr_t, SynchroTaskT> synchro_tasks;
-            
-            void push_synchro_task(SynchroTaskT task)
+            namespace synchro_tasks
             {
-                static intptr_t task_id = 0;
-
-                synchro_tasks[++task_id] = task;
-                config::PsInfo.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)task_id);
-            }
-            
-            void process_synchro_event(intptr_t task_id)
-            {
-                auto it = synchro_tasks.find(task_id);
-                if (it == synchro_tasks.end())
-                    return spdlog::error("There is no far synchro task registered with the given id, {}", task_id);
-
-                try
+                static tasks_queue queue;
+                
+                void push(tasks_queue::task_t task)
                 {
-                    it->second();
-                    synchro_tasks.erase(it);
+                    auto task_id = queue.push_task(task);
+                    config::PsInfo.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)task_id);
                 }
-                catch (const std::exception &ex)
+                
+                void process(intptr_t task_id)
                 {
-                    spdlog::error("There is an error while processing far synchro event, {}",
-                                  ex.what());
+                    return queue.process_one(task_id);
                 }
-            }
 
-            void clear_synchro_events()
-            {
-                if (synchro_tasks.size() > 0)
-                    spdlog::error("Unexpected far synchro tasks are stuck in the queue, {}",
-                                  synchro_tasks.size());
-
-                synchro_tasks.clear();
+                void clear()
+                {
+                    return queue.clear_tasks();
+                }
             }
         }
 
@@ -299,6 +283,52 @@ namespace spotifar
         {
             static auto r = std::wregex(L"[\?\\\\/:*<>|]");
             return std::regex_replace(filename, r, L"_");
+        }
+
+        
+        intptr_t tasks_queue::push_task(task_t task)
+        {
+            static intptr_t task_id = 0;
+            tasks[++task_id] = task;
+            return task_id;
+        }
+        
+        void tasks_queue::process_one(intptr_t task_id)
+        {
+            auto it = tasks.find(task_id);
+            if (it == tasks.end())
+                return log::global->error("There is no task registered with the given id, {}", task_id);
+
+            execute_task(it->second);
+            tasks.erase(it);
+        }
+
+        void tasks_queue::process_all()
+        {
+            for (auto& [task_id, task]: tasks)
+                execute_task(task);
+            tasks.clear();
+        }
+
+        void tasks_queue::clear_tasks()
+        {
+            if (tasks.size() > 0)
+                log::global->error("Unexpected tasks are stuck in the queue, {}",
+                                   tasks.size());
+            tasks.clear();
+        }
+        
+        void tasks_queue::execute_task(task_t &task)
+        {
+            try
+            {
+                task();
+            }
+            catch (const std::exception &ex)
+            {
+                log::global->error("There is an error while processing task: {}",
+                                   ex.what());
+            }
         }
     }
 }

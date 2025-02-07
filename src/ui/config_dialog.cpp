@@ -249,8 +249,7 @@ namespace spotifar
                 set_checkbox(hdlg, ctrl_id + 4, key_and_mods->second & MOD_ALT);
             }
 
-            auto exit_code = config::PsInfo.DialogRun(hdlg);
-            if (exit_code == OK_BUTTON)
+            if (config::PsInfo.DialogRun(hdlg) == OK_BUTTON)
             {
                 {
                     auto ctx = config::lock_settings();

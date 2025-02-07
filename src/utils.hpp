@@ -30,6 +30,21 @@ namespace spotifar
         string to_string(const wstring &ws);
 
         wstring strip_invalid_filename_chars(const wstring &filename);
+        
+        class tasks_queue
+        {
+        public:
+            typedef std::function<void(void)> task_t;
+
+            intptr_t push_task(task_t task);
+            void process_one(intptr_t task_id);
+            void process_all();
+            void clear_tasks();
+        protected:
+            void execute_task(task_t &task);
+        private:
+            std::unordered_map<intptr_t, task_t> tasks{};
+        };
 
         namespace log
         {
@@ -115,10 +130,12 @@ namespace spotifar
             const wchar_t* get_msg(int msg_id);
         
             // ProcessSynchroEventW mechanism
-            typedef std::function<void(void)> SynchroTaskT;
-            void push_synchro_task(SynchroTaskT task);
-            void process_synchro_event(intptr_t task_id);
-            void clear_synchro_events();
+            namespace synchro_tasks
+            {
+                void push(tasks_queue::task_t task);
+                void process(intptr_t task_id);
+                void clear();
+            }
 
 
             struct IStorableData

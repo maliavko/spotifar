@@ -20,7 +20,10 @@ namespace spotifar
             panel.gotoRootMenu();
         }
 
-        on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+        background_tasks.push_task([this] {
+            on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+        });
+        
 
         ObserverManager::subscribe<config::ConfigObserver>(this);
 	}
@@ -88,21 +91,6 @@ namespace spotifar
         {
             string exit_msg = "";
             const std::lock_guard worker_lock(sync_worker_mutex);
-            
-            //on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
-
-            // LPVOID lpMsgBuf;
-            // DWORD dw = GetLastError();
-            // FormatMessage(
-            //     FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-            //     FORMAT_MESSAGE_FROM_SYSTEM |
-            //     FORMAT_MESSAGE_IGNORE_INSERTS,
-            //     NULL,
-            //     dw,
-            //     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            //     (LPTSTR) &lpMsgBuf,
-            //     0, NULL);
-            // LPCTSTR str = (LPCTSTR)lpMsgBuf;
 
             try
             {
@@ -110,6 +98,8 @@ namespace spotifar
                 {
                     api.tick();
                     player.tick();
+
+                    background_tasks.process_all();
 
                     check_global_hotkeys();
 
@@ -123,6 +113,7 @@ namespace spotifar
                 log::api->critical("An exception occured while syncing up with an API: {}", exit_msg);
             }
             
+            // TODO: remove and cleanup the code
             // ObserverManager::notify(&BasicApiObserver::on_playback_sync_finished, exit_msg);
         });
 
@@ -143,27 +134,53 @@ namespace spotifar
     
     void Plugin::on_global_hotkeys_setting_changed(bool is_enabled)
     {
-        log::global->info("Changing global hotkeys state: {}", is_enabled);
+        background_tasks.push_task([is_enabled] {
+            log::global->info("Changing global hotkeys state: {}", is_enabled);
 
-        for (int idx = HotkeyID::PLAY; idx != HotkeyID::LAST; idx++)
-        {
-            HotkeyID hotkey_id = static_cast<HotkeyID>(idx);
-            if (is_enabled)
+            for (int idx = HotkeyID::PLAY; idx != HotkeyID::LAST; idx++)
             {
-                auto *hotkey = config::get_hotkey(hotkey_id);
-                if (hotkey != nullptr && hotkey->first != far3::KEY_NONE)
+                HotkeyID hotkey_id = static_cast<HotkeyID>(idx);
+                UnregisterHotKey(NULL, hotkey_id);
+
+                if (is_enabled)
                 {
-                    if (RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
+                    auto *hotkey = config::get_hotkey(hotkey_id);
+                    if (hotkey != nullptr && hotkey->first != far3::KEY_NONE)
                     {
-                        log::global->debug("A global hotkey is registered, {}, {}", hotkey->first, hotkey->second);
+                        if (RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
+                        {
+                            log::global->debug("A global hotkey is registered, {}, {}", hotkey->first, hotkey->second);
+                        }
+                        else
+                        {
+                            LPVOID lpMsgBuf;
+                            FormatMessage(
+                                FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                                FORMAT_MESSAGE_IGNORE_INSERTS,
+                                NULL,
+                                GetLastError(),
+                                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                (LPTSTR) &lpMsgBuf,
+                                0, NULL);
+                            
+                            if (NULL != lpMsgBuf)
+                            {
+                                log::global->error("There is an error while registering a hotkey: {}",
+                                                   utils::to_string((LPCTSTR)lpMsgBuf));
+                                LocalFree(lpMsgBuf);
+                                lpMsgBuf = NULL;
+                            }
+                        }
                     }
                 }
             }
-            else
-            {
-                UnregisterHotKey(NULL, hotkey_id);
-            }
-        }
+        });
+    }
+    
+    void Plugin::on_global_hotkey_changed(HotkeyID hotkey_id, WORD virtual_key, WORD modifiers)
+    {
+        // reinitialize all the hotkeys
+        on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
     }
     
     void Plugin::check_global_hotkeys()
@@ -177,11 +194,11 @@ namespace spotifar
             switch (LOWORD(msg.wParam))
             {
                 case HotkeyID::PLAY:
-                    log::api->debug("toggle playback");
-                    return;
+                    return api.toggle_playback();
                 case HotkeyID::SKIP_NEXT:
-                    log::api->debug("skip next");
-                    return;
+                    return api.skip_to_next();
+                case HotkeyID::SKIP_PREV:
+                    return api.skip_to_previous();
             }
         }
     }

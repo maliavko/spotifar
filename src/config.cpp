@@ -21,13 +21,21 @@ namespace spotifar
         SettingsContext::SettingsContext():
             ps(MainGuid, PsInfo.SettingsControl),
             settings_copy(settings)
-        {}
+            {}
 
         SettingsContext::~SettingsContext()
         {
             if (settings.is_global_hotkeys_enabled != settings_copy.is_global_hotkeys_enabled)
                 ObserverManager::notify(&ConfigObserver::on_global_hotkeys_setting_changed,
                                         settings.is_global_hotkeys_enabled);
+
+            for (const auto& [hotkey_id, hotkey]: settings.hotkeys)
+            {
+                auto &old_hotkey = settings_copy.hotkeys[hotkey_id];
+                if (hotkey.first != old_hotkey.first || hotkey.second != old_hotkey.second)
+                    ObserverManager::notify(&ConfigObserver::on_global_hotkey_changed,
+                                            hotkey_id, hotkey.first, hotkey.second);
+            }
         }
         
         Settings& SettingsContext::get_settings()
