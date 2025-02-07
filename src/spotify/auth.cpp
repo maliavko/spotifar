@@ -25,6 +25,19 @@ namespace spotifar
             "user-library-read "
             "user-library-modify ";
 
+        static string generate_random_string(const int length)
+        {
+            string text = "";
+            static const string possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            for (int i = 0; i < length; i++)
+            {
+                float rand = (float)std::rand() / RAND_MAX * possible.length();
+                text += possible[(int)std::floor(rand)];
+            }
+            return text;
+        };
+
         AuthCache::AuthCache(IApi *api, const string &client_id, const string &client_secret,
                              int port):
             CachedItem(L"AccessToken"),
@@ -136,7 +149,7 @@ namespace spotifar
                 { "client_id", client_id },
                 { "scope", scope }, 
                 { "redirect_uri", get_auth_callback_url() },
-                { "state", utils::generate_random_string(16) },
+                { "state", generate_random_string(16) },
             };
 
             string redirect_url = httplib::append_query_params(
@@ -148,7 +161,7 @@ namespace spotifar
             return a.get();
         }
         
-        std::string AuthCache::get_auth_callback_url() const
+        string AuthCache::get_auth_callback_url() const
         {
             return std::format("http://localhost:{}/auth/callback", port);
         }
