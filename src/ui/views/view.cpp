@@ -5,7 +5,7 @@ namespace spotifar
 {
     namespace ui
     {
-        ViewItem::ViewItem(const std::string &id, const wstring &name, const wstring &descr,
+        ViewItem::ViewItem(const string &id, const wstring &name, const wstring &descr,
                            uintptr_t attrs, size_t duration):
             id(id),
             name(utils::strip_invalid_filename_chars(name)),

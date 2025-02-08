@@ -6,10 +6,10 @@ namespace spotifar
 {
     namespace ui
     {
-        using utils::far3::get_msg;
+        using utils::far3::get_text;
         
-        RootView::RootView(spotify::Api *api):
-            View(get_msg(MPanelRootItemLabel)),
+        RootView::RootView(spotify::api *api):
+            View(get_text(MPanelRootItemLabel)),
             api(api)
         {
         }
@@ -20,14 +20,14 @@ namespace spotifar
             {
                 {
                     ArtistsView::ID,
-                    get_msg(MPanelArtistsItemLabel),
-                    get_msg(MPanelArtistsItemDescr),
+                    get_text(MPanelArtistsItemLabel),
+                    get_text(MPanelArtistsItemDescr),
                     FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
                 },
                 {
                     PlaylistsView::ID,
-                    get_msg(MPanelPlaylistsItemLabel),
-                    get_msg(MPanelPlaylistsItemDescr),
+                    get_text(MPanelPlaylistsItemLabel),
+                    get_text(MPanelPlaylistsItemDescr),
                     FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
                 }
             };
@@ -46,7 +46,7 @@ namespace spotifar
             return NULL;
         }
 
-        std::shared_ptr<RootView> RootView::create_view(spotify::Api *api)
+        std::shared_ptr<RootView> RootView::create_view(spotify::api *api)
         {
             return std::make_shared<RootView>(api);
         }

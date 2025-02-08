@@ -6,9 +6,9 @@ namespace spotifar
 {
     namespace ui
     {
-        using utils::far3::get_msg;
+        using utils::far3::get_text;
         
-        ArtistView::ArtistView(Api *api, const Artist &artist):
+        ArtistView::ArtistView(spotify::api *api, const spotify::artist &artist):
             View(artist.name),
             api(api),
             artist(artist)
@@ -21,7 +21,7 @@ namespace spotifar
             Items result;
             for (auto &[id, a]: api->get_albums(artist.id))
             {
-                std::wstring album_name = std::format(L"[{}] {}", utils::to_wstring(a.get_release_year()), a.name);
+                wstring album_name = std::format(L"[{}] {}", utils::to_wstring(a.get_release_year()), a.name);
                 if (a.is_single())
                     album_name += L" [EP]";
                 
@@ -47,12 +47,12 @@ namespace spotifar
                 {
                     case VK_F4:
                     {
-                        size_t size = config::PsInfo.PanelControl(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
+                        size_t size = config::ps_info.PanelControl(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
                         PluginPanelItem *PPI=(PluginPanelItem*)malloc(size);
                         if (PPI)
                         {
                             FarGetPluginPanelItem FGPPI={sizeof(FarGetPluginPanelItem), size, PPI};
-                            config::PsInfo.PanelControl(PANEL_ACTIVE,FCTL_GETCURRENTPANELITEM, 0, &FGPPI);
+                            config::ps_info.PanelControl(PANEL_ACTIVE,FCTL_GETCURRENTPANELITEM, 0, &FGPPI);
                             
                             const ItemFarUserData* data = nullptr;
                             if (PPI->UserData.Data != nullptr)
@@ -72,7 +72,8 @@ namespace spotifar
             return FALSE;
         }
 
-        std::shared_ptr<ArtistView> ArtistView::create_view(Api *api, const Artist &artist)
+        std::shared_ptr<ArtistView> ArtistView::create_view(
+            spotify::api *api, const spotify::artist &artist)
         {
             return std::make_shared<ArtistView>(api, artist);
         }

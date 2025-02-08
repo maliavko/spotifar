@@ -6,10 +6,9 @@
 namespace spotifar
 {
     using namespace utils;
-    using namespace std::literals;
-    using config::HotkeyID;
+    namespace hotkeys = config::hotkeys;
 
-	Plugin::Plugin():
+	plugin::plugin():
 		api(),
         panel(api),
         player(api)
@@ -24,22 +23,21 @@ namespace spotifar
             on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
         });
         
-
-        ObserverManager::subscribe<config::ConfigObserver>(this);
+        ObserverManager::subscribe<config::config_observer>(this);
 	}
 
-	Plugin::~Plugin()
+	plugin::~plugin()
 	{
         on_global_hotkeys_setting_changed(false);
-        ObserverManager::unsubscribe<config::ConfigObserver>(this);
+        ObserverManager::unsubscribe<config::config_observer>(this);
 	}
 
-    void Plugin::start()
+    void plugin::start()
     {
         launch_sync_worker();
     }
 
-    void Plugin::shutdown()
+    void plugin::shutdown()
     {
         shutdown_sync_worker();
 
@@ -48,33 +46,32 @@ namespace spotifar
         api.shutdown();
     }
     
-    void Plugin::update_panel_info(OpenPanelInfo *info)
+    void plugin::update_panel_info(OpenPanelInfo *info)
     {
         panel.update_panel_info(info);
     }
     
-    intptr_t Plugin::update_panel_items(GetFindDataInfo *info)
+    intptr_t plugin::update_panel_items(GetFindDataInfo *info)
     {
         return panel.update_panel_items(info);
     }
     
-    void Plugin::free_panel_items(const FreeFindDataInfo *info)
+    void plugin::free_panel_items(const FreeFindDataInfo *info)
     {
         panel.free_panel_items(info);
     }
     
-    intptr_t Plugin::select_item(const SetDirectoryInfo *info)
+    intptr_t plugin::select_item(const SetDirectoryInfo *info)
     {
         return panel.select_item(info);
     }
 
-    intptr_t Plugin::process_input(const ProcessPanelInputInfo *info)
+    intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
     {
         auto &key_event = info->Rec.Event.KeyEvent;
         if (key_event.bKeyDown)
         {
-            int key = utils::far3::input_record_to_combined_key(key_event);
-            switch (key)
+            switch (utils::far3::input_record_to_combined_key(key_event))
             {
                 case VK_F3:
                 {
@@ -85,7 +82,7 @@ namespace spotifar
         return panel.process_input(info);
     }
     
-    void Plugin::launch_sync_worker()
+    void plugin::launch_sync_worker()
     {
         std::packaged_task<void()> task([this]
         {
@@ -96,10 +93,10 @@ namespace spotifar
             {
                 while (is_worker_listening)
                 {
-                    api.tick();
-                    player.tick();
+                    api.tick(); // ticking spotify api
+                    player.tick(); // ticking player ui
 
-                    background_tasks.process_all();
+                    background_tasks.process_all(); // ticking background tasks if any
 
                     check_global_hotkeys();
 
@@ -122,7 +119,7 @@ namespace spotifar
         log::api->info("An API sync worker has been launched");
     }
 
-    void Plugin::shutdown_sync_worker()
+    void plugin::shutdown_sync_worker()
     {
         is_worker_listening = false;
         
@@ -132,20 +129,22 @@ namespace spotifar
         log::api->info("An API sync worker has been stopped");
     }
     
-    void Plugin::on_global_hotkeys_setting_changed(bool is_enabled)
+    void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
     {
+        // the definition of the global hotkeys must be performed in the
+        // the same thread, where the keys check is happening. So, here we push
+        // enabling function to the background tasks queue
         background_tasks.push_task([is_enabled] {
             log::global->info("Changing global hotkeys state: {}", is_enabled);
 
-            for (int idx = HotkeyID::PLAY; idx != HotkeyID::LAST; idx++)
+            for (int hotkey_id = hotkeys::play; hotkey_id != hotkeys::last; hotkey_id++)
             {
-                HotkeyID hotkey_id = static_cast<HotkeyID>(idx);
-                UnregisterHotKey(NULL, hotkey_id);
+                UnregisterHotKey(NULL, hotkey_id); // first, we unregister all the hotkeys
 
                 if (is_enabled)
                 {
                     auto *hotkey = config::get_hotkey(hotkey_id);
-                    if (hotkey != nullptr && hotkey->first != far3::KEY_NONE)
+                    if (hotkey != nullptr && hotkey->first != far3::keys::none)
                     {
                         if (RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
                         {
@@ -177,13 +176,13 @@ namespace spotifar
         });
     }
     
-    void Plugin::on_global_hotkey_changed(HotkeyID hotkey_id, WORD virtual_key, WORD modifiers)
+    void plugin::on_global_hotkey_changed(int hotkey_id, WORD virtual_key, WORD modifiers)
     {
         // reinitialize all the hotkeys
         on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
     }
     
-    void Plugin::check_global_hotkeys()
+    void plugin::check_global_hotkeys()
     {
         if (!config::is_global_hotkeys_enabled())
             return;
@@ -193,12 +192,13 @@ namespace spotifar
         {
             switch (LOWORD(msg.wParam))
             {
-                case HotkeyID::PLAY:
+                case hotkeys::play:
                     return api.toggle_playback();
-                case HotkeyID::SKIP_NEXT:
+                case hotkeys::skip_next:
                     return api.skip_to_next();
-                case HotkeyID::SKIP_PREV:
+                case hotkeys::skip_previous:
                     return api.skip_to_previous();
+                // TODO: finish up the commands
             }
         }
     }

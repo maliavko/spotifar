@@ -4,38 +4,36 @@
 
 #include "stdafx.h"
 #include "items.hpp"
-#include "interfaces.hpp"
-#include "cached_value.hpp"
+#include "abstract.hpp"
+#include "cache.hpp"
 
 namespace spotifar
 {
     namespace spotify
     {
-        using namespace std::literals;
-
-        class LibraryCache: public ICachedData
+        class LibraryCache: public cached_data_abstract
         {
         public:
-            LibraryCache(IApi *api);
+            LibraryCache(api_abstract *api);
             virtual ~LibraryCache();
 
-            // storable data interface
-            virtual void read(SettingsCtx &ctx);
-            virtual void write(SettingsCtx &ctx);
-            virtual void clear(SettingsCtx &ctx);
+            // persistent data interface
+            virtual void read(settings_ctx &ctx);
+            virtual void write(settings_ctx &ctx);
+            virtual void clear(settings_ctx &ctx);
 
-            const ArtistsT& get_followed_artist() { return followed_artists.get(); }
+            const ArtistsT& get_followed_artist() { return followed_artists; }
 
             // cached data interface
             virtual void resync(bool force = false);
 
         private:
             bool is_initialized = false;
-            IApi *api;
+            api_abstract *api;
             
-            std::vector<IStorableData*> storages;
+            std::vector<config::persistent_data_abstract*> storages;
 
-            JsonStorageValue<ArtistsT> followed_artists;
+            ArtistsT followed_artists;
         };
     }
 }

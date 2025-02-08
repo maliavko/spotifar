@@ -2,11 +2,10 @@
 #include "config.hpp"
 #include "plugin.h"
 #include "ui/config_dialog.hpp"
-#include "spotify/observers.hpp"
 
 namespace spotifar {
 
-using utils::far3::get_msg;
+using utils::far3::get_text;
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getglobalinfow.html
 void WINAPI GetGlobalInfoW(GlobalInfo *info)
@@ -29,7 +28,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
     if (config::is_added_to_disk_menu())
     {
         static const wchar_t *DiskMenuStrings[1];
-        DiskMenuStrings[0] = get_msg(MPluginUserName);
+        DiskMenuStrings[0] = get_text(MPluginUserName);
         info->DiskMenu.Guids = &MenuGuid;
         info->DiskMenu.Strings = DiskMenuStrings;
         info->DiskMenu.Count = std::size(DiskMenuStrings);
@@ -38,7 +37,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
     if (TRUE) // add to plugins menu
     {
         static const wchar_t *PluginMenuStrings[1];
-        PluginMenuStrings[0] = get_msg(MPluginUserName);
+        PluginMenuStrings[0] = get_text(MPluginUserName);
         info->PluginMenu.Guids = &MenuGuid;
         info->PluginMenu.Strings = PluginMenuStrings;
         info->PluginMenu.Count = std::size(PluginMenuStrings);
@@ -46,7 +45,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
 
     // add to plugins configuration menu
     static const wchar_t *PluginCfgStrings[1];
-    PluginCfgStrings[0] = get_msg(MPluginUserName);
+    PluginCfgStrings[0] = get_text(MPluginUserName);
     info->PluginConfig.Guids = &MenuGuid;
     info->PluginConfig.Strings = PluginCfgStrings;
     info->PluginConfig.Count = std::size(PluginCfgStrings);
@@ -65,10 +64,10 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
     {
         utils::log::init();
 
-        auto plugin = std::make_unique<Plugin>();
-        plugin->start();
+        auto p = std::make_unique<plugin>();
+        p->start();
 
-        return plugin.release();
+        return p.release();
     }
     catch (const spdlog::spdlog_ex &ex)
     {
@@ -82,8 +81,8 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html
 void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 {
-    auto &plugin = *static_cast<Plugin*>(info->hPanel);
-    plugin.update_panel_info(info);
+    auto &p = *static_cast<plugin*>(info->hPanel);
+    p.update_panel_info(info);
 }
 
 /// @brief https://api.farmanager.com/ru/structures/getfinddatainfo.html
@@ -92,13 +91,13 @@ intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
     if (info->OpMode & OPM_FIND)
         return FALSE;
     
-    return static_cast<Plugin*>(info->hPanel)->update_panel_items(info);
+    return static_cast<plugin*>(info->hPanel)->update_panel_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/freefinddataw.html 
 void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 {
-    return static_cast<Plugin*>(info->hPanel)->free_panel_items(info);
+    return static_cast<plugin*>(info->hPanel)->free_panel_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
@@ -107,24 +106,23 @@ intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
     if (info->OpMode & OPM_FIND)
         return FALSE;
         
-    return static_cast<Plugin*>(info->hPanel)->select_item(info);
+    return static_cast<plugin*>(info->hPanel)->select_item(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
 intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
     // auto &plugin = *static_cast<Plugin*>(info->hPanel);
-    return static_cast<Plugin*>(info->hPanel)->process_input(info);
+    return static_cast<plugin*>(info->hPanel)->process_input(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpaneleventw.html
 intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 {
-    auto &plugin = *static_cast<Plugin*>(info->hPanel);
-    
+    auto &p = *static_cast<plugin*>(info->hPanel);
     if (info->Event == FE_CLOSE)
     {
-        plugin.shutdown();
+        p.shutdown();
     }
 
     return FALSE;
@@ -140,7 +138,7 @@ intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 void WINAPI ClosePanelW(const ClosePanelInfo *info)
 {
     // after auto-variable is destroyed, the unique_ptr will be as well
-    std::unique_ptr<Plugin>(static_cast<Plugin*>(info->hPanel));
+    std::unique_ptr<plugin>(static_cast<plugin*>(info->hPanel));
 
     config::write();
     utils::log::fini();

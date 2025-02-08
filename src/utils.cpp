@@ -20,39 +20,112 @@ namespace spotifar { namespace utils {
 
 namespace far3
 {
-    NoRedraw::NoRedraw(HANDLE hdlg):
-        hdlg(hdlg)
-    {
-        assert(hdlg);
-        std::lock_guard lock(mutex);
-        send_dlg_msg(hdlg, DM_ENABLEREDRAW, FALSE, 0);
-    }
-
-    NoRedraw::~NoRedraw()
-    {
-        std::lock_guard lock(mutex);
-        send_dlg_msg(hdlg, DM_ENABLEREDRAW, TRUE, 0);
-    }
-
     int input_record_to_combined_key(const KEY_EVENT_RECORD &kir)
     {
         int key = static_cast<int>(kir.wVirtualKeyCode);
         const auto state = kir.dwControlKeyState;
         
-        if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= KEY_CTRL;
-        if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= KEY_ALT;
-        if (state & SHIFT_PRESSED) key |= KEY_SHIFT;
+        if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= keys::mods::ctrl;
+        if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= keys::mods::alt;
+        if (state & SHIFT_PRESSED) key |= keys::mods::shift;
 
         return key;
     }
 
+    namespace msg
+    {
+        intptr_t send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
+        {
+            return config::ps_info.SendDlgMessage(hdlg, msg, param1, param2);
+        }
+        
+        intptr_t close(HANDLE hdlg)
+        {
+            return send(hdlg, DM_CLOSE, -1, 0);
+        }
+        
+        intptr_t enable(HANDLE hdlg, int ctrl_id, bool is_enabled)
+        {
+            return send(hdlg, DM_ENABLE, ctrl_id, (void*)is_enabled);
+        }
+
+        intptr_t set_checked(HANDLE hdlg, int ctrl_id, bool is_checked)
+        {
+            auto param2 = is_checked ? BSTATE_CHECKED : BSTATE_UNCHECKED;
+            return send(hdlg, DM_SETCHECK, ctrl_id, reinterpret_cast<void*>(param2));
+        }
+
+        bool is_checked(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_GETCHECK, ctrl_id, NULL) == BSTATE_CHECKED;
+        }
+        
+        intptr_t set_text(HANDLE hdlg, int ctrl_id, const wstring &text)
+        {
+            return send(hdlg, DM_SETTEXTPTR, ctrl_id, (void*)text.c_str());
+        }
+        
+        intptr_t set_text(HANDLE hdlg, int ctrl_id, const string &text)
+        {
+            return set_text(hdlg, ctrl_id, to_wstring(text));
+        }
+
+        wstring get_text(HANDLE hdlg, int ctrl_id)
+        {
+            return wstring((const wchar_t *)send(hdlg, DM_GETCONSTTEXTPTR, ctrl_id, NULL));
+        }
+        
+        size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_LISTGETCURPOS, ctrl_id, NULL);
+        }
+
+        intptr_t clear_list(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_LISTDELETE, ctrl_id, NULL);
+        }
+        
+        intptr_t open_list(HANDLE hdlg, int ctrl_id, bool is_opened)
+        {
+            intptr_t param2 = is_opened ? TRUE : FALSE;
+            return send(hdlg, DM_SETDROPDOWNOPENED, ctrl_id, (void*)param2);
+        }
+        
+        intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
+                                void *data, size_t data_size, bool is_selected)
+        {
+            FarListItem item{ LIF_NONE, label.c_str(), NULL, NULL };
+            if (is_selected)
+                item.Flags |= LIF_SELECTED;
+                
+            FarList list{ sizeof(FarList), 1, &item };
+            auto r = send(hdlg, DM_LISTADD, ctrl_id, &list);
+            
+            if (data != nullptr)
+            {
+                FarListItemData item_data{ sizeof(FarListItemData), index, data_size, data };
+                send(hdlg, DM_LISTSETDATA, ctrl_id, &item_data);
+            }
+            return r;
+        }
+
+        template<>
+        string get_list_item_data<string>(HANDLE hdlg, int ctrl_id, size_t item_idx)
+        {
+            auto item_data = send(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
+            size_t item_data_size = send(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
+            return string(reinterpret_cast<const char*>(item_data), item_data_size);
+        }
+    }
+    
+
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
     {
-        auto err_msg = get_msg(error_msg_id);
+        auto err_msg = get_text(error_msg_id);
         const wchar_t* msgs[] = {
-            get_msg(MFarMessageErrorTitle),
+            get_text(MFarMessageErrorTitle),
             err_msg, extra_message.c_str(),
-            get_msg(MOk),
+            get_text(MOk),
         };
 
         log::global->error("Far error message dialog is shown, message id {}, {}", error_msg_id,
@@ -62,100 +135,17 @@ namespace far3
         if (GetLastError())  // if there's no error code, no need to show it in the dialog
             flags |= FMSG_ERRORTYPE;
 
-        return config::PsInfo.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
+        return config::ps_info.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
     }
     
     intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message)
     {
         return show_far_error_dlg(error_msg_id, utils::to_wstring(extra_message));
     }
-    
-    intptr_t send_dlg_msg(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
-    {
-        return config::PsInfo.SendDlgMessage(hdlg, msg, param1, param2);
-    }
-    
-    intptr_t close_dlg(HANDLE hdlg)
-    {
-        return send_dlg_msg(hdlg, DM_CLOSE, -1, 0);
-    }
-    
-    intptr_t set_enabled(HANDLE hdlg, int ctrl_id, bool is_enabled)
-    {
-        return send_dlg_msg(hdlg, DM_ENABLE, ctrl_id, (void*)is_enabled);
-    }
 
-    intptr_t set_checkbox(HANDLE hdlg, int ctrl_id, bool is_checked)
+    const wchar_t* get_text(int msg_id)
     {
-        auto param2 = is_checked ? BSTATE_CHECKED : BSTATE_UNCHECKED;
-        return send_dlg_msg(hdlg, DM_SETCHECK, ctrl_id, reinterpret_cast<void*>(param2));
-    }
-
-    bool get_checkbox(HANDLE hdlg, int ctrl_id)
-    {
-        return send_dlg_msg(hdlg, DM_GETCHECK, ctrl_id, NULL) == BSTATE_CHECKED;
-    }
-    
-    intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const wstring &text)
-    {
-        return send_dlg_msg(hdlg, DM_SETTEXTPTR, ctrl_id, (void*)text.c_str());
-    }
-    
-    intptr_t set_textptr(HANDLE hdlg, int ctrl_id, const string &text)
-    {
-        return set_textptr(hdlg, ctrl_id, to_wstring(text));
-    }
-
-    wstring get_textptr(HANDLE hdlg, int ctrl_id)
-    {
-        return wstring((const wchar_t *)send_dlg_msg(hdlg, DM_GETCONSTTEXTPTR, ctrl_id, NULL));
-    }
-    
-    size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
-    {
-        return send_dlg_msg(hdlg, DM_LISTGETCURPOS, ctrl_id, NULL);
-    }
-
-    intptr_t clear_list(HANDLE hdlg, int ctrl_id)
-    {
-        return send_dlg_msg(hdlg, DM_LISTDELETE, ctrl_id, NULL);
-    }
-    
-    intptr_t open_dropdown(HANDLE hdlg, int ctrl_id, bool is_opened)
-    {
-        intptr_t param2 = is_opened ? TRUE : FALSE;
-        return send_dlg_msg(hdlg, DM_SETDROPDOWNOPENED, ctrl_id, (void*)param2);
-    }
-    
-    intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                            void *data, size_t data_size, bool is_selected)
-    {
-        FarListItem item{ LIF_NONE, label.c_str(), NULL, NULL };
-        if (is_selected)
-            item.Flags |= LIF_SELECTED;
-            
-        FarList list{ sizeof(FarList), 1, &item };
-        auto r = send_dlg_msg(hdlg, DM_LISTADD, ctrl_id, &list);
-        
-        if (data != nullptr)
-        {
-            FarListItemData item_data{ sizeof(FarListItemData), index, data_size, data };
-            send_dlg_msg(hdlg, DM_LISTSETDATA, ctrl_id, &item_data);
-        }
-        return r;
-    }
-
-    template<>
-    string get_list_item_data<string>(HANDLE hdlg, int ctrl_id, size_t item_idx)
-    {
-        auto item_data = send_dlg_msg(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
-        size_t item_data_size = send_dlg_msg(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
-        return string(reinterpret_cast<const char*>(item_data), item_data_size);
-    }
-
-    const wchar_t* get_msg(int msg_id)
-    {
-        return config::PsInfo.GetMsg(&MainGuid, msg_id);
+        return config::ps_info.GetMsg(&MainGuid, msg_id);
     }
 
     namespace synchro_tasks
@@ -165,7 +155,7 @@ namespace far3
         void push(tasks_queue::task_t task)
         {
             auto task_id = queue.push_task(task);
-            config::PsInfo.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)task_id);
+            config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)task_id);
         }
         
         void process(intptr_t task_id)

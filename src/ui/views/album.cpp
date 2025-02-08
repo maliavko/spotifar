@@ -5,11 +5,11 @@ namespace spotifar
 {
     namespace ui
     {
-        using utils::far3::get_msg;
+        using utils::far3::get_text;
         
-        AlbumView::AlbumView(spotify::Api *api, const std::string &album_id,
-                             const std::string &artist_id):
-            View(get_msg(MPanelAlbumItemLabel)),
+        AlbumView::AlbumView(spotify::api *api, const string &album_id,
+                             const string &artist_id):
+            View(get_text(MPanelAlbumItemLabel)),
             api(api),
             album_id(album_id),
             artist_id(artist_id)
@@ -22,7 +22,7 @@ namespace spotifar
             Items result;
             for (const auto &track: api->get_album_tracks(album_id))
             {
-                std::wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
+                wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
                 result.push_back({track.id, track_name, L"", FILE_ATTRIBUTE_VIRTUAL, (size_t)track.duration});
             }
             return result;
@@ -43,8 +43,8 @@ namespace spotifar
             return nullptr;
         }
         
-        std::shared_ptr<AlbumView> AlbumView::create_view(spotify::Api *api,
-            const std::string &album_id, const std::string &artist_id)
+        std::shared_ptr<AlbumView> AlbumView::create_view(spotify::api *api,
+            const string &album_id, const string &artist_id)
         {
             return std::make_shared<AlbumView>(api, album_id, artist_id);
         }

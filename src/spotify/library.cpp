@@ -5,16 +5,11 @@ namespace spotifar
 {
     namespace spotify
     {
-        using namespace std::literals;
         using namespace utils;
 
-        LibraryCache::LibraryCache(IApi *api):
-            api(api),
-            followed_artists(L"FollowedArtists")
+        LibraryCache::LibraryCache(api_abstract *api):
+            api(api)
         {
-            storages.assign({
-                &followed_artists,
-            });
         }
 
         LibraryCache::~LibraryCache()
@@ -22,19 +17,19 @@ namespace spotifar
             storages.clear();
         }
 
-        void LibraryCache::read(SettingsCtx &ctx)
+        void LibraryCache::read(settings_ctx &ctx)
         {
             for (auto &s: storages)
                 s->read(ctx);
         }
 
-        void LibraryCache::write(SettingsCtx &ctx)
+        void LibraryCache::write(settings_ctx &ctx)
         {
             for (auto &s: storages)
                 s->write(ctx);
         }
 
-        void LibraryCache::clear(SettingsCtx &ctx)
+        void LibraryCache::clear(settings_ctx &ctx)
         {
             for (auto &s: storages)
                 s->clear(ctx);
@@ -51,7 +46,7 @@ namespace spotifar
 
                 log::api->debug("Library initialization");
 
-                ArtistsT result;
+                followed_artists.clear();
                 json request_artists_url = httplib::append_query_params("/v1/me/following", {
                     { "type", "artist" },
                     { "limit", std::to_string(50) },
@@ -65,12 +60,10 @@ namespace spotifar
                         request_artists_url = data["next"];
 
                         const auto &artists = data["items"].get<ArtistsT>();
-                        result.insert(result.end(), artists.begin(), artists.end());
+                        followed_artists.insert(followed_artists.end(), artists.begin(), artists.end());
                     }
                 }
                 while (!request_artists_url.is_null());
-
-                followed_artists.set(result);
             }
         }
     }

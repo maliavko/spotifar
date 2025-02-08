@@ -5,10 +5,10 @@ namespace spotifar
 {
     namespace ui
     {
-        using utils::far3::get_msg;
+        using utils::far3::get_text;
 
-        PlaylistsView::PlaylistsView(spotify::Api *api):
-            View(get_msg(MPanelPlaylistsItemLabel)),
+        PlaylistsView::PlaylistsView(spotify::api *api):
+            View(get_text(MPanelPlaylistsItemLabel)),
             api(api)
         {
         }
@@ -29,7 +29,7 @@ namespace spotifar
             return NULL;
         }
 
-        std::shared_ptr<PlaylistsView> PlaylistsView::create_view(spotify::Api *api)
+        std::shared_ptr<PlaylistsView> PlaylistsView::create_view(spotify::api *api)
         {
             return std::make_shared<PlaylistsView>(api);
         }

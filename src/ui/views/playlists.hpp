@@ -13,17 +13,17 @@ namespace spotifar
         class PlaylistsView: public View
         {
         public:
-            inline static const std::string ID = "playlists";
+            inline static const string ID = "playlists";
             
         public:
-            PlaylistsView(spotify::Api *api);
+            PlaylistsView(spotify::api *api);
 
             virtual Items get_items();
             virtual std::shared_ptr<View> select_item(const ItemFarUserData *data);
 
-            static std::shared_ptr<PlaylistsView> create_view(spotify::Api *api);
+            static std::shared_ptr<PlaylistsView> create_view(spotify::api *api);
         private:
-            spotify::Api *api;
+            spotify::api *api;
         };
     }
 }

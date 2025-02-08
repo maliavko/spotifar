@@ -22,9 +22,9 @@ add_library(${PROJECT_NAME} SHARED
 	spotify/devices.cpp
 	spotify/library.cpp
 	ui/panel.cpp
-	ui/player_dialog.cpp
+	ui/player.cpp
 	ui/config_dialog.cpp
-	ui/components.cpp
+	ui/controls.cpp
 	ui/views/view.cpp
 	ui/views/root.cpp
 	ui/views/artists.cpp

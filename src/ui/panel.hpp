@@ -12,7 +12,7 @@ namespace spotifar
         class Panel
         {
         public:
-            Panel(spotify::Api &api);
+            Panel(spotify::api &api);
             virtual ~Panel();
             // TODO: consider having here shutdown/close method to cleanup resources
             
@@ -27,7 +27,7 @@ namespace spotifar
             static void WINAPI free_user_data(void *const UserData, const FarPanelItemFreeInfo *const Info);
         private:
 		    std::shared_ptr<View> view;
-            spotify::Api &api;
+            spotify::api &api;
         };
     }
 }

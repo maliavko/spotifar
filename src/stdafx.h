@@ -41,6 +41,7 @@ namespace spotifar
     using std::string;
     using std::wstring;
     using json = nlohmann::json;
+    using namespace std::literals;
 }
 
 #endif //STDAFX_H_1C7F58A6_19FE_42B6_BD4D_300A869FD713

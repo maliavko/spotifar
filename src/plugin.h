@@ -4,17 +4,17 @@
 #include "stdafx.h"
 #include "spotify/api.hpp"
 #include "ui/panel.hpp"
-#include "ui/player_dialog.hpp"
+#include "ui/player.hpp"
 #include "utils.hpp"
 
 namespace spotifar
 {
-    class Plugin:
-        public config::ConfigObserver
+    class plugin:
+        public config::config_observer
     {
     public:
-        Plugin();
-        virtual ~Plugin();
+        plugin();
+        virtual ~plugin();
 
         void start();
         void shutdown();
@@ -31,16 +31,16 @@ namespace spotifar
         void check_global_hotkeys();
 
         virtual void on_global_hotkeys_setting_changed(bool is_enabled);
-        virtual void on_global_hotkey_changed(config::HotkeyID hotkey_id, WORD virtual_key, WORD modifiers);
+        virtual void on_global_hotkey_changed(int hotkey_id, WORD virtual_key, WORD modifiers);
 
     private:
         std::mutex sync_worker_mutex;
         std::atomic<bool> is_worker_listening = false;
 
         utils::tasks_queue background_tasks;
-        spotify::Api api;
+        spotify::api api;
         ui::Panel panel;
-        ui::PlayerDialog player;
+        ui::player player;
     };
 }
 

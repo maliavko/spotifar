@@ -10,24 +10,21 @@ namespace spotifar
 {
     namespace ui
     {
-        using std::string;
-        using std::wstring;
-
         class RootView: public View
         {
         public:
-            const std::string ID = "/";
+            const string ID = "/";
         
         public:
-            RootView(spotify::Api *api);
+            RootView(spotify::api *api);
 
             virtual Items get_items();
             virtual std::shared_ptr<View> select_item(const ItemFarUserData *data);
 
-            static std::shared_ptr<RootView> create_view(spotify::Api *api);
+            static std::shared_ptr<RootView> create_view(spotify::api *api);
 
         private:
-            spotify::Api *api;
+            spotify::api *api;
         };
     }
 }

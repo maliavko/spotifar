@@ -8,9 +8,6 @@ namespace spotifar
 {
     namespace ui
     {
-        using std::string;
-        using std::wstring;
-
         struct ViewItem
         {
             string id;

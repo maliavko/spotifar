@@ -10,26 +10,23 @@ namespace spotifar
 {
     namespace ui
     {
-        using std::string;
-        using std::wstring;
-
         class AlbumView: public View
         {
         public:
-            inline static const std::string ID = "album";
+            inline static const string ID = "album";
             
         public:
-            AlbumView(spotify::Api *api, const string &album_id, const string &artist_id);
+            AlbumView(spotify::api *api, const string &album_id, const string &artist_id);
 
             virtual Items get_items();
             virtual std::shared_ptr<View> select_item(const ItemFarUserData *data);
 
-            static std::shared_ptr<AlbumView> create_view(spotify::Api *api,
-                const std::string &album_id, const std::string &artist_id);
+            static std::shared_ptr<AlbumView> create_view(spotify::api *api,
+                const string &album_id, const string &artist_id);
         private:
             string album_id;
             string artist_id;
-            spotify::Api *api;
+            spotify::api *api;
         };
     }
 }
