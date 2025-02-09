@@ -7,8 +7,7 @@ refactor
 - replace Api class with IApi interface everywhere is possible
 
 application ideas
-- fair random while playing with shuffle, different strategies for shuffling (e.g. a plain random, random of groups of tracks between different artists)
-- global hotkeys?
+- propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - panels
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
     - managing playlists via standard Far functions: create folder, move/remove from panel

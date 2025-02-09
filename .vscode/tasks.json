@@ -41,7 +41,7 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "Far + Spotifar build and configure",
+            "label": "Build all",
             "type": "shell",
             "group": {
                 "kind": "build"
@@ -52,7 +52,7 @@
                 "focus": true,
                 "clear": true
             },
-            "dependsOn": ["Far msbuild", "Spotifar cmake build", "Install Spotifar to Far"],
+            "dependsOn": ["Far msbuild", "Spotifar cmake build", "Build librespot", "Install Librespot to Spotifar", "Install Spotifar to Far"],
             "dependsOrder": "sequence",
             "problemMatcher": "$msCompile"
         },
@@ -102,29 +102,45 @@
             "type": "shell",
             "command": "mklink",
             "args": [
-                "/J",
+                "/j",
                 "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\Spotifar\\",
                 "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\"
             ],
             "presentation": {
                 "reveal": "silent"
             },
-            "dependsOn": ["Create Spotifar plugin folder"],
+            //"dependsOn": ["Create Spotifar plugin folder"],
             "group": {
                 "kind": "build"
             }
         },
         {
-            "label": "Create Spotifar plugin folder",
+            "label": "Install Librespot to Spotifar",
             "type": "shell",
-            "command": "mkdir",
+            "command": "xcopy",
             "args": [
-                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
+                "${workspaceFolder}\\thirdparty\\librespot\\target\\release\\librespot.exe",
+                "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\librespot.exe*",
             ],
+            "presentation": {
+                "reveal": "silent"
+            },
+            //"dependsOn": ["Create Spotifar plugin folder"],
             "group": {
                 "kind": "build"
             }
-        }
+        },
+        // {
+        //     "label": "Create Spotifar plugin folder",
+        //     "type": "shell",
+        //     "command": "mkdir",
+        //     "args": [
+        //         "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
+        //     ],
+        //     "group": {
+        //         "kind": "build"
+        //     }
+        // }
     ],
     "inputs": [
         {

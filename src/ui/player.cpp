@@ -506,7 +506,11 @@ bool player::on_play_btn_click(void *empty)
     //         api.resume_playback(playback.device.id);
     //     return true;
     // }
-    api.toggle_playback();
+    
+    size_t pos = far3::msg::get_list_current_pos(hdlg, controls::devices_combo);
+    auto device_id = far3::msg::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
+
+    api.toggle_playback(device_id);
     return true;
 }
 

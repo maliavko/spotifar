@@ -172,30 +172,28 @@ namespace far3
 
 namespace log
 {
-    std::shared_ptr<spdlog::logger> global = nullptr, api  = nullptr;
+    std::shared_ptr<spdlog::logger>
+        global = nullptr,
+        api  = nullptr,
+        librespot = nullptr;
 
     void init()
     {
-        wstring filepath;
-        PWSTR app_data_path = NULL;
-        HRESULT hres = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &app_data_path);
-
-        // at first, we are trying to create a logs folder in users home directory,
-        // if not possible, trying plugins home directory
-        if (SUCCEEDED(hres))
-            filepath = std::format(L"{}\\spotifar\\spotifar.log", app_data_path);
-        else
-            filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_launch_folder());
+        auto filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_data_folder());
 
         // a default sink to the file 
         auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
         
-        auto default_logger = global = std::make_shared<spdlog::logger>("global", daily_sink);
-        spdlog::set_default_logger(default_logger);
+        global = std::make_shared<spdlog::logger>("global", daily_sink);
+        spdlog::set_default_logger(global);
 
         // specific logger for spotify api communication
-        auto api_logger = api = std::make_shared<spdlog::logger>("api", daily_sink);
-        spdlog::register_logger(api_logger);
+        api = std::make_shared<spdlog::logger>("api", daily_sink);
+        spdlog::register_logger(api);
+
+        // specific logger for librespot messages
+        librespot = std::make_shared<spdlog::logger>("librespot", daily_sink);
+        spdlog::register_logger(librespot);
 
         #ifdef _DEBUG
             spdlog::set_level(spdlog::level::debug);
@@ -210,9 +208,9 @@ namespace log
             spdlog::set_level(spdlog::level::info);
         #endif
 
-        log::global->info("Plugin logging system is initialized, log level: {}",
+        global->info("Plugin logging system is initialized, log level: {}",
             spdlog::level::to_string_view(spdlog::get_level()));
-        default_logger->info("Plugin version: {}", PLUGIN_VERSION);
+        global->info("Plugin version: {}", PLUGIN_VERSION);
     }
 
     void fini()

@@ -18,6 +18,18 @@ static wstring get_plugin_launch_folder(const struct PluginStartupInfo *info)
 {
     return std::filesystem::path(info->ModuleName).parent_path().wstring();
 }
+static wstring get_user_app_data_folder()
+{
+    PWSTR app_data_path = NULL;
+    HRESULT hres = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &app_data_path);
+
+    // at first, we are trying to create a logs folder in users home directory,
+    // if not possible, trying plugins home directory
+    if (SUCCEEDED(hres))
+        return std::format(L"{}\\spotifar", app_data_path);
+    
+    return config::get_plugin_launch_folder();
+}
 
 settings_context::settings_context():
     ps(MainGuid, ps_info.SettingsControl),
@@ -123,6 +135,7 @@ void read(const PluginStartupInfo *info)
     _settings.spotify_client_secret = ctx->get_wstr(spotify_client_secret_opt, L"");
     _settings.localhost_service_port = ctx->get_int(localhost_service_port_opt, 5050);
     _settings.plugin_startup_folder = get_plugin_launch_folder(info);
+    _settings.plugin_data_folder = get_user_app_data_folder();
 
     for (int hotkey_id = hotkeys::play; hotkey_id != hotkeys::last; hotkey_id++)
     {
@@ -174,6 +187,11 @@ int get_localhost_port()
 const wstring& get_plugin_launch_folder()
 {
     return _settings.plugin_startup_folder;
+}
+
+const wstring& get_plugin_data_folder()
+{
+    return _settings.plugin_data_folder;
 }
 
 std::pair<WORD, WORD>* get_hotkey(int hotkey_id)

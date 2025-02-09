@@ -45,7 +45,7 @@ typedef struct
     bool is_global_hotkeys_enabled;
     int localhost_service_port;
     wstring spotify_client_id, spotify_client_secret;
-    wstring plugin_startup_folder;
+    wstring plugin_startup_folder, plugin_data_folder;
     /// pair(key_virtual_code, key_modifiers)
     std::unordered_map<int, std::pair<WORD, WORD>> hotkeys;
 } settings;
@@ -103,6 +103,8 @@ int get_localhost_port();
 
 /// @brief The absolute folder path, containing plugin files
 const wstring& get_plugin_launch_folder();
+
+const wstring& get_plugin_data_folder();
 
 /// @brief Returning a pair(virtual key code, modifiers) pointer or nullptr
 std::pair<WORD, WORD>* get_hotkey(int hotkey_id);

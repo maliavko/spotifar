@@ -46,7 +46,7 @@ private:
 
 namespace log
 {
-    extern std::shared_ptr<spdlog::logger> global, api;
+    extern std::shared_ptr<spdlog::logger> global, api, librespot;
 
     void init();
     void fini();

@@ -13,6 +13,7 @@ struct auth
     int expires_in;
     string refresh_token;
     
+    bool is_valid() const { return !access_token.empty(); }
     friend void from_json(const json &j, auth &a);
     friend void to_json(json &j, const auth &a);
 };
@@ -40,6 +41,12 @@ private:
     int port;
     
     api_abstract *api;
+};
+
+struct auth_observer: public BaseObserverProtocol
+{
+    /// @brief An auth status has been changed
+    virtual void on_auth_status_changed(const spotify::auth &auth) {};
 };
 
 } // namespace spotify
