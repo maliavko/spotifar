@@ -6,28 +6,24 @@
 #include "view.hpp"
 #include "spotify/api.hpp"
 
-namespace spotifar
+namespace spotifar { namespace ui {
+
+class artist_view: public view
 {
-    namespace ui
-    {
-        class ArtistView: public View
-        {
-        public:
-            inline static const string ID = "artist";
-            
-        public:
-            ArtistView(spotify::api *api, const spotify::artist &artist);
+public:
+    artist_view(spotify::api *api, const spotify::artist &artist);
 
-            virtual Items get_items();
-            virtual std::shared_ptr<View> select_item(const ItemFarUserData *data);
-            virtual intptr_t process_input(const ProcessPanelInputInfo *info);
+    virtual view_items_t get_items();
+    virtual std::shared_ptr<view> select_item(const string &album_id);
+    virtual intptr_t process_input(const ProcessPanelInputInfo *info);
 
-            static std::shared_ptr<ArtistView> create_view(spotify::api *api, const spotify::artist &artist);
-        private:
-            spotify::artist artist;
-            spotify::api *api;
-        };
-    }
-}
+    static std::shared_ptr<artist_view> build(spotify::api *api, const spotify::artist &artist);
+private:
+    spotify::artist artist;
+    spotify::api *api;
+};
+
+} // namespace ui
+} // namespace spotifar
 
 #endif // ARTIST_HPP_505486D2_3FE3_4140_BF0A_76B2ACB22E61

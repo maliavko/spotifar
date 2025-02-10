@@ -2,39 +2,40 @@
 #include "root.hpp"
 #include "artist.hpp"
 
-namespace spotifar
+namespace spotifar { namespace ui {
+
+using utils::far3::get_text;
+
+artists_view::artists_view(spotify::api *api):
+    view(get_text(MPanelArtistsItemLabel)),
+    api(api)
 {
-    namespace ui
-    {
-        using utils::far3::get_text;
-
-        ArtistsView::ArtistsView(spotify::api *api):
-            View(get_text(MPanelArtistsItemLabel)),
-            api(api)
-        {
-        }
-
-        View::Items ArtistsView::get_items()
-        {
-            Items result;
-            for (const auto &a: api->get_library().get_followed_artist())
-                result.push_back({a.id, a.name, L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
-            return result;
-        }
-
-        std::shared_ptr<View> ArtistsView::select_item(const ItemFarUserData *data)
-        {
-            if (data == nullptr)
-                return RootView::create_view(api);
-            // TODO: tmp, cache a mapping in library and use it
-            const auto &artists = api->get_library().get_followed_artist();
-            const auto artist = std::find_if(artists.begin(), artists.end(), [&data](const auto &a) { return a.id == data->id; });
-            return ArtistView::create_view(api, *artist);
-        }
-        
-        std::shared_ptr<ArtistsView> ArtistsView::create_view(spotify::api *api)
-        {
-            return std::make_shared<ArtistsView>(api);
-        }
-    }
 }
+
+view::view_items_t artists_view::get_items()
+{
+    view_items_t result;
+    for (const auto &a: api->get_library().get_followed_artists())
+        result.push_back({a->id, a->name, L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
+    return result;
+}
+
+std::shared_ptr<view> artists_view::select_item(const string &artist_id)
+{
+    if (artist_id.empty())
+        return root_view::build(api);
+    
+    const artist *a = api->get_library().get_artist(artist_id);
+    if (a != nullptr)
+        return artist_view::build(api, *a);
+    
+    return nullptr;
+}
+
+std::shared_ptr<artists_view> artists_view::build(spotify::api *api)
+{
+    return std::make_shared<artists_view>(api);
+}
+
+} // namespace ui
+} // namespace spotifar

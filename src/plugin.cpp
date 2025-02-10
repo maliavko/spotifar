@@ -37,9 +37,9 @@ plugin::~plugin()
 
 void plugin::start()
 {
-    launch_sync_worker();
-    
     log::global->info("Spotifar plugin has started, version {}", utils::far3::get_plugin_version());
+
+    launch_sync_worker();
 }
 
 void plugin::shutdown()
@@ -198,22 +198,22 @@ void plugin::launch_librespot(const string &access_token)
     if (config::is_verbose_logging_enabled())
         cmd << L" --verbose";
 
-    if( !CreateProcess(
-        NULL,
-        &cmd.str()[0],
-        NULL,           // Process handle not inheritable
-        NULL,           // Thread handle not inheritable
-        TRUE,          // Set handle inheritance to FALSE
-        0,              // https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
-        NULL,           // Use parent's environment block
-        NULL,           // Use parent's starting directory 
-        &si,            // Pointer to STARTUPINFO structure
-        &pi )           // Pointer to PROCESS_INFORMATION structure
-    )
-    {
-        printf( "CreateProcess failed (%d).\n", GetLastError() );
-        return;
-    }
+    // if( !CreateProcess(
+    //     NULL,
+    //     &cmd.str()[0],
+    //     NULL,           // Process handle not inheritable
+    //     NULL,           // Thread handle not inheritable
+    //     TRUE,          // Set handle inheritance to FALSE
+    //     0,              // https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
+    //     NULL,           // Use parent's environment block
+    //     NULL,           // Use parent's starting directory 
+    //     &si,            // Pointer to STARTUPINFO structure
+    //     &pi )           // Pointer to PROCESS_INFORMATION structure
+    // )
+    // {
+    //     printf( "CreateProcess failed (%d).\n", GetLastError() );
+    //     return;
+    // }
 
 
     DWORD dwMode = PIPE_READMODE_BYTE | PIPE_NOWAIT;

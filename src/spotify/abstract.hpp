@@ -10,9 +10,18 @@ struct api_abstract
 {
     virtual ~api_abstract() {}
     
+    /// @brief Sets the given `token` as a bearer token to the http client
     virtual void set_bearer_token_auth(const string &token) = 0;
+
+    /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
+
+    /// @brief Returns the number of playback listeners. For these the API
+    /// syncs with the Spotify server way more often
     virtual size_t get_playback_observers_count() const = 0;
+
+    /// @brief Performs a HTTP GET request
+    /// @param cache_for caches the requested data for the givem amount of time
     virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {}) = 0;
 };
 

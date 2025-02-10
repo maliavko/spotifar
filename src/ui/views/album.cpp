@@ -1,52 +1,52 @@
 #include "album.hpp"
 #include "artist.hpp"
 
-namespace spotifar
+namespace spotifar { namespace ui {
+
+using utils::far3::get_text;
+
+album_view::album_view(spotify::api *api, const spotify::album &album,
+                       const spotify::artist &artist):
+    view(album.get_user_name()),
+    api(api),
+    album(album),
+    artist(artist)
 {
-    namespace ui
-    {
-        using utils::far3::get_text;
-        
-        AlbumView::AlbumView(spotify::api *api, const string &album_id,
-                             const string &artist_id):
-            View(get_text(MPanelAlbumItemLabel)),
-            api(api),
-            album_id(album_id),
-            artist_id(artist_id)
-        {
-        }
-
-        View::Items AlbumView::get_items()
-        {
-            // TODO: tmp code
-            Items result;
-            for (const auto &track: api->get_album_tracks(album_id))
-            {
-                wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
-                result.push_back({track.id, track_name, L"", FILE_ATTRIBUTE_VIRTUAL, (size_t)track.duration});
-            }
-            return result;
-        }
-
-        std::shared_ptr<View> AlbumView::select_item(const ItemFarUserData *data)
-        {
-            if (data == nullptr)
-            {
-                // TODO: tmp, cache a mapping in library and use it
-                const auto &artists = api->get_library().get_followed_artist();
-                const auto artist = std::find_if(artists.begin(), artists.end(), [this](const auto &a) { return a.id == artist_id; });
-                return ArtistView::create_view(api, *artist);
-            }
-
-            api->start_playback(album_id, data->id);
-            
-            return nullptr;
-        }
-        
-        std::shared_ptr<AlbumView> AlbumView::create_view(spotify::api *api,
-            const string &album_id, const string &artist_id)
-        {
-            return std::make_shared<AlbumView>(api, album_id, artist_id);
-        }
-    }
 }
+
+view::view_items_t album_view::get_items()
+{
+    // TODO: tmp code
+    view_items_t result;
+    for (const auto &track: api->get_album_tracks(album.id))
+    {
+        wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
+        result.push_back({track.id, track_name, L"", FILE_ATTRIBUTE_VIRTUAL, (size_t)track.duration});
+    }
+    return result;
+}
+
+std::shared_ptr<view> album_view::select_item(const string &track_id)
+{
+    if (track_id.empty())
+    {
+        const spotify::artist *a = api->get_library().get_artist(artist.id);
+        if (a != nullptr)
+            return artist_view::build(api, *a);
+    }
+    else
+    {
+        api->start_playback(album.id, track_id);
+    }
+    
+    return nullptr;
+}
+
+std::shared_ptr<album_view> album_view::build(spotify::api *api,
+    const spotify::album &album, const spotify::artist &artist)
+{
+    return std::make_shared<album_view>(api, album, artist);
+}
+
+} // namespace ui
+} // namespace spotifar

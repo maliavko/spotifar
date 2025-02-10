@@ -39,7 +39,7 @@ void to_json(json &j, const artist &a)
     });
 }
 
-string SimplifiedAlbum::get_release_year() const
+string simplified_album::get_release_year() const
 {
     static auto r = std::regex("[\\d]{4}");	
     std::smatch match;
@@ -48,7 +48,15 @@ string SimplifiedAlbum::get_release_year() const
     return "----";
 }
 
-void from_json(const json &j, SimplifiedAlbum &a)
+wstring simplified_album::get_user_name() const
+{
+    wstring user_name = std::format(L"[{}] {}", utils::to_wstring(get_release_year()), name);
+    if (is_single())
+        user_name += L" [EP]";
+    return user_name;
+}
+
+void from_json(const json &j, simplified_album &a)
 {
     j.at("id").get_to(a.id);
     j.at("total_tracks").get_to(a.total_tracks);
@@ -58,7 +66,7 @@ void from_json(const json &j, SimplifiedAlbum &a)
     a.name = utils::utf8_decode(j.at("name").get<string>());
 }
 
-void to_json(json &j, const SimplifiedAlbum &a)
+void to_json(json &j, const simplified_album &a)
 {
     j = json{
         { "id", a.id },
@@ -69,14 +77,14 @@ void to_json(json &j, const SimplifiedAlbum &a)
     };
 }
 
-void from_json(const json &j, Album &a)
+void from_json(const json &j, album &a)
 {
-    from_json(j, dynamic_cast<SimplifiedAlbum&>(a));
+    from_json(j, dynamic_cast<simplified_album&>(a));
 }
 
-void to_json(json &j, const Album &a)
+void to_json(json &j, const album &a)
 {
-    to_json(j, dynamic_cast<const SimplifiedAlbum&>(a));
+    to_json(j, dynamic_cast<const simplified_album&>(a));
     //j.update
 }
 

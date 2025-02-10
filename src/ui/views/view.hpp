@@ -3,48 +3,42 @@
 #pragma once
 
 #include "stdafx.h"
+#include "utils.hpp"
 
-namespace spotifar
+namespace spotifar { namespace ui {
+
+struct view_item
 {
-    namespace ui
-    {
-        struct ViewItem
-        {
-            string id;
-            wstring name;
-            wstring description;
-            uintptr_t file_attrs;
-            size_t duration;
+    string id;
+    wstring name;
+    wstring description;
+    uintptr_t file_attrs;
+    size_t duration;
 
-            ViewItem(const string &id, const wstring &name, const wstring &descr,
-                uintptr_t attrs = 0, size_t duration = 0);
-        };
+    view_item(const string &id, const wstring &name, const wstring &descr,
+        uintptr_t attrs = 0, size_t duration = 0);
+};
 
-		struct ItemFarUserData
-		{
-			string id;
-		};
+class view
+{
+public:
+    typedef std::vector<view_item> view_items_t;
+public:
+    view(const wstring &name): name(utils::strip_invalid_filename_chars(name)) {}
+    virtual ~view() {}
 
-        class View
-        {
-        public:
-            typedef std::vector<ViewItem> Items;
+    inline const wstring& get_name() const { return name; }
 
-        public:
-            View(const wstring &name): name(name), id(id) {}
-            virtual ~View() {}
+    virtual void update_panel_info(OpenPanelInfo *info) {}
+    virtual intptr_t process_input(const ProcessPanelInputInfo *info) { return FALSE; }
+    virtual view_items_t get_items() = 0;
+    virtual std::shared_ptr<view> select_item(const string &id) = 0;
 
-            inline const wstring& get_name() const { return name; }
+protected:
+    const wstring name;
+};
 
-            virtual void on_panel_updated(OpenPanelInfo *info) {}
-            virtual intptr_t process_input(const ProcessPanelInputInfo *info) { return FALSE; }
-            virtual Items get_items() = 0;
-            virtual std::shared_ptr<View> select_item(const ItemFarUserData *data) = 0;
+} // namespace ui
+} // namespace spotifar
 
-        protected:
-            wstring name;
-            string id;
-        };
-    }
-}
 #endif // VIEW_HPP_BD8268F0_532D_4A60_9847_B08580783467

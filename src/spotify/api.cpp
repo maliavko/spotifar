@@ -164,7 +164,7 @@ void api::start_playback(const std::vector<string> &uris, const string &device_i
     start_playback(body, device_id);
 }
 
-void api::start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track)
+void api::start_playback(const simplified_album &album, const SimplifiedTrack &track)
 {
     return start_playback(album.get_uri(), track.get_uri());
 }
@@ -424,13 +424,13 @@ PlaylistTracksT api::get_playlist_tracks(const string &playlist_id)
     return result;
 }
 
-TracksT api::get_artist_top_tracks(const string &artist_id)
+tracks_list_t api::get_artist_top_tracks(const string &artist_id)
 {
     json request_url = std::format("/v1/artists/{}/top-tracks", artist_id);
     if (auto r = get(request_url))
     {
         json data = json::parse(r->body);
-        return data["tracks"].get<TracksT>();
+        return data["tracks"].get<tracks_list_t>();
     }
     return {};
 }
@@ -450,13 +450,12 @@ AlbumsCollection api::get_albums(const string &artist_id)
 
     do
     {
-        //auto r = client.Get(request_url);
         auto r = get(request_url);
 
         json data = json::parse(r->body);
         for (json& aj : data["items"])
         {
-            auto a = aj.get<SimplifiedAlbum>();
+            auto a = aj.get<simplified_album>();
             albums[a.id] = a;
         }
 
@@ -483,7 +482,7 @@ PlaylistsCollection api::get_playlists()
 
     do
     {
-        auto r = client.Get(request_url);
+        auto r = get(request_url);
 
         json data = json::parse(r->body);
         for (json& aj : data["items"])

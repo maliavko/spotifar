@@ -28,7 +28,7 @@ public:
 
     SimplifiedTracksT get_album_tracks(const string &album_id);
     PlaylistTracksT get_playlist_tracks(const string &playlist_id);
-    TracksT get_artist_top_tracks(const string &artist_id);
+    tracks_list_t get_artist_top_tracks(const string &artist_id);
     AlbumsCollection get_albums(const string &artist_id);
     PlaylistsCollection get_playlists();
     
@@ -43,7 +43,7 @@ public:
     void start_playback(const string &context_uri, const string &track_uri = "",
                         int position_ms = 0, const string &device_id = "");
     void start_playback(const std::vector<string> &uris, const string &device_id = "");
-    void start_playback(const SimplifiedAlbum &album, const SimplifiedTrack &track);
+    void start_playback(const simplified_album &album, const SimplifiedTrack &track);
     void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
     void resume_playback(const string &device_id = "");
     void toggle_playback(const string &device_id = "");

@@ -30,7 +30,7 @@ struct artist: public simplified_artist
     friend void to_json(json &j, const artist &a);
 };
 
-struct SimplifiedAlbum
+struct simplified_album
 {
     inline static const string
         album = "album",
@@ -49,14 +49,15 @@ struct SimplifiedAlbum
     inline string get_uri() const { return make_uri(id); }
     inline bool is_single() const { return album_type == single; }
     string get_release_year() const;
-    friend void from_json(const json &j, SimplifiedAlbum &a);
-    friend void to_json(json &j, const SimplifiedAlbum &p);
+    wstring get_user_name() const;
+    friend void from_json(const json &j, simplified_album &a);
+    friend void to_json(json &j, const simplified_album &p);
 };
 
-struct Album: public SimplifiedAlbum
+struct album: public simplified_album
 {
-    friend void from_json(const json &j, Album &t);
-    friend void to_json(json &j, const Album &p);
+    friend void from_json(const json &j, album &t);
+    friend void to_json(json &j, const album &p);
 };
 
 struct SimplifiedTrack
@@ -77,7 +78,7 @@ struct SimplifiedTrack
 
 struct Track: public SimplifiedTrack
 {
-    Album album;
+    album album;
     std::vector<simplified_artist> artists;
 
     static const string& get_fields_filter();
@@ -108,10 +109,9 @@ struct PlaylistTrack
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(PlaylistTrack, added_at, track);
 };
 
-typedef std::map<string, SimplifiedAlbum> AlbumsCollection;
-typedef std::map<string, artist> ArtistsCollection;
-typedef std::vector<artist> ArtistsT;
-typedef std::vector<Track> TracksT;
+typedef std::map<string, simplified_album> AlbumsCollection;
+typedef std::vector<artist> artists_list_t;
+typedef std::vector<Track> tracks_list_t;
 typedef std::vector<PlaylistTrack> PlaylistTracksT;
 typedef std::vector<SimplifiedTrack> SimplifiedTracksT;
 typedef std::map<string, SimplifiedPlaylist> PlaylistsCollection;

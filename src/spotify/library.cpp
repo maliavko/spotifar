@@ -1,70 +1,104 @@
 #include "library.hpp"
 #include "utils.hpp"
 
-namespace spotifar
+namespace spotifar { namespace spotify {
+
+using namespace utils;
+
+LibraryCache::LibraryCache(api_abstract *api):
+    api(api)
 {
-    namespace spotify
+}
+
+LibraryCache::~LibraryCache()
+{
+    storages.clear();
+}
+
+void LibraryCache::read(settings_ctx &ctx)
+{
+    for (auto &s: storages)
+        s->read(ctx);
+}
+
+void LibraryCache::write(settings_ctx &ctx)
+{
+    for (auto &s: storages)
+        s->write(ctx);
+}
+
+void LibraryCache::clear(settings_ctx &ctx)
+{
+    for (auto &s: storages)
+        s->clear(ctx);
+}
+
+void LibraryCache::resync(bool force)
+{
+    if (!api->is_authenticated())
+        return;
+
+    if (!is_initialized)
     {
-        using namespace utils;
+        is_initialized = true;
 
-        LibraryCache::LibraryCache(api_abstract *api):
-            api(api)
+        log::api->debug("Library initialization");
+
+        json request_url = httplib::append_query_params("/v1/me/following", {
+            { "type", "artist" },
+            { "limit", std::to_string(50) },
+        });
+
+        do
         {
-        }
-
-        LibraryCache::~LibraryCache()
-        {
-            storages.clear();
-        }
-
-        void LibraryCache::read(settings_ctx &ctx)
-        {
-            for (auto &s: storages)
-                s->read(ctx);
-        }
-
-        void LibraryCache::write(settings_ctx &ctx)
-        {
-            for (auto &s: storages)
-                s->write(ctx);
-        }
-
-        void LibraryCache::clear(settings_ctx &ctx)
-        {
-            for (auto &s: storages)
-                s->clear(ctx);
-        }
-
-        void LibraryCache::resync(bool force)
-        {
-            if (!api->is_authenticated())
-                return;
-
-            if (!is_initialized)
+            if (auto r = api->get(request_url))
             {
-                is_initialized = true;
+                json data = json::parse(r->body)["artists"];
+                request_url = data["next"];
 
-                log::api->debug("Library initialization");
-
-                followed_artists.clear();
-                json request_artists_url = httplib::append_query_params("/v1/me/following", {
-                    { "type", "artist" },
-                    { "limit", std::to_string(50) },
-                });
-
-                do
+                artists_list_t result;
+                for (const auto &artist: data["items"].get<artists_list_t>())
                 {
-                    if (auto r = api->get(request_artists_url))
-                    {
-                        json data = json::parse(r->body)["artists"];
-                        request_artists_url = data["next"];
-
-                        const auto &artists = data["items"].get<ArtistsT>();
-                        followed_artists.insert(followed_artists.end(), artists.begin(), artists.end());
-                    }
+                    auto &ref = artists[artist.id] = artist;
+                    followed_artists.push_back(&ref);
                 }
-                while (!request_artists_url.is_null());
             }
         }
+        while (!request_url.is_null());
     }
 }
+    
+const artist* LibraryCache::get_artist(const string &artist_id)
+{
+    // looking for the artist in cache
+    auto it = artists.find(artist_id);
+    if (it != artists.end())
+        return &it->second;
+
+    // otherwise requesting from the server
+    if (auto r = api->get(std::format("/v1/artists/{}", artist_id)))
+    {
+        auto &ref = artists[artist_id] = json::parse(r->body).get<artist>();
+        return &ref;
+    }
+    return nullptr;
+}
+    
+const album* LibraryCache::get_album(const string &album_id)
+{
+    // looking for the album in cache
+    auto it = albums.find(album_id);
+    if (it != albums.end())
+        return &it->second;
+
+    // otherwise requesting from the server
+    if (auto r = api->get(std::format("/v1/albums/{}", album_id)))
+    {
+        auto &ref = albums[album_id] = json::parse(r->body).get<album>();
+        return &ref;
+    }
+    return nullptr;
+}
+
+} // namespace spotify
+} // namespace spotifar
