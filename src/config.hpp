@@ -28,32 +28,36 @@ namespace hotkeys
     };
 }
 
-struct config_observer: public BaseObserverProtocol
+struct settings
 {
-    virtual void on_global_hotkeys_setting_changed(bool is_enabled) {};
+    /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }
+    typedef std::unordered_map<int, std::pair<WORD, WORD>> hotkeys_t;
 
-    /// @brief The event is called if hotkey's key code or modifiers have changed
-    /// @param hotkey_id `hotkey_id`
-    /// @param virtual_key virtual key code
-    /// @param modifiers combination of keys modifiers
-    virtual void on_global_hotkey_changed(int hotkey_id, WORD virtual_key, WORD modifiers) {};
-};
-
-typedef struct
-{
     bool add_to_disk_menu;
     bool is_global_hotkeys_enabled;
+    bool verbose_logging;
     int localhost_service_port;
     wstring spotify_client_id, spotify_client_secret;
     wstring plugin_startup_folder, plugin_data_folder;
-    /// pair(key_virtual_code, key_modifiers)
-    std::unordered_map<int, std::pair<WORD, WORD>> hotkeys;
-} settings;
+    hotkeys_t hotkeys;
+};
+
+struct config_observer: public BaseObserverProtocol
+{
+    /// @brief The global hotkeys setting's state has been changed: on/off
+    virtual void on_global_hotkeys_setting_changed(bool is_enabled) {};
+
+    /// @brief The logging verbosity level has been changed
+    virtual void on_logging_verbocity_changed(bool is_verbose) {};
+
+    /// @brief The event is called if hotkey's key code or modifiers have changed
+    virtual void on_global_hotkey_changed(settings::hotkeys_t changed_keys) {};
+};
 
 class settings_context
 {
 public:
-    settings_context();
+    settings_context(bool fire_diff_events);
     ~settings_context();
 
     bool get_bool(const wstring &name, bool def);
@@ -72,13 +76,15 @@ public:
 
     settings& get_settings();
 private:
+    bool fire_events;
     PluginSettings ps;
     settings settings_copy;
 };
 
 /// @brief Returns the settings context, which provides the access 
 /// to the plugin settings
-std::shared_ptr<settings_context> lock_settings();
+/// @param fire_diff_events fire diff config events, when the editing is finished
+std::shared_ptr<settings_context> lock_settings(bool fire_diff_events = true);
 
 /// @brief Initialize settings
 void read(const PluginStartupInfo *info);
@@ -92,6 +98,9 @@ bool is_added_to_disk_menu();
 /// @brief Returns the flag, indicating whether the global hotkeys are enabled
 bool is_global_hotkeys_enabled();
 
+/// additional verbose logging enabled
+bool is_verbose_logging_enabled();
+
 /// @brief Returns the Spotify client id, set by user
 string get_client_id();
 
@@ -104,6 +113,7 @@ int get_localhost_port();
 /// @brief The absolute folder path, containing plugin files
 const wstring& get_plugin_launch_folder();
 
+/// @brief The absolute folder path, pointer to the users AppData/spotify folder
 const wstring& get_plugin_data_folder();
 
 /// @brief Returning a pair(virtual key code, modifiers) pointer or nullptr

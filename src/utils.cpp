@@ -6,20 +6,21 @@
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
 
-/// @brief specific overload for logging far VersionInfo struct
-std::ostream& operator<<(std::ostream &os, const VersionInfo &c)
-{ 
-    return os << std::format("{}.{}.{}.{}.{}", c.Major, c.Minor, c.Revision, c.Build, (int)c.Stage); 
-}
-
-/// @brief fmt v10 and above requires `fmt::formatter<T>` extends `fmt::ostream_formatter`.
-/// See: https://github.com/fmtlib/fmt/issues/3318
-template <> struct fmt::formatter<VersionInfo> : fmt::ostream_formatter {};
-
 namespace spotifar { namespace utils {
 
 namespace far3
 {
+    string get_plugin_version()
+    {
+        return std::format("{}.{}.{}.{}.{}",
+            PLUGIN_VERSION.Major,
+            PLUGIN_VERSION.Minor,
+            PLUGIN_VERSION.Revision,
+            PLUGIN_VERSION.Build,
+            (int)PLUGIN_VERSION.Stage
+            );
+    }
+
     int input_record_to_combined_key(const KEY_EVENT_RECORD &kir)
     {
         int key = static_cast<int>(kir.wVirtualKeyCode);
@@ -196,27 +197,37 @@ namespace log
         spdlog::register_logger(librespot);
 
         #ifdef _DEBUG
-            spdlog::set_level(spdlog::level::debug);
-            
             // for debugging in VS Code this sink helps seeing the messages in the Debug Console view
             auto msvc_debug_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
             spdlog::apply_all([&msvc_debug_sink](const auto &logger)
             {
                 logger->sinks().push_back(msvc_debug_sink);
             });
-        #else
-            spdlog::set_level(spdlog::level::info);
         #endif
+        
+        global->info("Plugin logging system is initialized");
 
-        global->info("Plugin logging system is initialized, log level: {}",
-            spdlog::level::to_string_view(spdlog::get_level()));
-        global->info("Plugin version: {}", PLUGIN_VERSION);
+        // note: the librespot logging is initialized with process startup,
+        // the change will take place only after restarting the plugin
+        enable_verbose_logs(config::is_verbose_logging_enabled());
     }
 
     void fini()
     {
         log::global->info("Closing plugin\n\n");
         spdlog::shutdown();
+    }
+
+    void enable_verbose_logs(bool is_verbose)
+    {
+        auto level = spdlog::level::info;
+
+        if (is_verbose)
+            level = spdlog::level::debug;
+
+        spdlog::set_level(level);
+
+        global->info("Logging level has been changed: {}", spdlog::level::to_string_view(level));
     }
 }
 

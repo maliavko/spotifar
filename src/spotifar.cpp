@@ -54,28 +54,28 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/setstartupinfow.html 
 void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 {
-    config::read(info);
-}
-
-/// @brief https://api.farmanager.com/ru/exported_functions/openw.html 
-HANDLE WINAPI OpenW(const OpenInfo *info)
-{
     try 
     {
+        // initialize the global settings
+        config::read(info);
+        
+        // initialize logging system
         utils::log::init();
-
-        auto p = std::make_unique<plugin>();
-        p->start();
-
-        return p.release();
     }
     catch (const spdlog::spdlog_ex &ex)
     {
         utils::far3::show_far_error_dlg(
             MFarMessageErrorLogInit, utils::utf8_decode(ex.what()));
-
-        return nullptr;
     }
+}
+
+/// @brief https://api.farmanager.com/ru/exported_functions/openw.html 
+HANDLE WINAPI OpenW(const OpenInfo *info)
+{
+    auto p = std::make_unique<plugin>();
+    p->start();
+
+    return p.release();
 }
 
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html

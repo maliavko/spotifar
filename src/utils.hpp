@@ -49,7 +49,10 @@ namespace log
     extern std::shared_ptr<spdlog::logger> global, api, librespot;
 
     void init();
+
     void fini();
+
+    void enable_verbose_logs(bool is_verbose);
 }
 
 namespace far3
@@ -85,7 +88,10 @@ namespace far3
             a = 0x41,
             d = 0x44,
             r = 0x52,
-            s = 0x53;
+            s = 0x53,
+            z = 0x5A,
+            key_0 = 0x30,
+            key_9 = 0x39;
 
         namespace mods
         {
@@ -95,6 +101,9 @@ namespace far3
                 shift = 0x400000;
         }
     }
+
+    /// @brief Returns plugin version in the format "Major.Minor.Revision.Build.Stage"
+    string get_plugin_version();
 
     int input_record_to_combined_key(const KEY_EVENT_RECORD &kir);
 
@@ -135,9 +144,26 @@ namespace far3
     /// @brief ProcessSynchroEventW mechanism
     namespace synchro_tasks
     {
+        /// @brief Push a task, to be executed in the plugin's main thread
         void push(tasks_queue::task_t task);
+
+        /// @brief Execute a task with a given id
         void process(intptr_t task_id);
+
+        /// @brief Clear the tasks queue
         void clear();
+        
+        /// @brief Fire an ObserverManager event in the context of a plugin's main thread
+        /// @tparam P observer class
+        /// @param method observer method to be called
+        /// @param args arguments to be passed to the observer method
+        template <class P, typename... MethodArgumentTypes, typename... ActualArgumentTypes>
+        static void dispatch_event(void (P::*method)(MethodArgumentTypes...), ActualArgumentTypes... args)
+        {
+            far3::synchro_tasks::push([method, args...] {
+                ObserverManager::notify(method, args...);
+            });
+        }
     }
 
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message = L"");

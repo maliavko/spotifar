@@ -37,7 +37,8 @@ protected:
     void check_librespot_messages();
 
     virtual void on_global_hotkeys_setting_changed(bool is_enabled);
-    virtual void on_global_hotkey_changed(int hotkey_id, WORD virtual_key, WORD modifiers);
+    virtual void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys);
+    virtual void on_logging_verbocity_changed(bool is_verbose);
     virtual void on_auth_status_changed(const spotify::auth &auth);
 
 private:

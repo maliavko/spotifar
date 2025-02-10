@@ -3,9 +3,12 @@
 
 namespace spotifar { namespace config {
 
+using utils::far3::synchro_tasks::dispatch_event;
+
 static const wchar_t
     *add_to_disk_menu_opt = L"AddToDisksMenu",
     *activate_global_hotkeys_opt = L"ActivateGlobalHotkeys",
+    *verbose_logging_enabled_opt = L"EnableVerboseLogging",
     *spotify_client_id_opt = L"SpotifyClientID",
     *spotify_client_secret_opt = L"SpotifyClientSecret",
     *localhost_service_port_opt = L"LocalhostServicePort";
@@ -31,24 +34,32 @@ static wstring get_user_app_data_folder()
     return config::get_plugin_launch_folder();
 }
 
-settings_context::settings_context():
-    ps(MainGuid, ps_info.SettingsControl),
-    settings_copy(_settings)
-    {}
+settings_context::settings_context(bool fire_diff_events):
+    ps(MainGuid, ps_info.SettingsControl), settings_copy(_settings), fire_events(fire_diff_events) {}
 
 settings_context::~settings_context()
 {
+    if (!fire_events)
+        return;
+    
     if (_settings.is_global_hotkeys_enabled != settings_copy.is_global_hotkeys_enabled)
-        ObserverManager::notify(&config_observer::on_global_hotkeys_setting_changed,
+        dispatch_event(&config_observer::on_global_hotkeys_setting_changed,
             _settings.is_global_hotkeys_enabled);
 
+    settings::hotkeys_t changed_keys;
     for (const auto &[hotkey_id, hotkey]: _settings.hotkeys)
     {
         auto &old_hotkey = settings_copy.hotkeys[hotkey_id];
         if (hotkey.first != old_hotkey.first || hotkey.second != old_hotkey.second)
-            ObserverManager::notify(&config_observer::on_global_hotkey_changed,
-                                    hotkey_id, hotkey.first, hotkey.second);
+            changed_keys[hotkey_id] = hotkey;
     }
+    
+    if (changed_keys.size()) // send only if some keys have beeen changed
+        dispatch_event(&config_observer::on_global_hotkey_changed, changed_keys);
+    
+    if (_settings.verbose_logging != settings_copy.verbose_logging)
+        dispatch_event(&config_observer::on_logging_verbocity_changed,
+            _settings.verbose_logging);
 }
 
 settings& settings_context::get_settings()
@@ -111,9 +122,9 @@ bool settings_context::delete_value(const wstring& name)
     return ps.DeleteValue(0, name.c_str());
 }
 
-std::shared_ptr<settings_context> lock_settings()
+std::shared_ptr<settings_context> lock_settings(bool fire_diff_events)
 {
-    return std::make_shared<settings_context>();
+    return std::make_shared<settings_context>(fire_diff_events);
 }
 
 static wstring get_hotkey_node_name(int key)
@@ -127,10 +138,12 @@ void read(const PluginStartupInfo *info)
     fsf = *info->FSF;
     ps_info.FSF = &fsf;
 
-    auto ctx = lock_settings();
+    // read initial settings, do not fire diff events
+    auto ctx = lock_settings(false);
     
     _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
+    _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, true);
     _settings.spotify_client_id = ctx->get_wstr(spotify_client_id_opt, L"");
     _settings.spotify_client_secret = ctx->get_wstr(spotify_client_secret_opt, L"");
     _settings.localhost_service_port = ctx->get_int(localhost_service_port_opt, 5050);
@@ -151,6 +164,7 @@ void write()
 
     ctx->set_bool(add_to_disk_menu_opt, _settings.add_to_disk_menu);
     ctx->set_bool(activate_global_hotkeys_opt, _settings.is_global_hotkeys_enabled);
+    ctx->set_bool(verbose_logging_enabled_opt, _settings.verbose_logging);
     ctx->set_wstr(spotify_client_id_opt, _settings.spotify_client_id);
     ctx->set_wstr(spotify_client_secret_opt, _settings.spotify_client_secret);
     ctx->set_int(localhost_service_port_opt, _settings.localhost_service_port);
@@ -167,6 +181,11 @@ bool is_added_to_disk_menu()
 bool is_global_hotkeys_enabled()
 {
     return _settings.is_global_hotkeys_enabled;
+}
+
+bool is_verbose_logging_enabled()
+{
+    return _settings.verbose_logging;
 }
 
 string get_client_id()

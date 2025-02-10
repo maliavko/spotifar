@@ -13,6 +13,7 @@ enum controls : int
     no_control = -1,
     dialog_box,
     add_to_disk_checkbox,
+    verbose_logging_checkbox,
     spotify_api_separator,
     api_client_id_label,
     api_client_id_edit,
@@ -81,11 +82,13 @@ static const std::unordered_map<controls, int> hotkey_edits{
 };
 
 static const int
-    width = 62, height = 21,
+    api_box_y = 5, // x position of a panel with api settings
+    hotkeys_box_y = api_box_y + 4, // x position of a panel with hotkeys settings
+    buttons_box_y = hotkeys_box_y + 9, // x position of a buttons panel
+    width = 62, height = buttons_box_y + 4, // overall dialog height is a summ of all the panels included
     box_x1 = 3, box_x2 = width - 4, box_y1 = 1, box_y2 = height - 2,
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1,
-    view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2,
-    api_box_y = 3, hotkeys_box_y = 8, buttons_box_y = 17;
+    view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2;
 
 static FarDialogItem control(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
                              FARDIALOGITEMFLAGS flags, const wchar_t *data = L"")
@@ -98,6 +101,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 
     // global settings
     control(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,              DIF_LEFTTEXT, L"Add to disk menu"),
+    control(DI_CHECKBOX,    view_x1, view_y1+1, view_x1 + 15, 1,            DIF_LEFTTEXT, L"Verbose logging"),
     
     // api settings
     control(DI_TEXT,        box_x1, api_box_y, box_x2, box_y2,              DIF_SEPARATOR),
@@ -166,23 +170,45 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     control(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,          DIF_SEPARATOR),
     control(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
     control(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP, L"Cancel"),
-
 };
 
+/// @brief The function `GetKeyNameTextW` works no great, for some corner cases
+/// it returns empty or error translation. Plus the text will depend on the 
+/// locale language selected by user in OS. The function tries to be not
+/// dependent on these problems
 static wstring get_key_name(WORD virtual_key_code)
 {
+    // if the key is a text key
+    if (virtual_key_code >= utils::far3::keys::a && virtual_key_code <= utils::far3::keys::z)
+        return wstring(1, (char)virtual_key_code);
+
+    // if it is a special key
+    switch (virtual_key_code)
+    {
+        case VK_DOWN: return L"Down";
+        case VK_LEFT: return L"Left";
+        case VK_RIGHT: return L"Right";
+        case VK_UP: return L"Up";
+        case VK_END: return L"End";
+        case VK_NAVIGATION_DOWN: return L"Pg Down";
+        case VK_NAVIGATION_UP: return L"Pg Up";
+        case VK_CAPITAL: return L"Caps";
+        case VK_OEM_PERIOD: return L".";
+        case VK_OEM_COMMA: return L",";
+        case VK_OEM_1: return L";";
+        case VK_OEM_2: return L"/";
+        case VK_OEM_3: return L"";
+        case VK_OEM_4: return L"[";
+        case VK_OEM_5: return L"\\";
+        case VK_OEM_6: return L"]";
+        case VK_OEM_7: return L"'";
+    }
+    
+    // the rest we'll try to map via winapi
     wchar_t buf[32]{};
     auto scan_code = MapVirtualKeyA(virtual_key_code, MAPVK_VK_TO_VSC);
     GetKeyNameTextW(scan_code << 16, buf, sizeof(buf));
 
-    if (!wcscmp(buf, L"Num 2")) return L"Down";
-    if (!wcscmp(buf, L"Num 4")) return L"Left";
-    if (!wcscmp(buf, L"Num 6")) return L"Right";
-    if (!wcscmp(buf, L"Num 8")) return L"Up";
-    if (!wcscmp(buf, L"Num 1")) return L"End";
-    if (!wcscmp(buf, L"Num 3")) return L"Pg Down";
-    if (!wcscmp(buf, L"Num 9")) return L"Pg Up";
-    
     return buf;
 }
 
@@ -230,6 +256,7 @@ bool ConfigDialog::show()
         &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_NONE, &dlg_proc, nullptr);
 
     msg::set_checked(hdlg, add_to_disk_checkbox, config::is_added_to_disk_menu());
+    msg::set_checked(hdlg, verbose_logging_checkbox, config::is_verbose_logging_enabled());
     msg::set_checked(hdlg, hotkeys_checkbox, config::is_global_hotkeys_enabled());
     msg::set_text(hdlg, api_client_id_edit, config::get_client_id());
     msg::set_text(hdlg, api_client_secret_edit, config::get_client_secret());
@@ -255,6 +282,7 @@ bool ConfigDialog::show()
             auto &s = ctx->get_settings();
 
             s.add_to_disk_menu = msg::is_checked(hdlg, add_to_disk_checkbox);
+            s.verbose_logging = msg::is_checked(hdlg, verbose_logging_checkbox);
             s.is_global_hotkeys_enabled = msg::is_checked(hdlg, hotkeys_checkbox);
             s.spotify_client_id = msg::get_text(hdlg, api_client_id_edit);
             s.spotify_client_secret = msg::get_text(hdlg, api_client_secret_edit);

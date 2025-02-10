@@ -38,6 +38,8 @@ plugin::~plugin()
 void plugin::start()
 {
     launch_sync_worker();
+    
+    log::global->info("Spotifar plugin has started, version {}", utils::far3::get_plugin_version());
 }
 
 void plugin::shutdown()
@@ -182,17 +184,19 @@ void plugin::launch_librespot(const string &access_token)
     auto data_folder = config::get_plugin_data_folder();
     std::wstringstream cmd;
     cmd << std::format(L"{}\\librespot.exe", config::get_plugin_launch_folder());
-    // cmd << std::format(L" --cache {}\\cache", data_folder);
-    // cmd << std::format(L" --system-cache {}\\system-cache", data_folder);
-    // cmd << L" --verbose";
+    cmd << std::format(L" --cache {}\\cache", data_folder);
+    cmd << std::format(L" --system-cache {}\\system-cache", data_folder);
     cmd << L" --access-token " << utils::to_wstring(access_token);
     cmd << L" --name librespot";
     //cmd << L" --disable-audio-cache";
-    // cmd << L" --bitrate 320";
+    cmd << L" --bitrate 320";
     // cmd << L" --backend rodio";
-    // cmd << L" --disable-discovery";
+    cmd << L" --disable-discovery";
     // cmd << L" --initial-volume 90";
     // cmd << L" --enable-volume-normalisation";
+    
+    if (config::is_verbose_logging_enabled())
+        cmd << L" --verbose";
 
     if( !CreateProcess(
         NULL,
@@ -263,10 +267,15 @@ void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
     });
 }
 
-void plugin::on_global_hotkey_changed(int hotkey_id, WORD virtual_key, WORD modifiers)
+void plugin::on_global_hotkey_changed(config::settings::hotkeys_t changed_keys)
 {
     // reinitialize all the hotkeys
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+}
+
+void plugin::on_logging_verbocity_changed(bool is_verbose)
+{
+    log::enable_verbose_logs(is_verbose);
 }
 
 void plugin::on_auth_status_changed(const spotify::auth &auth)

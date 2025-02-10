@@ -3,7 +3,8 @@
 
 namespace spotifar { namespace spotify {
 
-using namespace utils;
+namespace log = utils::log;
+using utils::far3::synchro_tasks::dispatch_event;
 
 playback_cache::playback_cache(api_abstract *api): json_cache(L"PlaybackState"), api(api) {}
 
@@ -18,15 +19,6 @@ clock_t::duration playback_cache::get_sync_interval() const
 {
     // every second, minus some gap for smoother synching
     return 950ms;
-}
-
-
-template <class P, typename... MethodArgumentTypes, typename... ActualArgumentTypes>
-static void dispatch_event(void (P::*method)(MethodArgumentTypes...), ActualArgumentTypes... args)
-{
-    utils::far3::synchro_tasks::push([method, args...] {
-        ObserverManager::notify(method, args...);
-    });
 }
 
 void playback_cache::on_data_synced(const playback_state &data, const playback_state &prev_data)
