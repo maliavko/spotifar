@@ -30,6 +30,8 @@ void from_json(const json &j, artist &a)
     from_json(j, dynamic_cast<simplified_artist&>(a));
 
     j.at("popularity").get_to(a.popularity);
+    j.at("genres").get_to(a.genres);
+    j.at("followers").at("total").get_to(a.followers_total);
 }
 
 void to_json(json &j, const artist &a)
@@ -38,6 +40,8 @@ void to_json(json &j, const artist &a)
 
     j.update({
         { "popularity", a.popularity },
+        { "genres", a.genres },
+        { "followers", { "total", a.followers_total } },
     });
 }
 

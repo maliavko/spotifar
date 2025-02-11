@@ -8,17 +8,19 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
+
 class playlists_view: public view
 {
 public:
-    playlists_view(spotify::api *api);
+    playlists_view(api *api);
 
     virtual view_items_t get_items();
     virtual std::shared_ptr<view> select_item(const string &track_id);
 
-    static std::shared_ptr<playlists_view> build(spotify::api *api);
+    static std::shared_ptr<playlists_view> build(api *api);
 private:
-    spotify::api *api;
+    api *api;
 };
 
 } // namespace ui

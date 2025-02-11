@@ -28,6 +28,11 @@ string to_string(const wstring &ws);
 /// with the underscore
 wstring strip_invalid_filename_chars(const wstring &filename);
 
+/// @brief Join a vector of string into one, using given `delimeter`
+/// @param parts string parts
+/// @param delim delimeter
+wstring string_join(const std::vector<wstring> &parts, const std::wstring &delim);
+
 // TODO: making it thread safe
 class tasks_queue
 {

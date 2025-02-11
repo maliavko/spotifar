@@ -19,8 +19,6 @@ application ideas
     - comamnds for console input?
     - on the album tracks view search files with Alt does not work properly due to year in the name
 - player UI
-    - to add an artist main genre
-    - to add an album type postfix, e.g. "Album Name [EP]"
     - to add clickable links to the artist/albums/tracks HTTP pages
     - to add a label about the playing context: album, playlist etc.
     - goto artist, album, playlist etc.

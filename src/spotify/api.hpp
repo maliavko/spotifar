@@ -25,12 +25,6 @@ public:
 
     template<class T> void start_listening(T *o);
     template<class T> void stop_listening(T *o);
-
-    SimplifiedTracksT get_album_tracks(const string &album_id);
-    PlaylistTracksT get_playlist_tracks(const string &playlist_id);
-    tracks_list_t get_artist_top_tracks(const string &artist_id);
-    AlbumsCollection get_albums(const string &artist_id);
-    PlaylistsCollection get_playlists();
     
     inline const devices_list_t& get_available_devices() { return devices->get(); }
     inline const playback_state& get_playback_state() { return playback->get(); }
@@ -39,6 +33,7 @@ public:
 
     virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {});
     LibraryCache& get_library() { return *library; }
+    void clear_cache();
 
     void start_playback(const string &context_uri, const string &track_uri = "",
                         int position_ms = 0, const string &device_id = "");

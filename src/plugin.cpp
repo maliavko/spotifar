@@ -146,6 +146,10 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
                 //auto y = PostThreadMessage(pi.dwThreadId, WM_CLOSE, 0, 0);
                 return true;
             }
+            case VK_F8:
+            {
+                api.clear_cache();
+            }
         }
     }
     return panel.process_input(info);

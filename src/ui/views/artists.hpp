@@ -21,7 +21,6 @@ public:
     static std::shared_ptr<artists_view> build(spotify::api *api);
 
 private:
-    artists_list_t artists;
     spotify::api *api;
 };
 

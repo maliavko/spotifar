@@ -17,7 +17,7 @@ static const wchar_t
     *like_btn_label = L"[+]";
 
 static const int
-    width = 60, height = 10,
+    width = 60, height = 11,
     view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2,
     view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
 
@@ -533,7 +533,7 @@ void player::on_devices_changed(const devices_list_t &devices)
     {
         auto &dev = devices[i];
         far3::msg::add_list_item(hdlg, controls::devices_combo, dev.name, i,
-                            (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
+                                 (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
 }
 
@@ -547,8 +547,12 @@ void player::on_track_changed(const track &track)
     auto &state = api.get_playback_state();
     track_progress.set_higher_boundary(track.duration);
 
+    std::vector<wstring> artists_names;
+    std::transform(track.artists.cbegin(), track.artists.cend(), back_inserter(artists_names),
+        [](const auto &a) { return a.name; });
+
     set_control_text(controls::track_name, track.name);
-    set_control_text(controls::artist_name, track.artists.size() ? track.artists[0].name : L"");
+    set_control_text(controls::artist_name, utils::string_join(artists_names, L", "));
     set_control_text(controls::track_total_time, track_total_time_str);
 }
 
@@ -668,12 +672,14 @@ void player::on_context_changed(const context &ctx)
     else if (ctx.is_album())
     {
         auto album = api.get_library().get_album(ctx.get_item_id());
-        if (album != nullptr)
-            source_label = std::format(L"Album: {}", album->get_user_name());
+        if (album.id != invalid_id)
+            source_label = std::format(L"Album: {}", album.get_user_name());
     }
     else if (ctx.is_playlist())
     {
-        // source_name = L"playlist";
+        auto playlist = api.get_library().get_playlist(ctx.get_item_id());
+        if (playlist.id != invalid_id)
+            source_label = std::format(L"Playlist: {}", playlist.name);
     }
     
     if (source_label.empty())

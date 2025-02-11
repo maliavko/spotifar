@@ -20,10 +20,18 @@ public:
     virtual void write(settings_ctx &ctx);
     virtual void clear(settings_ctx &ctx);
 
-    const std::vector<const artist*>& get_followed_artists() const { return followed_artists; }
-    const artist* get_artist(const string &artist_id);
-    const album* get_album(const string &album_id);
-    const playlist* get_playlist(const string &playlist_id);
+    artists_t get_followed_artists();
+
+    artist get_artist(const string &artist_id);
+    albums_t get_artist_albums(const string &artist_id);
+    tracks_t get_artist_top_tracks(const string &artist_id);
+
+    album get_album(const string &album_id);
+    simplified_tracks_t get_album_tracks(const string &album_id);
+
+    playlist get_playlist(const string &playlist_id);
+    simplified_playlists_t get_playlists();
+    playlist_tracks_t get_playlist_tracks(const string &playlist_id);
 
     // cached data interface
     virtual void resync(bool force = false);
@@ -35,11 +43,11 @@ private:
     std::vector<config::persistent_data_abstract*> storages;
 
     // TODO: convert into peersistent data maybe?
-    std::unordered_map<string, artist> artists;
-    std::unordered_map<string, album> albums;
-    std::unordered_map<string, playlist> playlists;
+    // std::unordered_map<string, artist> artists;
+    // std::unordered_map<string, album> albums;
+    // std::unordered_map<string, playlist> playlists;
 
-    std::vector<const artist*> followed_artists;
+    // std::vector<const artist*> followed_artists;
 };
 
 } // namespace spotify

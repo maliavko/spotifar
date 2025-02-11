@@ -24,7 +24,9 @@ struct simplified_artist
 
 struct artist: public simplified_artist
 {
+    size_t followers_total;
     size_t popularity;
+    std::vector<string> genres;
 
     friend void from_json(const json &j, artist &a);
     friend void to_json(json &j, const artist &a);
@@ -123,12 +125,13 @@ struct playlist: public simplified_playlist
     static const string& get_fields_filter();
 };
 
-typedef std::map<string, simplified_album> AlbumsCollection;
-typedef std::vector<artist> artists_list_t;
-typedef std::vector<track> tracks_list_t;
-typedef std::vector<playlist_track> PlaylistTracksT;
-typedef std::vector<simplified_track> SimplifiedTracksT;
-typedef std::map<string, simplified_playlist> PlaylistsCollection;
+typedef std::vector<artist> artists_t;
+typedef std::vector<simplified_album> albums_t;
+typedef std::vector<simplified_track> simplified_tracks_t;
+typedef std::vector<track> tracks_t;
+typedef std::vector<playlist_track> playlist_tracks_t;
+typedef std::vector<simplified_playlist> simplified_playlists_t;
+typedef std::vector<playlist> playlists_t;
 
 } // namespace spotify
 } // namespace spotifar

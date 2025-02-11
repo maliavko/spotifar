@@ -280,19 +280,19 @@ void api::toggle_shuffle_plus(bool is_on)
         auto &state = get_playback_state();
         if (state.context.is_album())
         {
-            const auto &tracks = get_album_tracks(state.context.get_item_id());
+            const auto &tracks = get_library().get_album_tracks(state.context.get_item_id());
             std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
                             [](const auto &t) { return t.get_uri(); });
         }
         else if (state.context.is_playlist())
         {
-            const auto &tracks = get_playlist_tracks(state.context.get_item_id());
+            const auto &tracks = get_library().get_playlist_tracks(state.context.get_item_id());
             std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
                             [](const auto &t) { return t.track.get_uri(); });
         }
         else if (state.context.is_artist())
         {
-            const auto &tracks = get_artist_top_tracks(state.context.get_item_id());
+            const auto &tracks = get_library().get_artist_top_tracks(state.context.get_item_id());
             std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
                             [](const auto &t) { return t.get_uri(); });
         }
@@ -367,140 +367,6 @@ void api::transfer_playback(const string &device_id, bool start_playing)
         });
 }
 
-SimplifiedTracksT api::get_album_tracks(const string &album_id)
-{
-    SimplifiedTracksT result;
-    
-    json request_url = httplib::append_query_params(
-        std::format("/v1/albums/{}/tracks", album_id), {
-            { "limit", std::to_string(50) },
-        });
-        
-    do
-    {
-        if (auto r = get(request_url))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &tracks = data["items"].get<SimplifiedTracksT>();
-            result.insert(result.end(), tracks.begin(), tracks.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
-}
-
-PlaylistTracksT api::get_playlist_tracks(const string &playlist_id)
-{
-    PlaylistTracksT result;
-    
-    static string fields = std::format("items({}),next", playlist_track::get_fields_filter());
-    json request_url = httplib::append_query_params(
-        std::format("/v1/playlists/{}/tracks", playlist_id), {
-            { "limit", std::to_string(50) },
-            { "additional_types", "track" },
-            { "fields", fields },
-        });
-
-    int idx = 0;
-        
-    do
-    {
-        if (auto r = get(request_url))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &tracks = data["items"].get<PlaylistTracksT>();
-            result.insert(result.end(), tracks.begin(), tracks.end());
-        }
-        if (idx++ > 3)
-            break; // TODO: remove, tmp code to speed up a development
-    }
-    while (!request_url.is_null());
-
-    return result;
-}
-
-tracks_list_t api::get_artist_top_tracks(const string &artist_id)
-{
-    json request_url = std::format("/v1/artists/{}/top-tracks", artist_id);
-    if (auto r = get(request_url))
-    {
-        json data = json::parse(r->body);
-        return data["tracks"].get<tracks_list_t>();
-    }
-    return {};
-}
-
-AlbumsCollection api::get_albums(const string &artist_id)
-{
-    AlbumsCollection albums;
-
-    Params params = {
-        { "limit", "50" },
-        { "offset", "0" },
-        { "include_groups", "album" }
-    };
-
-    string request_url = append_query_params(
-        std::format("/v1/artists/{}/albums", artist_id), params);
-
-    do
-    {
-        auto r = get(request_url);
-
-        json data = json::parse(r->body);
-        for (json& aj : data["items"])
-        {
-            auto a = aj.get<simplified_album>();
-            albums[a.id] = a;
-        }
-
-        json next = data["next"];
-        if (next.is_null())
-            break;
-        
-        next.get_to(request_url);
-    } while (1);
-
-    return albums;
-}
-
-PlaylistsCollection api::get_playlists()
-{
-    PlaylistsCollection playlists;
-
-    Params params = {
-        { "limit", "50" },
-        { "offset", "0" },
-    };
-
-    string request_url = append_query_params("/v1/me/playlists", params);
-
-    do
-    {
-        auto r = get(request_url);
-
-        json data = json::parse(r->body);
-        for (json& aj : data["items"])
-        {
-            auto p = aj.get<simplified_playlist>();
-            playlists[p.id] = p;
-        }
-
-        json next = data["next"];
-        if (next.is_null())
-            break;
-        
-        next.get_to(request_url);
-    } while (1);
-
-    return playlists;
-}
-
 void api::start_playback(const json &body, const string &device_id)
 {
     Params params = {};
@@ -526,6 +392,16 @@ void api::start_playback(const json &body, const string &device_id)
         });
 }
 
+void api::clear_cache()
+{
+    responses_cache.clear();
+
+    auto ctx = config::lock_settings();
+    ctx->delete_value(L"responses");
+    log::api->debug("Clearning caches");
+}
+
+// TODO: what about caching for only one session?
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 {
     auto &cache = responses_cache[request_url];

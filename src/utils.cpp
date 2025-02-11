@@ -264,6 +264,22 @@ wstring strip_invalid_filename_chars(const wstring &filename)
     return std::regex_replace(filename, r, L"_");
 }
 
+wstring string_join(const std::vector<wstring> &parts, const wstring &delim)
+{
+    std::wostringstream os;
+    auto b = parts.begin(), e = parts.end();
+
+    if (b != e) {
+        std::copy(b, prev(e), std::ostream_iterator<wstring, wchar_t>(os, delim.c_str()));
+        b = prev(e);
+    }
+    if (b != e)
+        os << *b;
+
+    return os.str();
+
+}
+
 
 intptr_t tasks_queue::push_task(task_t task)
 {

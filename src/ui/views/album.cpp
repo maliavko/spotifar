@@ -16,9 +16,8 @@ album_view::album_view(spotify::api *api, const spotify::album &album,
 
 view::view_items_t album_view::get_items()
 {
-    // TODO: tmp code
     view_items_t result;
-    for (const auto &track: api->get_album_tracks(album.id))
+    for (const auto &track: api->get_library().get_album_tracks(album.id))
     {
         wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
         result.push_back({track.id, track_name, L"", FILE_ATTRIBUTE_VIRTUAL, (size_t)track.duration});
@@ -30,9 +29,7 @@ std::shared_ptr<view> album_view::select_item(const string &track_id)
 {
     if (track_id.empty())
     {
-        const spotify::artist *a = api->get_library().get_artist(artist.id);
-        if (a != nullptr)
-            return artist_view::build(api, *a);
+        return artist_view::build(api, artist);
     }
     else
     {

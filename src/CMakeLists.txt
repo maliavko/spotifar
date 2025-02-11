@@ -29,6 +29,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/views/root.cpp
 	ui/views/artists.cpp
 	ui/views/playlists.cpp
+	ui/views/playlist.cpp
 	ui/views/artist.cpp
 	ui/views/album.cpp
 	../thirdparty/ObserverManager/ObserverManager/ObserverManager.cpp

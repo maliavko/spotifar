@@ -17,9 +17,9 @@ view::view_items_t artist_view::get_items()
 {
     // TODO: split albums and singles into separate directoriess
     view_items_t result;
-    for (auto &[id, a]: api->get_albums(artist.id))
+    for (const auto &a: api->get_library().get_artist_albums(artist.id))
     {
-        result.push_back({id, a.get_user_name(), L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
+        result.push_back({a.id, a.get_user_name(), L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
     }
     return result;
 }
@@ -29,9 +29,9 @@ std::shared_ptr<view> artist_view::select_item(const string &album_id)
     if (album_id.empty())
         return artists_view::build(api);
     
-    const spotify::album *album = api->get_library().get_album(album_id);
-    if (album != nullptr)
-        return album_view::build(api, *album, artist);
+    const album &album = api->get_library().get_album(album_id);
+    if (album.id != invalid_id)
+        return album_view::build(api, album, artist);
 
     return nullptr;
 }

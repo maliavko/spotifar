@@ -1,4 +1,5 @@
 #include "playlists.hpp"
+#include "playlist.hpp"
 #include "root.hpp"
 
 namespace spotifar { namespace ui {
@@ -13,10 +14,9 @@ playlists_view::playlists_view(spotify::api *api):
 
 view::view_items_t playlists_view::get_items()
 {
-    // TODO: tmp code
     view_items_t result;
-    for (auto& [id, a]: api->get_playlists())
-        result.push_back({id, a.name, L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
+    for (const auto &p: api->get_library().get_playlists())
+        result.push_back({p.id, p.name, L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
     return result;
 }
 
@@ -26,6 +26,8 @@ std::shared_ptr<view> playlists_view::select_item(const string &playlist_id)
         return root_view::build(api);
     
     auto playlist = api->get_library().get_playlist(playlist_id);
+    if (playlist.id != invalid_id)
+        return playlist_view::build(api, playlist);
 
     return nullptr;
 }
