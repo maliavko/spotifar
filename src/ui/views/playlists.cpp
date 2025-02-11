@@ -25,7 +25,9 @@ std::shared_ptr<view> playlists_view::select_item(const string &playlist_id)
     if (playlist_id.empty())
         return root_view::build(api);
     
-    return NULL;
+    auto playlist = api->get_library().get_playlist(playlist_id);
+
+    return nullptr;
 }
 
 std::shared_ptr<playlists_view> playlists_view::build(spotify::api *api)

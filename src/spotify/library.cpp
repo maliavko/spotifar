@@ -100,5 +100,27 @@ const album* LibraryCache::get_album(const string &album_id)
     return nullptr;
 }
 
+const playlist* LibraryCache::get_playlist(const string &playlist_id)
+{
+    // looking for the album in cache
+    // auto it = playlists.find(playlist_id);
+    // if (it != playlists.end())
+    //     return &it->second;
+
+    json request_url = httplib::append_query_params(
+        std::format("/v1/playlists/{}", playlist_id), {
+            { "additional_types", "track" },
+            { "fields", playlist::get_fields_filter() },
+        });
+
+    // otherwise requesting from the server
+    if (auto r = api->get(request_url))
+    {
+        auto &ref = playlists[playlist_id] = json::parse(r->body).get<playlist>();
+        return &ref;
+    }
+    return nullptr;
+}
+
 } // namespace spotify
 } // namespace spotifar

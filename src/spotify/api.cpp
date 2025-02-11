@@ -164,12 +164,12 @@ void api::start_playback(const std::vector<string> &uris, const string &device_i
     start_playback(body, device_id);
 }
 
-void api::start_playback(const simplified_album &album, const SimplifiedTrack &track)
+void api::start_playback(const simplified_album &album, const simplified_track &track)
 {
     return start_playback(album.get_uri(), track.get_uri());
 }
 
-void api::start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track)
+void api::start_playback(const simplified_playlist &playlist, const simplified_track &track)
 {
     return start_playback(playlist.get_uri(), track.get_uri());
 }
@@ -396,7 +396,7 @@ PlaylistTracksT api::get_playlist_tracks(const string &playlist_id)
 {
     PlaylistTracksT result;
     
-    static string fields = std::format("items({}),next", PlaylistTrack::get_fields_filter());
+    static string fields = std::format("items({}),next", playlist_track::get_fields_filter());
     json request_url = httplib::append_query_params(
         std::format("/v1/playlists/{}/tracks", playlist_id), {
             { "limit", std::to_string(50) },
@@ -487,7 +487,7 @@ PlaylistsCollection api::get_playlists()
         json data = json::parse(r->body);
         for (json& aj : data["items"])
         {
-            auto p = aj.get<SimplifiedPlaylist>();
+            auto p = aj.get<simplified_playlist>();
             playlists[p.id] = p;
         }
 

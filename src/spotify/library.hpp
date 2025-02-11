@@ -23,6 +23,7 @@ public:
     const std::vector<const artist*>& get_followed_artists() const { return followed_artists; }
     const artist* get_artist(const string &artist_id);
     const album* get_album(const string &album_id);
+    const playlist* get_playlist(const string &playlist_id);
 
     // cached data interface
     virtual void resync(bool force = false);
@@ -33,10 +34,12 @@ private:
     
     std::vector<config::persistent_data_abstract*> storages;
 
-    std::vector<const artist*> followed_artists;
+    // TODO: convert into peersistent data maybe?
     std::unordered_map<string, artist> artists;
-
     std::unordered_map<string, album> albums;
+    std::unordered_map<string, playlist> playlists;
+
+    std::vector<const artist*> followed_artists;
 };
 
 } // namespace spotify

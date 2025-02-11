@@ -1,6 +1,8 @@
 #include "items.hpp"
 #include "utils.hpp"
 
+// TODO: after I started saving response strings instead of packed json, I think most of the to_json functions are not needed, review
+
 namespace spotifar { namespace spotify {
 
 string make_item_uri(const string &item_type_name, const string &id)
@@ -88,18 +90,18 @@ void to_json(json &j, const album &a)
     //j.update
 }
 
-const string& SimplifiedTrack::get_fields_filter()
+const string& simplified_track::get_fields_filter()
 {
     static string fields = "id,name,duration_ms,track_number";
     return fields;
 }
 
-bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs)
+bool operator==(const simplified_track &lhs, const simplified_track &rhs)
 {
     return lhs.id == rhs.id;
 }
 
-void from_json(const json &j, SimplifiedTrack &t)
+void from_json(const json &j, simplified_track &t)
 {
     j.at("id").get_to(t.id);
     j.at("track_number").get_to(t.track_number);
@@ -109,7 +111,7 @@ void from_json(const json &j, SimplifiedTrack &t)
     t.name = utils::utf8_decode(j.at("name").get<string>());
 }
 
-void to_json(json &j, const SimplifiedTrack &t)
+void to_json(json &j, const simplified_track &t)
 {
     j = json{
         { "id", t.id },
@@ -119,22 +121,22 @@ void to_json(json &j, const SimplifiedTrack &t)
     };
 }
 
-const string& Track::get_fields_filter()
+const string& track::get_fields_filter()
 {
-    static string fields = std::format("{},album,artists", SimplifiedTrack::get_fields_filter());
+    static string fields = std::format("{},album,artists", simplified_track::get_fields_filter());
     return fields;
 }
 
-void from_json(const json &j, Track &t)
+void from_json(const json &j, track &t)
 {
-    from_json(j, dynamic_cast<SimplifiedTrack&>(t));
+    from_json(j, dynamic_cast<simplified_track&>(t));
     j.at("album").get_to(t.album);
     j.at("artists").get_to(t.artists);
 }
 
-void to_json(json &j, const Track &t)
+void to_json(json &j, const track &t)
 {
-    to_json(j, dynamic_cast<const SimplifiedTrack&>(t));
+    to_json(j, dynamic_cast<const simplified_track&>(t));
 
     j.update({
         {"album", t.album},
@@ -142,18 +144,36 @@ void to_json(json &j, const Track &t)
     });
 }
 
-void from_json(const json &j, SimplifiedPlaylist &p)
+const string& playlist_track::get_fields_filter()
+{
+    static string fields = std::format("added_at,track({})", track::get_fields_filter());
+    return fields;
+}
+
+void from_json(const json &j, simplified_playlist &p)
 {
     j.at("id").get_to(p.id);
+    j.at("snapshot_id").get_to(p.snapshot_id);
+    j.at("href").get_to(p.href);
+    j.at("collaborative").get_to(p.collaborative);
+    j.at("public").get_to(p.is_public);
     j.at("tracks").at("total").get_to(p.tracks_total);
     
     p.name = utils::utf8_decode(j.at("name").get<string>());
+    p.user_display_name = utils::utf8_decode(j.at("owner").at("display_name").get<string>());
     p.description = utils::utf8_decode(j.at("description").get<string>());
 }
 
-const string& PlaylistTrack::get_fields_filter()
+const string& simplified_playlist::get_fields_filter()
 {
-    static string fields = std::format("added_at,track({})", Track::get_fields_filter());
+    static string fields = std::format("id,href,name,collaborative,public,description,"
+        "tracks(total),owner(display_name),snapshot_id");
+    return fields;
+}
+
+const string& playlist::get_fields_filter()
+{
+    static string fields = std::format("{}", simplified_playlist::get_fields_filter());
     return fields;
 }
 

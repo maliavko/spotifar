@@ -43,8 +43,8 @@ public:
     void start_playback(const string &context_uri, const string &track_uri = "",
                         int position_ms = 0, const string &device_id = "");
     void start_playback(const std::vector<string> &uris, const string &device_id = "");
-    void start_playback(const simplified_album &album, const SimplifiedTrack &track);
-    void start_playback(const SimplifiedPlaylist &playlist, const SimplifiedTrack &track);
+    void start_playback(const simplified_album &album, const simplified_track &track);
+    void start_playback(const simplified_playlist &playlist, const simplified_track &track);
     void resume_playback(const string &device_id = "");
     void toggle_playback(const string &device_id = "");
     void pause_playback(const string &device_id = "");

@@ -537,7 +537,7 @@ void player::on_devices_changed(const devices_list_t &devices)
     }
 }
 
-void player::on_track_changed(const Track &track)
+void player::on_track_changed(const track &track)
 {
     no_redraw nr(hdlg);
 
@@ -656,32 +656,29 @@ void player::on_state_changed(bool is_playing)
 
 void player::on_context_changed(const context &ctx)
 {
-    wstring source_name = L"";
+    wstring source_label = L"";
     if (ctx.is_collection())
     {
-        source_name = far3::get_text(MPlayerSourceCollection);
+        //source_name = far3::get_text(MPlayerSourceCollection);
     }
     else if (ctx.is_artist())
     {
-        // TODO: implement cache for artists and use it here
-        source_name = L"artist";
+        // source_name = L"artist";
     }
     else if (ctx.is_album())
     {
-        // TODO: implement cache for albums and use it here
-        source_name = L"album";
+        auto album = api.get_library().get_album(ctx.get_item_id());
+        if (album != nullptr)
+            source_label = std::format(L"Album: {}", album->get_user_name());
     }
     else if (ctx.is_playlist())
     {
-        // TODO: implement cache for playlists and use it here
-        source_name = L"playlist";
+        // source_name = L"playlist";
     }
     
-    static wstring source_label;
-    if (!source_name.empty())
-        source_label = std::format(L"{}: {}", far3::get_text(MPlayerSourceLabel), source_name);
-    else
-        source_label = L"";
+    if (source_label.empty())
+        source_label = std::format(L"{}: {}", far3::get_text(MPlayerSourceLabel),
+                                   utils::to_wstring(ctx.type));
 
     set_control_text(controls::source_name, source_label);
 }

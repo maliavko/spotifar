@@ -5,6 +5,7 @@ refactor
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
 - consider reformatting code to the style like in thread-pool library e.g.
 - replace Api class with IApi interface everywhere is possible
+- investigate "market" fields for some API requests, for now completly 
 
 application ideas
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
@@ -25,10 +26,10 @@ application ideas
     - goto artist, album, playlist etc.
     - to finishe up likes in the player
     - extended player view with the list of tracks (or maybe on panel?)
+    - recreate a volume control into slider?
 
 
 bugs
 - librespot quite often catches the error: Remote connection was forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api
 - still some memory racing happens when player just works
-- on th epanel, if return back from album tracks view, a cursor is no the wrong item
 - after refreshing an access token, the plugin starts one more librespot process

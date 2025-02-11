@@ -4,7 +4,7 @@
 
 #include "devices.hpp"
 #include "cache.hpp"
-#include "items.hpp" // TODO: remove dependency on Track
+#include "items.hpp" // TODO: remove dependency on track
 
 namespace spotifar { namespace spotify {
 
@@ -66,7 +66,7 @@ struct playback_state
     int progress_ms = 0;
     int progress = 0;
     bool is_playing = false;
-    Track item;
+    track item;
     context context;
 
     inline bool is_empty() const { return item.id == ""; }
@@ -96,7 +96,7 @@ struct playback_observer: public BaseObserverProtocol
 {
     /// @brief A track has changed
     /// @param track a new track, which jsut started playing
-    virtual void on_track_changed(const Track &track) {};
+    virtual void on_track_changed(const track &track) {};
 
     /// @brief A track's progress has changed
     /// @param duration a total track duration in seconds

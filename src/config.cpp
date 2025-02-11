@@ -143,7 +143,7 @@ void read(const PluginStartupInfo *info)
     
     _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
-    _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, true);
+    _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, false);
     _settings.spotify_client_id = ctx->get_wstr(spotify_client_id_opt, L"");
     _settings.spotify_client_secret = ctx->get_wstr(spotify_client_secret_opt, L"");
     _settings.localhost_service_port = ctx->get_int(localhost_service_port_opt, 5050);

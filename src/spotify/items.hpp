@@ -60,7 +60,7 @@ struct album: public simplified_album
     friend void to_json(json &j, const album &p);
 };
 
-struct SimplifiedTrack
+struct simplified_track
 {
     string id = invalid_id;
     wstring name;
@@ -70,51 +70,65 @@ struct SimplifiedTrack
 
     static string make_uri(const string &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();
+
     inline string get_uri() const { return make_uri(id); }
-    friend bool operator==(const SimplifiedTrack &lhs, const SimplifiedTrack &rhs);
-    friend void from_json(const json &j, SimplifiedTrack &t);
-    friend void to_json(json &j, const SimplifiedTrack &t);
+    friend bool operator==(const simplified_track &lhs, const simplified_track &rhs);
+    friend void from_json(const json &j, simplified_track &t);
+    friend void to_json(json &j, const simplified_track &t);
 };
 
-struct Track: public SimplifiedTrack
+struct track: public simplified_track
 {
     album album;
     std::vector<simplified_artist> artists;
 
     static const string& get_fields_filter();
-    friend void from_json(const json &j, Track &t);
-    friend void to_json(json &j, const Track &p);
+
+    friend void from_json(const json &j, track &t);
+    friend void to_json(json &j, const track &p);
 };
 
-struct SimplifiedPlaylist
+struct playlist_track
+{
+    string added_at;
+    track track;
+    
+    static const string& get_fields_filter();
+    
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(playlist_track, added_at, track);
+};
+
+struct simplified_playlist
 {
     string id = invalid_id;
+    string href;
+    string snapshot_id;
     wstring name;
+    wstring user_display_name;
+    bool collaborative;
+    bool is_public;
     wstring description;
     size_t tracks_total;
 
     static string make_uri(const string &id) { return make_item_uri("playlist", id); }
+    static const string& get_fields_filter();
 
     inline string get_uri() const { return make_uri(id); }
-    friend void from_json(const json &j, SimplifiedPlaylist &p);
+    friend void from_json(const json &j, simplified_playlist &p);
 };
 
-struct PlaylistTrack
+struct playlist: public simplified_playlist
 {
-    string added_at;
-    Track track;
-    
+    //std::vector<playlist_track> tracks;
     static const string& get_fields_filter();
-    
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(PlaylistTrack, added_at, track);
 };
 
 typedef std::map<string, simplified_album> AlbumsCollection;
 typedef std::vector<artist> artists_list_t;
-typedef std::vector<Track> tracks_list_t;
-typedef std::vector<PlaylistTrack> PlaylistTracksT;
-typedef std::vector<SimplifiedTrack> SimplifiedTracksT;
-typedef std::map<string, SimplifiedPlaylist> PlaylistsCollection;
+typedef std::vector<track> tracks_list_t;
+typedef std::vector<playlist_track> PlaylistTracksT;
+typedef std::vector<simplified_track> SimplifiedTracksT;
+typedef std::map<string, simplified_playlist> PlaylistsCollection;
 
 } // namespace spotify
 } // namespace spotifar

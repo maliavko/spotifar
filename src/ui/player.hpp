@@ -52,7 +52,7 @@ protected:
     // api even handlers
     virtual void on_playback_sync_finished(const string &err_msg);
     virtual void on_devices_changed(const devices_list_t &devices);
-    virtual void on_track_changed(const Track &track);
+    virtual void on_track_changed(const track &track);
     virtual void on_track_progress_changed(int duration, int progress);
     virtual void on_volume_changed(int volume);
     virtual void on_shuffle_state_changed(bool state);

@@ -11,7 +11,7 @@ namespace spotifar
     {
         struct HistoryItem
         {
-            Track track;
+            track track;
             spotify::context context;
             string played_at;
             

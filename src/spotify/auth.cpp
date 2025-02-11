@@ -59,7 +59,7 @@ void auth_cache::on_data_synced(const auth &data, const auth &prev_data)
     api->set_bearer_token_auth(data.access_token);
     is_logged_in = true;
     
-    log::api->debug("Access token: {}", data.access_token);
+    // log::api->debug("Access token: {}", data.access_token);
     ObserverManager::notify(&auth_observer::on_auth_status_changed, data);
 }
 
