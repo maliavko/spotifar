@@ -7,7 +7,7 @@
 
 namespace spotifar { namespace ui {
 
-struct ConfigDialog
+struct config_dialog
 {
     static bool show();
 };

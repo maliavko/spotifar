@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "ui/panel.hpp"
 #include "ui/views/root.hpp"
+#include "ui/views/artists.hpp"
+#include "ui/views/artist.hpp"
+#include "ui/views/album.hpp"
+#include "ui/views/playlists.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -15,16 +19,13 @@ Panel::Panel(spotify::api &api):
     // TODO: process correctly selected item on the panel
     // https://api.farmanager.com/ru/structures/pluginpanelitem.html
     // PPIF_SELECTED
+    ObserverManager::subscribe<ui_events_observer>(this);
 }
 
 Panel::~Panel()
 {
+    ObserverManager::unsubscribe<ui_events_observer>(this);
     view = nullptr;
-}
-
-void Panel::gotoRootMenu()
-{
-    view = root_view::build(&api);
 }
 
 void Panel::update_panel_info(OpenPanelInfo *info)
@@ -119,6 +120,9 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         for (size_t idx = 0; idx < items.size(); idx++)
         {
             auto &item = items[idx];
+
+            //if (item.is_current)
+            //    info->CurrentItem = idx;
             
             memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
             panel_item[idx].FileAttributes = item.file_attrs;
@@ -132,6 +136,16 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
 
         info->PanelItem = panel_item;
         info->ItemsNumber = items.size();
+
+        // working
+        // size_t size = config::ps_info.PanelControl(PANEL_ACTIVE, FCTL_GETPANELDIRECTORY, 0, 0);
+        // FarPanelDirectory *PPI=(FarPanelDirectory*)malloc(size);
+        // if (PPI)
+        // {
+        //     config::ps_info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELDIRECTORY, size, PPI);
+            
+        //     free(PPI);
+        // }
 
         return TRUE;
     }
@@ -156,21 +170,44 @@ void WINAPI Panel::free_user_data(void *const UserData, const FarPanelItemFreeIn
     delete static_cast<const far_user_data*>(UserData);
 }
 
+void Panel::change_view(std::shared_ptr<ui::view> view)
+{
+    utils::log::global->debug("A panel view has been changed, {}", utils::to_string(view->get_name()));
+    this->view = view;
+}
+
+void Panel::show_root_view()
+{
+    return change_view(std::make_shared<root_view>(&api));
+}
+
+void Panel::show_artists_view()
+{
+    return change_view(std::make_shared<artists_view>(&api));
+}
+
+void Panel::show_artist_view(const spotify::artist &artist)
+{
+    return change_view(std::make_shared<artist_view>(&api, artist));
+}
+
+void Panel::show_album_view(const spotify::artist &artist, const spotify::album &album)
+{
+    return change_view(std::make_shared<album_view>(&api, artist, album));
+}
+
+void Panel::show_playlists_view()
+{
+    return change_view(std::make_shared<playlists_view>(&api));
+}
+
 intptr_t Panel::select_item(const SetDirectoryInfo *info)
 {
     string item_id = "";
     if (info->UserData.Data != nullptr)
-    {
         item_id = reinterpret_cast<const far_user_data*>(info->UserData.Data)->id;
-    }
 
-    auto next_view = view->select_item(item_id);
-    if (next_view != nullptr)
-    {
-        view = next_view;
-        return TRUE;
-    }
-    return TRUE;
+    return view->select_item(item_id);
 }
 
 intptr_t Panel::process_input(const ProcessPanelInputInfo *info)

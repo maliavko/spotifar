@@ -112,8 +112,9 @@ namespace far3
 
     int input_record_to_combined_key(const KEY_EVENT_RECORD &kir);
 
-    namespace msg
+    namespace dialogs
     {
+        void flush_vbuffer();
         intptr_t send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
         intptr_t close(HANDLE hdlg);
         intptr_t enable(HANDLE hdlg, int ctrl_id, bool is_enabled);
@@ -136,11 +137,29 @@ namespace far3
         template<class T>
         T get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx)
         {
-            auto item_data = msg::send(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
-            size_t item_data_size = msg::send(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
+            auto item_data = dialogs::send(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
+            size_t item_data_size = dialogs::send(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
             return reinterpret_cast<T>(item_data);
         }
         template<> string get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
+    }
+
+    namespace panels
+    {
+        intptr_t redraw(HANDLE panel = PANEL_ACTIVE);
+        intptr_t update(HANDLE panel = PANEL_ACTIVE);
+        intptr_t is_active(HANDLE panel);
+        intptr_t does_exist(HANDLE panel);
+        intptr_t set_active(HANDLE panel);
+        intptr_t get_current_item(HANDLE panel = PANEL_ACTIVE);
+    }
+
+    namespace actl
+    {
+        intptr_t redraw_all();
+        HWND get_far_hwnd();
+        intptr_t quit(intptr_t exit_code);
+        intptr_t synchro(void *user_data);
     }
     
     /// @brief Localize given far string id

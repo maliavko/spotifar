@@ -12,14 +12,14 @@ using namespace spotify;
 class player:
     public playback_observer,
     public devices_observer
-    //public BasicApiObserver
 {
 public:
     player(api &api);
     virtual ~player();
 
     bool show();
-    bool hide(bool close_ui = true);
+    bool hide();
+    void cleanup();
     void tick();
 
     inline bool is_visible() const { return visible; }
@@ -32,11 +32,14 @@ public:
     bool on_repeat_btn_click(void* = nullptr);
     bool on_devices_item_selected(void *dialog_item);
     bool on_input_received(void *input_record);
+    bool on_artist_label_input_received(void *input_record);
+    bool on_source_label_input_received(void *input_record);
+    bool on_track_label_input_received(void *input_record);
+    bool on_track_bar_input_received(void *input_record);
 
     // controls' styles
     bool on_playback_control_style_applied(void *dialog_item_colors);
     bool on_track_bar_style_applied(void *dialog_item_colors);
-    bool on_track_bar_input_received(void *input_record);
     bool on_inactive_control_style_applied(void *dialog_item_colors);
     bool on_shuffle_btn_style_applied(void *dialog_item_colors);
     bool on_repeat_btn_style_applied(void *dialog_item_colors);

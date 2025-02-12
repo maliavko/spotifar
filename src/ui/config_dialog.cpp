@@ -223,11 +223,11 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
             int key = input_record_to_combined_key(key_event), edit_id = (int)param1;
             if (key == VK_BACK)
             {
-                msg::set_text(hdlg, edit_id, L"");
-                msg::set_text(hdlg, edit_id + 1, L"0");
-                msg::set_checked(hdlg, edit_id + 2, false);
-                msg::set_checked(hdlg, edit_id + 3, false);
-                msg::set_checked(hdlg, edit_id + 4, false);
+                dialogs::set_text(hdlg, edit_id, L"");
+                dialogs::set_text(hdlg, edit_id + 1, L"0");
+                dialogs::set_checked(hdlg, edit_id + 2, false);
+                dialogs::set_checked(hdlg, edit_id + 3, false);
+                dialogs::set_checked(hdlg, edit_id + 4, false);
                 return TRUE;
             }
             else if (key != VK_ESCAPE)
@@ -237,11 +237,11 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
 
                 // disallowing to pick the already selected key
                 for (auto &[ctrl_id, hotkey_id]: hotkey_edits)
-                    if (msg::get_text(hdlg, ctrl_id) == key_name)
+                    if (dialogs::get_text(hdlg, ctrl_id) == key_name)
                         return TRUE;
 
-                msg::set_text(hdlg, edit_id, key_name);
-                msg::set_text(hdlg, edit_id + 1, key_code);
+                dialogs::set_text(hdlg, edit_id, key_name);
+                dialogs::set_text(hdlg, edit_id + 1, key_code);
                 return TRUE;
             }
         }
@@ -250,17 +250,17 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
     return config::ps_info.DefDlgProc(hdlg, msg, param1, param2);
 }
 
-bool ConfigDialog::show()
+bool config_dialog::show()
 {
     auto hdlg = config::ps_info.DialogInit(&MainGuid, &ConfigDialogGuid, -1, -1, width, height, 0,
         &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_NONE, &dlg_proc, nullptr);
 
-    msg::set_checked(hdlg, add_to_disk_checkbox, config::is_added_to_disk_menu());
-    msg::set_checked(hdlg, verbose_logging_checkbox, config::is_verbose_logging_enabled());
-    msg::set_checked(hdlg, hotkeys_checkbox, config::is_global_hotkeys_enabled());
-    msg::set_text(hdlg, api_client_id_edit, config::get_client_id());
-    msg::set_text(hdlg, api_client_secret_edit, config::get_client_secret());
-    msg::set_text(hdlg, api_port_edit, std::to_string(config::get_localhost_port()));
+    dialogs::set_checked(hdlg, add_to_disk_checkbox, config::is_added_to_disk_menu());
+    dialogs::set_checked(hdlg, verbose_logging_checkbox, config::is_verbose_logging_enabled());
+    dialogs::set_checked(hdlg, hotkeys_checkbox, config::is_global_hotkeys_enabled());
+    dialogs::set_text(hdlg, api_client_id_edit, config::get_client_id());
+    dialogs::set_text(hdlg, api_client_secret_edit, config::get_client_secret());
+    dialogs::set_text(hdlg, api_port_edit, std::to_string(config::get_localhost_port()));
 
     for (auto &[ctrl_id, hotkey_id]: hotkey_edits)
     {
@@ -268,11 +268,11 @@ bool ConfigDialog::show()
         if (key_and_mods == nullptr)
             continue;
 
-        msg::set_text(hdlg, ctrl_id, get_key_name(key_and_mods->first));
-        msg::set_text(hdlg, ctrl_id + 1, std::to_wstring(key_and_mods->first));
-        msg::set_checked(hdlg, ctrl_id + 2, key_and_mods->second & MOD_CONTROL);
-        msg::set_checked(hdlg, ctrl_id + 3, key_and_mods->second & MOD_SHIFT);
-        msg::set_checked(hdlg, ctrl_id + 4, key_and_mods->second & MOD_ALT);
+        dialogs::set_text(hdlg, ctrl_id, get_key_name(key_and_mods->first));
+        dialogs::set_text(hdlg, ctrl_id + 1, std::to_wstring(key_and_mods->first));
+        dialogs::set_checked(hdlg, ctrl_id + 2, key_and_mods->second & MOD_CONTROL);
+        dialogs::set_checked(hdlg, ctrl_id + 3, key_and_mods->second & MOD_SHIFT);
+        dialogs::set_checked(hdlg, ctrl_id + 4, key_and_mods->second & MOD_ALT);
     }
 
     if (config::ps_info.DialogRun(hdlg) == ok_button)
@@ -281,19 +281,19 @@ bool ConfigDialog::show()
             auto ctx = config::lock_settings();
             auto &s = ctx->get_settings();
 
-            s.add_to_disk_menu = msg::is_checked(hdlg, add_to_disk_checkbox);
-            s.verbose_logging = msg::is_checked(hdlg, verbose_logging_checkbox);
-            s.is_global_hotkeys_enabled = msg::is_checked(hdlg, hotkeys_checkbox);
-            s.spotify_client_id = msg::get_text(hdlg, api_client_id_edit);
-            s.spotify_client_secret = msg::get_text(hdlg, api_client_secret_edit);
-            s.localhost_service_port = std::stoi(msg::get_text(hdlg, api_port_edit));
+            s.add_to_disk_menu = dialogs::is_checked(hdlg, add_to_disk_checkbox);
+            s.verbose_logging = dialogs::is_checked(hdlg, verbose_logging_checkbox);
+            s.is_global_hotkeys_enabled = dialogs::is_checked(hdlg, hotkeys_checkbox);
+            s.spotify_client_id = dialogs::get_text(hdlg, api_client_id_edit);
+            s.spotify_client_secret = dialogs::get_text(hdlg, api_client_secret_edit);
+            s.localhost_service_port = std::stoi(dialogs::get_text(hdlg, api_port_edit));
 
             for (auto &[ctrl_id, hotkey_id]: hotkey_edits)
             {
-                WORD key = std::stoi(msg::get_text(hdlg, ctrl_id + 1)), mods = 0;
-                if (msg::is_checked(hdlg, ctrl_id + 2)) mods |= MOD_CONTROL;
-                if (msg::is_checked(hdlg, ctrl_id + 3)) mods |= MOD_SHIFT;
-                if (msg::is_checked(hdlg, ctrl_id + 4)) mods |= MOD_ALT;
+                WORD key = std::stoi(dialogs::get_text(hdlg, ctrl_id + 1)), mods = 0;
+                if (dialogs::is_checked(hdlg, ctrl_id + 2)) mods |= MOD_CONTROL;
+                if (dialogs::is_checked(hdlg, ctrl_id + 3)) mods |= MOD_SHIFT;
+                if (dialogs::is_checked(hdlg, ctrl_id + 4)) mods |= MOD_ALT;
                 s.hotkeys[hotkey_id] = std::make_pair(key, mods);
             }
         }

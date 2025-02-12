@@ -1,6 +1,5 @@
 #include "playlists.hpp"
-#include "playlist.hpp"
-#include "root.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -20,21 +19,19 @@ view::view_items_t playlists_view::get_items()
     return result;
 }
 
-std::shared_ptr<view> playlists_view::select_item(const string &playlist_id)
+intptr_t playlists_view::select_item(const string &playlist_id)
 {
     if (playlist_id.empty())
-        return root_view::build(api);
+    {
+        events::show_root_view();
+        return TRUE;
+    }
     
     auto playlist = api->get_library().get_playlist(playlist_id);
     if (playlist.id != invalid_id)
         return playlist_view::build(api, playlist);
 
-    return nullptr;
-}
-
-std::shared_ptr<playlists_view> playlists_view::build(spotify::api *api)
-{
-    return std::make_shared<playlists_view>(api);
+    return FALSE;
 }
 
 } // namespace ui

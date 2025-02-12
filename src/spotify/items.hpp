@@ -18,6 +18,7 @@ struct simplified_artist
     string id = invalid_id;
     wstring name;
     
+    inline bool is_valid() const { return id != invalid_id; }
     friend void from_json(const json &j, simplified_artist &a);
     friend void to_json(json &j, const simplified_artist &a);
 };
@@ -48,6 +49,7 @@ struct simplified_album
 
     static string make_uri(const string &id) { return make_item_uri("album", id); }
     
+    inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     inline bool is_single() const { return album_type == single; }
     string get_release_year() const;
@@ -73,6 +75,7 @@ struct simplified_track
     static string make_uri(const string &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();
 
+    inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     friend bool operator==(const simplified_track &lhs, const simplified_track &rhs);
     friend void from_json(const json &j, simplified_track &t);
@@ -115,6 +118,7 @@ struct simplified_playlist
     static string make_uri(const string &id) { return make_item_uri("playlist", id); }
     static const string& get_fields_filter();
 
+    inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     friend void from_json(const json &j, simplified_playlist &p);
 };

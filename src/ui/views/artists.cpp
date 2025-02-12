@@ -1,6 +1,7 @@
 #include "artists.hpp"
 #include "root.hpp"
 #include "artist.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -20,21 +21,22 @@ view::view_items_t artists_view::get_items()
     return result;
 }
 
-std::shared_ptr<view> artists_view::select_item(const string &artist_id)
+intptr_t artists_view::select_item(const string &artist_id)
 {
     if (artist_id.empty())
-        return root_view::build(api);
+    {
+        events::show_root_view();
+        return TRUE;
+    }
     
-    const artist &a = api->get_library().get_artist(artist_id);
-    if (a.id != invalid_id)
-        return artist_view::build(api, a);
+    const spotify::artist &artist = api->get_library().get_artist(artist_id);
+    if (artist.is_valid())
+    {
+        events::show_artist_view(a);
+        return TRUE;
+    }
     
-    return nullptr;
-}
-
-std::shared_ptr<artists_view> artists_view::build(spotify::api *api)
-{
-    return std::make_shared<artists_view>(api);
+    return FALSE;
 }
 
 } // namespace ui

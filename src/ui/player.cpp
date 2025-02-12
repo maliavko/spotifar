@@ -1,4 +1,5 @@
 #include "ui/player.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -70,13 +71,13 @@ struct [[nodiscard]] no_redraw
     {
         assert(hdlg);
         std::lock_guard lock(mutex);
-        far3::msg::send(hdlg, DM_ENABLEREDRAW, FALSE, 0);
+        far3::dialogs::send(hdlg, DM_ENABLEREDRAW, FALSE, 0);
     }
 
     ~no_redraw()
     {
         std::lock_guard lock(mutex);
-        far3::msg::send(hdlg, DM_ENABLEREDRAW, TRUE, 0);
+        far3::dialogs::send(hdlg, DM_ENABLEREDRAW, TRUE, 0);
     }
     
     HANDLE hdlg;
@@ -147,9 +148,14 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
     { controls::artist_name, {
         { DN_CTLCOLORDLGITEM, &player::on_inactive_control_style_applied },
+        { DN_CONTROLINPUT, &player::on_artist_label_input_received },
+    }},
+    { controls::track_name, {
+        { DN_CONTROLINPUT, &player::on_track_label_input_received },
     }},
     { controls::source_name, {
         { DN_CTLCOLORDLGITEM, &player::on_inactive_control_style_applied },
+        { DN_CONTROLINPUT, &player::on_source_label_input_received },
     }},
     { controls::like_btn, {
         { DN_CTLCOLORDLGITEM, &player::on_inactive_control_style_applied },
@@ -204,7 +210,7 @@ bool player::handle_dlg_proc_event(intptr_t msg_id, intptr_t control_id, void *p
 
 intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 {
-    static player* dialog = nullptr;
+    static player *dialog = nullptr;
     if (msg == DN_INITDIALOG)
     {
         dialog = reinterpret_cast<player*>(param2);
@@ -212,10 +218,9 @@ intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param
     }
     else if (msg == DN_CLOSE)
     {
-        // the event comes from far and ui will be closed automatically,
-        // to avoid recursion, we're telling "hide" not to fire a message
-        dialog->hide(false);
+        dialog->cleanup();
         dialog = nullptr;
+
         return TRUE;
     }
 
@@ -233,7 +238,6 @@ bool player::show()
             &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
         are_dlg_events_suppressed = false;
         
-        // api.start_listening(dynamic_cast<BasicApiObserver*>(this));
         api.start_listening(dynamic_cast<playback_observer*>(this));
         api.start_listening(dynamic_cast<devices_observer*>(this));
 
@@ -264,28 +268,32 @@ bool player::show()
     return false;
 }
 
-bool player::hide(bool close_ui)
+bool player::hide()
 {
     if (visible)
     {
-        // api.stop_listening(dynamic_cast<BasicApiObserver*>(this));
-        api.stop_listening(dynamic_cast<playback_observer*>(this));
-        api.stop_listening(dynamic_cast<devices_observer*>(this));
-
-        if (hdlg != NULL && close_ui)
-            far3::msg::close(hdlg);
-        
-        hdlg = NULL;
-        visible = false;
-        are_dlg_events_suppressed = true;
+        if (hdlg != NULL)
+            far3::dialogs::close(hdlg);
 
         return true;
     }
     return false;
 }
 
+void player::cleanup()
+{
+    api.stop_listening(dynamic_cast<playback_observer*>(this));
+    api.stop_listening(dynamic_cast<devices_observer*>(this));
+    
+    hdlg = NULL;
+    visible = false;
+    are_dlg_events_suppressed = true;
+}
+
 void player::tick()
 {
+    if (!visible) return;
+        
     // here we process delayed controls like seeking position or volume, as they require
     // timer for perform smoothly. But the final operation is executed through the far main
     // thread to avoid threads clashes
@@ -314,8 +322,8 @@ bool player::on_devices_item_selected(void *dialog_item)
 {
     FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
-    size_t pos = far3::msg::get_list_current_pos(hdlg, controls::devices_combo);
-    auto device_id = far3::msg::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
+    size_t pos = far3::dialogs::get_list_current_pos(hdlg, controls::devices_combo);
+    auto device_id = far3::dialogs::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
 
     if (!device_id.empty())
     {
@@ -379,7 +387,7 @@ bool player::on_input_received(void *input_record)
                     }
                     case keys::d + keys::mods::alt:
                     {
-                        far3::msg::open_list(hdlg, controls::devices_combo, true);
+                        far3::dialogs::open_list(hdlg, controls::devices_combo, true);
                         return true;
                     }
                 }
@@ -391,7 +399,7 @@ bool player::on_input_received(void *input_record)
 
 bool player::on_playback_control_style_applied(void *dialog_item_colors)
 {
-    FarDialogItemColors* dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
     dic->Colors->BackgroundColor = colors::dgray;
     dic->Colors->ForegroundColor = colors::black;
@@ -406,6 +414,65 @@ bool player::on_track_bar_style_applied(void *dialog_item_colors)
     return true;
 }
 
+bool player::on_artist_label_input_received(void *input_record)
+{
+    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    if (ir->EventType == KEY_EVENT)
+        return false;
+
+    auto &playback = api.get_playback_state();
+
+    // TODO: for now we go to only the first artist in the list, try to distinguish
+    // which one is clicked from several and goto the correct one
+    const auto &artist = api.get_library().get_artist(playback.item.artists[0].id);
+    if (artist.is_valid())
+    {
+        hide();
+
+        ui::events::show_artist_view(artist);
+    
+        // forcing the panels to get udpated and redrawn
+        far3::panels::update();
+        far3::panels::redraw();
+    }
+
+    return true;
+}
+
+bool player::on_track_label_input_received(void *input_record)
+{
+    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    if (ir->EventType == KEY_EVENT)
+        return false;
+
+    auto &playback = api.get_playback_state();
+
+    hide();
+
+    const auto &artist = api.get_library().get_artist(playback.item.artists[0].id);
+    if (artist.is_valid())
+    {
+        hide();
+
+        ui::events::show_album_view(artist, playback.item.album);
+    
+        // forcing the panels to get udpated and redrawn
+        far3::panels::update();
+        far3::panels::redraw();
+    }
+
+    return true;
+}
+
+bool player::on_source_label_input_received(void *input_record)
+{
+    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    if (ir->EventType == KEY_EVENT)
+        return false;
+
+    return true;
+}
+
 bool player::on_track_bar_input_received(void *input_record)
 {
     auto &playback = api.get_playback_state();
@@ -413,9 +480,11 @@ bool player::on_track_bar_input_received(void *input_record)
         return false;
 
     INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    if (ir->EventType == KEY_EVENT)
+        return false;
 
     SMALL_RECT dlg_rect;
-    far3::msg::send(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
+    far3::dialogs::send(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
     
     auto track_bar_layout = dlg_items_layout[controls::track_bar];
     auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
@@ -507,8 +576,8 @@ bool player::on_play_btn_click(void *empty)
     //     return true;
     // }
     
-    size_t pos = far3::msg::get_list_current_pos(hdlg, controls::devices_combo);
-    auto device_id = far3::msg::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
+    size_t pos = far3::dialogs::get_list_current_pos(hdlg, controls::devices_combo);
+    auto device_id = far3::dialogs::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
 
     api.toggle_playback(device_id);
     return true;
@@ -527,12 +596,12 @@ void player::on_devices_changed(const devices_list_t &devices)
     no_redraw nr(hdlg);
     dlg_events_supressor s(this);
 
-    far3::msg::clear_list(hdlg, controls::devices_combo);
+    far3::dialogs::clear_list(hdlg, controls::devices_combo);
 
     for (int i = 0; i < devices.size(); i++)
     {
         auto &dev = devices[i];
-        far3::msg::add_list_item(hdlg, controls::devices_combo, dev.name, i,
+        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, i,
                                  (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
 }
@@ -696,12 +765,12 @@ void player::on_permissions_changed(const spotify::actions &actions)
 
 intptr_t player::set_control_text(int control_id, const wstring &text)
 {
-    return far3::msg::set_text(hdlg, control_id, text);
+    return far3::dialogs::set_text(hdlg, control_id, text);
 }
 
 intptr_t player::set_control_enabled(int control_id, bool is_enabled)
 {
-    return far3::msg::enable(hdlg, control_id, is_enabled);
+    return far3::dialogs::enable(hdlg, control_id, is_enabled);
 }
 
 } // namespace ui

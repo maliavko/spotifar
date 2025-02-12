@@ -33,7 +33,7 @@ namespace spotifar
             virtual bool request_data(HistoryList &data);
 
         private:
-        api_abstract *api;
+            api_abstract *api;
         };
     }
 }

@@ -24,6 +24,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/panel.cpp
 	ui/player.cpp
 	ui/config_dialog.cpp
+	ui/events.cpp
 	ui/controls.cpp
 	ui/views/view.cpp
 	ui/views/root.cpp

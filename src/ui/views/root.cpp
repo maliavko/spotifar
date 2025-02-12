@@ -1,13 +1,12 @@
 #include "root.hpp"
-#include "artists.hpp"
-#include "playlists.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
 static const string
-    artist_view_id = "artists",
+    artists_view_id = "artists",
     playlists_view_id = "playlists";
 
 root_view::root_view(spotify::api *api):
@@ -20,7 +19,7 @@ view::view_items_t root_view::get_items()
 {
     return view_items_t{
         {
-            artist_view_id,
+            artists_view_id,
             get_text(MPanelArtistsItemLabel),
             get_text(MPanelArtistsItemDescr),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
@@ -34,20 +33,21 @@ view::view_items_t root_view::get_items()
     };
 }
 
-std::shared_ptr<view> root_view::select_item(const string &view_id)
+intptr_t root_view::select_item(const string &view_id)
 {
-    if (view_id == artist_view_id)
-        return artists_view::build(api);
+    if (view_id == artists_view_id)
+    {
+        ui::events::show_artists_view();
+        return TRUE;
+    }
     
     if (view_id == playlists_view_id)
-        return playlists_view::build(api);
+    {
+        ui::events::show_playlists_view();
+        return TRUE;
+    }
 
-    return NULL;
-}
-
-std::shared_ptr<root_view> root_view::build(spotify::api *api)
-{
-    return std::make_shared<root_view>(api);
+    return FALSE;
 }
 
 } // namespace ui
