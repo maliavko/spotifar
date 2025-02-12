@@ -432,8 +432,8 @@ bool player::on_artist_label_input_received(void *input_record)
         ui::events::show_artist_view(artist);
     
         // forcing the panels to get udpated and redrawn
-        far3::panels::update();
-        far3::panels::redraw();
+        far3::panels::update(PANEL_ACTIVE);
+        far3::panels::redraw(PANEL_ACTIVE);
     }
 
     return true;
@@ -457,8 +457,8 @@ bool player::on_track_label_input_received(void *input_record)
         ui::events::show_album_view(artist, playback.item.album);
     
         // forcing the panels to get udpated and redrawn
-        far3::panels::update();
-        far3::panels::redraw();
+        far3::panels::update(PANEL_ACTIVE);
+        far3::panels::redraw(PANEL_ACTIVE);
     }
 
     return true;

@@ -127,8 +127,9 @@ namespace far3
 
     namespace panels
     {
-        intptr_t redraw(HANDLE panel)
+        intptr_t redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx)
         {
+            PanelRedrawInfo info{ sizeof(PanelRedrawInfo), current_item_idx, top_item_idx };
             return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, 0);
         }
         
@@ -173,6 +174,12 @@ namespace far3
             //     free(PPI);
             // }
             return 0;
+        }
+
+        intptr_t set_current_item(HANDLE panel, size_t idx)
+        {
+            PanelRedrawInfo info{ sizeof(PanelRedrawInfo), idx, 0 };
+            return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, &info);
         }
     }
     

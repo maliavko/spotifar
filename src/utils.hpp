@@ -146,12 +146,13 @@ namespace far3
 
     namespace panels
     {
-        intptr_t redraw(HANDLE panel = PANEL_ACTIVE);
-        intptr_t update(HANDLE panel = PANEL_ACTIVE);
+        intptr_t redraw(HANDLE panel, size_t current_item_idx = 0, size_t top_item_idx = 0);
+        intptr_t update(HANDLE panel);
         intptr_t is_active(HANDLE panel);
         intptr_t does_exist(HANDLE panel);
         intptr_t set_active(HANDLE panel);
-        intptr_t get_current_item(HANDLE panel = PANEL_ACTIVE);
+        intptr_t get_current_item(HANDLE panel);
+        intptr_t set_current_item(HANDLE panel, size_t idx);
     }
 
     namespace actl
