@@ -8,6 +8,9 @@ refactor
 - investigate "market" fields for some API requests, for now completly 
 
 application ideas
+- grab lyrics from here? https://coda.io/@musixmatch/musixmatch-lyrics-api
+- is there other way to track fresh releases?
+- librespot as a win service to avoid stopping playback, while closing far
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - panels
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
@@ -22,7 +25,6 @@ application ideas
     - to add an artist main genre
     - to add an album type postfix, e.g. "Album Name [EP]"
     - to add clickable links to the artist/albums/tracks HTTP pages
-    - to add a label about the playing context: album, playlist etc.
     - goto artist, album, playlist etc.
     - to finishe up likes in the player
     - extended player view with the list of tracks (or maybe on panel?)

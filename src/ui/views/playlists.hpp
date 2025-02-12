@@ -14,9 +14,7 @@ public:
     playlists_view(spotify::api *api);
 
     virtual view_items_t get_items();
-    virtual std::shared_ptr<view> select_item(const string &track_id);
-
-    static std::shared_ptr<playlists_view> build(spotify::api *api);
+    virtual intptr_t select_item(const string &track_id);
 private:
     spotify::api *api;
 };

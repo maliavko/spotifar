@@ -1,7 +1,9 @@
 #include "plugin.h"
 #include "config.hpp"
 #include "utils.hpp"
+#include "ui/events.hpp"
 #include "ui/config_dialog.hpp"
+#include "ui/views/artists.hpp"
 
 namespace spotifar {
 
@@ -15,11 +17,12 @@ plugin::plugin():
 {
     ObserverManager::subscribe<config::config_observer>(this);
     ObserverManager::subscribe<spotify::auth_observer>(this);
+    ObserverManager::subscribe<ui::ui_events_observer>(this);
 
     // TODO: what if not initialized?
     if (api.start())
     {
-        panel.gotoRootMenu();
+        ui::events::show_root_view();
     }
 
     background_tasks.push_task([this] {
@@ -33,6 +36,7 @@ plugin::~plugin()
 
     ObserverManager::unsubscribe<spotify::auth_observer>(this);
     ObserverManager::unsubscribe<config::config_observer>(this);
+    ObserverManager::unsubscribe<ui::ui_events_observer>(this);
 }
 
 void plugin::start()
@@ -51,8 +55,7 @@ void plugin::shutdown()
 
     shutdown_sync_worker();
 
-    // when shutting down, Far closes ui itself
-    player.hide(false);
+    player.hide();
     api.shutdown();
 }
 
@@ -133,7 +136,8 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
         {
             case VK_F3:
             {
-                return player.show();
+                show_player_dialog();
+                return TRUE;
             }
             case VK_F6:
             {
@@ -144,7 +148,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
                 //auto y = GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_hChildStd_OUT_Wr);
                 //auto y = GenerateConsoleCtrlEvent(CTRL_CLOSE_EVENT, pi.dwProcessId);
                 //auto y = PostThreadMessage(pi.dwThreadId, WM_CLOSE, 0, 0);
-                return true;
+                return TRUE;
             }
         }
     }
@@ -284,6 +288,11 @@ void plugin::on_auth_status_changed(const spotify::auth &auth)
     {
         launch_librespot(auth.access_token);
     }
+}
+
+void plugin::show_player_dialog()
+{
+    player.show();
 }
 
 void plugin::check_global_hotkeys()

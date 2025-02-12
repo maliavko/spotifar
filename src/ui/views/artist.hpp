@@ -14,10 +14,8 @@ public:
     artist_view(spotify::api *api, const spotify::artist &artist);
 
     virtual view_items_t get_items();
-    virtual std::shared_ptr<view> select_item(const string &album_id);
+    virtual intptr_t select_item(const string &album_id);
     virtual intptr_t process_input(const ProcessPanelInputInfo *info);
-
-    static std::shared_ptr<artist_view> build(spotify::api *api, const spotify::artist &artist);
 private:
     spotify::artist artist;
     spotify::api *api;

@@ -6,13 +6,15 @@
 #include "spotify/auth.hpp"
 #include "ui/panel.hpp"
 #include "ui/player.hpp"
+#include "ui/events.hpp"
 #include "utils.hpp"
 
 namespace spotifar {
 
 class plugin:
     public config::config_observer,
-    public spotify::auth_observer
+    public spotify::auth_observer,
+    public ui::ui_events_observer
 {
 public:
     plugin();
@@ -40,6 +42,7 @@ protected:
     virtual void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys);
     virtual void on_logging_verbocity_changed(bool is_verbose);
     virtual void on_auth_status_changed(const spotify::auth &auth);
+    virtual void show_player_dialog();
 
 private:
     std::mutex sync_worker_mutex;

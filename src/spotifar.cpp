@@ -131,7 +131,7 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/configurew.html 
 intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 {
-    return ui::ConfigDialog::show();
+    return ui::config_dialog::show();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html 

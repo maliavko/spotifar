@@ -1,6 +1,5 @@
 #include "artist.hpp"
-#include "artists.hpp"
-#include "album.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -24,16 +23,22 @@ view::view_items_t artist_view::get_items()
     return result;
 }
 
-std::shared_ptr<view> artist_view::select_item(const string &album_id)
+intptr_t artist_view::select_item(const string &album_id)
 {
     if (album_id.empty())
-        return artists_view::build(api);
+    {
+        events::show_artists_view();
+        return TRUE;
+    }
     
     const spotify::album *album = api->get_library().get_album(album_id);
     if (album != nullptr)
-        return album_view::build(api, *album, artist);
+    {
+        events::show_album_view(artist, *album);
+        return TRUE;
+    }
 
-    return nullptr;
+    return FALSE;
 }
 
 intptr_t artist_view::process_input(const ProcessPanelInputInfo *info)
@@ -69,12 +74,6 @@ intptr_t artist_view::process_input(const ProcessPanelInputInfo *info)
         }
     }
     return FALSE;
-}
-
-std::shared_ptr<artist_view> artist_view::build(
-    spotify::api *api, const spotify::artist &artist)
-{
-    return std::make_shared<artist_view>(api, artist);
 }
 
 } // namespace ui

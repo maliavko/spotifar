@@ -33,8 +33,14 @@ namespace far3
         return key;
     }
 
-    namespace msg
+    namespace dialogs
     {
+        void flush_vbuffer()
+        {
+            // found some hack: https://api.farmanager.com/ru/dialogapi/dmsg/dn_drawdialogdone.html
+            return config::ps_info.Text(0, 0, NULL, NULL);
+        }
+
         intptr_t send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
         {
             return config::ps_info.SendDlgMessage(hdlg, msg, param1, param2);
@@ -118,7 +124,80 @@ namespace far3
             return string(reinterpret_cast<const char*>(item_data), item_data_size);
         }
     }
+
+    namespace panels
+    {
+        intptr_t redraw(HANDLE panel)
+        {
+            return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, 0);
+        }
+        
+        intptr_t update(HANDLE panel)
+        {
+            return config::ps_info.PanelControl(panel, FCTL_UPDATEPANEL, 0, 0);
+        }
+        
+        intptr_t is_active(HANDLE panel)
+        {
+            return config::ps_info.PanelControl(panel, FCTL_ISACTIVEPANEL, 0, 0);
+        }
+        
+        intptr_t does_exist(HANDLE panel)
+        {
+            return config::ps_info.PanelControl(panel, FCTL_CHECKPANELSEXIST, 0, 0);
+        }
+        
+        intptr_t set_active(HANDLE panel)
+        {
+            return config::ps_info.PanelControl(panel, FCTL_SETACTIVEPANEL, 0, 0);
+        }
+        
+        intptr_t get_current_item(HANDLE panel)
+        {
+            // TODO: unfinished
+            // size_t size = config::ps_info.PanelControl(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
+            // PluginPanelItem *PPI=(PluginPanelItem*)malloc(size);
+            // if (PPI)
+            // {
+            //     FarGetPluginPanelItem FGPPI={sizeof(FarGetPluginPanelItem), size, PPI};
+            //     config::ps_info.PanelControl(PANEL_ACTIVE,FCTL_GETCURRENTPANELITEM, 0, &FGPPI);
+                
+            //     const far_user_data* data = nullptr;
+            //     if (PPI->UserData.Data != nullptr)
+            //     {
+            //         data = static_cast<const far_user_data*>(PPI->UserData.Data);
+            //         spdlog::debug("current item {}", album::make_uri(data->id));
+            //         api->start_playback(album::make_uri(data->id));
+            //     }
+                
+            //     free(PPI);
+            // }
+            return 0;
+        }
+    }
     
+    namespace actl
+    {
+        intptr_t redraw_all()
+        {
+            return config::ps_info.AdvControl(&MainGuid, ACTL_REDRAWALL, 0, 0);
+        }
+
+        HWND get_far_hwnd()
+        {
+            return (HWND)config::ps_info.AdvControl(&MainGuid, ACTL_GETFARHWND, 0, 0);
+        }
+
+        intptr_t quit(intptr_t exit_code)
+        {
+            return config::ps_info.AdvControl(&MainGuid, ACTL_QUIT, exit_code, 0);
+        }
+
+        intptr_t synchro(void *user_data)
+        {
+            return config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, user_data);
+        }
+    }
 
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
     {
@@ -156,7 +235,7 @@ namespace far3
         void push(tasks_queue::task_t task)
         {
             auto task_id = queue.push_task(task);
-            config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, (void*)task_id);
+            actl::synchro((void*)task_id);
         }
         
         void process(intptr_t task_id)

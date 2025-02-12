@@ -11,16 +11,15 @@ namespace spotifar { namespace ui {
 class album_view: public view
 {
 public:
-    album_view(spotify::api *api, const spotify::album &album, const spotify::artist &artist);
+    album_view(spotify::api *api, const spotify::artist &artist, const spotify::album &album,
+                const spotify::track &initial_track = spotify::track());
 
     virtual view_items_t get_items();
-    virtual std::shared_ptr<view> select_item(const string &track_id);
-
-    static std::shared_ptr<album_view> build(spotify::api *api,
-        const spotify::album &album, const spotify::artist &artist);
+    virtual intptr_t select_item(const string &track_id);
 private:
     spotify::album album;
     spotify::artist artist;
+    spotify::track initial_track;
     spotify::api *api;
 };
 
