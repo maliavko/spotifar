@@ -194,6 +194,11 @@ namespace far3
     intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message = "");
 }
 
+namespace http
+{
+    bool is_success(int response_code);
+}
+
 } // namespace utils
 } // namespace spotifar
 

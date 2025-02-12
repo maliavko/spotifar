@@ -50,7 +50,8 @@ artists_t LibraryCache::get_followed_artists()
 
     do
     {
-        if (auto r = api->get(request_url, 5min))
+        auto r = api->get(request_url, 5min);
+        if (http::is_success(r->status))
         {
             json data = json::parse(r->body)["artists"];
             request_url = data["next"];
@@ -66,7 +67,8 @@ artists_t LibraryCache::get_followed_artists()
     
 artist LibraryCache::get_artist(const string &artist_id)
 {
-    if (auto r = api->get(std::format("/v1/artists/{}", artist_id)))
+    auto r = api->get(std::format("/v1/artists/{}", artist_id));
+    if (http::is_success(r->status))
         return json::parse(r->body).get<artist>();
     return artist();
 }
@@ -83,7 +85,8 @@ albums_t LibraryCache::get_artist_albums(const string &artist_id)
         
     do
     {
-        if (auto r = api->get(request_url))
+        auto r = api->get(request_url);
+        if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
             request_url = data["next"];
@@ -99,8 +102,9 @@ albums_t LibraryCache::get_artist_albums(const string &artist_id)
 
 tracks_t LibraryCache::get_artist_top_tracks(const string &artist_id)
 {
-    json request_url = std::format("/v1/artists/{}/top-tracks", artist_id);
-    if (auto r = api->get(request_url))
+    auto r = api->get(std::format("/v1/artists/{}/top-tracks", artist_id));
+
+    if (http::is_success(r->status))
     {
         json data = json::parse(r->body);
         return data["tracks"].get<tracks_t>();
@@ -110,7 +114,8 @@ tracks_t LibraryCache::get_artist_top_tracks(const string &artist_id)
     
 album LibraryCache::get_album(const string &album_id)
 {
-    if (auto r = api->get(std::format("/v1/albums/{}", album_id)))
+    auto r = api->get(std::format("/v1/albums/{}", album_id));
+    if (http::is_success(r->status))
         return json::parse(r->body).get<album>();
     return album();
 }
@@ -126,7 +131,8 @@ simplified_tracks_t LibraryCache::get_album_tracks(const string &album_id)
         
     do
     {
-        if (auto r = api->get(request_url))
+        auto r = api->get(request_url);
+        if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
             request_url = data["next"];
@@ -148,7 +154,8 @@ playlist LibraryCache::get_playlist(const string &playlist_id)
             { "fields", playlist::get_fields_filter() },
         });
 
-    if (auto r = api->get(request_url))
+    auto r = api->get(request_url);
+    if (http::is_success(r->status))
         return json::parse(r->body).get<playlist>();
     return playlist();
 }
@@ -163,7 +170,8 @@ simplified_playlists_t LibraryCache::get_playlists()
     
     do
     {
-        if (auto r = api->get(request_url))
+        auto r = api->get(request_url);
+        if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
             request_url = data["next"];
@@ -191,7 +199,8 @@ playlist_tracks_t LibraryCache::get_playlist_tracks(const string &playlist_id)
     
     do
     {
-        if (auto r = api->get(request_url))
+        auto r = api->get(request_url);
+        if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
             request_url = data["next"];

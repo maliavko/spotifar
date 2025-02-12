@@ -405,5 +405,16 @@ void tasks_queue::execute_task(task_t &task)
     }
 }
 
+namespace http
+{
+    using namespace httplib;
+    
+    bool is_success(int response_code)
+    {
+        return (response_code == OK_200 || response_code == NoContent_204 ||
+            response_code == NotModified_304);
+    }
+}
+
 } // namespace utils
 } // namespace spotifar

@@ -5,11 +5,6 @@ namespace spotifar { namespace spotify {
 using namespace httplib;
 using namespace utils;
 
-bool is_success(int status)
-{
-    return status == OK_200 || status == NoContent_204 || status == NotModified_304;
-}
-
 // TODO: reconsider these functions
 string dump_headers(const Headers &headers) {
     string s;
@@ -61,7 +56,7 @@ api::api():
     client.set_logger(
         [this](const Request &req, const Response &res)
         {
-            if (is_success(res.status))
+            if (http::is_success(res.status))
             {
                 if (!exclude.contains(req.path))
                 {
@@ -199,7 +194,7 @@ void api::pause_playback(const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = c.Put(append_query_params("/v1/me/player/pause", params));
-            if (is_success(res))
+            if (http::is_success(res))
                 cache.patch({
                     { "is_playing", false }
                 });
@@ -245,7 +240,7 @@ void api::seek_to_position(int position_ms, const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = c.Put(append_query_params("/v1/me/player/seek", params));
-            if (is_success(res->status))
+            if (http::is_success(res->status))
                 cache.patch({
                     { "progress_ms", position_ms }
                 });
@@ -265,7 +260,7 @@ void api::toggle_shuffle(bool is_on, const string &device_id)
                 params.insert({ "device_id", dev_id });
             
             auto res = c.Put(append_query_params("/v1/me/player/shuffle", params));
-            if (is_success(res->status))
+            if (http::is_success(res->status))
                 cache.patch({
                     { "shuffle_state", is_on }
                 });
@@ -313,7 +308,7 @@ void api::set_repeat_state(const string &mode, const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = c.Put(append_query_params("/v1/me/player/repeat", params));
-            if (is_success(res->status))
+            if (http::is_success(res->status))
                 cache.patch({
                     { "repeat_state", mode }
                 });
@@ -333,7 +328,7 @@ void api::set_playback_volume(int volume_percent, const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = c.Put(append_query_params("/v1/me/player/volume", params));
-            if (is_success(res->status))
+            if (http::is_success(res->status))
                 cache.patch({
                     { "device", {
                         { "volume_percent", volume_percent }
@@ -385,7 +380,7 @@ void api::start_playback(const json &body, const string &device_id)
             else
                 res = c.Put(request_url, body.dump(), "application/json");
 
-            if (is_success(res))
+            if (http::is_success(res))
                 cache.patch({
                     { "is_playing", true }
                 });
