@@ -20,6 +20,11 @@ namespace events {
     {
         return ObserverManager::notify(&ui_events_observer::show_playlists_view);
     }
+
+    void show_playlist_view(const spotify::playlist &playlist)
+    {
+        return ObserverManager::notify(&ui_events_observer::show_playlist_view, playlist);
+    }
     
     void show_artist_view(const spotify::artist &artist)
     {

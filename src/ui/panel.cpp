@@ -5,6 +5,7 @@
 #include "ui/views/artist.hpp"
 #include "ui/views/album.hpp"
 #include "ui/views/playlists.hpp"
+#include "ui/views/playlist.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -199,6 +200,11 @@ void Panel::show_album_view(const spotify::artist &artist, const spotify::album 
 void Panel::show_playlists_view()
 {
     return change_view(std::make_shared<playlists_view>(&api));
+}
+
+void Panel::show_playlist_view(const spotify::playlist &playlist)
+{
+    return change_view(std::make_shared<playlist_view>(&api, playlist));
 }
 
 intptr_t Panel::select_item(const SetDirectoryInfo *info)

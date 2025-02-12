@@ -32,7 +32,7 @@ intptr_t artists_view::select_item(const string &artist_id)
     const spotify::artist &artist = api->get_library().get_artist(artist_id);
     if (artist.is_valid())
     {
-        events::show_artist_view(a);
+        events::show_artist_view(artist);
         return TRUE;
     }
     

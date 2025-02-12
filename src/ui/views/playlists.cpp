@@ -28,8 +28,11 @@ intptr_t playlists_view::select_item(const string &playlist_id)
     }
     
     auto playlist = api->get_library().get_playlist(playlist_id);
-    if (playlist.id != invalid_id)
-        return playlist_view::build(api, playlist);
+    if (playlist.is_valid())
+    {
+        events::show_playlist_view(playlist);
+        return TRUE;
+    }
 
     return FALSE;
 }

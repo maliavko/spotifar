@@ -153,6 +153,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             case VK_F8:
             {
                 api.clear_cache();
+                log::global->debug("Cached has been cleared");
             }
         }
     }

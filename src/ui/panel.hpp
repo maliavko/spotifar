@@ -31,6 +31,7 @@ protected:
     virtual void show_artist_view(const spotify::artist &artist);
     virtual void show_album_view(const spotify::artist &artist, const spotify::album &album);
     virtual void show_playlists_view();
+    virtual void show_playlist_view(const spotify::playlist &playlist);
 private:
     std::shared_ptr<ui::view> view;
     spotify::api &api;
