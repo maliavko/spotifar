@@ -25,18 +25,19 @@ public:
     intptr_t process_input(const ProcessPanelInputInfo *info);
 protected:
     static void WINAPI free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info);
-    void change_view(std::shared_ptr<ui::view> view, const string &item_id = "");
+    void change_view(std::shared_ptr<ui::view> view);
 
     // views events' handlers
+    virtual void refresh_panels(const string &item_id);
     virtual void show_root_view();
     virtual void show_artists_view();
-    virtual void show_artist_view(const spotify::artist &artist);
-    virtual void show_album_view(const spotify::artist &artist, const spotify::album &album, const track &track);
+    virtual void show_artist_view(const artist &artist);
+    virtual void show_album_view(const artist &artist, const album &album);
     virtual void show_playlists_view();
-    virtual void show_playlist_view(const spotify::playlist &playlist);
+    virtual void show_playlist_view(const playlist &playlist);
 private:
     std::shared_ptr<ui::view> view;
-    spotify::api &api;
+    api &api;
 };
 
 } // namespace ui

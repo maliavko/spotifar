@@ -31,9 +31,9 @@ namespace events {
         return ObserverManager::notify(&ui_events_observer::show_artist_view, artist);
     }
     
-    void show_album_view(const artist &artist, const album &album, const track &track)
+    void show_album_view(const artist &artist, const album &album)
     {
-        return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album, track);
+        return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album);
     }
     
     void show_player_dialog()
@@ -44,6 +44,11 @@ namespace events {
     void show_config_dialog()
     {
         config_dialog::show();
+    }
+    
+    void refresh_panels(const string &item_id)
+    {
+        return ObserverManager::notify(&ui_events_observer::refresh_panels, item_id);
     }
 
 } // namespace events

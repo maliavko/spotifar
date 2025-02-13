@@ -168,11 +168,13 @@ void WINAPI Panel::free_user_data(void *const user_data, const FarPanelItemFreeI
     delete static_cast<const far_user_data*>(user_data);
 }
 
-void Panel::change_view(std::shared_ptr<ui::view> view, const string &item_id)
+void Panel::change_view(std::shared_ptr<ui::view> view)
 {
-    // utils::log::global->debug("A panel view has been changed, {}", utils::to_string(view->get_name()));
     this->view = view;
+}
 
+void Panel::refresh_panels(const string &item_id)
+{
     utils::far3::panels::update(PANEL_ACTIVE);
     utils::far3::panels::redraw(PANEL_ACTIVE, view->get_item_idx(item_id) + 1); // 0 index is ".."
 }
@@ -187,14 +189,14 @@ void Panel::show_artists_view()
     return change_view(std::make_shared<artists_view>(&api));
 }
 
-void Panel::show_artist_view(const spotify::artist &artist)
+void Panel::show_artist_view(const artist &artist)
 {
     return change_view(std::make_shared<artist_view>(&api, artist));
 }
 
-void Panel::show_album_view(const spotify::artist &artist, const spotify::album &album, const track &track)
+void Panel::show_album_view(const artist &artist, const album &album)
 {
-    change_view(std::make_shared<album_view>(&api, artist, album), track.id);
+    change_view(std::make_shared<album_view>(&api, artist, album));
 }
 
 void Panel::show_playlists_view()

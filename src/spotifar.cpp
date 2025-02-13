@@ -105,7 +105,7 @@ intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 {
     if (info->OpMode & OPM_FIND)
         return FALSE;
-        
+    
     return static_cast<plugin*>(info->hPanel)->select_item(info);
 }
 

@@ -6,6 +6,7 @@
 #include "items.hpp"
 #include "abstract.hpp"
 #include "cache.hpp"
+#include "utils.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -35,7 +36,9 @@ public:
 
     // cached data interface
     virtual void resync(bool force = false);
-
+protected:
+    template<typename T>
+    void request_paginated_data(const string &request_url, T &data, const string &data_key = "");
 private:
     bool is_initialized = false;
     api_abstract *api;
@@ -49,6 +52,46 @@ private:
 
     // std::vector<const artist*> followed_artists;
 };
+
+template<typename T>
+void LibraryCache::request_paginated_data(const string &request_url, T &result, const string &data_key)
+{
+    // TODO: unfinished, ugly
+    json url(request_url);
+
+    size_t entries_received = 0;
+    auto ss = config::ps_info.SaveScreen(0, 0, -1, -1);
+    wstring message = L"Loading\nRequesting data...";
+
+    do
+    {
+        config::ps_info.Message(&MainGuid,&FarMessageGuid,
+            FMSG_ALLINONE,
+            L"",
+            (const wchar_t * const *)message.c_str(),
+            0,0);
+
+        auto r = api->get(url);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body);
+            if (!data_key.empty())
+                data = data.at(data_key);
+
+                url = data["next"];
+
+            const auto &entries = data["items"].get<T>();
+            result.insert(result.end(), entries.begin(), entries.end());
+            
+            entries_received += entries.size();
+            message = std::format(L"Loading\nEntries received {}/{}",
+                entries_received, data["total"].get<int>());
+        }
+    }
+    while (!url.is_null());
+
+    config::ps_info.RestoreScreen(ss);
+}
 
 } // namespace spotify
 } // namespace spotifar

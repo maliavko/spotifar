@@ -459,7 +459,9 @@ bool player::on_artist_label_input_received(void *input_record)
     if (artist.is_valid())
     {
         hide();
+
         ui::events::show_artist_view(artist);
+        ui::events::refresh_panels();
     }
 
     return true;
@@ -477,7 +479,9 @@ bool player::on_track_label_input_received(void *input_record)
     if (artist.is_valid())
     {
         hide();
-        ui::events::show_album_view(artist, playback.item.album, playback.item);
+
+        ui::events::show_album_view(artist, playback.item.album);
+        ui::events::refresh_panels(playback.item.id);
     }
 
     return true;
