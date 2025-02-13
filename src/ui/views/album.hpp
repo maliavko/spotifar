@@ -11,16 +11,19 @@ namespace spotifar { namespace ui {
 class album_view: public view
 {
 public:
-    album_view(spotify::api *api, const spotify::artist &artist, const spotify::album &album,
-                const spotify::track &initial_track = spotify::track());
+    album_view(spotify::api *api, const spotify::artist &artist, const spotify::album &album);
 
-    virtual view_items_t get_items();
+    virtual view_items_t get_items() { return items; }
     virtual intptr_t select_item(const string &track_id);
+    virtual size_t get_item_idx(const string &item_id);
+protected:
+    void rebuild_items();
 private:
     spotify::album album;
     spotify::artist artist;
-    spotify::track initial_track;
     spotify::api *api;
+
+    view_items_t items;
 };
 
 } // namespace ui

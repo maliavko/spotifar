@@ -21,19 +21,19 @@ namespace events {
         return ObserverManager::notify(&ui_events_observer::show_playlists_view);
     }
 
-    void show_playlist_view(const spotify::playlist &playlist)
+    void show_playlist_view(const playlist &playlist)
     {
         return ObserverManager::notify(&ui_events_observer::show_playlist_view, playlist);
     }
     
-    void show_artist_view(const spotify::artist &artist)
+    void show_artist_view(const artist &artist)
     {
         return ObserverManager::notify(&ui_events_observer::show_artist_view, artist);
     }
     
-    void show_album_view(const spotify::artist &artist, const spotify::album &album)
+    void show_album_view(const artist &artist, const album &album, const track &track)
     {
-        return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album);
+        return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album, track);
     }
     
     void show_player_dialog()

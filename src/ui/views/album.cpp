@@ -5,30 +5,13 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-album_view::album_view(spotify::api *api, const spotify::artist &artist, const spotify::album &album,
-                        const spotify::track &initial_track):
+album_view::album_view(spotify::api *api, const spotify::artist &artist, const spotify::album &album):
     view(album.get_user_name()),
     api(api),
     album(album),
-    artist(artist),
-    initial_track(initial_track)
+    artist(artist)
 {
-}
-
-view::view_items_t album_view::get_items()
-{
-    view_items_t result;
-    for (const auto &track: api->get_library().get_album_tracks(album.id))
-    {
-        wstring track_name = std::format(L"{:02}. {}", track.track_number, track.name);
-        result.push_back({
-            track.id, track_name, L"",
-            FILE_ATTRIBUTE_VIRTUAL,
-            (size_t)track.duration,
-            track.id == initial_track.id
-        });
-    }
-    return result;
+    rebuild_items();
 }
 
 intptr_t album_view::select_item(const string &track_id)
@@ -41,9 +24,34 @@ intptr_t album_view::select_item(const string &track_id)
     else
     {
         api->start_playback(album.id, track_id);
+        return TRUE; // TODO: or False as nothing has been changed on the panel
     }
     
     return FALSE;
+}
+
+size_t album_view::get_item_idx(const string &item_id)
+{
+    for (size_t idx = 0; idx < items.size(); idx++)
+        if (items[idx].id == item_id)
+            return idx;
+    return 0;
+}
+
+void album_view::rebuild_items()
+{
+    items.clear();
+
+    for (const auto &track: api->get_library().get_album_tracks(album.id))
+    {
+        items.push_back({
+            track.id,
+            std::format(L"{:02}. {}", track.track_number, track.name),
+            L"",
+            FILE_ATTRIBUTE_VIRTUAL,
+            (size_t)track.duration
+        });
+    }
 }
 
 } // namespace ui

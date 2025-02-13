@@ -8,6 +8,8 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
+
 class Panel: public ui_events_observer
 {
 public:
@@ -22,14 +24,14 @@ public:
     intptr_t select_item(const SetDirectoryInfo *info);
     intptr_t process_input(const ProcessPanelInputInfo *info);
 protected:
-    static void WINAPI free_user_data(void *const UserData, const FarPanelItemFreeInfo *const Info);
-    void change_view(std::shared_ptr<ui::view> view);
+    static void WINAPI free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info);
+    void change_view(std::shared_ptr<ui::view> view, const string &item_id = "");
 
     // views events' handlers
     virtual void show_root_view();
     virtual void show_artists_view();
     virtual void show_artist_view(const spotify::artist &artist);
-    virtual void show_album_view(const spotify::artist &artist, const spotify::album &album);
+    virtual void show_album_view(const spotify::artist &artist, const spotify::album &album, const track &track);
     virtual void show_playlists_view();
     virtual void show_playlist_view(const spotify::playlist &playlist);
 private:

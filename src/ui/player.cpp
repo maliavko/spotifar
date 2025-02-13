@@ -420,20 +420,46 @@ bool player::on_artist_label_input_received(void *input_record)
     if (ir->EventType == KEY_EVENT)
         return false;
 
+    // searching for a specific artist in the list of them, which
+    // user has clicked on
+    SMALL_RECT dlg_rect = utils::far3::dialogs::get_rect(hdlg);
+    
+    auto label_layout = dlg_items_layout[controls::artist_name];
+    auto label_length = label_layout.X2 - label_layout.X1;
+    auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + label_layout.X1);
+    
+    // we are iterating through all the names separated by comma in the full string,
+    // and check whether the clicking position happened within range of symbols
+    // of this particular name
     auto &playback = api.get_playback_state();
+    wstring ws = playback.item.get_artists_full_name();
+    std::wregex pattern(L"[^,]+");
 
-    // TODO: for now we go to only the first artist in the list, try to distinguish
-    // which one is clicked from several and goto the correct one
-    const auto &artist = api.get_library().get_artist(playback.item.artists[0].id);
+    auto begin = std::wsregex_iterator{ ws.begin(), ws.end(), pattern };
+    auto end = std::wsregex_iterator();
+
+    wstring result;
+    for (auto i = begin; i != end; ++i)
+    {
+        // if the position of the next match is farther than the clicking one,
+        // our previous word is what we need
+        if (i->position() > click_pos)
+            break;
+        
+        result = i->str();
+    }
+
+    // if we won't find our artist by name, we pick the main one
+    auto simplified_artist = playback.item.artists[0];
+    for (const auto &a: playback.item.artists)
+        if (a.name == utils::trim(result))
+            simplified_artist = a;
+
+    const auto &artist = api.get_library().get_artist(simplified_artist.id);
     if (artist.is_valid())
     {
         hide();
-
         ui::events::show_artist_view(artist);
-    
-        // forcing the panels to get udpated and redrawn
-        far3::panels::update(PANEL_ACTIVE);
-        far3::panels::redraw(PANEL_ACTIVE);
     }
 
     return true;
@@ -447,18 +473,11 @@ bool player::on_track_label_input_received(void *input_record)
 
     auto &playback = api.get_playback_state();
 
-    hide();
-
     const auto &artist = api.get_library().get_artist(playback.item.artists[0].id);
     if (artist.is_valid())
     {
         hide();
-
-        ui::events::show_album_view(artist, playback.item.album);
-    
-        // forcing the panels to get udpated and redrawn
-        far3::panels::update(PANEL_ACTIVE);
-        far3::panels::redraw(PANEL_ACTIVE);
+        ui::events::show_album_view(artist, playback.item.album, playback.item);
     }
 
     return true;
@@ -483,8 +502,7 @@ bool player::on_track_bar_input_received(void *input_record)
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    SMALL_RECT dlg_rect;
-    far3::dialogs::send(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
+    SMALL_RECT dlg_rect = utils::far3::dialogs::get_rect(hdlg);
     
     auto track_bar_layout = dlg_items_layout[controls::track_bar];
     auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
@@ -602,7 +620,7 @@ void player::on_devices_changed(const devices_list_t &devices)
     {
         auto &dev = devices[i];
         far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, i,
-                                 (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
+            (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
 }
 
@@ -616,12 +634,8 @@ void player::on_track_changed(const track &track)
     auto &state = api.get_playback_state();
     track_progress.set_higher_boundary(track.duration);
 
-    std::vector<wstring> artists_names;
-    std::transform(track.artists.cbegin(), track.artists.cend(), back_inserter(artists_names),
-        [](const auto &a) { return a.name; });
-
     set_control_text(controls::track_name, track.name);
-    set_control_text(controls::artist_name, utils::string_join(artists_names, L", "));
+    set_control_text(controls::artist_name, track.get_artists_full_name());
     set_control_text(controls::track_total_time, track_total_time_str);
 }
 

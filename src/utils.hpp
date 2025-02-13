@@ -33,6 +33,13 @@ wstring strip_invalid_filename_chars(const wstring &filename);
 /// @param delim delimeter
 wstring string_join(const std::vector<wstring> &parts, const std::wstring &delim);
 
+/// @brief Returns a copy of a given string without trailing whitespaces
+string trim(const string &s);
+
+/// @brief Returns a copy of a given string without trailing whitespaces
+wstring trim(const wstring &s);
+
+
 // TODO: making it thread safe
 class tasks_queue
 {
@@ -116,6 +123,7 @@ namespace far3
     {
         void flush_vbuffer();
         intptr_t send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
+        SMALL_RECT get_rect(HANDLE hdlg);
         intptr_t close(HANDLE hdlg);
         intptr_t enable(HANDLE hdlg, int ctrl_id, bool is_enabled);
         intptr_t set_checked(HANDLE hdlg, int ctrl_id, bool is_checked);
@@ -152,7 +160,6 @@ namespace far3
         intptr_t does_exist(HANDLE panel);
         intptr_t set_active(HANDLE panel);
         intptr_t get_current_item(HANDLE panel);
-        intptr_t set_current_item(HANDLE panel, size_t idx);
     }
 
     namespace actl

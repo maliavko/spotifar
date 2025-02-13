@@ -45,6 +45,13 @@ namespace far3
         {
             return config::ps_info.SendDlgMessage(hdlg, msg, param1, param2);
         }
+
+        SMALL_RECT get_rect(HANDLE hdlg)
+        {
+            SMALL_RECT dlg_rect;
+            send(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
+            return dlg_rect;
+        }
         
         intptr_t close(HANDLE hdlg)
         {
@@ -130,7 +137,7 @@ namespace far3
         intptr_t redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx)
         {
             PanelRedrawInfo info{ sizeof(PanelRedrawInfo), current_item_idx, top_item_idx };
-            return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, 0);
+            return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, &info);
         }
         
         intptr_t update(HANDLE panel)
@@ -174,12 +181,6 @@ namespace far3
             //     free(PPI);
             // }
             return 0;
-        }
-
-        intptr_t set_current_item(HANDLE panel, size_t idx)
-        {
-            PanelRedrawInfo info{ sizeof(PanelRedrawInfo), idx, 0 };
-            return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, &info);
         }
     }
     
@@ -355,7 +356,8 @@ wstring string_join(const std::vector<wstring> &parts, const wstring &delim)
     std::wostringstream os;
     auto b = parts.begin(), e = parts.end();
 
-    if (b != e) {
+    if (b != e)
+    {
         std::copy(b, prev(e), std::ostream_iterator<wstring, wchar_t>(os, delim.c_str()));
         b = prev(e);
     }
@@ -363,7 +365,28 @@ wstring string_join(const std::vector<wstring> &parts, const wstring &delim)
         os << *b;
 
     return os.str();
+}
 
+string trim(const string &s)
+{
+    size_t first = s.find_first_not_of(' ');
+    if (string::npos == first)
+    {
+        return s;
+    }
+    size_t last = s.find_last_not_of(' ');
+    return s.substr(first, (last - first + 1));
+}
+
+wstring trim(const wstring &s)
+{
+    size_t first = s.find_first_not_of(L' ');
+    if (string::npos == first)
+    {
+        return s;
+    }
+    size_t last = s.find_last_not_of(L' ');
+    return s.substr(first, (last - first + 1));
 }
 
 

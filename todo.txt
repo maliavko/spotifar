@@ -5,7 +5,8 @@ refactor
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
 - consider reformatting code to the style like in thread-pool library e.g.
 - replace Api class with IApi interface everywhere is possible
-- investigate "market" fields for some API requests, for now completly 
+- investigate "market" fields for some API requests, for now completly
+- migrate to a new spotify auth method https://developer.spotify.com/documentation/web-api/tutorials/migration-insecure-redirect-uri
 
 application ideas
 - grab lyrics from here? https://coda.io/@musixmatch/musixmatch-lyrics-api
@@ -13,6 +14,7 @@ application ideas
 - librespot as a win service to avoid stopping playback, while closing far
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - panels
+    - small dialog, showing progress of loading data in case of pagination requests
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
     - managing playlists via standard Far functions: create folder, move/remove from panel
     - while an album or playlist is on the panel and player is shown, update a selection of file in accordance to the playing track
@@ -27,7 +29,6 @@ application ideas
     - to finishe up likes in the player
     - extended player view with the list of tracks (or maybe on panel?)
     - recreate a volume control into slider?
-
 
 bugs
 - librespot quite often catches the error: Remote connection was forcibly closed, investigate: https://stackoverflow.com/questions/51719641/an-existing-connection-was-forcibly-closed-by-the-remote-host-web-api

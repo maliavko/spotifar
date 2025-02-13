@@ -131,6 +131,14 @@ const string& track::get_fields_filter()
     return fields;
 }
 
+wstring track::get_artists_full_name() const
+{
+    std::vector<wstring> artists_names;
+    std::transform(artists.cbegin(), artists.cend(), back_inserter(artists_names),
+        [](const auto &a) { return a.name; });
+    return utils::string_join(artists_names, L", ");
+}
+
 void from_json(const json &j, track &t)
 {
     from_json(j, dynamic_cast<simplified_track&>(t));

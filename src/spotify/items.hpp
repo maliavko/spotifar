@@ -89,6 +89,7 @@ struct track: public simplified_track
 
     static const string& get_fields_filter();
 
+    wstring get_artists_full_name() const;
     friend void from_json(const json &j, track &t);
     friend void to_json(json &j, const track &p);
 };

@@ -14,10 +14,9 @@ struct view_item
     wstring description;
     uintptr_t file_attrs;
     size_t duration;
-    bool is_current;
 
     view_item(const string &id, const wstring &name, const wstring &descr,
-        uintptr_t attrs = 0, size_t duration = 0, bool is_current = false);
+        uintptr_t attrs = 0, size_t duration = 0);
 };
 
 class view
@@ -30,7 +29,7 @@ public:
 
     inline const wstring& get_name() const { return name; }
 
-    virtual void update_panel_info(OpenPanelInfo *info) {}
+    virtual size_t get_item_idx(const string &item_id) { return 0; };
     virtual intptr_t process_input(const ProcessPanelInputInfo *info) { return FALSE; }
     virtual view_items_t get_items() = 0;
     virtual intptr_t select_item(const string &id) = 0;

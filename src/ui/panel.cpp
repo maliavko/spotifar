@@ -106,9 +106,6 @@ void Panel::update_panel_info(OpenPanelInfo *info)
     }
 
     info->KeyBar = &kbt;
-
-    if (view)
-        view->update_panel_info(info);
 }
 
 intptr_t Panel::update_panel_items(GetFindDataInfo *info)
@@ -166,15 +163,18 @@ void Panel::free_panel_items(const FreeFindDataInfo *info)
     free(info->PanelItem);
 }
 
-void WINAPI Panel::free_user_data(void *const UserData, const FarPanelItemFreeInfo *const Info)
+void WINAPI Panel::free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
 {
-    delete static_cast<const far_user_data*>(UserData);
+    delete static_cast<const far_user_data*>(user_data);
 }
 
-void Panel::change_view(std::shared_ptr<ui::view> view)
+void Panel::change_view(std::shared_ptr<ui::view> view, const string &item_id)
 {
-    utils::log::global->debug("A panel view has been changed, {}", utils::to_string(view->get_name()));
+    // utils::log::global->debug("A panel view has been changed, {}", utils::to_string(view->get_name()));
     this->view = view;
+
+    utils::far3::panels::update(PANEL_ACTIVE);
+    utils::far3::panels::redraw(PANEL_ACTIVE, view->get_item_idx(item_id) + 1); // 0 index is ".."
 }
 
 void Panel::show_root_view()
@@ -192,9 +192,9 @@ void Panel::show_artist_view(const spotify::artist &artist)
     return change_view(std::make_shared<artist_view>(&api, artist));
 }
 
-void Panel::show_album_view(const spotify::artist &artist, const spotify::album &album)
+void Panel::show_album_view(const spotify::artist &artist, const spotify::album &album, const track &track)
 {
-    return change_view(std::make_shared<album_view>(&api, artist, album));
+    change_view(std::make_shared<album_view>(&api, artist, album), track.id);
 }
 
 void Panel::show_playlists_view()
