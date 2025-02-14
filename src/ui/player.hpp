@@ -36,6 +36,7 @@ public:
     bool on_source_label_input_received(void *input_record);
     bool on_track_label_input_received(void *input_record);
     bool on_track_bar_input_received(void *input_record);
+    bool on_like_btn_input_received(void *input_record);
 
     // controls' styles
     bool on_playback_control_style_applied(void *dialog_item_colors);
@@ -43,6 +44,7 @@ public:
     bool on_inactive_control_style_applied(void *dialog_item_colors);
     bool on_shuffle_btn_style_applied(void *dialog_item_colors);
     bool on_repeat_btn_style_applied(void *dialog_item_colors);
+    bool on_like_btn_style_applied(void *dialog_item_colors);
 
 protected:
     friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
@@ -51,6 +53,7 @@ protected:
     void update_volume_bar(int volume);
     void update_shuffle_btn(bool is_shuffling);
     void update_repeat_btn(const string &repeate_state);
+    void update_like_btn(bool is_saved);
 
     // api even handlers
     virtual void on_playback_sync_finished(const string &err_msg);

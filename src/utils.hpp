@@ -31,7 +31,22 @@ wstring strip_invalid_filename_chars(const wstring &filename);
 /// @brief Join a vector of string into one, using given `delimeter`
 /// @param parts string parts
 /// @param delim delimeter
-wstring string_join(const std::vector<wstring> &parts, const std::wstring &delim);
+template<typename E, typename S = std::basic_string<E>>
+S string_join(const std::vector<S> &parts, const E *delim)
+{
+    std::basic_ostringstream<E, std::char_traits<E>, std::allocator<E>> os;
+    auto b = parts.begin(), e = parts.end();
+
+    if (b != e)
+    {
+        std::copy(b, prev(e), std::ostream_iterator<S, E>(os, delim));
+        b = prev(e);
+    }
+    if (b != e)
+        os << *b;
+
+    return os.str();
+}
 
 /// @brief Returns a copy of a given string without trailing whitespaces
 string trim(const string &s);

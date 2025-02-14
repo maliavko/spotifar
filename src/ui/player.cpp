@@ -158,7 +158,8 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
         { DN_CONTROLINPUT, &player::on_source_label_input_received },
     }},
     { controls::like_btn, {
-        { DN_CTLCOLORDLGITEM, &player::on_inactive_control_style_applied },
+        { DN_CTLCOLORDLGITEM, &player::on_like_btn_style_applied },
+        { DN_CONTROLINPUT, &player::on_like_btn_input_received },
     }},
     { controls::shuffle_btn, {
         { DN_BTNCLICK, &player::on_shuffle_btn_click },
@@ -525,6 +526,40 @@ bool player::on_inactive_control_style_applied(void *dialog_item_colors)
     return true;
 }
 
+bool player::on_like_btn_input_received(void *input_record)
+{
+    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    if (ir->EventType == KEY_EVENT)
+        return false;
+
+    auto &playback = api.get_playback_state();
+    bool is_saved = api.get_library().check_saved_track(playback.item.id);
+    if (is_saved)
+        api.get_library().remove_tracks({ playback.item.id });
+    else
+        api.get_library().save_tracks({ playback.item.id });
+    
+    update_like_btn(is_saved);
+
+    return true;
+}
+
+bool player::on_like_btn_style_applied(void *dialog_item_colors)
+{
+    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto &playback = api.get_playback_state();
+    if (api.get_library().check_saved_track(playback.item.id))
+    {
+        dic->Colors->ForegroundColor = colors::black;
+    }
+    else
+    {
+        dic->Colors->ForegroundColor = colors::dgray;
+    }
+    dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
+    return true;
+}
+
 bool player::on_shuffle_btn_style_applied(void *dialog_item_colors)
 {
     FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
@@ -641,6 +676,8 @@ void player::on_track_changed(const track &track)
     set_control_text(controls::track_name, track.name);
     set_control_text(controls::artist_name, track.get_artists_full_name());
     set_control_text(controls::track_total_time, track_total_time_str);
+
+    update_like_btn(api.get_library().check_saved_track(state.item.id));
 }
 
 void player::update_track_bar(int duration, int progress)
@@ -738,6 +775,12 @@ void player::update_repeat_btn(const string &repeate_state)
     // TODO: localize?
     repeat_label = utils::utf8_decode(repeate_state);
     set_control_text(controls::repeat_btn, repeat_label);
+}
+
+void player::update_like_btn(bool is_saved)
+{
+    no_redraw nr(hdlg);
+    set_control_text(controls::like_btn, like_btn_label);
 }
 
 void player::on_state_changed(bool is_playing)

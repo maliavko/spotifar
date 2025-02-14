@@ -34,6 +34,11 @@ public:
     simplified_playlists_t get_playlists();
     playlist_tracks_t get_playlist_tracks(const string &playlist_id);
 
+    bool check_saved_track(const string &track_id);
+    std::vector<bool> check_saved_tracks(const std::vector<string> &ids);
+    bool save_tracks(const std::vector<string> &ids);
+    bool remove_tracks(const std::vector<string> &ids);
+
     // cached data interface
     virtual void resync(bool force = false);
 protected:

@@ -23,6 +23,10 @@ struct api_abstract
     /// @brief Performs a HTTP GET request
     /// @param cache_for caches the requested data for the givem amount of time
     virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {}) = 0;
+
+    virtual httplib::Result put(const string &request_url, const json &body = {}) = 0;
+
+    virtual httplib::Result del(const string &request_url, const json &body = {}) = 0;
 };
 
 /// @brief An interface to the class, which implements the functionality to cache the data

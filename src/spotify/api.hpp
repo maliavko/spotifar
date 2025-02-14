@@ -32,6 +32,9 @@ public:
     inline virtual size_t get_playback_observers_count() const { return playback_observers; }
 
     virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {});
+    virtual httplib::Result put(const string &request_url, const json &body = {});
+    virtual httplib::Result del(const string &request_url, const json &body = {});
+
     LibraryCache& get_library() { return *library; }
     void clear_cache();
 

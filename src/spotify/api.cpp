@@ -446,6 +446,16 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     return httplib::Result();
 }
 
+httplib::Result api::put(const string &request_url, const json &body)
+{
+    return client.Put(request_url, body.dump(), "application/json");
+}
+
+httplib::Result api::del(const string &request_url, const json &body)
+{
+    return client.Delete(request_url, body.dump(), "application/json");
+}
+
 void api::set_bearer_token_auth(const string &token)
 {
     client.set_bearer_token_auth(token);

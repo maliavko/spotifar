@@ -193,5 +193,49 @@ playlist_tracks_t LibraryCache::get_playlist_tracks(const string &playlist_id)
     return result;
 }
 
+bool LibraryCache::check_saved_track(const string &track_id)
+{
+    auto flags = check_saved_tracks({ track_id });
+    if (flags.size() > 0)
+        return flags[0];
+    return false;
+}
+
+std::vector<bool> LibraryCache::check_saved_tracks(const std::vector<string> &ids)
+{
+    auto r = api->get(httplib::append_query_params(
+        "/v1/me/tracks/contains", {{ "ids", utils::string_join(ids, ",") }}));
+    if (http::is_success(r->status))
+    {
+        std::vector<bool> result;
+        json::parse(r->body).get_to(result);
+        
+        return result;
+        
+    }
+    
+    return {};
+}
+
+bool LibraryCache::save_tracks(const std::vector<string> &ids)
+{
+    auto r = api->put("/v1/me/tracks", json{{ "ids", ids }});
+    if (http::is_success(r->status))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool LibraryCache::remove_tracks(const std::vector<string> &ids)
+{
+    auto r = api->del("/v1/me/tracks", json{{ "ids", ids }});
+    if (http::is_success(r->status))
+    {
+        return true;
+    }
+    return false;
+}
+
 } // namespace spotify
 } // namespace spotifar
