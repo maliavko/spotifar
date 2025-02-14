@@ -296,6 +296,8 @@ bool config_dialog::show()
                 if (dialogs::is_checked(hdlg, ctrl_id + 4)) mods |= MOD_ALT;
                 s.hotkeys[hotkey_id] = std::make_pair(key, mods);
             }
+
+            ctx->fire_events(); // notify all the listeners
         }
         config::write();
     }

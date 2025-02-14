@@ -434,7 +434,7 @@ bool player::on_artist_label_input_received(void *input_record)
     // of this particular name
     auto &playback = api.get_playback_state();
     wstring ws = playback.item.get_artists_full_name();
-    std::wregex pattern(L"[^,]+");
+    static std::wregex pattern(L"[^,]+");
 
     auto begin = std::wsregex_iterator{ ws.begin(), ws.end(), pattern };
     auto end = std::wsregex_iterator();

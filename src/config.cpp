@@ -34,14 +34,23 @@ static wstring get_user_app_data_folder()
     return config::get_plugin_launch_folder();
 }
 
-settings_context::settings_context(bool fire_diff_events):
-    ps(MainGuid, ps_info.SettingsControl), settings_copy(_settings), fire_events(fire_diff_events) {}
-
-settings_context::~settings_context()
+settings_context::settings_context(const wstring &subkey):
+    ps(MainGuid, ps_info.SettingsControl), settings_copy(_settings), subkey_path(subkey)
 {
-    if (!fire_events)
-        return;
-    
+    static std::wregex pattern(L"[^/]+");
+
+    auto begin = std::wsregex_iterator{ subkey.begin(), subkey.end(), pattern };
+    auto end = std::wsregex_iterator();
+
+    for (auto i = begin; i != end; ++i)
+    {
+        ps.CreateSubKey(subkey_idx, i->str().c_str());
+        subkey_idx++;
+    }
+}
+
+void settings_context::fire_events()
+{
     if (_settings.is_global_hotkeys_enabled != settings_copy.is_global_hotkeys_enabled)
         dispatch_event(&config_observer::on_global_hotkeys_setting_changed,
             _settings.is_global_hotkeys_enabled);
@@ -60,31 +69,28 @@ settings_context::~settings_context()
     if (_settings.verbose_logging != settings_copy.verbose_logging)
         dispatch_event(&config_observer::on_logging_verbocity_changed,
             _settings.verbose_logging);
-}
 
-settings& settings_context::get_settings()
-{
-    return _settings;
+    settings_copy = _settings;
 }
 
 bool settings_context::get_bool(const wstring &name, bool def)
 {
-    return ps.Get(0, name.c_str(), def);
+    return ps.Get(subkey_idx, name.c_str(), def);
 }
 
 std::int64_t settings_context::get_int64(const wstring &name, std::int64_t def)
 {
-    return ps.Get(0, name.c_str(), def);
+    return ps.Get(subkey_idx, name.c_str(), def);
 }
 
 int settings_context::get_int(const wstring &name, int def)
 {
-    return ps.Get(0, name.c_str(), def);
+    return ps.Get(subkey_idx, name.c_str(), def);
 }
 
 const wstring settings_context::get_wstr(const wstring &name, const wstring &def)
 {
-    return ps.Get(0, name.c_str(), def.c_str());
+    return ps.Get(subkey_idx, name.c_str(), def.c_str());
 }
 
 string settings_context::get_str(const wstring &name, const string &def)
@@ -94,22 +100,22 @@ string settings_context::get_str(const wstring &name, const string &def)
 
 void settings_context::set_bool(const wstring &name, bool value)
 {
-    ps.Set(0, name.c_str(), value);
+    ps.Set(subkey_idx, name.c_str(), value);
 }
 
 void settings_context::set_int64(const wstring &name, std::int64_t value)
 {
-    ps.Set(0, name.c_str(), value);
+    ps.Set(subkey_idx, name.c_str(), value);
 }
 
 void settings_context::set_int(const wstring &name, int value)
 {
-    ps.Set(0, name.c_str(), value);
+    ps.Set(subkey_idx, name.c_str(), value);
 }
 
 void settings_context::set_wstr(const wstring &name, const wstring &value)
 {
-    ps.Set(0, name.c_str(), value.c_str());
+    ps.Set(subkey_idx, name.c_str(), value.c_str());
 }
 
 void settings_context::set_str(const wstring &name, const string &value)
@@ -119,12 +125,48 @@ void settings_context::set_str(const wstring &name, const string &value)
 
 bool settings_context::delete_value(const wstring& name)
 {
-    return ps.DeleteValue(0, name.c_str());
+    return ps.DeleteValue(subkey_idx, name.c_str());
 }
 
-std::shared_ptr<settings_context> lock_settings(bool fire_diff_events)
+bool settings_context::clear_subkey()
 {
-    return std::make_shared<settings_context>(fire_diff_events);
+    return ps.DeleteSubKey(subkey_idx);
+}
+
+void settings_context::trace_all()
+{
+    FarSettingsEnum s;
+    ps.Enum(subkey_idx, &s);
+
+    log::global->debug("Tracing all the stored settings for \"{}\", count {}",
+        utils::to_string(subkey_path), s.Count);
+
+    for (size_t i = 0; i < s.Count; i++)
+    {
+        const auto item = s.Items[i];
+        
+        string type_name = "unknown";
+        switch (item.Type)
+        {
+            case FST_UNKNOWN: type_name = "unknown"; break;
+            case FST_SUBKEY: type_name = "subkey"; break;
+            case FST_QWORD: type_name = "qword"; break;
+            case FST_STRING: type_name = "string"; break;
+            case FST_DATA: type_name = "userdata"; break;
+        }
+
+        log::global->debug("Name: {}, type: {}", utils::to_string(item.Name), type_name);
+    }
+}
+
+settings& settings_context::get_settings()
+{
+    return _settings;
+}
+
+std::shared_ptr<settings_context> lock_settings(const wstring &subkey)
+{
+    return std::make_shared<settings_context>(subkey);
 }
 
 static wstring get_hotkey_node_name(int key)
@@ -138,8 +180,7 @@ void read(const PluginStartupInfo *info)
     fsf = *info->FSF;
     ps_info.FSF = &fsf;
 
-    // read initial settings, do not fire diff events
-    auto ctx = lock_settings(false);
+    auto ctx = lock_settings();
     
     _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);

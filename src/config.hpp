@@ -57,8 +57,9 @@ struct config_observer: public BaseObserverProtocol
 class settings_context
 {
 public:
-    settings_context(bool fire_diff_events);
-    ~settings_context();
+    /// @param subkey a subkey name in the format of words, separated by slashes
+    ///                 e.g. "subkey1", "subkey1/key2/key3"
+    settings_context(const wstring &subkey);
 
     bool get_bool(const wstring &name, bool def);
     std::int64_t get_int64(const wstring &name, std::int64_t def);
@@ -72,19 +73,34 @@ public:
     void set_wstr(const wstring &name, const wstring &value);
     void set_str(const wstring &name, const string &value);
 
+    /// @brief Delete the value from the settings with the given `name`
     bool delete_value(const wstring &name);
 
+    /// @brief Clears all the current context's level subkey settings
+    bool clear_subkey();
+
+    /// @brief Prints out all the settings of the current context
+    void trace_all();
+
+    /// @brief Returns a reference to the current settings object
     settings& get_settings();
+
+    /// @brief Compares the current state of all the settings with
+    /// their initial state and fire the difference observer events,
+    /// to notify all the listeners
+    void fire_events();
 private:
-    bool fire_events;
     PluginSettings ps;
-    settings settings_copy;
+    settings settings_copy; // used for comparing the settings with the changed ones
+    const wstring subkey_path;
+    size_t subkey_idx = 0;
 };
 
 /// @brief Returns the settings context, which provides the access 
 /// to the plugin settings
-/// @param fire_diff_events fire diff config events, when the editing is finished
-std::shared_ptr<settings_context> lock_settings(bool fire_diff_events = true);
+/// @param subkey a settings subkey to get settings context for. Can be nested
+///                 like "subkey1/subkey2/key3"
+std::shared_ptr<settings_context> lock_settings(const wstring &subkey = L"");
 
 /// @brief Initialize settings
 void read(const PluginStartupInfo *info);
