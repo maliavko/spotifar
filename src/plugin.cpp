@@ -48,12 +48,13 @@ void plugin::start()
 
 void plugin::shutdown()
 {
-    auto y = GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
+    shutdown_sync_worker();
+    
+    // sending a control stop event to the librespot process
+    GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
     
     CloseHandle(m_hChildStd_OUT_Rd);
     CloseHandle(m_hChildStd_OUT_Wr);
-
-    shutdown_sync_worker();
 
     player.hide();
     api.shutdown();
@@ -105,7 +106,7 @@ void plugin::launch_sync_worker()
         {
             // TODO: what if there is an error, but no playback is opened
             exit_msg = ex.what();
-            log::api->critical("An exception occured while syncing up with an API: {}", exit_msg);
+            log::api->critical("An exception occured in the background thread: {}", exit_msg);
         }
         
         // TODO: remove and cleanup the code
@@ -114,7 +115,7 @@ void plugin::launch_sync_worker()
 
     is_worker_listening = true;
     std::thread(std::move(task)).detach();
-    log::api->info("An API sync worker has been launched");
+    log::api->info("Plugin's background thread has been launched");
 }
 
 void plugin::shutdown_sync_worker()
@@ -124,7 +125,7 @@ void plugin::shutdown_sync_worker()
     // trying to acquare a sync worker mutex, giving worker time to clean up
     // all the resources
     const std::lock_guard worker_lock(sync_worker_mutex);
-    log::api->info("An API sync worker has been stopped");
+    log::api->info("Plugin's background thread has been stopped");
 }
 
 intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
@@ -141,13 +142,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             }
             case VK_F6:
             {
-                CHAR chBuf[] = "\x03";
-                DWORD dwWritten;
-                auto y = GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
-                auto bSuccess = WriteFile(m_hChildStd_OUT_Wr, (LPCVOID)chBuf, 1, &dwWritten, NULL);
-                //auto y = GenerateConsoleCtrlEvent(CTRL_C_EVENT, m_hChildStd_OUT_Wr);
-                //auto y = GenerateConsoleCtrlEvent(CTRL_CLOSE_EVENT, pi.dwProcessId);
-                //auto y = PostThreadMessage(pi.dwThreadId, WM_CLOSE, 0, 0);
+                GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
                 return TRUE;
             }
             case VK_F8:

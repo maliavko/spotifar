@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME} SHARED
 	spotify/playback.cpp
 	spotify/devices.cpp
 	spotify/library.cpp
+	spotify/cache.cpp
 	ui/panel.cpp
 	ui/player.cpp
 	ui/config_dialog.cpp

@@ -220,6 +220,9 @@ namespace far3
 namespace http
 {
     bool is_success(int response_code);
+    
+    /// @brief A static constant, representing the flag of a session-wide caching
+    static const auto session = clock_t::duration(-1);
 }
 
 } // namespace utils

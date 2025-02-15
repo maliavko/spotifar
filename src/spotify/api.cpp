@@ -98,28 +98,26 @@ api::~api()
 bool api::start()
 {
     auto ctx = config::lock_settings();
-    for (auto &c: caches)
-        c->read(*ctx);
 
-    // TODO: this caches is definitely a tmp solution
-    auto s = ctx->get_str(L"responses", "");
-    if (!s.empty())
-        responses_cache = json::parse(s);
+    // initializing persistent caches
+    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); });
+
+    // initializing http responses cache
+    pool.detach_task([this, ctx] { api_responses_cache.start(*ctx); }, BS::pr::highest);
 
     return true;
 }
 
 void api::shutdown()
 {
-    auto ctx = config::lock_settings();
-    for (auto &c: caches)
-        c->write(*ctx);
-
-    ctx->set_str(L"responses", responses_cache.dump());
-    
-    pool.purge();
-
     ObserverManager::clear<BaseObserverProtocol>();
+
+    auto ctx = config::lock_settings();
+    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->write(*ctx); });
+
+    pool.purge(); // remove unfinished tasks from the queue
+
+    api_responses_cache.shutdown(*ctx);
 }
 
 void api::tick()
@@ -187,13 +185,13 @@ void api::toggle_playback(const string &device_id)
 void api::pause_playback(const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, &cache = *playback, dev_id = std::as_const(device_id)]
+        [&cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {};
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = c.Put(append_query_params("/v1/me/player/pause", params));
+            auto res = put(append_query_params("/v1/me/player/pause", params));
             if (http::is_success(res))
                 cache.patch({
                     { "is_playing", false }
@@ -230,7 +228,7 @@ void api::skip_to_previous(const string &device_id)
 void api::seek_to_position(int position_ms, const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, position_ms, &cache = *playback, dev_id = std::as_const(device_id)]
+        [position_ms, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
                 { "position_ms", std::to_string(position_ms) },
@@ -239,7 +237,7 @@ void api::seek_to_position(int position_ms, const string &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = c.Put(append_query_params("/v1/me/player/seek", params));
+            auto res = put(append_query_params("/v1/me/player/seek", params));
             if (http::is_success(res->status))
                 cache.patch({
                     { "progress_ms", position_ms }
@@ -250,7 +248,7 @@ void api::seek_to_position(int position_ms, const string &device_id)
 void api::toggle_shuffle(bool is_on, const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, is_on, &cache = *playback, dev_id = std::as_const(device_id)]
+        [is_on, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
                 { "state", is_on ? "true" : "false" },
@@ -259,7 +257,7 @@ void api::toggle_shuffle(bool is_on, const string &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
             
-            auto res = c.Put(append_query_params("/v1/me/player/shuffle", params));
+            auto res = put(append_query_params("/v1/me/player/shuffle", params));
             if (http::is_success(res->status))
                 cache.patch({
                     { "shuffle_state", is_on }
@@ -298,7 +296,7 @@ void api::toggle_shuffle_plus(bool is_on)
 void api::set_repeat_state(const string &mode, const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, mode, &cache = *playback, dev_id = std::as_const(device_id)]
+        [mode, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
                 { "state", mode },
@@ -307,7 +305,7 @@ void api::set_repeat_state(const string &mode, const string &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = c.Put(append_query_params("/v1/me/player/repeat", params));
+            auto res = put(append_query_params("/v1/me/player/repeat", params));
             if (http::is_success(res->status))
                 cache.patch({
                     { "repeat_state", mode }
@@ -318,7 +316,7 @@ void api::set_repeat_state(const string &mode, const string &device_id)
 void api::set_playback_volume(int volume_percent, const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, volume_percent, &cache = *playback, dev_id = std::as_const(device_id)]
+        [volume_percent, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
                 { "volume_percent", std::to_string(volume_percent) },
@@ -327,7 +325,7 @@ void api::set_playback_volume(int volume_percent, const string &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = c.Put(append_query_params("/v1/me/player/volume", params));
+            auto res = put(append_query_params("/v1/me/player/volume", params));
             if (http::is_success(res->status))
                 cache.patch({
                     { "device", {
@@ -350,14 +348,14 @@ void api::transfer_playback(const string &device_id, bool start_playing)
         return log::api->warn("The given device is already active {}", device_it->to_str());
     
     pool.detach_task(
-        [&c = this->client, start_playing, dev_id = std::as_const(device_id)]
+        [this, start_playing, dev_id = std::as_const(device_id)]
         {
             json body{
                 { "device_ids", { dev_id } },
                 { "play", start_playing },
             };
 
-            auto res = c.Put("/v1/me/player", body.dump(), "application/json");
+            auto res = put("/v1/me/player", body);
             // TODO: handle errors
         });
 }
@@ -370,16 +368,11 @@ void api::start_playback(const json &body, const string &device_id)
 
     pool.detach_task(
         [
-            &c = this->client, &cache = *playback, dev_id = std::as_const(device_id),
+            this, &cache = *playback, dev_id = std::as_const(device_id),
             request_url = append_query_params("/v1/me/player/play", params), body
         ]
         {
-            Result res;
-            if (body.empty())
-                res = c.Put(request_url);
-            else
-                res = c.Put(request_url, body.dump(), "application/json");
-
+            auto res = put(request_url, body);
             if (http::is_success(res))
                 cache.patch({
                     { "is_playing", true }
@@ -389,66 +382,63 @@ void api::start_playback(const json &body, const string &device_id)
 
 void api::clear_cache()
 {
-    responses_cache.clear();
-
-    auto ctx = config::lock_settings();
-    ctx->delete_value(L"responses");
+    api_responses_cache.clear_all();
     log::api->debug("Clearning caches");
 }
 
 // TODO: what about caching for only one session?
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 {
-    auto &cache = responses_cache[request_url];
+    using namespace httplib;
 
     string cached_etag = "";
-    if (!cache.is_null())
-    {
-        auto cached_until = clock_t::time_point{ clock_t::duration(
-            (std::int64_t)cache.value("cached-until", 0LL)) };
 
-        // if caching time is specified and still valid - returning cached result
-        if (clock_t::now() < cached_until)
+    // we have a cache for the requested url and it is still valid
+    if (api_responses_cache.is_cached(request_url))
+    {
+        auto cache = api_responses_cache.get(request_url);
+        if (cache.is_valid())
         {
-            httplib::Result res(std::make_unique<httplib::Response>(), httplib::Error::Success);
-            res->status = httplib::OK_200;
-            res->body = cache.value("body", "");
+            Result res(std::make_unique<Response>(), Error::Success);
+            res->status = OK_200;
+            res->body = cache.body;
             return res;
         }
 
-        cached_etag = cache.value("etag", "");
+        cached_etag = cache.etag;
     }
 
-    if (auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }}))
+    auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }});
+    if (utils::http::is_success(r->status))
     {
-        // collecting valid-until timestamp
-        if (cache_for > clock_t::duration::zero())
+        if (r->status == OK_200 && r->has_header("etag"))
         {
-            cache["cached-until"] = (clock_t::now() + cache_for).time_since_epoch().count();
+            api_responses_cache.store(
+                request_url, r->body, r->get_header_value("etag"), cache_for);
         }
+        else if (r->status == NotModified_304)
+        {
+            auto cache = api_responses_cache.get(request_url);
 
-        if (r->status == httplib::OK_200)
-        {
-            if (r->has_header("etag"))
-                cache["etag"] = r->get_header_value("etag");
-        }
-        else if (r->status == httplib::NotModified_304)
-        {
-            r->body = cache.value("body", "");
-        }
+            // replacing empty body with the cached one, so the client
+            // does not see the difference
+            r->body = cache.body;
 
-        // if either cache-until or etag is present - caching body as well
-        if (!cache.empty())
-            cache["body"] = r->body;
+            if (cache_for > clock_t::duration::zero())
+                api_responses_cache.store(request_url, cache);
+        }
         
         return r;
     }
-    return httplib::Result();
+    return Result();
 }
 
 httplib::Result api::put(const string &request_url, const json &body)
 {
-    return client.Put(request_url, body.dump(), "application/json");
+    if (!body.empty())
+        return client.Put(request_url, body.dump(), "application/json");
+    
+    return client.Put(request_url);
 }
 
 httplib::Result api::del(const string &request_url, const json &body)

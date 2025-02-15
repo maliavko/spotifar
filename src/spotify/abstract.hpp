@@ -16,9 +16,9 @@ struct api_abstract
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
 
-    /// @brief Returns the number of playback listeners. For these the API
-    /// syncs with the Spotify server way more often
-    virtual size_t get_playback_observers_count() const = 0;
+    /// @brief Returns whether a playback is active. For sucn case the API
+    /// syncs with the Spotify server happens way more often
+    virtual bool is_playback_active() const = 0;
 
     /// @brief Performs a HTTP GET request
     /// @param cache_for caches the requested data for the givem amount of time

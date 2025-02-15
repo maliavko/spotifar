@@ -112,6 +112,61 @@ private:
     std::vector<std::pair<time_point, json>> patches;
 };
 
+
+/// @brief A class for caching http responses from spotify server. Holds
+/// the information about ETags and validity time of the responses
+class http_cache
+{
+public:
+    /// @brief A calss for storing one entry of a cache
+    struct cache_entry
+    {
+        string etag = "";
+        string body = "";
+        clock_t::time_point cached_until{};
+        
+        /// @brief Is cached value still valid or expired
+        inline bool is_valid() const { return clock_t::now() < cached_until; }
+
+        /// @brief Is value cached only for the current session or persistent
+        inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
+
+        // json serialization interface
+        friend void from_json(const json &j, cache_entry &t);
+        friend void to_json(json &j, const cache_entry &p);
+    };
+public:
+    void start(config::settings_context &ctx);
+    void shutdown(config::settings_context &ctx);
+
+    /// @brief Initialization can take some time, return readiness
+    inline bool is_initilized() const { return is_initialized; }
+
+    /// @brief Store given reponse body for a cache
+    /// @param url http get-request
+    /// @param body a body to store
+    /// @param http response ETag header
+    /// @param cache_for optional time duration to keep the response
+    void store(const string &url, string body, const string &etag, clock_t::duration cache_for = {});
+    void store(const string &url, const cache_entry &entry);
+
+    /// @brief Does cache have the stored response for a given `url`
+    bool is_cached(const string &url) const;
+
+    /// @brief Get the cached data for a given `url`
+    const cache_entry& get(const string &url) const;
+
+    /// @brief Invalidates stored data for the `url` or range of urls, matching given `url part`
+    void invalidate(const string &url_part);
+
+    /// @brief Invalidates all the cache
+    void clear_all() { cached_responses.clear(); }
+private:
+    std::atomic<bool> is_initialized = false;
+    std::unordered_map<string, cache_entry> cached_responses;
+};
+
+
 template<typename T>
 json_cache<T>::json_cache(const wstring &storage_key):
     data(storage_key),

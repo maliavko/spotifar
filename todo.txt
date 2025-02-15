@@ -2,11 +2,12 @@ project infrastructure
 - gcc support
 
 refactor
+- the librespot and process winapi is written poorly, wrap it up well
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
-- consider reformatting code to the style like in thread-pool library e.g.
 - replace Api class with IApi interface everywhere is possible
 - investigate "market" fields for some API requests, for now completly
 - migrate to a new spotify auth method https://developer.spotify.com/documentation/web-api/tutorials/migration-insecure-redirect-uri
+- parallelize playlists and saved tracks request via pool, using offset and limit fields
 
 application ideas
 - grab lyrics from here? https://coda.io/@musixmatch/musixmatch-lyrics-api

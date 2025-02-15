@@ -29,7 +29,7 @@ public:
     inline const devices_list_t& get_available_devices() { return devices->get(); }
     inline const playback_state& get_playback_state() { return playback->get(); }
     inline virtual bool is_authenticated() const { return auth->is_authenticated(); }
-    inline virtual size_t get_playback_observers_count() const { return playback_observers; }
+    inline virtual bool is_playback_active() const { return playback_observers > 0; }
 
     virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {});
     virtual httplib::Result put(const string &request_url, const json &body = {});
@@ -63,8 +63,7 @@ private:
     BS::thread_pool pool;
     httplib::Client client;
     size_t playback_observers = 0;
-
-    json responses_cache; // TODO: not sure it is a final solution
+    http_cache api_responses_cache;
 
     // caches
     std::unique_ptr<playback_cache> playback;

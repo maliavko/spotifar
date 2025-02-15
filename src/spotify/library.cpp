@@ -41,15 +41,25 @@ void LibraryCache::resync(bool force)
 artists_t LibraryCache::get_followed_artists()
 {
     artists_t result;
+    
+    json request_url = httplib::append_query_params("/v1/me/following", {
+        { "type", "artist" },
+        { "limit", std::to_string(50) },
+    });
 
-    request_paginated_data(
-        httplib::append_query_params("/v1/me/following", {
-            { "type", "artist" },
-            { "limit", std::to_string(50) },
-        }),
-        result,
-        "artists"
-    );
+    do
+    {
+        auto r = api->get(request_url, utils::http::session);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body)["artists"];
+            request_url = data["next"];
+
+            const auto &entries = data["items"].get<artists_t>();
+            result.insert(result.end(), entries.begin(), entries.end());
+        }
+    }
+    while (!request_url.is_null());
 
     return result;
 }
@@ -176,19 +186,29 @@ simplified_playlists_t LibraryCache::get_playlists()
 
 playlist_tracks_t LibraryCache::get_playlist_tracks(const string &playlist_id)
 {
-    static string fields = std::format("items({}),next,total", playlist_track::get_fields_filter());
-
     playlist_tracks_t result;
+    
+    static string fields = std::format("items({}),next,total", playlist_track::get_fields_filter());
+    json request_url = httplib::append_query_params(
+        std::format("/v1/playlists/{}/tracks", playlist_id), {
+            { "limit", std::to_string(50) },
+            { "additional_types", "track" },
+            { "fields", fields },
+        });
 
-    request_paginated_data(
-        httplib::append_query_params(
-            std::format("/v1/playlists/{}/tracks", playlist_id), {
-                { "limit", std::to_string(50) },
-                { "additional_types", "track" },
-                { "fields", fields },
-            }),
-        result
-    );
+    do
+    {
+        auto r = api->get(request_url);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body);
+            request_url = data["next"];
+
+            const auto &entries = data["items"].get<playlist_tracks_t>();
+            result.insert(result.end(), entries.begin(), entries.end());
+        }
+    }
+    while (!request_url.is_null());
 
     return result;
 }
@@ -203,8 +223,9 @@ bool LibraryCache::check_saved_track(const string &track_id)
 
 std::vector<bool> LibraryCache::check_saved_tracks(const std::vector<string> &ids)
 {
-    auto r = api->get(httplib::append_query_params(
-        "/v1/me/tracks/contains", {{ "ids", utils::string_join(ids, ",") }}));
+    auto request_url = httplib::append_query_params(
+        "/v1/me/tracks/contains", {{ "ids", utils::string_join(ids, ",") }});
+    auto r = api->get(request_url, utils::http::session);
     if (http::is_success(r->status))
     {
         std::vector<bool> result;
