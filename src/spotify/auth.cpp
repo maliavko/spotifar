@@ -137,7 +137,7 @@ string auth_cache::request_auth_code()
             svr.stop();
         });
 
-        svr.listen("localhost", port);
+        svr.listen("127.0.0.1", port);
         return result;
     });
     
@@ -162,7 +162,7 @@ string auth_cache::request_auth_code()
 
 string auth_cache::get_auth_callback_url() const
 {
-    return std::format("http://localhost:{}/auth/callback", port);
+    return std::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
 void from_json(const json &j, auth &a)

@@ -99,7 +99,7 @@ bool api::start()
     auto ctx = config::lock_settings();
 
     // initializing persistent caches
-    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); });
+    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); c->resync(true); });
 
     // initializing http responses cache
     pool.detach_task([this, ctx] { api_responses_cache.start(*ctx); }, BS::pr::highest);
@@ -156,7 +156,7 @@ artists_t api::get_followed_artists()
 
 artist api::get_artist(const string &artist_id)
 {
-    auto r = get(std::format("/v1/artists/{}", artist_id));
+    auto r = get(std::format("/v1/artists/{}", artist_id), utils::http::session);
     if (http::is_success(r->status))
         return json::parse(r->body).get<artist>();
     return artist();
@@ -174,7 +174,7 @@ albums_t api::get_artist_albums(const string &artist_id)
         
     do
     {
-        auto r = get(request_url);
+        auto r = get(request_url, utils::http::session);
         if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
@@ -191,8 +191,7 @@ albums_t api::get_artist_albums(const string &artist_id)
 
 tracks_t api::get_artist_top_tracks(const string &artist_id)
 {
-    auto r = get(std::format("/v1/artists/{}/top-tracks", artist_id));
-
+    auto r = get(std::format("/v1/artists/{}/top-tracks", artist_id), utils::http::session);
     if (http::is_success(r->status))
     {
         json data = json::parse(r->body);
@@ -203,7 +202,7 @@ tracks_t api::get_artist_top_tracks(const string &artist_id)
     
 album api::get_album(const string &album_id)
 {
-    auto r = get(std::format("/v1/albums/{}", album_id));
+    auto r = get(std::format("/v1/albums/{}", album_id), utils::http::session);
     if (http::is_success(r->status))
         return json::parse(r->body).get<album>();
     return album();
@@ -220,7 +219,7 @@ simplified_tracks_t api::get_album_tracks(const string &album_id)
         
     do
     {
-        auto r = get(request_url);
+        auto r = get(request_url, utils::http::session);
         if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
@@ -243,7 +242,7 @@ playlist api::get_playlist(const string &playlist_id)
             { "fields", playlist::get_fields_filter() },
         });
 
-    auto r = get(request_url);
+    auto r = get(request_url, utils::http::session);
     if (http::is_success(r->status))
         return json::parse(r->body).get<playlist>();
     return playlist();
@@ -259,7 +258,7 @@ simplified_playlists_t api::get_playlists()
     
     do
     {
-        auto r = get(request_url);
+        auto r = get(request_url, utils::http::session);
         if (http::is_success(r->status))
         {
             json data = json::parse(r->body);
@@ -288,7 +287,7 @@ playlist_tracks_t api::get_playlist_tracks(const string &playlist_id)
 
     do
     {
-        auto r = get(request_url);
+        auto r = get(request_url, utils::http::session);
         if (utils::http::is_success(r->status))
         {
             json data = json::parse(r->body);
@@ -620,10 +619,10 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }});
     if (utils::http::is_success(r->status))
     {
-        if (r->status == OK_200 && r->has_header("etag"))
+        if (r->status == OK_200)
         {
             api_responses_cache.store(
-                request_url, r->body, r->get_header_value("etag"), cache_for);
+                request_url, r->body, r->get_header_value("etag", ""), cache_for);
         }
         else if (r->status == NotModified_304)
         {
@@ -633,8 +632,11 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
             // does not see the difference
             r->body = cache.body;
 
-            if (cache_for > clock_t::duration::zero())
-                api_responses_cache.store(request_url, cache);
+            // the response is still valid, so caching for a session or any other
+            // time if needed
+            if (cache_for != clock_t::duration::zero())
+                api_responses_cache.store(
+                    request_url, cache.body, cache.etag, cache_for);
         }
     }
     return r;

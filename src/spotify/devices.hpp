@@ -10,7 +10,8 @@ namespace spotifar { namespace spotify {
 class devices_cache: public json_cache<devices_t>
 {
 public:
-    devices_cache(api_abstract *api): json_cache(L"DevicesList"), api_proxy(api) {}
+    // devices_cache(api_abstract *api): json_cache(L"DevicesList"), api_proxy(api) {}
+    devices_cache(api_abstract *api): json_cache(L""), api_proxy(api) {}
     virtual ~devices_cache() { api_proxy = nullptr; }
     virtual bool is_active() const;
 protected:

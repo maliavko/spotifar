@@ -11,7 +11,8 @@ namespace spotifar { namespace spotify {
 class playback_cache: public json_cache<playback_state>
 {
 public:
-    playback_cache(api_abstract *api): json_cache(L"PlaybackState"), api_proxy(api) {}
+    //playback_cache(api_abstract *api): json_cache(L"PlaybackState"), api_proxy(api) {}
+    playback_cache(api_abstract *api): json_cache(L""), api_proxy(api) {}
     virtual ~playback_cache() { api_proxy = nullptr; }
     virtual bool is_active() const;
 

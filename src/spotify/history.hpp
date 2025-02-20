@@ -3,7 +3,7 @@
 #pragma once
 
 #include "cache.hpp"
-#include "playback.hpp"
+#include "items.hpp"
 
 namespace spotifar
 {

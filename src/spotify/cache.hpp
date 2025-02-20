@@ -64,7 +64,8 @@ template<class T>
 class json_cache: public cached_data_abstract
 {
 public:
-    /// @param storage_key A storage key name to save the data to
+    /// @param storage_key A storage key name to save the data to. If key is empty, so
+    /// the cache is not getting saved to disk, kept for sessino only
     json_cache(const wstring &storage_key);
 
     // persistent data interface
@@ -107,6 +108,7 @@ protected:
 private:
     json_value<T> data;
     timestamp_value last_sync_time;
+    bool is_persistent;
 
     std::mutex patch_mutex;
     std::vector<std::pair<time_point, json>> patches;
@@ -169,6 +171,7 @@ private:
 
 template<typename T>
 json_cache<T>::json_cache(const wstring &storage_key):
+    is_persistent(!storage_key.empty()),
     data(storage_key),
     last_sync_time(storage_key + L"Time")
 {
@@ -177,8 +180,11 @@ json_cache<T>::json_cache(const wstring &storage_key):
 template<typename T>
 void json_cache<T>::read(settings_ctx &ctx)
 {
-    data.read(ctx);
-    last_sync_time.read(ctx);
+    if (is_persistent)
+    {
+        data.read(ctx);
+        last_sync_time.read(ctx);
+    }
 
     // if the data is still valid, we send notification as
     // it was resynced well from server
@@ -189,15 +195,21 @@ void json_cache<T>::read(settings_ctx &ctx)
 template<typename T>
 void json_cache<T>::write(settings_ctx &ctx)
 {
-    data.write(ctx);
-    last_sync_time.write(ctx);
+    if (is_persistent)
+    {
+        data.write(ctx);
+        last_sync_time.write(ctx);
+    }
 }
 
 template<typename T>
 void json_cache<T>::clear(settings_ctx &ctx)
 {
-    data.clear(ctx);
-    last_sync_time.clear(ctx);
+    if (is_persistent)
+    {
+        data.clear(ctx);
+        last_sync_time.clear(ctx);
+    }
 }
 
 template<typename T>
@@ -206,7 +218,7 @@ void json_cache<T>::resync(bool force)
     auto sync_time = clock_t::now();
     // no updates for disabled caches, otherwise only in case the data
     // is invalid or resync is forced
-    if (!is_active() || (!force && is_valid()))
+    if (!force && (!is_active() || is_valid()))
         return;
 
     T new_data;

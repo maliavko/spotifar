@@ -33,6 +33,5 @@
 "Player"
 
 "Critical error"
-"An error has occured while initializing of a logging system."
-"A critical error occured while syncing a playback info."
+"An error has occured while initializing plugin."
 "Warning"

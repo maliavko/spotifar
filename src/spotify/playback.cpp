@@ -55,17 +55,17 @@ bool playback_cache::request_data(playback_state &data)
         json::parse(res->body).get_to(data);
         return true;
     }
-    else if (res->status == httplib::NoContent_204)
-    {
-        // we make sure that the stored last played data has "is_playing = false",
-        // not to confuse anybody with the UI status
-        data = get();
-        if (!data.is_empty())
-        {
-            data.is_playing = false;
-        }
-        return true;
-    }
+    // else if (res->status == httplib::NoContent_204)
+    // {
+    //     // we make sure that the stored last played data has "is_playing = false",
+    //     // not to confuse anybody with the UI status
+    //     data = get();
+    //     if (!data.is_empty())
+    //     {
+    //         data.is_playing = false;
+    //     }
+    //     return true;
+    // }
 
     return false;
 }

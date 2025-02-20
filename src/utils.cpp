@@ -215,12 +215,9 @@ namespace far3
             err_msg, extra_message.c_str(),
             get_text(MOk),
         };
-
-        log::global->error("Far error message dialog is shown, message id {}, {}", error_msg_id,
-            utils::to_string(extra_message));
         
         FARMESSAGEFLAGS flags = FMSG_WARNING;
-        if (GetLastError())  // if there's no error code, no need to show it in the dialog
+        if (extra_message.empty() && GetLastError())  // if there's no error code, no need to show it in the dialog
             flags |= FMSG_ERRORTYPE;
 
         return config::ps_info.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);

@@ -39,8 +39,7 @@ namespace spotifar
 		MKeyBarF4,
 
 		MFarMessageErrorTitle,
-		MFarMessageErrorLogInit,
-		MFarMessageErrorPlaybackSync,
+		MFarMessageErrorStartup,
 		MFarMessageWarning,
 	};
 }

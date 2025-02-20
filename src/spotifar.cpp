@@ -62,16 +62,30 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
         // initialize logging system
         utils::log::init();
     }
-    catch (const spdlog::spdlog_ex &ex)
+    catch (const std::exception &ex)
     {
         utils::far3::show_far_error_dlg(
-            MFarMessageErrorLogInit, utils::utf8_decode(ex.what()));
+            MFarMessageErrorStartup, utils::utf8_decode(ex.what()));
     }
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/openw.html 
 HANDLE WINAPI OpenW(const OpenInfo *info)
 {
+    if (config::get_client_id().empty())
+    {
+        utils::far3::show_far_error_dlg(
+            MFarMessageErrorStartup, L"Spotify client ID is not specified");
+        return NULL;
+    }
+
+    if (config::get_client_secret().empty())
+    {
+        utils::far3::show_far_error_dlg(
+            MFarMessageErrorStartup, L"Spotify client secret is not specified");
+        return NULL;
+    }
+
     auto p = std::make_unique<plugin>();
     p->start();
 

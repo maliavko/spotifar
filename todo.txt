@@ -6,7 +6,6 @@ refactor
 - the librespot and process winapi is written poorly, wrap it up well
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
-- migrate to a new spotify auth method https://developer.spotify.com/documentation/web-api/tutorials/migration-insecure-redirect-uri
 - parallelize playlists and saved tracks request via pool, using offset and limit fields
 
 application ideas
@@ -28,9 +27,9 @@ application ideas
     - recreate a volume control into slider?
 
 bugs
-- still some memory racing happens when player just works
 - after refreshing an access token, the plugin starts one more librespot process
 - on the album tracks view search files with Alt does not work properly due to year in the name
+- big http cache causes plugin to freeze while closing
 
 
 

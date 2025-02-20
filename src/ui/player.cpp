@@ -252,9 +252,6 @@ bool player::show()
             static wstring title(std::format(L" {} ", far3::get_text(MPluginUserName)));
             set_control_text(controls::title, title);
 
-            // TODO: all the updates are coming from sync-thread, this one is in the main one,
-            // which can create memory racing situation. Reconsider the logic here
-            // initial ui initialization with the cached data
             auto &state = api_proxy->get_playback_state();
             on_track_changed(state.item);
             on_track_progress_changed(state.item.duration, state.progress);
@@ -264,6 +261,7 @@ bool player::show()
             on_shuffle_state_changed(state.shuffle_state);
             on_repeat_state_changed(state.repeat_state);
             
+            auto &devices = api_proxy->get_available_devices();
             on_devices_changed(api_proxy->get_available_devices());
 
             return true;
@@ -538,6 +536,9 @@ bool player::on_like_btn_input_received(void *input_record)
         return false;
 
     auto &playback = api_proxy->get_playback_state();
+    if (playback.is_empty())
+        return true;
+    
     bool is_saved = api_proxy->check_saved_track(playback.item.id);
     if (is_saved)
         api_proxy->remove_saved_tracks({ playback.item.id });
@@ -553,7 +554,7 @@ bool player::on_like_btn_style_applied(void *dialog_item_colors)
 {
     FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     auto &playback = api_proxy->get_playback_state();
-    if (api_proxy->check_saved_track(playback.item.id))
+    if (!playback.is_empty() && api_proxy->check_saved_track(playback.item.id))
     {
         dic->Colors->ForegroundColor = colors::black;
     }
@@ -647,8 +648,8 @@ bool player::on_play_btn_click(void *empty)
 
 void player::on_playback_sync_finished(const string &exit_msg)
 {
-    if (!exit_msg.empty())
-        far3::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
+    // if (!exit_msg.empty())
+    //     far3::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
     
     hide();
 }
@@ -675,14 +676,14 @@ void player::on_track_changed(const track &track)
     static wstring track_total_time_str;
     track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track.duration));
 
-    auto &state = api_proxy->get_playback_state();
     track_progress.set_higher_boundary(track.duration);
 
     set_control_text(controls::track_name, track.name);
     set_control_text(controls::artist_name, track.get_artists_full_name());
     set_control_text(controls::track_total_time, track_total_time_str);
 
-    update_like_btn(api_proxy->check_saved_track(state.item.id));
+    auto &state = api_proxy->get_playback_state();
+    update_like_btn(!state.is_empty() && api_proxy->check_saved_track(state.item.id));
 }
 
 void player::update_track_bar(int duration, int progress)
