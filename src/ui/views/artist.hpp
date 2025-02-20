@@ -4,21 +4,21 @@
 
 #include "stdafx.h"
 #include "view.hpp"
-#include "spotify/api.hpp"
+#include "spotify/abstract.hpp"
 
 namespace spotifar { namespace ui {
 
 class artist_view: public view
 {
 public:
-    artist_view(spotify::api *api, const spotify::artist &artist);
+    artist_view(spotify::api_abstract *api, const spotify::artist &artist);
 
     virtual view_items_t get_items();
     virtual intptr_t select_item(const string &album_id);
     virtual intptr_t process_input(const ProcessPanelInputInfo *info);
 private:
     spotify::artist artist;
-    spotify::api *api;
+    spotify::api_abstract *api_proxy;
 };
 
 } // namespace ui

@@ -2,7 +2,9 @@
 #define PLAYER_DIALOG_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
 
 #include "stdafx.h"
-#include "spotify/api.hpp"
+#include "spotify/abstract.hpp"
+#include "spotify/playback.hpp"
+#include "spotify/devices.hpp"
 #include "controls.hpp"
 
 namespace spotifar { namespace ui {
@@ -14,7 +16,7 @@ class player:
     public devices_observer
 {
 public:
-    player(api &api);
+    player(api_abstract *api);
     virtual ~player();
 
     bool show();
@@ -57,7 +59,7 @@ protected:
 
     // api even handlers
     virtual void on_playback_sync_finished(const string &err_msg);
-    virtual void on_devices_changed(const devices_list_t &devices);
+    virtual void on_devices_changed(const devices_t &devices);
     virtual void on_track_changed(const track &track);
     virtual void on_track_progress_changed(int duration, int progress);
     virtual void on_volume_changed(int volume);
@@ -72,7 +74,7 @@ protected:
     intptr_t set_control_enabled(int control_id, bool is_enabled);
 
 private:
-    api &api;
+    api_abstract *api_proxy;
     HANDLE hdlg;
     bool visible = false;
     bool are_dlg_events_suppressed = true;

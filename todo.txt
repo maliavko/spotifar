@@ -2,9 +2,9 @@ project infrastructure
 - gcc support
 
 refactor
+- consider removing json_cache class, as all the responses now are being cached in http_cache
 - the librespot and process winapi is written poorly, wrap it up well
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
-- replace Api class with IApi interface everywhere is possible
 - investigate "market" fields for some API requests, for now completly
 - migrate to a new spotify auth method https://developer.spotify.com/documentation/web-api/tutorials/migration-insecure-redirect-uri
 - parallelize playlists and saved tracks request via pool, using offset and limit fields
@@ -22,14 +22,55 @@ application ideas
     - custom columns to show additional info, track lenght and etc
     - local far hotkey to open app player even if a spotifar panel is passive
     - comamnds for console input?
-    - on the album tracks view search files with Alt does not work properly due to year in the name
 - player UI
-    - to add clickable links to the artist/albums/tracks HTTP pages
     - goto artist, album, playlist etc.
-    - to finishe up likes in the player
     - extended player view with the list of tracks (or maybe on panel?)
     - recreate a volume control into slider?
 
 bugs
 - still some memory racing happens when player just works
 - after refreshing an access token, the plugin starts one more librespot process
+- on the album tracks view search files with Alt does not work properly due to year in the name
+
+
+
+
+
+
+//// sample how to show loading splash screen
+
+    // TODO: unfinished, ugly
+    json url(request_url);
+
+    size_t entries_received = 0;
+    auto ss = config::ps_info.SaveScreen(0, 0, -1, -1);
+    wstring message = L"Loading\nRequesting data...";
+
+    do
+    {
+        config::ps_info.Message(&MainGuid,&FarMessageGuid,
+            FMSG_ALLINONE,
+            L"",
+            (const wchar_t * const *)message.c_str(),
+            0,0);
+
+        auto r = api->get(url);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body);
+            if (!data_key.empty())
+                data = data.at(data_key);
+
+                url = data["next"];
+
+            const auto &entries = data["items"].get<T>();
+            result.insert(result.end(), entries.begin(), entries.end());
+            
+            entries_received += entries.size();
+            message = std::format(L"Loading\nEntries received {}/{}",
+                entries_received, data["total"].get<int>());
+        }
+    }
+    while (!url.is_null());
+
+    config::ps_info.RestoreScreen(ss);

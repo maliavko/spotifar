@@ -91,7 +91,7 @@ void http_cache::invalidate(const string &url_part)
     for (auto it = cached_responses.begin(); it != cached_responses.end();)
     {
         auto pos = it->first.find(url_part);
-        if (pos == string::npos)
+        if (pos != string::npos)
             cached_responses.erase(it++);
         else
             ++it;

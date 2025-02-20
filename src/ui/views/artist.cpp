@@ -5,9 +5,9 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-artist_view::artist_view(spotify::api *api, const spotify::artist &artist):
+artist_view::artist_view(spotify::api_abstract *api, const spotify::artist &artist):
     view(artist.name),
-    api(api),
+    api_proxy(api),
     artist(artist)
 {
 }
@@ -16,7 +16,7 @@ view::view_items_t artist_view::get_items()
 {
     // TODO: split albums and singles into separate directoriess
     view_items_t result;
-    for (const auto &a: api->get_library().get_artist_albums(artist.id))
+    for (const auto &a: api_proxy->get_artist_albums(artist.id))
     {
         result.push_back({a.id, a.get_user_name(), L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
     }
@@ -31,7 +31,7 @@ intptr_t artist_view::select_item(const string &album_id)
         return TRUE;
     }
     
-    const spotify::album &album = api->get_library().get_album(album_id);
+    const spotify::album &album = api_proxy->get_album(album_id);
     if (album.is_valid())
     { 
         events::show_album_view(artist, album);

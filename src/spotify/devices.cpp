@@ -3,31 +3,35 @@
 
 namespace spotifar { namespace spotify {
 
+namespace log = utils::log;
+using utils::far3::synchro_tasks::dispatch_event;
+
 bool devices_cache::is_active() const
 {
     // the cache is actively synchronized only when the user is authenticated and there are
     // playback observers
-    return api->is_authenticated() && api->is_playback_active();
+    return api_proxy->is_authenticated() && api_proxy->is_frequent_syncs();
 }
 
 clock_t::duration devices_cache::get_sync_interval() const
 {
-    return 1000ms;
+    // every second, minus some gap for smoother synching
+    return 950ms;
 }
 
-void devices_cache::on_data_synced(const devices_list_t &data, const devices_list_t &prev_data)
+void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_data)
 {
     bool has_devices_changed = !std::equal(
         data.begin(), data.end(), prev_data.begin(), prev_data.end(),
         [](const auto &a, const auto &b) { return a.id == b.id && a.is_active == b.is_active; });
     
     if (has_devices_changed)
-        ObserverManager::notify(&devices_observer::on_devices_changed, data);
+        dispatch_event(&devices_observer::on_devices_changed, data);
 }
 
-bool devices_cache::request_data(devices_list_t &data)
+bool devices_cache::request_data(devices_t &data)
 {
-    auto res = api->get("/v1/me/player/devices");
+    auto res = api_proxy->get("/v1/me/player/devices");
     if (res->status == httplib::OK_200)
         json::parse(res->body).at("devices").get_to(data);
 

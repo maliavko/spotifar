@@ -9,7 +9,6 @@
 #include "devices.hpp"
 #include "auth.hpp"
 #include "history.hpp"
-#include "library.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -22,22 +21,31 @@ public:
     bool start();
     void shutdown();
     void tick();
+    void clear_http_cache();
 
-    template<class T> void start_listening(T *o);
-    template<class T> void stop_listening(T *o);
+    bool is_authenticated() const { return auth->is_authenticated(); }
+
+    void set_frequent_syncs(bool is_on) { is_frequent_syncs_flag = is_on; };
+    bool is_frequent_syncs() const { return is_frequent_syncs_flag; }
     
-    inline const devices_list_t& get_available_devices() { return devices->get(); }
-    inline const playback_state& get_playback_state() { return playback->get(); }
-    inline virtual bool is_authenticated() const { return auth->is_authenticated(); }
-    inline virtual bool is_playback_active() const { return playback_observers > 0; }
+    // library api interface
+    auto get_available_devices() -> const devices_t& { return devices->get(); }
+    auto get_playback_state() -> const playback_state& { return playback->get(); }
+    auto get_followed_artists() -> artists_t;
+    auto get_artist(const string &artist_id) -> artist;
+    auto get_artist_albums(const string &artist_id) -> albums_t;
+    auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
+    auto get_album(const string &album_id) -> album;
+    auto get_album_tracks(const string &album_id) -> simplified_tracks_t;
+    auto get_playlist(const string &playlist_id) -> playlist;
+    auto get_playlists() -> simplified_playlists_t;
+    auto get_playlist_tracks(const string &playlist_id) -> playlist_tracks_t;
+    auto check_saved_track(const string &track_id) -> bool;
+    auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool>;
+    auto save_tracks(const std::vector<string> &ids) -> bool;
+    auto remove_saved_tracks(const std::vector<string> &ids) -> bool;
 
-    virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {});
-    virtual httplib::Result put(const string &request_url, const json &body = {});
-    virtual httplib::Result del(const string &request_url, const json &body = {});
-
-    LibraryCache& get_library() { return *library; }
-    void clear_cache();
-
+    // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",
                         int position_ms = 0, const string &device_id = "");
     void start_playback(const std::vector<string> &uris, const string &device_id = "");
@@ -58,11 +66,16 @@ public:
 protected:
     void start_playback(const json &body, const string &device_id);
     virtual void set_bearer_token_auth(const string &token);
+    
+    // the main interface for raw http requests
+    virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {});
+    virtual httplib::Result put(const string &request_url, const json &body = {});
+    virtual httplib::Result del(const string &request_url, const json &body = {});
 
 private:
     BS::thread_pool pool;
     httplib::Client client;
-    size_t playback_observers = 0;
+    bool is_frequent_syncs_flag = false;
     http_cache api_responses_cache;
 
     // caches
@@ -70,28 +83,9 @@ private:
     std::unique_ptr<devices_cache> devices;
     std::unique_ptr<auth_cache> auth;
     std::unique_ptr<PlayedHistory> history;
-    std::unique_ptr<LibraryCache> library;
 
     std::vector<cached_data_abstract*> caches;
 };
-
-template<class T>
-void api::start_listening(T *o)
-{
-    ObserverManager::subscribe<T>(o);
-    // if the observer is a playback observer, we let API know to increase the
-    // frequency of playback state updates
-    if (std::is_same<T, playback_observer>::value)
-        ++playback_observers;
-}
-
-template<class T>
-void api::stop_listening(T *o)
-{
-    ObserverManager::unsubscribe<T>(o);
-    if (std::is_same<T, playback_observer>::value)
-        --playback_observers;
-}
 
 } // namespace spotify
 } // namespace spotifar

@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "view.hpp"
-#include "spotify/api.hpp"
+#include "spotify/abstract.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -13,12 +13,12 @@ using namespace spotify;
 class playlists_view: public view
 {
 public:
-    playlists_view(api *api);
+    playlists_view(api_abstract *api);
 
     virtual view_items_t get_items();
     virtual intptr_t select_item(const string &track_id);
 private:
-    api *api;
+    api_abstract *api_proxy;
 };
 
 } // namespace ui

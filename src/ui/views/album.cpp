@@ -5,9 +5,9 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-album_view::album_view(spotify::api *api, const spotify::artist &artist, const spotify::album &album):
+album_view::album_view(spotify::api_abstract *api, const spotify::artist &artist, const spotify::album &album):
     view(album.get_user_name()),
-    api(api),
+    api_proxy(api),
     album(album),
     artist(artist)
 {
@@ -23,7 +23,7 @@ intptr_t album_view::select_item(const string &track_id)
     }
     else
     {
-        api->start_playback(album.id, track_id);
+        api_proxy->start_playback(album.id, track_id);
         return TRUE; // TODO: or False as nothing has been changed on the panel
     }
     
@@ -42,7 +42,7 @@ void album_view::rebuild_items()
 {
     items.clear();
 
-    for (const auto &track: api->get_library().get_album_tracks(album.id))
+    for (const auto &track: api_proxy->get_album_tracks(album.id))
     {
         items.push_back({
             track.id,

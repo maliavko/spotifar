@@ -14,8 +14,8 @@ struct far_user_data
     string id;
 };
 
-Panel::Panel(spotify::api &api):
-    api(api)
+Panel::Panel(spotify::api_abstract *api):
+    api_proxy(api)
 {
     // TODO: process correctly selected item on the panel
     // https://api.farmanager.com/ru/structures/pluginpanelitem.html
@@ -181,32 +181,32 @@ void Panel::refresh_panels(const string &item_id)
 
 void Panel::show_root_view()
 {
-    return change_view(std::make_shared<root_view>(&api));
+    return change_view(std::make_shared<root_view>(api_proxy));
 }
 
 void Panel::show_artists_view()
 {
-    return change_view(std::make_shared<artists_view>(&api));
+    return change_view(std::make_shared<artists_view>(api_proxy));
 }
 
 void Panel::show_artist_view(const artist &artist)
 {
-    return change_view(std::make_shared<artist_view>(&api, artist));
+    return change_view(std::make_shared<artist_view>(api_proxy, artist));
 }
 
 void Panel::show_album_view(const artist &artist, const album &album)
 {
-    change_view(std::make_shared<album_view>(&api, artist, album));
+    change_view(std::make_shared<album_view>(api_proxy, artist, album));
 }
 
 void Panel::show_playlists_view()
 {
-    return change_view(std::make_shared<playlists_view>(&api));
+    return change_view(std::make_shared<playlists_view>(api_proxy));
 }
 
 void Panel::show_playlist_view(const spotify::playlist &playlist)
 {
-    return change_view(std::make_shared<playlist_view>(&api, playlist));
+    return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
 intptr_t Panel::select_item(const SetDirectoryInfo *info)

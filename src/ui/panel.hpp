@@ -2,9 +2,9 @@
 #define PANEL_HPP_A9BFB4E5_8B2C_4800_A7C3_11571828163B
 #pragma once
 
-#include "spotify/api.hpp"
+#include "spotify/abstract.hpp"
 #include "ui/views/view.hpp"
-#include "ui/events.hpp"
+#include "ui/events.hpp" // ui_events_observer
 
 namespace spotifar { namespace ui {
 
@@ -13,7 +13,7 @@ using namespace spotify;
 class Panel: public ui_events_observer
 {
 public:
-    Panel(spotify::api &api);
+    Panel(spotify::api_abstract *api);
     virtual ~Panel();
     // TODO: consider having here shutdown/close method to cleanup resources
 
@@ -37,7 +37,7 @@ protected:
     virtual void show_playlist_view(const playlist &playlist);
 private:
     std::shared_ptr<ui::view> view;
-    api &api;
+    api_abstract *api_proxy;
 };
 
 } // namespace ui

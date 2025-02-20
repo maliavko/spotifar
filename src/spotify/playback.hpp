@@ -2,83 +2,17 @@
 #define PLAYBACK_HPP_1E84D5C4_F3BB_4BCA_8719_1995E4AF0ED7
 #pragma once
 
-#include "devices.hpp"
+#include "stdafx.h"
 #include "cache.hpp"
-#include "items.hpp" // TODO: remove dependency on track
+#include "items.hpp"
 
 namespace spotifar { namespace spotify {
-
-struct actions
-{
-    bool interrupting_playback = false;
-    bool pausing = false;
-    bool resuming = false;
-    bool seeking = false;
-    bool skipping_next = false;
-    bool skipping_prev = false;
-    bool toggling_repeat_context = false;
-    bool toggling_repeat_track = false;
-    bool toggling_shuffle = false;
-    bool trasferring_playback = false;
-
-    friend bool operator==(const actions &lhs, const actions &rhs);
-    friend void from_json(const json &j, actions &p);
-    friend void to_json(json &j, const actions &p);
-};
-
-struct context
-{
-    inline static const string
-        album = "album",
-        playlist = "playlist",
-        artist = "artist",
-        show = "show",
-        collection = "collection";
-
-    string type;
-    string uri;
-    string href;
-
-    bool is_empty() const { return type == ""; }
-    bool is_artist() const { return type == artist; }
-    bool is_album() const { return type == album; }
-    bool is_playlist() const { return type == playlist; }
-    bool is_collection() const { return type == collection; }
-    string get_item_id() const;
-
-    friend bool operator==(const context &lhs, const context &rhs);
-
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(context, type, uri, href);
-};
-
-// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
-struct playback_state
-{
-    inline static const string
-        repeat_off = "off",
-        repeat_track = "track",
-        repeat_context = "context";
-
-    spotify::actions actions;
-    spotify::device device;
-    string repeat_state = repeat_off;
-    bool shuffle_state = false;
-    int progress_ms = 0;
-    int progress = 0;
-    bool is_playing = false;
-    track item;
-    context context;
-
-    inline bool is_empty() const { return item.id == ""; }
-    friend void from_json(const json &j, playback_state &p);
-    friend void to_json(json &j, const playback_state &p);
-};
 
 class playback_cache: public json_cache<playback_state>
 {
 public:
-    playback_cache(api_abstract *api);
-    virtual ~playback_cache() { api = nullptr; }
+    playback_cache(api_abstract *api): json_cache(L"PlaybackState"), api_proxy(api) {}
+    virtual ~playback_cache() { api_proxy = nullptr; }
     virtual bool is_active() const;
 
     /// @param tracks_uris list of spotify tracks' URIs
@@ -89,7 +23,7 @@ protected:
     virtual clock_t::duration get_sync_interval() const;
 
 private:
-    api_abstract *api;
+    api_abstract *api_proxy;
 };
 
 struct playback_observer: public BaseObserverProtocol

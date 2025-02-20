@@ -12,8 +12,8 @@ namespace hotkeys = config::hotkeys;
 
 plugin::plugin():
     api(),
-    panel(api),
-    player(api)
+    panel(&api),
+    player(&api)
 {
     ObserverManager::subscribe<config::config_observer>(this);
     ObserverManager::subscribe<spotify::auth_observer>(this);
@@ -147,8 +147,8 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             }
             case VK_F8:
             {
-                api.clear_cache();
-                log::global->debug("Cached has been cleared");
+                api.clear_http_cache();
+                log::global->debug("Cache has been cleared");
             }
         }
     }

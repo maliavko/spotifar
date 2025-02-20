@@ -130,6 +130,88 @@ struct playlist: public simplified_playlist
     static const string& get_fields_filter();
 };
 
+struct actions
+{
+    bool interrupting_playback = false;
+    bool pausing = false;
+    bool resuming = false;
+    bool seeking = false;
+    bool skipping_next = false;
+    bool skipping_prev = false;
+    bool toggling_repeat_context = false;
+    bool toggling_repeat_track = false;
+    bool toggling_shuffle = false;
+    bool trasferring_playback = false;
+
+    friend bool operator==(const actions &lhs, const actions &rhs);
+    friend void from_json(const json &j, actions &p);
+    friend void to_json(json &j, const actions &p);
+};
+
+struct context
+{
+    inline static const string
+        album = "album",
+        playlist = "playlist",
+        artist = "artist",
+        show = "show",
+        collection = "collection";
+
+    string type;
+    string uri;
+    string href;
+
+    bool is_empty() const { return type == ""; }
+    bool is_artist() const { return type == artist; }
+    bool is_album() const { return type == album; }
+    bool is_playlist() const { return type == playlist; }
+    bool is_collection() const { return type == collection; }
+    string get_item_id() const;
+
+    friend bool operator==(const context &lhs, const context &rhs);
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(context, type, uri, href);
+};
+
+struct device
+{
+    string id = "";
+    bool is_active = false;
+    wstring name;
+    string type;
+    int volume_percent = 100;
+    bool supports_volume = false;
+
+    string to_str() const;
+    friend bool operator==(const device &lhs, const device &rhs);
+    friend void from_json(const json &j, device &d);
+    friend void to_json(json &j, const device &d);
+};
+
+// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
+struct playback_state
+{
+    inline static const string
+        repeat_off = "off",
+        repeat_track = "track",
+        repeat_context = "context";
+
+    actions actions;
+    device device;
+    string repeat_state = repeat_off;
+    bool shuffle_state = false;
+    int progress_ms = 0;
+    int progress = 0;
+    bool is_playing = false;
+    track item;
+    context context;
+
+    inline bool is_empty() const { return item.id == ""; }
+    friend void from_json(const json &j, playback_state &p);
+    friend void to_json(json &j, const playback_state &p);
+};
+
+typedef std::vector<device> devices_t;
 typedef std::vector<artist> artists_t;
 typedef std::vector<simplified_album> albums_t;
 typedef std::vector<simplified_track> simplified_tracks_t;

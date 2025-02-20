@@ -189,5 +189,90 @@ const string& playlist::get_fields_filter()
     return fields;
 }
 
+void from_json(const json &j, playback_state &p)
+{
+    j.at("device").get_to(p.device);
+    j.at("repeat_state").get_to(p.repeat_state);
+    j.at("shuffle_state").get_to(p.shuffle_state);
+    j.at("is_playing").get_to(p.is_playing);
+    j.at("actions").get_to(p.actions);
+
+    p.progress_ms = j.value("progress_ms", 0);
+    p.progress = p.progress_ms / 1000;
+
+    if (j.contains("context") && !j.at("context").is_null())
+        j.at("context").get_to(p.context);
+
+    if (j.contains("item") && !j.at("item").is_null())
+        j.at("item").get_to(p.item);
+}
+
+void to_json(json &j, const playback_state &p)
+{
+    j = json{
+        { "device", p.device },
+        { "repeat_state", p.repeat_state },
+        { "shuffle_state", p.shuffle_state },
+        { "progress_ms", p.progress_ms },
+        { "is_playing", p.is_playing },
+        { "actions", p.actions },
+        { "item", p.item },
+        { "context", p.context },
+    };
+}
+
+bool operator==(const actions &lhs, const actions &rhs)
+{
+    return (
+        lhs.interrupting_playback == rhs.interrupting_playback &&
+        lhs.pausing == rhs.pausing &&
+        lhs.resuming == rhs.resuming &&
+        lhs.seeking == rhs.seeking &&
+        lhs.skipping_next == rhs.skipping_next &&
+        lhs.skipping_prev == rhs.skipping_prev &&
+        lhs.toggling_repeat_context == rhs.toggling_repeat_context &&
+        lhs.toggling_repeat_track == rhs.toggling_repeat_track &&
+        lhs.toggling_shuffle == rhs.toggling_shuffle &&
+        lhs.trasferring_playback == rhs.trasferring_playback
+    );
+}
+
+void from_json(const json &j, actions &p)
+{
+    if (j.is_null())
+        return;
+    
+    p.interrupting_playback = j.value("interrupting_playback", false);
+    p.pausing = j.value("pausing", false);
+    p.resuming = j.value("resuming", false);
+    p.seeking = j.value("seeking", false);
+    p.skipping_next = j.value("skipping_next", false);
+    p.skipping_prev = j.value("skipping_prev", false);
+    p.toggling_repeat_context = j.value("toggling_repeat_context", false);
+    p.toggling_repeat_track = j.value("toggling_repeat_track", false);
+    p.toggling_shuffle = j.value("toggling_shuffle", false);
+    p.trasferring_playback = j.value("trasferring_playback", false);
+}
+
+void to_json(json &j, const actions &p)
+{
+    // TODO: unfinished
+    j = json{};
+}
+
+string context::get_item_id() const
+{
+    static auto r = std::regex("(\\w+):(\\w+):(\\w+)");	
+    std::smatch match;
+    if (std::regex_search(uri, match, r))
+        return match[3];
+    return "";
+}
+
+bool operator==(const context &lhs, const context &rhs)
+{
+    return lhs.href == rhs.href;
+}
+
 } // namespace spotify
 } // namespace spotifar

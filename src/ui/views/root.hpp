@@ -4,19 +4,19 @@
 
 #include "stdafx.h"
 #include "view.hpp"
-#include "spotify/api.hpp"
+#include "spotify/abstract.hpp"
 
 namespace spotifar { namespace ui {
 
 class root_view: public view
 {
 public:
-    root_view(spotify::api *api);
+    root_view(spotify::api_abstract *api);
 
     virtual view_items_t get_items();
     virtual intptr_t select_item(const string &view_id);
 private:
-    spotify::api *api;
+    spotify::api_abstract *api_proxy;
 };
 
 } // namespace ui

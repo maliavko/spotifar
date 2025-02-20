@@ -9,9 +9,9 @@ static const string
     artists_view_id = "artists",
     playlists_view_id = "playlists";
 
-root_view::root_view(spotify::api *api):
+root_view::root_view(spotify::api_abstract *api):
     view(get_text(MPanelRootItemLabel)),
-    api(api)
+    api_proxy(api)
 {
 }
 
