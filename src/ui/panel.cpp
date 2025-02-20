@@ -9,6 +9,8 @@
 
 namespace spotifar { namespace ui {
 
+namespace far3 = utils::far3;
+
 struct far_user_data
 {
     string id;
@@ -54,7 +56,7 @@ void Panel::update_panel_info(OpenPanelInfo *info)
 
     // filling the panel top title label
     static wchar_t title[MAX_PATH];
-    config::fsf.sprintf(title, L" %s: %s ", utils::far3::get_text(MPluginUserName), info->CurDir);
+    config::fsf.sprintf(title, L" %s: %s ", far3::get_text(MPluginUserName), info->CurDir);
     info->PanelTitle = title;
 
     // updating the labels of command key bar in the down of the screen
@@ -97,7 +99,7 @@ void Panel::update_panel_info(OpenPanelInfo *info)
 
         if (fkeys[i + 2])
         {
-            kbl[j].Text = kbl[j].LongText = utils::far3::get_text(fkeys[i + 2]);
+            kbl[j].Text = kbl[j].LongText = far3::get_text(fkeys[i + 2]);
         }
         else
         {
@@ -175,8 +177,13 @@ void Panel::change_view(std::shared_ptr<ui::view> view)
 
 void Panel::refresh_panels(const string &item_id)
 {
-    utils::far3::panels::update(PANEL_ACTIVE);
-    utils::far3::panels::redraw(PANEL_ACTIVE, view->get_item_idx(item_id) + 1); // 0 index is ".."
+    far3::panels::update(PANEL_ACTIVE);
+
+    size_t item_idx = 0;
+    if (!item_id.empty())
+        item_idx = view->get_item_idx(item_id) + 1; // 0 index is ".."
+    
+    far3::panels::redraw(PANEL_ACTIVE, item_idx);
 }
 
 void Panel::show_root_view()

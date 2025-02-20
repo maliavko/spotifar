@@ -465,7 +465,7 @@ bool player::on_artist_label_input_received(void *input_record)
         hide();
 
         ui::events::show_artist_view(artist);
-        ui::events::refresh_panels();
+        ui::events::refresh_panels(playback.item.album.id);
     }
 
     return true;
