@@ -13,10 +13,10 @@ struct view_item
     wstring name;
     wstring description;
     uintptr_t file_attrs;
-    size_t duration;
+    std::vector<wstring> custom_column_data;
 
     view_item(const string &id, const wstring &name, const wstring &descr,
-        uintptr_t attrs = 0, size_t duration = 0);
+        uintptr_t attrs, const std::vector<wstring> &custom_column_data = {});
 };
 
 class view
@@ -31,6 +31,7 @@ public:
 
     virtual size_t get_item_idx(const string &item_id) { return 0; };
     virtual intptr_t process_input(const ProcessPanelInputInfo *info) { return FALSE; }
+    virtual void update_panel_info(OpenPanelInfo *info) {}
     virtual view_items_t get_items() = 0;
     virtual intptr_t select_item(const string &id) = 0;
 

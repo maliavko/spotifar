@@ -41,14 +41,11 @@ void http_cache::start(config::settings_context &ctx)
 
 void http_cache::shutdown(config::settings_context &ctx)
 {
-    // removing session-wide cached entries
-    for (auto it = cached_responses.begin(); it != cached_responses.end();)
-    {
-        if (it->second.is_cached_for_session())
-            cached_responses.erase(it++);
-        else
-            ++it;
-    }
+    // session-only caches still can have a valid etag, so instead of removing
+    // them we just invalidating `cache-until` attribute
+    for (auto &[url, cache]: cached_responses)
+        if (cache.is_cached_for_session())
+            cache.cached_until = utils::clock_t::time_point::min();
 
     try
     {

@@ -53,6 +53,8 @@ void Panel::update_panel_info(OpenPanelInfo *info)
     // folders, but spotify items, just in case the current view name is handed over,
     // which equals empty string for the root views
     info->CurDir = view->get_name().c_str();
+    
+    info->StartPanelMode = intptr_t('0');
 
     // filling the panel top title label
     static wchar_t title[MAX_PATH];
@@ -108,6 +110,9 @@ void Panel::update_panel_info(OpenPanelInfo *info)
     }
 
     info->KeyBar = &kbt;
+
+    if (view)
+        return view->update_panel_info(info);
 }
 
 intptr_t Panel::update_panel_items(GetFindDataInfo *info)
@@ -121,15 +126,18 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         {
             auto &item = items[idx];
 
-            //if (item.is_current)
-            //    info->CurrentItem = idx;
+            // TODO: what if no memory allocated?
+            const wchar_t **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * item.custom_column_data.size());
+            for (size_t idx = 0; idx < item.custom_column_data.size(); idx++)
+                column_data[idx] = _wcsdup(item.custom_column_data[idx].c_str());
             
             memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
             panel_item[idx].FileAttributes = item.file_attrs;
-            panel_item[idx].FileSize = item.duration;
             panel_item[idx].Flags = PPIF_PROCESSDESCR;
             panel_item[idx].FileName = _wcsdup(item.name.c_str());
-            panel_item[idx].Description = NULL; //_wcsdup(item.description.c_str());
+            panel_item[idx].Description = _wcsdup(item.description.c_str());
+            panel_item[idx].CustomColumnData = column_data;
+            panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
             panel_item[idx].UserData.Data = new far_user_data(item.id);
             panel_item[idx].UserData.FreeData = free_user_data;
         }
@@ -157,10 +165,16 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
 
 void Panel::free_panel_items(const FreeFindDataInfo *info)
 {
-    for (size_t idx = 0; idx < info->ItemsNumber; idx++)
+    for (size_t i = 0; i < info->ItemsNumber; i++)
     {
-        free(const_cast<wchar_t*>(info->PanelItem[idx].FileName));
-        free(const_cast<wchar_t*>(info->PanelItem[idx].Description));
+        auto &item = info->PanelItem[i];
+
+        free(const_cast<wchar_t*>(item.FileName));
+        free(const_cast<wchar_t*>(item.Description));
+
+        for (size_t j = 0; j < info->PanelItem[i].CustomColumnNumber; j++)
+            free(const_cast<wchar_t*>(item.CustomColumnData[j]));
+        free(const_cast<wchar_t**>(item.CustomColumnData));
     }
     free(info->PanelItem);
 }
@@ -182,7 +196,7 @@ void Panel::refresh_panels(const string &item_id)
     size_t item_idx = 0;
     if (!item_id.empty())
         item_idx = view->get_item_idx(item_id) + 1; // 0 index is ".."
-    
+
     far3::panels::redraw(PANEL_ACTIVE, item_idx);
 }
 
@@ -226,7 +240,7 @@ intptr_t Panel::select_item(const SetDirectoryInfo *info)
 }
 
 intptr_t Panel::process_input(const ProcessPanelInputInfo *info)
-{   
+{
     if (view)
         return view->process_input(info);
     return FALSE;

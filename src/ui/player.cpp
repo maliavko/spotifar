@@ -346,7 +346,7 @@ bool player::on_input_received(void *input_record)
         case KEY_EVENT:
             if (ir->Event.KeyEvent.bKeyDown)
             {
-                int key = far3::input_record_to_combined_key(ir->Event.KeyEvent);
+                int key = keys::make_combined(ir->Event.KeyEvent);
                 switch (key)
                 {
                     case VK_SPACE:

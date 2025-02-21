@@ -220,7 +220,7 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
         auto &key_event = record->Event.KeyEvent;
         if (record->EventType == KEY_EVENT && key_event.bKeyDown)
         {
-            int key = input_record_to_combined_key(key_event), edit_id = (int)param1;
+            int key = keys::make_combined(key_event), edit_id = (int)param1;
             if (key == VK_BACK)
             {
                 dialogs::set_text(hdlg, edit_id, L"");

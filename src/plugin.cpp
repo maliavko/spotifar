@@ -9,6 +9,7 @@ namespace spotifar {
 
 using namespace utils;
 namespace hotkeys = config::hotkeys;
+namespace far3 = utils::far3;
 
 plugin::plugin():
     api(),
@@ -41,7 +42,7 @@ plugin::~plugin()
 
 void plugin::start()
 {
-    log::global->info("Spotifar plugin has started, version {}", utils::far3::get_plugin_version());
+    log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
 
     launch_sync_worker();
 }
@@ -133,7 +134,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        switch (utils::far3::input_record_to_combined_key(key_event))
+        switch (far3::keys::make_combined(key_event))
         {
             case VK_F3:
             {
@@ -142,7 +143,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             }
             case VK_F6:
             {
-                GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
+                far3::panels::set_view_mode(PANEL_ACTIVE, 0);
                 return TRUE;
             }
             case VK_F8:

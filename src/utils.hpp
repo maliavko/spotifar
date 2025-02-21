@@ -127,12 +127,17 @@ namespace far3
                 alt = 0x200000,
                 shift = 0x400000;
         }
+
+        /// @brief Whether the given virtual key is pressed at the moment
+        bool is_pressed(int virtual_key);
+
+        /// @brief Converts the given input record to the combined int, including a pressed
+        /// key + all the modifiers, so it can be used later as key_a + mods::ctrl + mods::shift e.g.
+        int make_combined(const KEY_EVENT_RECORD &kir);
     }
 
     /// @brief Returns plugin version in the format "Major.Minor.Revision.Build.Stage"
     string get_plugin_version();
-
-    int input_record_to_combined_key(const KEY_EVENT_RECORD &kir);
 
     namespace dialogs
     {
@@ -175,6 +180,8 @@ namespace far3
         intptr_t does_exist(HANDLE panel);
         intptr_t set_active(HANDLE panel);
         intptr_t get_current_item(HANDLE panel);
+        intptr_t set_view_mode(HANDLE panel, size_t view_mode_idx);
+        intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false);
     }
 
     namespace actl

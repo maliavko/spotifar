@@ -99,10 +99,15 @@ bool api::start()
     auto ctx = config::lock_settings();
 
     // initializing persistent caches
-    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); c->resync(true); });
+    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); });
 
     // initializing http responses cache
     pool.detach_task([this, ctx] { api_responses_cache.start(*ctx); }, BS::pr::highest);
+
+    // the initial initialization of the playback important data
+    // TODO: the requests should be done right after successful authentication
+    // playback->resync(true);
+    // devices->resync(true);
 
     return true;
 }
@@ -617,7 +622,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     }
 
     auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }});
-    if (utils::http::is_success(r->status))
+    if (http::is_success(r->status))
     {
         if (r->status == OK_200)
         {

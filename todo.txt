@@ -2,17 +2,15 @@ project infrastructure
 - gcc support
 
 refactor
-- consider removing json_cache class, as all the responses now are being cached in http_cache
-- the librespot and process winapi is written poorly, wrap it up well
+- the librespot and process winapi is written poorly, wrap it up well; add possibility to register it as a win service to avoid interrupting music when far is closed
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
 - parallelize playlists and saved tracks request via pool, using offset and limit fields
+- propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 
 application ideas
 - grab lyrics from here? https://coda.io/@musixmatch/musixmatch-lyrics-api
 - is there other way to track fresh releases?
-- librespot as a win service to avoid stopping playback, while closing far
-- propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - panels
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
     - managing playlists via standard Far functions: create folder, move/remove from panel
@@ -22,7 +20,7 @@ application ideas
     - local far hotkey to open app player even if a spotifar panel is passive
     - comamnds for console input?
 - player UI
-    - goto artist, album, playlist etc.
+    - goto playlist
     - extended player view with the list of tracks (or maybe on panel?)
     - recreate a volume control into slider?
 
@@ -30,9 +28,8 @@ bugs
 - after refreshing an access token, the plugin starts one more librespot process
 - on the album tracks view search files with Alt does not work properly due to year in the name
 - big http cache causes plugin to freeze while closing
-
-
-
+- metallica ride the lightning delux has multiply discs, show incorrect on the panel
+- Bi-2, Мяу Кисс ми; 5th track is empty
 
 
 

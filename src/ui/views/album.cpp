@@ -48,8 +48,7 @@ void album_view::rebuild_items()
             track.id,
             std::format(L"{:02}. {}", track.track_number, track.name),
             L"",
-            FILE_ATTRIBUTE_VIRTUAL,
-            (size_t)track.duration
+            FILE_ATTRIBUTE_VIRTUAL
         });
     }
 }

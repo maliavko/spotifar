@@ -21,16 +21,24 @@ namespace far3
             );
     }
 
-    int input_record_to_combined_key(const KEY_EVENT_RECORD &kir)
+    namespace keys
     {
-        int key = static_cast<int>(kir.wVirtualKeyCode);
-        const auto state = kir.dwControlKeyState;
-        
-        if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= keys::mods::ctrl;
-        if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= keys::mods::alt;
-        if (state & SHIFT_PRESSED) key |= keys::mods::shift;
+        bool is_pressed(int virtual_key)
+        {
+            return GetKeyState(virtual_key);
+        }
 
-        return key;
+        int make_combined(const KEY_EVENT_RECORD &kir)
+        {
+            int key = static_cast<int>(kir.wVirtualKeyCode);
+            const auto state = kir.dwControlKeyState;
+            
+            if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= keys::mods::ctrl;
+            if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= keys::mods::alt;
+            if (state & SHIFT_PRESSED) key |= keys::mods::shift;
+    
+            return key;
+        }
     }
 
     namespace dialogs
@@ -181,6 +189,18 @@ namespace far3
             //     free(PPI);
             // }
             return 0;
+        }
+        
+        intptr_t set_view_mode(HANDLE panel, size_t view_mode_idx)
+        {
+            return config::ps_info.PanelControl(panel, FCTL_SETVIEWMODE, view_mode_idx, 0);
+        }
+        
+        intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc)
+        {
+            auto r = config::ps_info.PanelControl(panel, FCTL_SETSORTMODE, sort_mode, 0);
+            config::ps_info.PanelControl(panel, FCTL_SETSORTORDER, (intptr_t)is_desc, 0);
+            return r;
         }
     }
     

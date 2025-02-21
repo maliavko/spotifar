@@ -5,7 +5,7 @@
 
 namespace spotifar {
 
-using utils::far3::get_text;
+namespace far3 = utils::far3;
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getglobalinfow.html
 void WINAPI GetGlobalInfoW(GlobalInfo *info)
@@ -28,7 +28,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
     if (config::is_added_to_disk_menu())
     {
         static const wchar_t *DiskMenuStrings[1];
-        DiskMenuStrings[0] = get_text(MPluginUserName);
+        DiskMenuStrings[0] = far3::get_text(MPluginUserName);
         info->DiskMenu.Guids = &MenuGuid;
         info->DiskMenu.Strings = DiskMenuStrings;
         info->DiskMenu.Count = std::size(DiskMenuStrings);
@@ -37,7 +37,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
     if (TRUE) // add to plugins menu
     {
         static const wchar_t *PluginMenuStrings[1];
-        PluginMenuStrings[0] = get_text(MPluginUserName);
+        PluginMenuStrings[0] = far3::get_text(MPluginUserName);
         info->PluginMenu.Guids = &MenuGuid;
         info->PluginMenu.Strings = PluginMenuStrings;
         info->PluginMenu.Count = std::size(PluginMenuStrings);
@@ -45,7 +45,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
 
     // add to plugins configuration menu
     static const wchar_t *PluginCfgStrings[1];
-    PluginCfgStrings[0] = get_text(MPluginUserName);
+    PluginCfgStrings[0] = far3::get_text(MPluginUserName);
     info->PluginConfig.Guids = &MenuGuid;
     info->PluginConfig.Strings = PluginCfgStrings;
     info->PluginConfig.Count = std::size(PluginCfgStrings);
@@ -64,7 +64,7 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
     }
     catch (const std::exception &ex)
     {
-        utils::far3::show_far_error_dlg(
+        far3::show_far_error_dlg(
             MFarMessageErrorStartup, utils::utf8_decode(ex.what()));
     }
 }
@@ -74,14 +74,14 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
 {
     if (config::get_client_id().empty())
     {
-        utils::far3::show_far_error_dlg(
+        far3::show_far_error_dlg(
             MFarMessageErrorStartup, L"Spotify client ID is not specified");
         return NULL;
     }
 
     if (config::get_client_secret().empty())
     {
-        utils::far3::show_far_error_dlg(
+        far3::show_far_error_dlg(
             MFarMessageErrorStartup, L"Spotify client secret is not specified");
         return NULL;
     }
@@ -156,7 +156,7 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
 
     config::write();
     utils::log::fini();
-    utils::far3::synchro_tasks::clear();
+    far3::synchro_tasks::clear();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processsynchroeventw.html
@@ -164,10 +164,16 @@ intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 {
     if (info->Event == SE_COMMONSYNCHRO)
     {
-        utils::far3::synchro_tasks::process((intptr_t)info->Param);
+        far3::synchro_tasks::process((intptr_t)info->Param);
         return NULL;
     }
     return NULL;
+}
+
+/// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
+intptr_t WINAPI CompareW(const CompareInfo *info)
+{
+    return -2;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 

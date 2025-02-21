@@ -13,11 +13,21 @@ static const string invalid_id = "";
 /// @param id spotify item id
 string make_item_uri(const string &item_type_name, const string &id);
 
+struct image
+{
+    string url;
+    size_t width, height;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(image, url, width, height);
+};
+
 struct simplified_artist
 {
     string id = invalid_id;
     wstring name;
     
+    static string make_uri(const string &id) { return make_item_uri("artist", id); }
+
+    inline string get_uri() const { return make_uri(id); }
     inline bool is_valid() const { return id != invalid_id; }
     friend void from_json(const json &j, simplified_artist &a);
     friend void to_json(json &j, const simplified_artist &a);
@@ -28,6 +38,7 @@ struct artist: public simplified_artist
     size_t followers_total;
     size_t popularity;
     std::vector<string> genres;
+    std::vector<image> images;
 
     friend void from_json(const json &j, artist &a);
     friend void to_json(json &j, const artist &a);

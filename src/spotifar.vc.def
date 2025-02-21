@@ -12,6 +12,7 @@ EXPORTS
   ProcessPanelInputW
   ProcessPanelEventW
   ProcessSynchroEventW
+  CompareW
   AnalyseW
   GetFilesW
   DeleteFilesW

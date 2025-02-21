@@ -46,7 +46,7 @@ intptr_t artist_view::process_input(const ProcessPanelInputInfo *info)
     auto& key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        int key = utils::far3::input_record_to_combined_key(key_event);
+        int key = utils::far3::keys::make_combined(key_event);
         switch (key)
         {
             case VK_F4:
