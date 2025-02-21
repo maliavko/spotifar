@@ -53,7 +53,7 @@ void Panel::update_panel_info(OpenPanelInfo *info)
     // folders, but spotify items, just in case the current view name is handed over,
     // which equals empty string for the root views
     info->CurDir = view->get_name().c_str();
-    
+
     info->StartPanelMode = intptr_t('0');
 
     // filling the panel top title label
@@ -228,6 +228,11 @@ void Panel::show_playlists_view()
 void Panel::show_playlist_view(const spotify::playlist &playlist)
 {
     return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
+}
+
+void Panel::show_recents_view()
+{
+    //return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
 intptr_t Panel::select_item(const SetDirectoryInfo *info)

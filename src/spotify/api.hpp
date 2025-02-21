@@ -12,11 +12,13 @@
 
 namespace spotifar { namespace spotify {
 
-class api: public api_abstract
+class api:
+    public api_abstract,
+    public auth_observer
 {
 public:
     api();
-    virtual ~api();
+    ~api();
 
     bool start();
     void shutdown();
@@ -44,6 +46,7 @@ public:
     auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool>;
     auto save_tracks(const std::vector<string> &ids) -> bool;
     auto remove_saved_tracks(const std::vector<string> &ids) -> bool;
+    auto get_playing_queue() -> playing_queue;
 
     // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",
@@ -65,7 +68,8 @@ public:
 
 protected:
     void start_playback(const json &body, const string &device_id);
-    virtual void set_bearer_token_auth(const string &token);
+    
+    void on_auth_status_changed(const auth &auth);
     
     // the main interface for raw http requests
     virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {});

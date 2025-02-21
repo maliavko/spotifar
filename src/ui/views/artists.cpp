@@ -21,6 +21,8 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     modes[0].ColumnTypes = L"N,C0";
     modes[0].ColumnWidths = L"20,0";
     modes[0].ColumnTitles = titles;
+    modes[0].StatusColumnTypes = L"N,C0";
+    modes[0].StatusColumnWidths = L"20,0";
 
     info->PanelModesArray = modes;
     info->PanelModesNumber = ARRAYSIZE(modes);

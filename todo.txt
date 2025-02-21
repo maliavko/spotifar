@@ -19,6 +19,7 @@ application ideas
     - custom columns to show additional info, track lenght and etc
     - local far hotkey to open app player even if a spotifar panel is passive
     - comamnds for console input?
+    - show track progress on the win tray icon with ACTL_SETPROGRESSSTATE
 - player UI
     - goto playlist
     - extended player view with the list of tracks (or maybe on panel?)

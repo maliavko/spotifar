@@ -24,6 +24,9 @@ public:
     void cleanup();
     void tick();
 
+    bool is_expanded() const;
+    void expand(bool is_unfolded);
+
     inline bool is_visible() const { return visible; }
 
     // controls' event handlers
@@ -39,6 +42,7 @@ public:
     bool on_track_label_input_received(void *input_record);
     bool on_track_bar_input_received(void *input_record);
     bool on_like_btn_input_received(void *input_record);
+    bool on_playing_queue_input_received(void *input_record);
 
     // controls' styles
     bool on_playback_control_style_applied(void *dialog_item_colors);
@@ -56,6 +60,7 @@ protected:
     void update_shuffle_btn(bool is_shuffling);
     void update_repeat_btn(const string &repeate_state);
     void update_like_btn(bool is_saved);
+    void update_playing_queue(bool is_visible);
 
     // api even handlers
     virtual void on_playback_sync_finished(const string &err_msg);

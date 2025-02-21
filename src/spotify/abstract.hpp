@@ -30,6 +30,7 @@ struct api_abstract
     virtual auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool> = 0;
     virtual auto save_tracks(const std::vector<string> &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const std::vector<string> &ids) -> bool = 0;
+    virtual auto get_playing_queue() -> playing_queue = 0;
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
@@ -51,13 +52,6 @@ struct api_abstract
 
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
-
-    /// @brief Returns whether a playback is active. For sucn case the API
-    /// syncs with the Spotify server happens way more often
-    //virtual bool is_playback_active() const = 0;
-
-    /// @brief Sets the given `token` as a bearer token to the http client
-    virtual void set_bearer_token_auth(const string &token) = 0;
 
     /// @brief Performs a HTTP GET request
     /// @param cache_for caches the requested data for the givem amount of time

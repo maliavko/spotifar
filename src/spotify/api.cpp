@@ -96,6 +96,8 @@ api::~api()
 
 bool api::start()
 {
+    ObserverManager::subscribe<auth_observer>(this);
+
     auto ctx = config::lock_settings();
 
     // initializing persistent caches
@@ -104,17 +106,12 @@ bool api::start()
     // initializing http responses cache
     pool.detach_task([this, ctx] { api_responses_cache.start(*ctx); }, BS::pr::highest);
 
-    // the initial initialization of the playback important data
-    // TODO: the requests should be done right after successful authentication
-    // playback->resync(true);
-    // devices->resync(true);
-
     return true;
 }
 
 void api::shutdown()
 {
-    ObserverManager::clear<BaseObserverProtocol>();
+    ObserverManager::unsubscribe<auth_observer>(this);
 
     auto ctx = config::lock_settings();
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->write(*ctx); });
@@ -343,9 +340,17 @@ bool api::remove_saved_tracks(const std::vector<string> &ids)
     return http::is_success(r->status);
 }
 
+playing_queue api::get_playing_queue()
+{
+    auto r = get("/v1/me/player/queue");
+    if (http::is_success(r->status))
+        return json::parse(r->body).get<playing_queue>();
+    return playing_queue();
+}
+
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
 void api::start_playback(const string &context_uri, const string &track_uri,
-                            int position_ms, const string &device_id)
+                         int position_ms, const string &device_id)
 {
     json body{
         { "context_uri", context_uri },
@@ -353,7 +358,7 @@ void api::start_playback(const string &context_uri, const string &track_uri,
 
     if (!track_uri.empty())
         body.update({
-            { "offset", { "uri", track_uri } },
+            { "offset", {{ "uri", track_uri }} },
             { "position_ms", position_ms },
         });
     
@@ -559,7 +564,7 @@ void api::transfer_playback(const string &device_id, bool start_playing)
         return log::api->error("There is no devices with the given id={}", device_id);
 
     if (device_it->is_active)
-        return log::api->warn("The given device is already active {}", device_it->to_str());
+        return log::api->warn("The given device is already active, {}", device_it->to_str());
     
     pool.detach_task(
         [this, start_playing, dev_id = std::as_const(device_id)]
@@ -678,9 +683,11 @@ httplib::Result api::del(const string &request_url, const json &body)
     return res;
 }
 
-void api::set_bearer_token_auth(const string &token)
+void api::on_auth_status_changed(const spotify::auth &auth)
 {
-    client.set_bearer_token_auth(token);
+    client.set_bearer_token_auth(auth.access_token);
+    
+    devices->pick_up_device();
 }
 
 } // namespace spotify

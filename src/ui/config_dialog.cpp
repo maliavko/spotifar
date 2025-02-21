@@ -86,7 +86,7 @@ static const int
     hotkeys_box_y = api_box_y + 4, // x position of a panel with hotkeys settings
     buttons_box_y = hotkeys_box_y + 9, // x position of a buttons panel
     width = 62, height = buttons_box_y + 4, // overall dialog height is a summ of all the panels included
-    box_x1 = 3, box_x2 = width - 4, box_y1 = 1, box_y2 = height - 2,
+    box_x1 = 3, box_y1 = 1, box_x2 = width - 4, box_y2 = height - 2,
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1,
     view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2;
 

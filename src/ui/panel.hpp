@@ -35,6 +35,7 @@ protected:
     virtual void show_album_view(const artist &artist, const album &album);
     virtual void show_playlists_view();
     virtual void show_playlist_view(const playlist &playlist);
+    virtual void show_recents_view();
 private:
     std::shared_ptr<ui::view> view;
     api_abstract *api_proxy;

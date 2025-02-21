@@ -41,7 +41,7 @@ auth_cache::auth_cache(api_abstract *api, const string &client_id, const string 
     client_id(client_id),
     client_secret(client_secret),
     port(port),
-    api(api)
+    api_proxy(api)
 {
 };
 
@@ -56,7 +56,6 @@ void auth_cache::on_data_synced(const auth &data, const auth &prev_data)
     log::api->info("A valid access token is found, expires in {}",
         std::format("{:%T}", get_expires_at() - clock_t::now()));
 
-    api->set_bearer_token_auth(data.access_token);
     is_logged_in = true;
     
     // log::api->debug("Access token: {}", data.access_token);

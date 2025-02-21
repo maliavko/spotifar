@@ -13,7 +13,9 @@ public:
     // devices_cache(api_abstract *api): json_cache(L"DevicesList"), api_proxy(api) {}
     devices_cache(api_abstract *api): json_cache(L""), api_proxy(api) {}
     virtual ~devices_cache() { api_proxy = nullptr; }
+
     virtual bool is_active() const;
+    void pick_up_device(const string &device_id = "");
 protected:
     virtual bool request_data(devices_t &data);
     virtual void on_data_synced(const devices_t &data, const devices_t &prev_data);

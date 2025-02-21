@@ -19,6 +19,33 @@ clock_t::duration devices_cache::get_sync_interval() const
     return 950ms;
 }
 
+void devices_cache::pick_up_device(const string &device_id)
+{
+    resync(true); // to make sure we have the latest data
+
+    // let's transfer a playback to the device with the given id, if it is not selected already
+    auto available_devices = get();
+    for (const auto &d: available_devices)
+        if (d.id == device_id && !d.is_active)
+        {
+            log::api->debug("Picking up a device with a given {}", d.to_str());
+            return api_proxy->transfer_playback(device_id);
+        }
+
+    // ...or transfer a playback to the first available device, if it is not selected
+    if (available_devices.size() > 0)
+    {
+        auto device = available_devices[0];
+        if (device.is_active)
+            return;
+        
+        log::api->debug("Picking up a first available device {}", device.to_str());
+        return api_proxy->transfer_playback(device.id);
+    }
+    
+    log::api->warn("No available devices for picking up, playback is not transferred");
+}
+
 void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_data)
 {
     bool has_devices_changed = !std::equal(
@@ -36,39 +63,6 @@ bool devices_cache::request_data(devices_t &data)
         json::parse(res->body).at("devices").get_to(data);
 
     return true;
-}
-
-void from_json(const json &j, device &d)
-{
-    j.at("id").get_to(d.id);
-    j.at("is_active").get_to(d.is_active);
-    j.at("type").get_to(d.type);
-    j.at("supports_volume").get_to(d.supports_volume);
-
-    d.volume_percent = j.value("volume_percent", 100);
-    d.name = utils::utf8_decode(j.at("name").get<string>());
-}
-
-void to_json(json &j, const device &d)
-{
-    j = json{
-        { "id", d.id },
-        { "is_active", d.is_active },
-        { "name", utils::utf8_encode(d.name) },
-        { "type", d.type },
-        { "volume_percent", d.volume_percent },
-        { "supports_volume", d.supports_volume },
-    };
-}
-
-string device::to_str() const
-{
-    return std::format("device(name={}, id={})", utils::to_string(name), id);
-}
-
-bool operator==(const device &lhs, const device &rhs)
-{
-    return lhs.id == rhs.id;
 }
 
 } // namespace spotify

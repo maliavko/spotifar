@@ -141,6 +141,18 @@ wstring track::get_artists_full_name() const
     return utils::string_join(artists_names, L", ");
 }
 
+wstring track::get_artist_name() const
+{
+    if (artists.size() > 0)
+        return artists[0].name;
+    return L"Unknown"; // TODO: localize
+}
+
+wstring track::get_long_name() const
+{
+    return std::format(L"{} - {}", get_artist_name(), name);
+}
+
 void from_json(const json &j, track &t)
 {
     from_json(j, dynamic_cast<simplified_track&>(t));
@@ -223,6 +235,22 @@ void to_json(json &j, const playback_state &p)
     };
 }
 
+void from_json(const json &j, playing_queue &p)
+{
+    if (j.contains("currently_playing") && !j.at("currently_playing").is_null())
+        j.at("currently_playing").get_to(p.currently_playing);
+
+    j.at("queue").get_to(p.queue);
+}
+
+void to_json(json &j, const playing_queue &p)
+{
+    j = json{
+        { "queue", p.queue },
+        { "currently_playing", p.currently_playing },
+    };
+}
+
 bool operator==(const actions &lhs, const actions &rhs)
 {
     return (
@@ -274,6 +302,40 @@ string context::get_item_id() const
 bool operator==(const context &lhs, const context &rhs)
 {
     return lhs.href == rhs.href;
+}
+
+
+void from_json(const json &j, device &d)
+{
+    j.at("id").get_to(d.id);
+    j.at("is_active").get_to(d.is_active);
+    j.at("type").get_to(d.type);
+    j.at("supports_volume").get_to(d.supports_volume);
+
+    d.volume_percent = j.value("volume_percent", 100);
+    d.name = utils::utf8_decode(j.at("name").get<string>());
+}
+
+void to_json(json &j, const device &d)
+{
+    j = json{
+        { "id", d.id },
+        { "is_active", d.is_active },
+        { "name", utils::utf8_encode(d.name) },
+        { "type", d.type },
+        { "volume_percent", d.volume_percent },
+        { "supports_volume", d.supports_volume },
+    };
+}
+
+string device::to_str() const
+{
+    return std::format("device(name={}, id={})", utils::to_string(name), id);
+}
+
+bool operator==(const device &lhs, const device &rhs)
+{
+    return lhs.id == rhs.id;
 }
 
 } // namespace spotify

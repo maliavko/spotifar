@@ -100,7 +100,10 @@ struct track: public simplified_track
 
     static const string& get_fields_filter();
 
+    wstring get_artist_name() const;
     wstring get_artists_full_name() const;
+    wstring get_long_name() const;
+
     friend void from_json(const json &j, track &t);
     friend void to_json(json &j, const track &p);
 };
@@ -220,6 +223,15 @@ struct playback_state
     inline bool is_empty() const { return item.id == ""; }
     friend void from_json(const json &j, playback_state &p);
     friend void to_json(json &j, const playback_state &p);
+};
+
+struct playing_queue
+{
+    track currently_playing;
+    std::vector<track> queue;
+    
+    friend void from_json(const json &j, playing_queue &p);
+    friend void to_json(json &j, const playing_queue &p);
 };
 
 typedef std::vector<device> devices_t;

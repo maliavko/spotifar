@@ -8,41 +8,6 @@ namespace keys = far3::keys;
 namespace colors = far3::colors;
 namespace synchro_tasks = far3::synchro_tasks;
 
-static const wchar_t
-    track_bar_char_unfilled = 0x2591,
-    track_bar_char_filled = 0x2588,
-    *play_btn_label = L"[ \x25ba ]",
-    *pause_btn_label = L"[ ‖ ]",
-    *next_btn_label = L"[>>]",
-    *prev_btn_label = L"[<<]",
-    *like_btn_label = L"[+]";
-
-static const int
-    width = 60, height = 11,
-    view_x = 2, view_y = 2, view_width = width - 2, view_height = height - 2,
-    view_center_x = (view_width + view_x)/2, view_center_y = (view_height + view_y)/2;
-
-enum controls : int
-{
-    no_control = -1,
-    box,
-    title,
-    track_bar,
-    track_time,
-    track_total_time,
-    source_name,
-    artist_name,
-    track_name,
-    play_btn,
-    prev_btn,
-    next_btn,
-    like_btn,
-    volume_label,
-    repeat_btn,
-    shuffle_btn,
-    devices_combo,
-};
-
 /// @brief a helper class to suppress `dlg_proc` function from handling incoming events,
 /// while the instance of the class exists in the particular scope
 struct [[nodiscard]] dlg_events_supressor
@@ -71,13 +36,13 @@ struct [[nodiscard]] no_redraw
     {
         assert(hdlg);
         std::lock_guard lock(mutex);
-        far3::dialogs::send(hdlg, DM_ENABLEREDRAW, FALSE, 0);
+        far3::dialogs::enable_redraw(hdlg, false);
     }
 
     ~no_redraw()
     {
         std::lock_guard lock(mutex);
-        far3::dialogs::send(hdlg, DM_ENABLEREDRAW, TRUE, 0);
+        far3::dialogs::enable_redraw(hdlg, true);
     }
     
     HANDLE hdlg;
@@ -90,36 +55,77 @@ static FarDialogItem control(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, 
     return FarDialogItem(type, x1, y1, x2, y2, {}, nullptr, nullptr, flags, data);
 }
 
+enum controls : int
+{
+    no_control = -1,
+    box,
+    title,
+    track_bar,
+    track_time,
+    track_total_time,
+    source_name,
+    artist_name,
+    track_name,
+    play_btn,
+    prev_btn,
+    next_btn,
+    like_btn,
+    volume_label,
+    repeat_btn,
+    shuffle_btn,
+    devices_combo,
+    queue_list,
+};
+
+static const wchar_t
+    track_bar_char_unfilled = 0x2591,
+    track_bar_char_filled = 0x2588,
+    *play_btn_label = L"[ \x25ba ]",
+    *pause_btn_label = L"[ ‖ ]",
+    *next_btn_label = L"[>>]",
+    *prev_btn_label = L"[<<]",
+    *like_btn_label = L"[+]";
+
+static const int
+    width = 60, height = 11, expanded_height = 34,
+    view_x1 = 2, view_y1 = 2, view_x2 = width - 2, view_y2 = height - 2,
+    view_center_x = (view_x2 + view_x1)/2, view_center_y = (view_y2 + view_y1)/2,
+    qbox_x1 = 0, qbox_y1 = height, qbox_x2 = width, qbox_y2 = expanded_height,
+    qview_x1 = qbox_x1 + 2, qview_y1 = qbox_y1, qview_x2 = qbox_x2 - 3, qview_y2 = qbox_y2 - 2;
+
 static const auto
     btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE,
     combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_DROPDOWNLIST;
 
 static const std::vector<FarDialogItem> dlg_items_layout{
     // border
-    control(DI_DOUBLEBOX,   0, 0, width, height,                            DIF_NONE), // BOX
-    control(DI_TEXT,        view_center_x - 5, 0, 10, 1,                    DIF_CENTERTEXT), // TITLE
+    control(DI_DOUBLEBOX,   0, 0, width, height-1,                  DIF_NONE), // BOX
+    control(DI_TEXT,        view_center_x-5, 0, 10, 1,              DIF_CENTERTEXT), // TITLE
 
     // trackbar
-    control(DI_TEXT,        view_x + 6, view_height - 2, view_width - 6, 1, DIF_CENTERTEXT), // TRACK_BAR
-    control(DI_TEXT,        view_x, view_height - 2, 6, 1,                  DIF_LEFTTEXT), // TRACK_TIME
-    control(DI_TEXT,        view_width - 5, view_height - 2, 6, 1,          DIF_RIGHTTEXT), // TRACK_TOTAL_TIME
+    control(DI_TEXT,        view_x1+6, view_y2-2, view_x2-6, 1,     DIF_CENTERTEXT), // TRACK_BAR
+    control(DI_TEXT,        view_x1, view_y2-2, 6, 1,               DIF_LEFTTEXT), // TRACK_TIME
+    control(DI_TEXT,        view_x2-5, view_y2-2, 6, 1,             DIF_RIGHTTEXT), // TRACK_TOTAL_TIME
     
     // playing info
-    control(DI_TEXT,        view_x, 1, view_width, 1,                       DIF_LEFTTEXT), // SOURCE_NAME
-    control(DI_TEXT,        view_x, view_height - 5, view_width, 1,         DIF_LEFTTEXT), // ARTIST_NAME
-    control(DI_TEXT,        view_x, view_height - 4, view_width, 1,         DIF_LEFTTEXT), // TRACK_NAME
+    control(DI_TEXT,        view_x1, 1, view_x2, 1,                 DIF_LEFTTEXT), // SOURCE_NAME
+    control(DI_TEXT,        view_x1, view_y2-5, view_x2, 1,         DIF_LEFTTEXT), // ARTIST_NAME
+    control(DI_TEXT,        view_x1, view_y2-4, view_x2, 1,         DIF_LEFTTEXT), // TRACK_NAME
 
     // controls
-    control(DI_BUTTON,      view_center_x - 2, view_height, 1, 1,           btn_flags, play_btn_label), // PLAY
-    control(DI_BUTTON,      view_center_x - 7, view_height, 1, 1,           btn_flags, prev_btn_label), // PREV_BTN
-    control(DI_BUTTON,      view_center_x + 4, view_height, 1, 1,           btn_flags, next_btn_label), // NEXT_BTN
-    control(DI_BUTTON,      view_x, view_height, 1, 1,                      btn_flags, like_btn_label), // LIKE BTN
-    control(DI_TEXT,        view_width - 6, view_height, 1, 1,              btn_flags | DIF_RIGHTTEXT, L"[---%]"), // VOLUME
-    control(DI_BUTTON,      view_center_x + 9, view_height, 1, 1,           btn_flags),  // REPEAT
-    control(DI_BUTTON,      view_center_x - 15, view_height, 1, 1,          btn_flags),  // SHUFFLE
+    control(DI_BUTTON,      view_center_x-2, view_y2, 1, 1,         btn_flags, play_btn_label), // PLAY
+    control(DI_BUTTON,      view_center_x-7, view_y2, 1, 1,         btn_flags, prev_btn_label), // PREV_BTN
+    control(DI_BUTTON,      view_center_x+4, view_y2, 1, 1,         btn_flags, next_btn_label), // NEXT_BTN
+    control(DI_BUTTON,      view_x1, view_y2, 1, 1,                 btn_flags, like_btn_label), // LIKE BTN
+    control(DI_TEXT,        view_x2-6, view_y2, 1, 1,               btn_flags | DIF_RIGHTTEXT, L"[---%]"), // VOLUME
+    control(DI_BUTTON,      view_center_x+9, view_y2, 1, 1,         btn_flags),  // REPEAT
+    control(DI_BUTTON,      view_center_x-15, view_y2, 1, 1,        btn_flags),  // SHUFFLE
     
     // devices box
-    control(DI_COMBOBOX,    view_width - 13, 1, view_width - 1, 0,          combo_flags), // DEVICES
+    control(DI_COMBOBOX,    view_x2-13, 1, view_x2-1, 0,            combo_flags), // DEVICES
+
+    // queue
+    control(DI_LISTBOX,     qview_x1, qview_y1, qview_x2, qview_y2, DIF_LISTWRAPMODE | DIF_NOFOCUS | DIF_LISTNOCLOSE, L"Playing Queue"),
 };
 
 typedef bool (player::*control_handler_t)(void*);
@@ -168,6 +174,9 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     { controls::repeat_btn, {
         { DN_BTNCLICK, &player::on_repeat_btn_click },
         { DN_CTLCOLORDLGITEM, &player::on_repeat_btn_style_applied },
+    }},
+    { controls::queue_list, {
+        { DN_CONTROLINPUT, &player::on_playing_queue_input_received },
     }},
 };
 
@@ -244,10 +253,11 @@ bool player::show()
         ObserverManager::subscribe<playback_observer>(this);
         ObserverManager::subscribe<devices_observer>(this);
 
-
         if (hdlg != NULL)
         {
             visible = true;
+
+            expand(false);
             
             static wstring title(std::format(L" {} ", far3::get_text(MPluginUserName)));
             set_control_text(controls::title, title);
@@ -322,12 +332,41 @@ void player::tick()
     });
 }
 
+bool player::is_expanded() const
+{
+    auto r = far3::dialogs::get_dialog_rect(hdlg);
+    return r.Bottom - r.Top > height;
+}
+
+void player::expand(bool is_unfolded)
+{
+    no_redraw nr(hdlg);
+    dlg_events_supressor s(this);
+
+    if (is_unfolded)
+    {
+        far3::dialogs::resize_dialog(hdlg, width, expanded_height);
+        far3::dialogs::resize_item(hdlg, controls::box, { 0, 0, width, expanded_height - 1 });
+    }
+    else
+    {
+        far3::dialogs::resize_dialog(hdlg, width, height);
+        far3::dialogs::resize_item(hdlg, controls::box, { 0, 0, width, height - 1 });
+    }
+
+    // keep the same horizontal position, but center by vertical one
+    auto rect = far3::dialogs::get_dialog_rect(hdlg);
+    far3::dialogs::move_dialog_to(hdlg, rect.Left, -1);
+
+    update_playing_queue(is_unfolded);
+}
+
 bool player::on_devices_item_selected(void *dialog_item)
 {
     FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
-    size_t pos = far3::dialogs::get_list_current_pos(hdlg, controls::devices_combo);
-    auto device_id = far3::dialogs::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
+    auto device_id = far3::dialogs::get_list_current_item_data<string>(
+        hdlg, controls::devices_combo);
 
     if (!device_id.empty())
     {
@@ -394,6 +433,11 @@ bool player::on_input_received(void *input_record)
                         far3::dialogs::open_list(hdlg, controls::devices_combo, true);
                         return true;
                     }
+                    case keys::q + keys::mods::ctrl:
+                    {
+                        expand(!is_expanded());
+                        return true;
+                    }
                 }
             }
             break;
@@ -426,7 +470,7 @@ bool player::on_artist_label_input_received(void *input_record)
 
     // searching for a specific artist in the list of them, which
     // user has clicked on
-    SMALL_RECT dlg_rect = utils::far3::dialogs::get_rect(hdlg);
+    SMALL_RECT dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
     
     auto label_layout = dlg_items_layout[controls::artist_name];
     auto label_length = label_layout.X2 - label_layout.X1;
@@ -491,6 +535,25 @@ bool player::on_track_label_input_received(void *input_record)
     return true;
 }
 
+bool player::on_playing_queue_input_received(void *input_record)
+{
+    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    if (ir->EventType == KEY_EVENT)
+        return false;
+
+    if (ir->Event.MouseEvent.dwEventFlags & DOUBLE_CLICK)
+    {
+        auto track_uri = far3::dialogs::get_list_current_item_data<string>(
+            hdlg, controls::queue_list);
+
+        // TODO: unclear how to skip several tracks in the playing queue
+        // auto &state = api_proxy->get_playback_state();
+        // api_proxy->start_playback(state.context.uri, track_uri);
+    }
+
+    return true;
+}
+
 bool player::on_source_label_input_received(void *input_record)
 {
     INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
@@ -510,7 +573,7 @@ bool player::on_track_bar_input_received(void *input_record)
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    SMALL_RECT dlg_rect = utils::far3::dialogs::get_rect(hdlg);
+    SMALL_RECT dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
     
     auto track_bar_layout = dlg_items_layout[controls::track_bar];
     auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
@@ -638,9 +701,8 @@ bool player::on_play_btn_click(void *empty)
     //         api_proxy->resume_playback(playback.device.id);
     //     return true;
     // }
-    
-    size_t pos = far3::dialogs::get_list_current_pos(hdlg, controls::devices_combo);
-    auto device_id = far3::dialogs::get_list_item_data<string>(hdlg, controls::devices_combo, pos);
+    auto device_id = far3::dialogs::get_list_current_item_data<string>(
+        hdlg, controls::devices_combo);
 
     api_proxy->toggle_playback(device_id);
     return true;
@@ -684,6 +746,9 @@ void player::on_track_changed(const track &track)
 
     auto &state = api_proxy->get_playback_state();
     update_like_btn(!state.is_empty() && api_proxy->check_saved_track(state.item.id));
+
+    if (is_expanded())
+        update_playing_queue(true);
 }
 
 void player::update_track_bar(int duration, int progress)
@@ -787,6 +852,30 @@ void player::update_like_btn(bool is_saved)
 {
     no_redraw nr(hdlg);
     set_control_text(controls::like_btn, like_btn_label);
+}
+
+void player::update_playing_queue(bool is_visible)
+{
+    no_redraw nr(hdlg);
+    dlg_events_supressor s(this);
+
+    far3::dialogs::clear_list(hdlg, controls::queue_list);
+    far3::dialogs::resize_item(hdlg, controls::queue_list,
+        { qview_x1, qview_y1, qview_x2, qview_y2 });
+
+    if (is_visible)
+    {
+        const auto &items = api_proxy->get_playing_queue().queue;
+        for (int i = 0; i < items.size(); i++)
+        {
+            const auto &item = items[i];
+            far3::dialogs::add_list_item(hdlg, controls::queue_list, item.get_long_name(), i,
+                (void*)item.get_uri().c_str(), item.get_uri().size());
+        }
+    }
+    
+    far3::dialogs::set_visible(hdlg, controls::queue_list, is_visible);
+    // far3::dialogs::set_focus(hdlg, controls::queue_list);
 }
 
 void player::on_state_changed(bool is_playing)

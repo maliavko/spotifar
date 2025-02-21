@@ -4,44 +4,46 @@
 
 namespace spotifar
 {
-	enum
-	{
-		MPluginUserName,
+    enum
+    {
+        MPluginUserName,
 
-		MOk,
-		MCancel,
-		MError,
-		MYes,
+        MOk,
+        MCancel,
+        MError,
+        MYes,
 
-		MConfigAddToDisksMenu,
-		MConfigSpotifySettings,
-		MConfigSpotifyClientID,
-		MConfigSpotifyClientSecret,
-		MConfigLocalhostServicePort,
+        MConfigAddToDisksMenu,
+        MConfigSpotifySettings,
+        MConfigSpotifyClientID,
+        MConfigSpotifyClientSecret,
+        MConfigLocalhostServicePort,
 
-		MPanelRootItemLabel,
-		MPanelArtistsItemLabel,
-		MPanelArtistsItemDescr,
-		MPanelAlbumItemLabel,
-		MPanelAlbumItemDescr,
-		MPanelArtistItemLabel,
-		MPanelArtistItemDescr,
-		MPanelPlaylistsItemLabel,
-		MPanelPlaylistsItemDescr,
+        MPanelRootItemLabel,
+        MPanelArtistsItemLabel,
+        MPanelArtistsItemDescr,
+        MPanelAlbumItemLabel,
+        MPanelAlbumItemDescr,
+        MPanelArtistItemLabel,
+        MPanelArtistItemDescr,
+        MPanelPlaylistsItemLabel,
+        MPanelPlaylistsItemDescr,
+		MPanelRecentsItemLabel,
+		MPanelRecentsItemDescr,
 
-		MPlayerSourceLabel,
-		MPlayerSourceCollection,
-		MPlayerRepeatNoneBtn,
-		MPlayerRepeatOneBtn,
-		MPlayerRepeatAllBtn,
-		MPlayerShuffleBtn,
+        MPlayerSourceLabel,
+        MPlayerSourceCollection,
+        MPlayerRepeatNoneBtn,
+        MPlayerRepeatOneBtn,
+        MPlayerRepeatAllBtn,
+        MPlayerShuffleBtn,
 
-		MKeyBarF4,
+        MKeyBarF4,
 
-		MFarMessageErrorTitle,
-		MFarMessageErrorStartup,
-		MFarMessageWarning,
-	};
+        MFarMessageErrorTitle,
+        MFarMessageErrorStartup,
+        MFarMessageWarning,
+    };
 }
 
 #endif // LNG_HPP_A5DED539_88BF_4605_9A46_F2D47A6D9F7C

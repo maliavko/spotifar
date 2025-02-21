@@ -7,7 +7,8 @@ using utils::far3::get_text;
 
 static const string
     artists_view_id = "artists",
-    playlists_view_id = "playlists";
+    playlists_view_id = "playlists",
+    recents_view_id = "recents";
 
 root_view::root_view(spotify::api_abstract *api):
     view(get_text(MPanelRootItemLabel)),
@@ -29,6 +30,12 @@ view::view_items_t root_view::get_items()
             get_text(MPanelPlaylistsItemLabel),
             get_text(MPanelPlaylistsItemDescr),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+        },
+        {
+            recents_view_id,
+            get_text(MPanelRecentsItemLabel),
+            get_text(MPanelRecentsItemDescr),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
         }
     };
 }
@@ -44,6 +51,12 @@ intptr_t root_view::select_item(const string &view_id)
     if (view_id == playlists_view_id)
     {
         ui::events::show_playlists_view();
+        return TRUE;
+    }
+    
+    if (view_id == recents_view_id)
+    {
+        ui::events::show_recents_view();
         return TRUE;
     }
 

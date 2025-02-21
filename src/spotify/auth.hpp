@@ -22,7 +22,7 @@ class auth_cache: public json_cache<auth>
 {
 public:
     auth_cache(api_abstract *api, const string &client_id, const string &client_secret, int port);
-    virtual ~auth_cache() { api = nullptr; }
+    virtual ~auth_cache() { api_proxy = nullptr; }
     bool is_authenticated() const { return is_logged_in; }
 protected:
     virtual bool request_data(auth &data);
@@ -40,7 +40,7 @@ private:
     const string client_id, client_secret;
     int port;
     
-    api_abstract *api;
+    api_abstract *api_proxy;
 };
 
 struct auth_observer: public BaseObserverProtocol

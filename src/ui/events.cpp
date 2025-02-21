@@ -36,6 +36,11 @@ namespace events {
         return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album);
     }
     
+    void show_recents_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_recents_view);
+    }
+    
     void show_player_dialog()
     {
         return ObserverManager::notify(&ui_events_observer::show_player_dialog);

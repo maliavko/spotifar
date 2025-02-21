@@ -114,6 +114,7 @@ namespace far3
             none = 0x00,
             a = 0x41,
             d = 0x44,
+            q = 0x51,
             r = 0x52,
             s = 0x53,
             z = 0x5A,
@@ -141,16 +142,28 @@ namespace far3
 
     namespace dialogs
     {
+        // dialog
         void flush_vbuffer();
         intptr_t send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
-        SMALL_RECT get_rect(HANDLE hdlg);
+        SMALL_RECT get_dialog_rect(HANDLE hdlg);
+        intptr_t enable_redraw(HANDLE hdlg, bool is_enable);
         intptr_t close(HANDLE hdlg);
+        intptr_t resize_dialog(HANDLE hdlg, SHORT width, SHORT height);
+        intptr_t move_dialog_to(HANDLE hdlg, SHORT x = -1, SHORT y = -1);
+        intptr_t move_dialog_by(HANDLE hdlg, SHORT distance_x, SHORT distance_y);
+
+        // controls
         intptr_t enable(HANDLE hdlg, int ctrl_id, bool is_enabled);
+        bool is_enabled(HANDLE hdlg, int ctrl_id);
+        intptr_t set_focus(HANDLE hdlg, int ctrl_id);
+        intptr_t set_visible(HANDLE hdlg, int ctrl_id, bool is_visible);
+        bool is_visible(HANDLE hdlg, int ctrl_id);
         intptr_t set_checked(HANDLE hdlg, int ctrl_id, bool is_checked);
         bool is_checked(HANDLE hdlg, int ctrl_id);
         intptr_t set_text(HANDLE hdlg, int ctrl_id, const wstring &text);
         intptr_t set_text(HANDLE hdlg, int ctrl_id, const string &text);
         wstring get_text(HANDLE hdlg, int ctrl_id);
+        intptr_t resize_item(HANDLE hdlg, int ctrl_id, SMALL_RECT rect);
         intptr_t clear_list(HANDLE hdlg, int ctrl_id);
         size_t get_list_current_pos(HANDLE hdlg, int ctrl_id);
         intptr_t open_list(HANDLE hdlg, int ctrl_id, bool is_opened);
@@ -170,6 +183,13 @@ namespace far3
             return reinterpret_cast<T>(item_data);
         }
         template<> string get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
+
+        template<class T>
+        T get_list_current_item_data(HANDLE hdlg, int ctrl_id)
+        {
+            size_t pos = get_list_current_pos(hdlg, ctrl_id);
+            return get_list_item_data<T>(hdlg, ctrl_id, pos);
+        }
     }
 
     namespace panels

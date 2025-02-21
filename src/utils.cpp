@@ -25,7 +25,7 @@ namespace far3
     {
         bool is_pressed(int virtual_key)
         {
-            return GetKeyState(virtual_key);
+            return GetKeyState(virtual_key) < 0;
         }
 
         int make_combined(const KEY_EVENT_RECORD &kir)
@@ -54,11 +54,16 @@ namespace far3
             return config::ps_info.SendDlgMessage(hdlg, msg, param1, param2);
         }
 
-        SMALL_RECT get_rect(HANDLE hdlg)
+        SMALL_RECT get_dialog_rect(HANDLE hdlg)
         {
             SMALL_RECT dlg_rect;
             send(hdlg, DM_GETDLGRECT, 0, &dlg_rect);
             return dlg_rect;
+        }
+        
+        intptr_t enable_redraw(HANDLE hdlg, bool is_enable)
+        {
+            return send(hdlg, DM_ENABLEREDRAW, is_enable, 0);
         }
         
         intptr_t close(HANDLE hdlg)
@@ -66,9 +71,47 @@ namespace far3
             return send(hdlg, DM_CLOSE, -1, 0);
         }
         
+        intptr_t resize_dialog(HANDLE hdlg, SHORT width, SHORT height)
+        {
+            COORD coord{ width, height };
+            return send(hdlg, DM_RESIZEDIALOG, 0, &coord);
+        }
+        
+        intptr_t move_dialog_to(HANDLE hdlg, SHORT x, SHORT y)
+        {
+            COORD coord = { x, y };
+            return send(hdlg, DM_MOVEDIALOG, 1, &coord);
+        }
+
+        intptr_t move_dialog_by(HANDLE hdlg, SHORT distance_x, SHORT distance_y)
+        {
+            COORD coord = { distance_x, distance_y };
+            return send(hdlg, DM_MOVEDIALOG, 0, &coord);
+        }
+        
         intptr_t enable(HANDLE hdlg, int ctrl_id, bool is_enabled)
         {
             return send(hdlg, DM_ENABLE, ctrl_id, (void*)is_enabled);
+        }
+        
+        bool is_enabled(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_ENABLE, ctrl_id, (void*)-1) == TRUE;
+        }
+        
+        intptr_t set_focus(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_SETFOCUS, ctrl_id, 0);
+        }
+        
+        intptr_t set_visible(HANDLE hdlg, int ctrl_id, bool is_visible)
+        {
+            return send(hdlg, DM_SHOWITEM, ctrl_id, (void*)is_visible);
+        }
+        
+        bool is_visible(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_SHOWITEM, ctrl_id, (void*)-1) == TRUE;
         }
 
         intptr_t set_checked(HANDLE hdlg, int ctrl_id, bool is_checked)
@@ -95,6 +138,11 @@ namespace far3
         wstring get_text(HANDLE hdlg, int ctrl_id)
         {
             return wstring((const wchar_t *)send(hdlg, DM_GETCONSTTEXTPTR, ctrl_id, NULL));
+        }
+
+        intptr_t resize_item(HANDLE hdlg, int ctrl_id, SMALL_RECT rect)
+        {
+            return send(hdlg, DM_SETITEMPOSITION, ctrl_id, &rect);
         }
         
         size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
