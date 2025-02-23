@@ -15,8 +15,11 @@ class artists_view: public view
 public:
     artists_view(spotify::api_abstract *api);
 
+    virtual const wchar_t* get_dir_name() const;
+    virtual const wchar_t* get_title() const;
+
     virtual void update_panel_info(OpenPanelInfo *info);
-    virtual view_items_t get_items();
+    virtual items_t get_items();
     virtual intptr_t select_item(const string &artist_id);
 
 private:

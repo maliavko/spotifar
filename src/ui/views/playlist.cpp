@@ -6,15 +6,26 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 playlist_view::playlist_view(spotify::api_abstract *api, const spotify::playlist &p):
-    view(p.user_display_name),
     playlist(p),
     api_proxy(api)
 {
 }
 
-view::view_items_t playlist_view::get_items()
+const wchar_t* playlist_view::get_dir_name() const
 {
-    view_items_t result;
+    static wchar_t dir_name[MAX_PATH];
+    wcsncpy_s(dir_name, utils::strip_invalid_filename_chars(playlist.name).c_str(), MAX_PATH);
+    return dir_name;
+}
+
+const wchar_t* playlist_view::get_title() const
+{
+    return playlist.name.c_str();
+}
+
+view::items_t playlist_view::get_items()
+{
+    items_t result;
     for (const auto &t: api_proxy->get_playlist_tracks(playlist.id))
         result.push_back({t.track.id, t.track.name, L"", FILE_ATTRIBUTE_VIRTUAL});
     return result;

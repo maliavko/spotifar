@@ -3,8 +3,8 @@
 
 namespace spotifar { namespace ui {
 
-    view_item::view_item(const string &id, const wstring &name, const wstring &descr,
-                         uintptr_t attrs, const std::vector<wstring> &custom_column_data):
+    view::item_t::item_t(const string &id, const wstring &name, const wstring &descr,
+                   uintptr_t attrs, const std::vector<wstring> &custom_column_data):
         id(id),
         name(utils::strip_invalid_filename_chars(name)),
         description(descr),

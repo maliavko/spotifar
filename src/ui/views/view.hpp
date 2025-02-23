@@ -7,33 +7,40 @@
 
 namespace spotifar { namespace ui {
 
-struct view_item
-{
-    string id;
-    wstring name;
-    wstring description;
-    uintptr_t file_attrs;
-    std::vector<wstring> custom_column_data;
-
-    view_item(const string &id, const wstring &name, const wstring &descr,
-        uintptr_t attrs, const std::vector<wstring> &custom_column_data = {});
-};
-
 class view
 {
 public:
-    typedef std::vector<view_item> view_items_t;
+    struct item_t
+    {
+        string id;
+        wstring name;
+        wstring description;
+        uintptr_t file_attrs;
+        std::vector<wstring> custom_column_data;
+
+        item_t(const string &id, const wstring &name, const wstring &descr,
+            uintptr_t attrs, const std::vector<wstring> &columns_data = {});
+    };
+
+    typedef std::vector<item_t> items_t;
+    typedef std::unordered_map<FarKey, wstring> key_bar_info_t;
+    typedef std::vector<InfoPanelLine> info_lines_t;
+
 public:
-    view(const wstring &name): name(utils::strip_invalid_filename_chars(name)) {}
+    view() {}
     virtual ~view() {}
 
-    inline const wstring& get_name() const { return name; }
+    virtual const wchar_t* get_dir_name() const = 0;
+    virtual const wchar_t* get_title() const = 0;
+    
+    virtual items_t get_items() { return {}; }
+    virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
+    virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
 
-    virtual size_t get_item_idx(const string &item_id) { return 0; };
+    virtual intptr_t select_item(const string &id) { return FALSE; }
+    virtual size_t get_item_idx(const string &item_id) { return 0; }
     virtual intptr_t process_input(const ProcessPanelInputInfo *info) { return FALSE; }
     virtual void update_panel_info(OpenPanelInfo *info) {}
-    virtual view_items_t get_items() = 0;
-    virtual intptr_t select_item(const string &id) = 0;
 
 protected:
     const wstring name;

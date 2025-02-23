@@ -187,8 +187,12 @@ HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 /// The function is also called when file on the panel is being copied to the other panel
 intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 {
+    // TODO: unfinished
     spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *info)");
     
+    // wchar_t FileName[MAX_PATH];
+    // config::ps_info.fsf->MkTemp(FileName, std::size(FileName), L"");
+
     auto file = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[0].FileName);
     std::ofstream fout(file, std::ios::trunc);
     fout << "Test data" << std::endl;

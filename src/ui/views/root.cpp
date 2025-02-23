@@ -11,14 +11,47 @@ static const string
     recents_view_id = "recents";
 
 root_view::root_view(spotify::api_abstract *api):
-    view(get_text(MPanelRootItemLabel)),
     api_proxy(api)
 {
 }
 
-view::view_items_t root_view::get_items()
+const wchar_t* root_view::get_dir_name() const
 {
-    return view_items_t{
+    // should be empty, so Far closes plugin in case of hitting ".."
+    static const wchar_t *cur_dir = { L"" };
+    return cur_dir;
+}
+
+const wchar_t* root_view::get_title() const
+{
+    static const wchar_t *title = { L"Root Menu" };
+    return title;
+}
+
+auto root_view::get_key_bar_info() -> const key_bar_info_t*
+{
+    // TODO: test data
+    static key_bar_info_t key_bar{
+        { { VK_F4, 0 }, utils::far3::get_text(MKeyBarF4) },
+    };
+
+    return &key_bar;
+}
+
+auto root_view::get_info_lines() -> const info_lines_t*
+{
+    // TODO: test data
+    static info_lines_t lines{
+        { L"1", L"1" },
+        { L"3", L"3", IPLFLAGS_SEPARATOR },
+        { L"4", L"4" },
+    };
+    return &lines;
+}
+
+view::items_t root_view::get_items()
+{
+    static items_t items{
         {
             artists_view_id,
             get_text(MPanelArtistsItemLabel),
@@ -38,6 +71,7 @@ view::view_items_t root_view::get_items()
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
         }
     };
+    return items;
 }
 
 intptr_t root_view::select_item(const string &view_id)

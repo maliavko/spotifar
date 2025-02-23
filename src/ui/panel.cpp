@@ -16,6 +16,9 @@ struct far_user_data
     string id;
 };
 
+// the `F` keys, which can be overriden by the nested views
+static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
+
 Panel::Panel(spotify::api_abstract *api):
     api_proxy(api)
 {
@@ -34,82 +37,46 @@ Panel::~Panel()
 void Panel::update_panel_info(OpenPanelInfo *info)
 {
     info->StructSize = sizeof(*info);
+    
+    info->CurDir = view->get_dir_name();
     info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
-    // wchar_t FileName[MAX_PATH];
-    // config::ps_info.fsf->MkTemp(FileName, std::size(FileName), L"");
-
-    // static InfoPanelLine lines[3]{
-    //     { L"Test0", L"Data0" },
-    //     { L"Test1", L"Data1" },
-    //     { L"Test2", L"Data2" },
-    // };
-
-    // info->InfoLines = lines;
-    // info->InfoLinesNumber = 3;
-
-    // FAR has a special logic when ".." folder is hit in the panel:
-    // if CurDir is empty, it closes the plugin's panel. As plugin does not operate with
-    // folders, but spotify items, just in case the current view name is handed over,
-    // which equals empty string for the root views
-    info->CurDir = view->get_name().c_str();
-
-    info->StartPanelMode = intptr_t('0');
-
-    // filling the panel top title label
-    static wchar_t title[MAX_PATH];
-    config::fsf.sprintf(title, L" %s: %s ", far3::get_text(MPluginUserName), info->CurDir);
-    info->PanelTitle = title;
-
-    // updating the labels of command key bar in the down of the screen
-    // the approach is copied from Network plugin, every third value represents a label,
-    // if it is "0", the label will be empty
-    static WORD fkeys[] =
-    {   
-        VK_F3, 0, 0,  // view
-        VK_F4, 0, MKeyBarF4,  // edit -> show player
-        VK_F5, 0, 0,  // copy
-        VK_F6, 0, 0,  // renmov
-        VK_F7, 0, 0,  // mkfold
-        VK_F8, 0, 0,  // delete
-        VK_F1, SHIFT_PRESSED, 0,  // add archive
-        VK_F2, SHIFT_PRESSED, 0,  // extract
-        VK_F3, SHIFT_PRESSED, 0,  // arccmd
-        VK_F4, SHIFT_PRESSED, 0,  // edit...
-        VK_F5, SHIFT_PRESSED, 0,  // copy in-place
-        VK_F6, SHIFT_PRESSED, 0,  // rename
-        VK_F7, SHIFT_PRESSED, 0,  // <empty>
-        VK_F8, SHIFT_PRESSED, 0,  // delete
-        VK_F1, LEFT_CTRL_PRESSED, 0,  // show left panel
-        VK_F2, LEFT_CTRL_PRESSED, 0,  // show right panel
-        VK_F3, LEFT_CTRL_PRESSED, 0,  // sort by name
-        VK_F4, LEFT_CTRL_PRESSED, 0,  // ..by ext
-        VK_F5, LEFT_CTRL_PRESSED, 0,  // ..by write date
-        VK_F6, LEFT_CTRL_PRESSED, 0,  // ..by size
-        VK_F3, LEFT_ALT_PRESSED, 0,  // alt view
-        VK_F4, LEFT_ALT_PRESSED, 0,  // alt edit
-        VK_F5, LEFT_ALT_PRESSED, 0,  // print
-    };
-
-    static KeyBarLabel kbl[std::size(fkeys) / 3];
-    static KeyBarTitles kbt = {std::size(kbl), kbl};
-
-    for (size_t j = 0, i = 0; i < std::size(fkeys); i += 3, ++j)
+    // filling in the info lines on the Ctrl+L panel
+    const auto &info_lines = view->get_info_lines();
+    if (info_lines != nullptr)
     {
-        kbl[j].Key.VirtualKeyCode = fkeys[i];
-        kbl[j].Key.ControlKeyState = fkeys[i + 1];
-
-        if (fkeys[i + 2])
-        {
-            kbl[j].Text = kbl[j].LongText = far3::get_text(fkeys[i + 2]);
-        }
-        else
-        {
-            kbl[j].Text = kbl[j].LongText = L"";
-        }
+        info->InfoLines = info_lines->data();
+        info->InfoLinesNumber = info_lines->size();
     }
 
-    info->KeyBar = &kbt;
+    // filling the panel top title label
+    static wchar_t title[64];
+    config::fsf.snprintf(title, std::size(title), L" %s: %s ",
+        far3::get_text(MPluginUserName), view->get_title());
+    info->PanelTitle = title;
+
+    // every update we clear out all the refreshable `F` keys and fill them up
+    // by demand with the overriding info from the nested view
+    static KeyBarLabel key_bar_labels[refreshable_keys.size() * 4];
+    static KeyBarTitles key_bar = { std::size(key_bar_labels), key_bar_labels };
+    info->KeyBar = &key_bar;
+
+    const auto view_key_bar = view->get_key_bar_info();
+
+    size_t idx = 0;
+    for (const auto key: refreshable_keys)
+        for (const auto mod: { 0, SHIFT_PRESSED, LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED })
+        {
+            auto &kbl = key_bar_labels[idx++];
+
+            kbl.Key.VirtualKeyCode = key;
+            kbl.Key.ControlKeyState = mod;
+
+            if (view_key_bar && view_key_bar->contains(kbl.Key))
+                kbl.Text = kbl.LongText = view_key_bar->at(kbl.Key).c_str();
+            else
+                kbl.Text = kbl.LongText = L"";
+        }
 
     if (view)
         return view->update_panel_info(info);
@@ -117,6 +84,7 @@ void Panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t Panel::update_panel_items(GetFindDataInfo *info)
 {
+    // TODO: here happens some copy likely
     const auto &items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
@@ -125,11 +93,12 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         for (size_t idx = 0; idx < items.size(); idx++)
         {
             auto &item = items[idx];
+            auto &columns = item.custom_column_data;
 
             // TODO: what if no memory allocated?
-            const wchar_t **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * item.custom_column_data.size());
-            for (size_t idx = 0; idx < item.custom_column_data.size(); idx++)
-                column_data[idx] = _wcsdup(item.custom_column_data[idx].c_str());
+            auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
+            for (size_t idx = 0; idx < columns.size(); idx++)
+                column_data[idx] = _wcsdup(columns[idx].c_str());
             
             memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
             panel_item[idx].FileAttributes = item.file_attrs;
@@ -144,16 +113,6 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
 
         info->PanelItem = panel_item;
         info->ItemsNumber = items.size();
-
-        // working
-        // size_t size = config::ps_info.PanelControl(PANEL_ACTIVE, FCTL_GETPANELDIRECTORY, 0, 0);
-        // FarPanelDirectory *PPI=(FarPanelDirectory*)malloc(size);
-        // if (PPI)
-        // {
-        //     config::ps_info.PanelControl(PANEL_ACTIVE,FCTL_GETPANELDIRECTORY, size, PPI);
-            
-        //     free(PPI);
-        // }
 
         return TRUE;
     }

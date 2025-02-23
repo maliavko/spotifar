@@ -13,7 +13,10 @@ class artist_view: public view
 public:
     artist_view(spotify::api_abstract *api, const spotify::artist &artist);
 
-    virtual view_items_t get_items();
+    virtual const wchar_t* get_dir_name() const;
+    virtual const wchar_t* get_title() const;
+
+    virtual items_t get_items();
     virtual intptr_t select_item(const string &album_id);
     virtual intptr_t process_input(const ProcessPanelInputInfo *info);
 private:

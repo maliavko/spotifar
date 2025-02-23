@@ -15,7 +15,10 @@ class playlist_view: public view
 public:
     playlist_view(api_abstract *api, const playlist &p);
 
-    virtual view_items_t get_items();
+    virtual const wchar_t* get_dir_name() const;
+    virtual const wchar_t* get_title() const;
+
+    virtual items_t get_items();
     virtual intptr_t select_item(const string &track_id);
 private:
     playlist playlist;

@@ -5,6 +5,8 @@ namespace spotifar { namespace spotify {
 using namespace httplib;
 using namespace utils;
 
+const string SPOTIFY_API_URL = "https://api.spotify.com";
+
 // TODO: reconsider these functions
 string dump_headers(const Headers &headers) {
     string s;
@@ -17,6 +19,14 @@ string dump_headers(const Headers &headers) {
     }
 
     return s;
+}
+
+/// @brief clearing domain from path
+static string trim_webapi_url(const string &url)
+{
+    if (url.starts_with(SPOTIFY_API_URL))
+        return url.substr(SPOTIFY_API_URL.size(), url.size());
+    return url;
 }
 
 string dump_http_error(const Request &req, const Response &res)
@@ -42,8 +52,6 @@ string dump_http_error(const Request &req, const Response &res)
     return ss.str();
 }
 
-const string SPOTIFY_API_URL = "https://api.spotify.com";
-
 api::api():
     client(SPOTIFY_API_URL),
     pool(8)
@@ -60,13 +68,8 @@ api::api():
             {
                 if (!exclude.contains(req.path))
                 {
-                    // clearing domain from path, just for log readability
-                    auto req_path = req.path;
-                    if (req_path.starts_with(SPOTIFY_API_URL))
-                        req_path.erase(req_path.begin(), req_path.begin() + SPOTIFY_API_URL.size());
-                    
                     log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
-                                    res.status, req.method, req_path);
+                                    res.status, req.method, trim_webapi_url(req.path));
                 }
             }
             else
@@ -610,11 +613,12 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     using namespace httplib;
 
     string cached_etag = "";
+    string url = trim_webapi_url(request_url);
 
     // we have a cache for the requested url and it is still valid
-    if (api_responses_cache.is_cached(request_url))
+    if (api_responses_cache.is_cached(url))
     {
-        auto cache = api_responses_cache.get(request_url);
+        auto cache = api_responses_cache.get(url);
         if (cache.is_valid())
         {
             Result res(std::make_unique<Response>(), Error::Success);
@@ -631,12 +635,15 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     {
         if (r->status == OK_200)
         {
-            api_responses_cache.store(
-                request_url, r->body, r->get_header_value("etag", ""), cache_for);
+            auto etag = r->get_header_value("etag", "");
+
+            // caching only requests which have ETag or `cache-for` instruction
+            if (!etag.empty() || cache_for > clock_t::duration::zero())
+                api_responses_cache.store(url, r->body, etag, cache_for);
         }
         else if (r->status == NotModified_304)
         {
-            auto cache = api_responses_cache.get(request_url);
+            auto cache = api_responses_cache.get(url);
 
             // replacing empty body with the cached one, so the client
             // does not see the difference
@@ -645,8 +652,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
             // the response is still valid, so caching for a session or any other
             // time if needed
             if (cache_for != clock_t::duration::zero())
-                api_responses_cache.store(
-                    request_url, cache.body, cache.etag, cache_for);
+                api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
     }
     return r;

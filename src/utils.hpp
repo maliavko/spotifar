@@ -4,6 +4,20 @@
 
 #include "stdafx.h"
 
+template<>
+struct std::hash<FarKey>
+{
+    std::size_t operator()(const FarKey &fkey) const
+    {
+        std::size_t res = 0;
+        nlohmann::detail::combine(res, fkey.VirtualKeyCode);
+        nlohmann::detail::combine(res, fkey.ControlKeyState);
+        return res;
+    }
+};
+
+bool operator==(const FarKey &lhs, const FarKey &rhs);
+
 namespace spotifar { namespace utils {
 
 using clock_t = std::chrono::system_clock;
@@ -194,15 +208,37 @@ namespace far3
 
     namespace panels
     {
+        intptr_t control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1 = 0, void *param2 = nullptr);
         intptr_t redraw(HANDLE panel, size_t current_item_idx = 0, size_t top_item_idx = 0);
         intptr_t update(HANDLE panel);
-        intptr_t is_active(HANDLE panel);
-        intptr_t does_exist(HANDLE panel);
+        bool is_active(HANDLE panel);
+        bool does_exist(HANDLE panel);
         intptr_t set_active(HANDLE panel);
         intptr_t get_current_item(HANDLE panel);
         intptr_t set_view_mode(HANDLE panel, size_t view_mode_idx);
         intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false);
-    }
+
+        struct free_deleter
+        {
+            void operator()(void *data) { free(data); }
+        };
+
+        /// @brief Returns the shared_ptr with data object for the given command.
+        /// The memory allocated will get freed automatically.
+        /// @tparam T the data type to be returned
+        template<class T>
+        std::shared_ptr<T> get_data(HANDLE panel, FILE_CONTROL_COMMANDS cmd)
+        {
+            size_t size = control(panel, cmd, 0, 0); // getting the data size
+
+            // allocating a memory to store the data with the custom deleter
+            std::shared_ptr<T> data_ptr((T*)malloc(size), free_deleter());
+            if (data_ptr)
+                control(panel, cmd, size, data_ptr.get());
+            
+            return data_ptr;
+        }
+    }   
 
     namespace actl
     {

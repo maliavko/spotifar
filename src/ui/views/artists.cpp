@@ -8,9 +8,18 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 artists_view::artists_view(spotify::api_abstract *api):
-    view(get_text(MPanelArtistsItemLabel)),
     api_proxy(api)
 {
+}
+
+const wchar_t* artists_view::get_dir_name() const
+{
+    return get_title();
+}
+
+const wchar_t* artists_view::get_title() const
+{
+    return get_text(MPanelArtistsItemLabel);
 }
 
 void artists_view::update_panel_info(OpenPanelInfo *info)
@@ -28,9 +37,9 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
-view::view_items_t artists_view::get_items()
+view::items_t artists_view::get_items()
 {
-    view_items_t result;
+    items_t result;
     for (const auto &a: api_proxy->get_followed_artists())
     {
         std::vector<wstring> column_data;

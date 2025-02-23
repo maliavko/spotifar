@@ -6,6 +6,12 @@
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
 
+bool operator==(const FarKey &lhs, const FarKey &rhs)
+{
+    return (lhs.VirtualKeyCode == rhs.VirtualKeyCode &&
+        lhs.ControlKeyState == rhs.ControlKeyState);
+}
+
 namespace spotifar { namespace utils {
 
 namespace far3
@@ -17,8 +23,7 @@ namespace far3
             PLUGIN_VERSION.Minor,
             PLUGIN_VERSION.Revision,
             PLUGIN_VERSION.Build,
-            (int)PLUGIN_VERSION.Stage
-            );
+            (int)PLUGIN_VERSION.Stage);
     }
 
     namespace keys
@@ -137,7 +142,7 @@ namespace far3
 
         wstring get_text(HANDLE hdlg, int ctrl_id)
         {
-            return wstring((const wchar_t *)send(hdlg, DM_GETCONSTTEXTPTR, ctrl_id, NULL));
+            return wstring((const wchar_t*)send(hdlg, DM_GETCONSTTEXTPTR, ctrl_id, NULL));
         }
 
         intptr_t resize_item(HANDLE hdlg, int ctrl_id, SMALL_RECT rect)
@@ -190,30 +195,35 @@ namespace far3
 
     namespace panels
     {
+        intptr_t control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1, void *param2)
+        {
+            return config::ps_info.PanelControl(panel, cmd, param1, param2);
+        }
+
         intptr_t redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx)
         {
             PanelRedrawInfo info{ sizeof(PanelRedrawInfo), current_item_idx, top_item_idx };
-            return config::ps_info.PanelControl(panel, FCTL_REDRAWPANEL, 0, &info);
+            return control(panel, FCTL_REDRAWPANEL, 0, &info);
         }
         
         intptr_t update(HANDLE panel)
         {
-            return config::ps_info.PanelControl(panel, FCTL_UPDATEPANEL, 0, 0);
+            return control(panel, FCTL_UPDATEPANEL);
         }
         
-        intptr_t is_active(HANDLE panel)
+        bool is_active(HANDLE panel)
         {
-            return config::ps_info.PanelControl(panel, FCTL_ISACTIVEPANEL, 0, 0);
+            return control(panel, FCTL_ISACTIVEPANEL) == TRUE;
         }
         
-        intptr_t does_exist(HANDLE panel)
+        bool does_exist(HANDLE panel)
         {
-            return config::ps_info.PanelControl(panel, FCTL_CHECKPANELSEXIST, 0, 0);
+            return control(panel, FCTL_CHECKPANELSEXIST) == TRUE;
         }
         
         intptr_t set_active(HANDLE panel)
         {
-            return config::ps_info.PanelControl(panel, FCTL_SETACTIVEPANEL, 0, 0);
+            return control(panel, FCTL_SETACTIVEPANEL);
         }
         
         intptr_t get_current_item(HANDLE panel)
@@ -241,13 +251,13 @@ namespace far3
         
         intptr_t set_view_mode(HANDLE panel, size_t view_mode_idx)
         {
-            return config::ps_info.PanelControl(panel, FCTL_SETVIEWMODE, view_mode_idx, 0);
+            return control(panel, FCTL_SETVIEWMODE, view_mode_idx, 0);
         }
         
         intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc)
         {
-            auto r = config::ps_info.PanelControl(panel, FCTL_SETSORTMODE, sort_mode, 0);
-            config::ps_info.PanelControl(panel, FCTL_SETSORTORDER, (intptr_t)is_desc, 0);
+            auto r = control(panel, FCTL_SETSORTMODE, sort_mode, 0);
+            control(panel, FCTL_SETSORTORDER, is_desc ? TRUE : FALSE, 0);
             return r;
         }
     }
@@ -420,9 +430,8 @@ string trim(const string &s)
 {
     size_t first = s.find_first_not_of(' ');
     if (string::npos == first)
-    {
         return s;
-    }
+    
     size_t last = s.find_last_not_of(' ');
     return s.substr(first, (last - first + 1));
 }
@@ -431,9 +440,8 @@ wstring trim(const wstring &s)
 {
     size_t first = s.find_first_not_of(L' ');
     if (string::npos == first)
-    {
         return s;
-    }
+    
     size_t last = s.find_last_not_of(L' ');
     return s.substr(first, (last - first + 1));
 }
