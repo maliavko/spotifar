@@ -8,23 +8,24 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
+
 class album_view: public view
 {
 public:
-    album_view(spotify::api_abstract *api, const spotify::artist &artist, const spotify::album &album);
+    album_view(api_abstract *api, const artist &artist, const album &album);
 
+    virtual size_t get_item_idx(const string &item_id);
     virtual const wchar_t* get_dir_name() const;
     virtual const wchar_t* get_title() const;
 
-    virtual items_t get_items() { return items; }
+    virtual auto get_items() -> const items_t* { return &items; }
+
     virtual intptr_t select_item(const string &track_id);
-    virtual size_t get_item_idx(const string &item_id);
-protected:
-    void rebuild_items();
 private:
-    spotify::album album;
-    spotify::artist artist;
-    spotify::api_abstract *api_proxy;
+    album album;
+    artist artist;
+    api_abstract *api_proxy;
 
     items_t items;
 };

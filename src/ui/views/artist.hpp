@@ -8,20 +8,24 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
+
 class artist_view: public view
 {
 public:
-    artist_view(spotify::api_abstract *api, const spotify::artist &artist);
+    artist_view(api_abstract *api, const artist &artist);
 
     virtual const wchar_t* get_dir_name() const;
     virtual const wchar_t* get_title() const;
 
-    virtual items_t get_items();
+    virtual auto get_items() -> const items_t* { return &items; }
+
     virtual intptr_t select_item(const string &album_id);
     virtual intptr_t process_input(const ProcessPanelInputInfo *info);
 private:
-    spotify::artist artist;
-    spotify::api_abstract *api_proxy;
+    artist artist;
+    api_abstract *api_proxy;
+    items_t items;
 };
 
 } // namespace ui

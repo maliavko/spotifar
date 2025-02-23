@@ -13,17 +13,19 @@ using namespace spotify;
 class artists_view: public view
 {
 public:
-    artists_view(spotify::api_abstract *api);
+    artists_view(api_abstract *api);
 
     virtual const wchar_t* get_dir_name() const;
     virtual const wchar_t* get_title() const;
 
+    virtual auto get_items() -> const items_t* { return &items; }
     virtual void update_panel_info(OpenPanelInfo *info);
-    virtual items_t get_items();
+
     virtual intptr_t select_item(const string &artist_id);
 
 private:
-    spotify::api_abstract *api_proxy;
+    api_abstract *api_proxy;
+    items_t items;
 };
 
 } // namespace ui

@@ -10,7 +10,7 @@ static const string
     playlists_view_id = "playlists",
     recents_view_id = "recents";
 
-root_view::root_view(spotify::api_abstract *api):
+root_view::root_view(api_abstract *api):
     api_proxy(api)
 {
 }
@@ -49,7 +49,7 @@ auto root_view::get_info_lines() -> const info_lines_t*
     return &lines;
 }
 
-view::items_t root_view::get_items()
+auto root_view::get_items() -> const items_t*
 {
     static items_t items{
         {
@@ -71,7 +71,7 @@ view::items_t root_view::get_items()
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
         }
     };
-    return items;
+    return &items;
 }
 
 intptr_t root_view::select_item(const string &view_id)

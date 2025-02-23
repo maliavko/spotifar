@@ -33,7 +33,7 @@ public:
     virtual const wchar_t* get_dir_name() const = 0;
     virtual const wchar_t* get_title() const = 0;
     
-    virtual items_t get_items() { return {}; }
+    virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
 

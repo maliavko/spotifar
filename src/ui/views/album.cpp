@@ -10,7 +10,15 @@ album_view::album_view(spotify::api_abstract *api, const spotify::artist &artist
     album(album),
     artist(artist)
 {
-    rebuild_items();
+    for (const auto &track: api_proxy->get_album_tracks(album.id))
+    {
+        items.push_back({
+            track.id,
+            std::format(L"{:02}. {}", track.track_number, track.name),
+            L"",
+            FILE_ATTRIBUTE_VIRTUAL
+        });
+    }
 }
 
 const wchar_t* album_view::get_dir_name() const
@@ -48,21 +56,6 @@ size_t album_view::get_item_idx(const string &item_id)
         if (items[idx].id == item_id)
             return idx;
     return 0;
-}
-
-void album_view::rebuild_items()
-{
-    items.clear();
-
-    for (const auto &track: api_proxy->get_album_tracks(album.id))
-    {
-        items.push_back({
-            track.id,
-            std::format(L"{:02}. {}", track.track_number, track.name),
-            L"",
-            FILE_ATTRIBUTE_VIRTUAL
-        });
-    }
 }
 
 } // namespace ui

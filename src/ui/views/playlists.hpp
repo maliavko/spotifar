@@ -18,10 +18,12 @@ public:
     virtual const wchar_t* get_dir_name() const;
     virtual const wchar_t* get_title() const;
 
-    virtual items_t get_items();
+    virtual auto get_items() -> const items_t* { return &items; }
+
     virtual intptr_t select_item(const string &track_id);
 private:
     api_abstract *api_proxy;
+    items_t items;
 };
 
 } // namespace ui

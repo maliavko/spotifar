@@ -5,10 +5,12 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-playlist_view::playlist_view(spotify::api_abstract *api, const spotify::playlist &p):
+playlist_view::playlist_view(api_abstract *api, const spotify::playlist &p):
     playlist(p),
     api_proxy(api)
 {
+    for (const auto &t: api_proxy->get_playlist_tracks(playlist.id))
+        items.push_back({t.track.id, t.track.name, L"", FILE_ATTRIBUTE_VIRTUAL});
 }
 
 const wchar_t* playlist_view::get_dir_name() const
@@ -21,14 +23,6 @@ const wchar_t* playlist_view::get_dir_name() const
 const wchar_t* playlist_view::get_title() const
 {
     return playlist.name.c_str();
-}
-
-view::items_t playlist_view::get_items()
-{
-    items_t result;
-    for (const auto &t: api_proxy->get_playlist_tracks(playlist.id))
-        result.push_back({t.track.id, t.track.name, L"", FILE_ATTRIBUTE_VIRTUAL});
-    return result;
 }
 
 intptr_t playlist_view::select_item(const string &track_id)

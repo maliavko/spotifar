@@ -84,42 +84,39 @@ void Panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t Panel::update_panel_items(GetFindDataInfo *info)
 {
-    // TODO: here happens some copy likely
-    const auto &items = view->get_items();
+    const auto items = view->get_items();
+    if (items == nullptr)
+        return FALSE;
 
-    auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
-    if (panel_item)
+    auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
+    if (panel_item == nullptr)
+        return FALSE;
+
+    for (size_t idx = 0; idx < items->size(); idx++)
     {
-        for (size_t idx = 0; idx < items.size(); idx++)
-        {
-            auto &item = items[idx];
-            auto &columns = item.custom_column_data;
+        auto &item = (*items)[idx];
+        auto &columns = item.custom_column_data;
 
-            // TODO: what if no memory allocated?
-            auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
-            for (size_t idx = 0; idx < columns.size(); idx++)
-                column_data[idx] = _wcsdup(columns[idx].c_str());
-            
-            memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
-            panel_item[idx].FileAttributes = item.file_attrs;
-            panel_item[idx].Flags = PPIF_PROCESSDESCR;
-            panel_item[idx].FileName = _wcsdup(item.name.c_str());
-            panel_item[idx].Description = _wcsdup(item.description.c_str());
-            panel_item[idx].CustomColumnData = column_data;
-            panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
-            panel_item[idx].UserData.Data = new far_user_data(item.id);
-            panel_item[idx].UserData.FreeData = free_user_data;
-        }
-
-        info->PanelItem = panel_item;
-        info->ItemsNumber = items.size();
-
-        return TRUE;
+        // TODO: what if no memory allocated?
+        auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
+        for (size_t idx = 0; idx < columns.size(); idx++)
+            column_data[idx] = _wcsdup(columns[idx].c_str());
+        
+        memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
+        panel_item[idx].FileAttributes = item.file_attrs;
+        panel_item[idx].Flags = PPIF_PROCESSDESCR;
+        panel_item[idx].FileName = _wcsdup(item.name.c_str());
+        panel_item[idx].Description = _wcsdup(item.description.c_str());
+        panel_item[idx].CustomColumnData = column_data;
+        panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
+        panel_item[idx].UserData.Data = new far_user_data(item.id);
+        panel_item[idx].UserData.FreeData = free_user_data;
     }
 
-    info->PanelItem = nullptr;
-    info->ItemsNumber = 0;
-    return FALSE;
+    info->PanelItem = panel_item;
+    info->ItemsNumber = items->size();
+
+    return TRUE;
 }
 
 void Panel::free_panel_items(const FreeFindDataInfo *info)
