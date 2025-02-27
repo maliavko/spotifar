@@ -14,12 +14,25 @@ namespace far3 = utils::far3;
 struct far_user_data
 {
     string id;
+
+    static string unpack(const SetDirectoryInfo *info)
+    {
+        string item_id = "";
+        if (info->UserData.Data != nullptr)
+            item_id = reinterpret_cast<const far_user_data*>(info->UserData.Data)->id;
+        return item_id;
+    }
 };
+
+static void WINAPI free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
+{
+    delete static_cast<const far_user_data*>(user_data);
+}
 
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
-Panel::Panel(spotify::api_abstract *api):
+panel::panel(spotify::api_abstract *api):
     api_proxy(api)
 {
     // TODO: process correctly selected item on the panel
@@ -28,13 +41,13 @@ Panel::Panel(spotify::api_abstract *api):
     ObserverManager::subscribe<ui_events_observer>(this);
 }
 
-Panel::~Panel()
+panel::~panel()
 {
     ObserverManager::unsubscribe<ui_events_observer>(this);
     view = nullptr;
 }
 
-void Panel::update_panel_info(OpenPanelInfo *info)
+void panel::update_panel_info(OpenPanelInfo *info)
 {
     info->StructSize = sizeof(*info);
     
@@ -82,15 +95,33 @@ void Panel::update_panel_info(OpenPanelInfo *info)
         return view->update_panel_info(info);
 }
 
-intptr_t Panel::update_panel_items(GetFindDataInfo *info)
+auto panel::update_panel_items(GetFindDataInfo *info) -> intptr_t
 {
-    const auto items = view->get_items();
-    if (items == nullptr)
-        return FALSE;
+    const view::items_t *items;
+
+    if (info->OpMode & OPM_FIND)
+    {
+        if (find_proc == nullptr)
+        {
+            utils::log::global->error("An empty find processor while a request for find data has been received");
+            return FALSE;
+        }
+            
+        items = find_proc->get_items();
+    }
+    else
+    {
+        items = view->get_items();
+    }
+
+    if (items == nullptr) return FALSE;
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
     if (panel_item == nullptr)
+    {
+        utils::log::global->error("Could not allocate memory for panel items");
         return FALSE;
+    }
 
     for (size_t idx = 0; idx < items->size(); idx++)
     {
@@ -99,8 +130,8 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
 
         // TODO: what if no memory allocated?
         auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
-        for (size_t idx = 0; idx < columns.size(); idx++)
-            column_data[idx] = _wcsdup(columns[idx].c_str());
+        for (size_t i = 0; i < columns.size(); i++)
+            column_data[i] = _wcsdup(columns[i].c_str());
         
         memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
         panel_item[idx].FileAttributes = item.file_attrs;
@@ -111,6 +142,8 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
         panel_item[idx].UserData.Data = new far_user_data(item.id);
         panel_item[idx].UserData.FreeData = free_user_data;
+        // panel_item[idx].AllocationSize = 0;
+        panel_item[idx].FileSize = item.size;
     }
 
     info->PanelItem = panel_item;
@@ -119,7 +152,17 @@ intptr_t Panel::update_panel_items(GetFindDataInfo *info)
     return TRUE;
 }
 
-void Panel::free_panel_items(const FreeFindDataInfo *info)
+auto panel::get_find_items(GetFindDataInfo *info) -> intptr_t
+{
+    if (find_proc != nullptr)
+    {
+        //auto items = 
+        return TRUE;
+    }
+    return FALSE;
+}
+
+void panel::free_panel_items(const FreeFindDataInfo *info)
 {
     for (size_t i = 0; i < info->ItemsNumber; i++)
     {
@@ -135,17 +178,12 @@ void Panel::free_panel_items(const FreeFindDataInfo *info)
     free(info->PanelItem);
 }
 
-void WINAPI Panel::free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
-{
-    delete static_cast<const far_user_data*>(user_data);
-}
-
-void Panel::change_view(std::shared_ptr<ui::view> view)
+void panel::change_view(std::shared_ptr<ui::view> view)
 {
     this->view = view;
 }
 
-void Panel::refresh_panels(const string &item_id)
+void panel::refresh_panels(const string &item_id)
 {
     far3::panels::update(PANEL_ACTIVE);
 
@@ -156,55 +194,54 @@ void Panel::refresh_panels(const string &item_id)
     far3::panels::redraw(PANEL_ACTIVE, item_idx);
 }
 
-void Panel::show_root_view()
+void panel::show_root_view()
 {
     return change_view(std::make_shared<root_view>(api_proxy));
 }
 
-void Panel::show_artists_view()
+void panel::show_artists_view()
 {
     return change_view(std::make_shared<artists_view>(api_proxy));
 }
 
-void Panel::show_artist_view(const artist &artist)
+void panel::show_artist_view(const artist &artist)
 {
     return change_view(std::make_shared<artist_view>(api_proxy, artist));
 }
 
-void Panel::show_album_view(const artist &artist, const album &album)
+void panel::show_album_view(const artist &artist, const album &album)
 {
     change_view(std::make_shared<album_view>(api_proxy, artist, album));
 }
 
-void Panel::show_playlists_view()
+void panel::show_playlists_view()
 {
     return change_view(std::make_shared<playlists_view>(api_proxy));
 }
 
-void Panel::show_playlist_view(const spotify::playlist &playlist)
+void panel::show_playlist_view(const spotify::playlist &playlist)
 {
     return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
-void Panel::show_recents_view()
+void panel::show_recents_view()
 {
     //return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
-intptr_t Panel::select_item(const SetDirectoryInfo *info)
+auto panel::select_directory(const SetDirectoryInfo *info) -> intptr_t
 {
-    string item_id = "";
-    if (info->UserData.Data != nullptr)
-        item_id = reinterpret_cast<const far_user_data*>(info->UserData.Data)->id;
-
-    return view->select_item(item_id);
+    return view->select_item(far_user_data::unpack(info));
 }
 
-intptr_t Panel::process_input(const ProcessPanelInputInfo *info)
+auto panel::set_find_directory(const SetDirectoryInfo *info) -> intptr_t
 {
-    if (view)
-        return view->process_input(info);
-    return FALSE;
+    return (find_proc = view->get_find_processor(far_user_data::unpack(info))) != nullptr;
+}
+
+intptr_t panel::process_input(const ProcessPanelInputInfo *info)
+{
+    return view && view->process_input(info);
 }
 
 } // namespace ui

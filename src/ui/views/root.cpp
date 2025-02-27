@@ -1,5 +1,7 @@
 #include "root.hpp"
 #include "ui/events.hpp"
+#include "ui/views/artists.hpp"
+#include "ui/views/playlists.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -74,7 +76,7 @@ auto root_view::get_items() -> const items_t*
     return &items;
 }
 
-intptr_t root_view::select_item(const string &view_id)
+auto root_view::select_item(const string &view_id) -> intptr_t
 {
     if (view_id == artists_view_id)
     {
@@ -95,6 +97,17 @@ intptr_t root_view::select_item(const string &view_id)
     }
 
     return FALSE;
+}
+
+auto root_view::get_find_processor(const string &view_id) -> std::shared_ptr<find_processor>
+{
+    if (view_id == artists_view_id)
+        return std::make_shared<artists_view::find_processor>(api_proxy);
+
+    if (view_id == playlists_view_id)
+        return std::make_shared<playlists_view::find_processor>(api_proxy);
+    
+    return nullptr;
 }
 
 } // namespace ui

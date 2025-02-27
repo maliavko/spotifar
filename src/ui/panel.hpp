@@ -10,21 +10,22 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class Panel: public ui_events_observer
+class panel: public ui_events_observer
 {
 public:
-    Panel(spotify::api_abstract *api);
-    virtual ~Panel();
+    panel(spotify::api_abstract *api);
+    virtual ~panel();
     // TODO: consider having here shutdown/close method to cleanup resources
 
     // far global events' handlers
-    void update_panel_info(OpenPanelInfo *info);
-    intptr_t update_panel_items(GetFindDataInfo *info);
-    void free_panel_items(const FreeFindDataInfo *info);
-    intptr_t select_item(const SetDirectoryInfo *info);
-    intptr_t process_input(const ProcessPanelInputInfo *info);
+    auto update_panel_info(OpenPanelInfo *info) -> void;
+    auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
+    auto free_panel_items(const FreeFindDataInfo *info) -> void;
+    auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
+    auto set_find_directory(const SetDirectoryInfo *info) -> intptr_t;
+    auto get_find_items(GetFindDataInfo *info) -> intptr_t;
+    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
 protected:
-    static void WINAPI free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info);
     void change_view(std::shared_ptr<ui::view> view);
 
     // views events' handlers
@@ -38,6 +39,7 @@ protected:
     virtual void show_recents_view();
 private:
     std::shared_ptr<ui::view> view;
+    std::shared_ptr<view::find_processor> find_proc = nullptr;
     api_abstract *api_proxy;
 };
 

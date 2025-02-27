@@ -13,14 +13,25 @@ using namespace spotify;
 class playlists_view: public view
 {
 public:
+    struct find_processor: public view::find_processor
+    {
+        api_abstract *api_proxy;
+
+        find_processor(api_abstract *api): api_proxy(api) {};
+        auto get_items() const -> const items_t*;
+    };
+
+public:
     playlists_view(api_abstract *api);
 
-    virtual const wchar_t* get_dir_name() const;
-    virtual const wchar_t* get_title() const;
+    auto get_dir_name() const -> const wchar_t*;
+    auto get_title() const -> const wchar_t*;
 
-    virtual auto get_items() -> const items_t* { return &items; }
+    auto get_items() -> const items_t* { return &items; }
 
-    virtual intptr_t select_item(const string &track_id);
+    auto select_item(const string &track_id) -> intptr_t;
+protected:
+    auto get_playlists() -> simplified_playlists_t;
 private:
     api_abstract *api_proxy;
     items_t items;

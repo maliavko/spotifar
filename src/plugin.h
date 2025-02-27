@@ -23,11 +23,11 @@ public:
     void start();
     void shutdown();
 
-    void update_panel_info(OpenPanelInfo *info);
-    intptr_t update_panel_items(GetFindDataInfo *info);
-    void free_panel_items(const FreeFindDataInfo *info);
-    intptr_t select_item(const SetDirectoryInfo *info);
-    intptr_t process_input(const ProcessPanelInputInfo *info);
+    auto update_panel_info(OpenPanelInfo *info) -> void;
+    auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
+    auto free_panel_items(const FreeFindDataInfo *info) -> void;
+    auto set_directory(const SetDirectoryInfo *info) -> intptr_t;
+    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
 
 protected:
     void launch_sync_worker();
@@ -50,7 +50,7 @@ private:
 
     utils::tasks_queue background_tasks;
     spotify::api api;
-    ui::Panel panel;
+    ui::panel panel;
     ui::player player;
     
     STARTUPINFO si;

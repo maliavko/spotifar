@@ -15,14 +15,15 @@ class root_view: public view
 public:
     root_view(api_abstract *api);
 
-    virtual const wchar_t* get_dir_name() const;
-    virtual const wchar_t* get_title() const;
+    const wchar_t* get_dir_name() const;
+    const wchar_t* get_title() const;
 
-    virtual auto get_items() -> const items_t*;
-    virtual auto get_key_bar_info() -> const key_bar_info_t*;
-    virtual auto get_info_lines() -> const info_lines_t*;
+    auto get_items() -> const items_t*;
+    auto get_key_bar_info() -> const key_bar_info_t*;
+    auto get_info_lines() -> const info_lines_t*;
 
-    virtual intptr_t select_item(const string &view_id);
+    auto select_item(const string &view_id) -> intptr_t;
+    auto get_find_processor(const string &item_id) -> std::shared_ptr<find_processor>;
 private:
     api_abstract *api_proxy;
 };

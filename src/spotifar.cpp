@@ -102,9 +102,6 @@ void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 /// @brief https://api.farmanager.com/ru/structures/getfinddatainfo.html
 intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 {
-    if (info->OpMode & OPM_FIND)
-        return FALSE;
-    
     return static_cast<plugin*>(info->hPanel)->update_panel_items(info);
 }
 
@@ -117,10 +114,7 @@ void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
 intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 {
-    if (info->OpMode & OPM_FIND)
-        return FALSE;
-    
-    return static_cast<plugin*>(info->hPanel)->select_item(info);
+    return static_cast<plugin*>(info->hPanel)->set_directory(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 

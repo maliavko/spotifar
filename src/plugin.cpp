@@ -76,9 +76,12 @@ void plugin::free_panel_items(const FreeFindDataInfo *info)
     panel.free_panel_items(info);
 }
 
-intptr_t plugin::select_item(const SetDirectoryInfo *info)
+intptr_t plugin::set_directory(const SetDirectoryInfo *info)
 {
-    return panel.select_item(info);
+    if (info->OpMode & OPM_FIND)
+        return panel.set_find_directory(info);
+    
+    return panel.select_directory(info);
 }
 
 void plugin::launch_sync_worker()
@@ -136,11 +139,11 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
     {
         switch (far3::keys::make_combined(key_event))
         {
-            case VK_F3:
-            {
-                show_player_dialog();
-                return TRUE;
-            }
+            // case VK_F3:
+            // {
+            //     show_player_dialog();
+            //     return TRUE;
+            // }
             case VK_F6:
             {
                 far3::panels::set_view_mode(PANEL_ACTIVE, 0);

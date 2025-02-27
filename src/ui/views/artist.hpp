@@ -13,15 +13,28 @@ using namespace spotify;
 class artist_view: public view
 {
 public:
+    struct find_processor: public view::find_processor
+    {
+        api_abstract *api_proxy;
+        const string artist_id;
+
+        find_processor(api_abstract *api, const string &artist_id):
+            api_proxy(api), artist_id(artist_id) {};
+        auto get_items() const -> const items_t*;
+    };
+public:
     artist_view(api_abstract *api, const artist &artist);
 
-    virtual const wchar_t* get_dir_name() const;
-    virtual const wchar_t* get_title() const;
+    auto get_dir_name() const -> const wchar_t*;
+    auto get_title() const -> const wchar_t*;
 
-    virtual auto get_items() -> const items_t* { return &items; }
+    auto get_items() -> const items_t* { return &items; }
 
-    virtual intptr_t select_item(const string &album_id);
-    virtual intptr_t process_input(const ProcessPanelInputInfo *info);
+    auto select_item(const string &album_id) -> intptr_t;
+    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    auto get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>;
+protected:
+    auto get_artist_albums(const string &artist_id) -> albums_t;
 private:
     artist artist;
     api_abstract *api_proxy;

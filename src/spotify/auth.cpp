@@ -59,7 +59,7 @@ void auth_cache::on_data_synced(const auth &data, const auth &prev_data)
     is_logged_in = true;
     
     // log::api->debug("Access token: {}", data.access_token);
-    ObserverManager::notify(&auth_observer::on_auth_status_changed, data);
+    utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data);
 }
 
 bool auth_cache::request_data(auth &data)

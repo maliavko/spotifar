@@ -7,10 +7,18 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
+static string make_request_url(size_t limit)
+{
+    return httplib::append_query_params("/v1/me/following", {
+        { "type", "artist" },
+        { "limit", std::to_string(limit) },
+    });
+}
+
 artists_view::artists_view(api_abstract *api):
     api_proxy(api)
 {
-    for (const auto &a: api_proxy->get_followed_artists())
+    for (const auto &a: get_followed_artists())
     {
         std::vector<wstring> column_data;
 
@@ -39,6 +47,7 @@ artists_view::artists_view(api_abstract *api):
             a.name,
             L"",
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+            0,
             column_data
         });
     }
@@ -85,6 +94,60 @@ intptr_t artists_view::select_item(const string &artist_id)
     }
     
     return FALSE;
+}
+
+auto artists_view::get_find_processor(const string &artist_id) -> std::shared_ptr<view::find_processor>
+{
+    if (!artist_id.empty())
+    {
+        const auto &artist = api_proxy->get_artist(artist_id);
+        return std::make_shared<artist_view::find_processor>(api_proxy, artist_id);
+    }
+    
+    return nullptr;
+}
+
+artists_t artists_view::get_followed_artists()
+{
+    artists_t result;
+    json request_url = make_request_url(50);
+
+    do
+    {
+        auto r = api_proxy->get(request_url, utils::http::session);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body)["artists"];
+            request_url = data["next"];
+
+            const auto &entries = data["items"].get<artists_t>();
+            result.insert(result.end(), entries.begin(), entries.end());
+        }
+    }
+    while (!request_url.is_null());
+
+    return result;
+}
+
+auto artists_view::find_processor::get_items() const -> const items_t*
+{
+    size_t total_artists = 0;
+
+    auto r = api_proxy->get(make_request_url(1), utils::http::session);
+    if (utils::http::is_success(r->status))
+    {
+        json data = json::parse(r->body)["artists"];
+        data["total"].get_to(total_artists);
+    }
+
+    static items_t items;
+    items.assign({
+        // it's a pure fake item, which holds the size of the total amount of followed artists,
+        // for the sake of showing it in the item's size column on the panel
+        { "", L"followed artists", L"", FILE_ATTRIBUTE_VIRTUAL, total_artists }
+    });
+
+    return &items;
 }
 
 } // namespace ui

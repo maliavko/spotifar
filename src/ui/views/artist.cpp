@@ -5,29 +5,38 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
+static string make_request_url(const string &artist_id, size_t limit)
+{
+    return httplib::append_query_params(
+        std::format("/v1/artists/{}/albums", artist_id), {
+            { "limit", std::to_string(limit) },
+            { "include_groups", "album" }
+        });
+}
+
 artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
     api_proxy(api),
     artist(artist)
 {
-    for (const auto &a: api_proxy->get_artist_albums(artist.id))
+    for (const auto &a: get_artist_albums(artist.id))
         items.push_back({
             a.id, a.get_user_name(), L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL
         });
 }
 
-const wchar_t* artist_view::get_dir_name() const
+auto artist_view::get_dir_name() const -> const wchar_t*
 {
     static wchar_t dir_name[MAX_PATH];
     wcsncpy_s(dir_name, utils::strip_invalid_filename_chars(artist.name).c_str(), MAX_PATH);
     return dir_name;
 }
 
-const wchar_t* artist_view::get_title() const
+auto artist_view::get_title() const -> const wchar_t*
 {
     return artist.name.c_str();
 }
 
-intptr_t artist_view::select_item(const string &album_id)
+auto artist_view::select_item(const string &album_id) -> intptr_t
 {
     if (album_id.empty())
     {
@@ -45,7 +54,18 @@ intptr_t artist_view::select_item(const string &album_id)
     return FALSE;
 }
 
-intptr_t artist_view::process_input(const ProcessPanelInputInfo *info)
+auto artist_view::get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>
+{
+    // if (!album_id.empty())
+    // {
+    //     const spotify::album &album = api_proxy->get_album(album_id);
+    //     return std::make_shared<artist_view::find_processor>(api_proxy, artist, album);
+    // }
+    
+    return nullptr;
+}
+
+auto artist_view::process_input(const ProcessPanelInputInfo *info) -> intptr_t
 {
     auto& key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
@@ -78,6 +98,50 @@ intptr_t artist_view::process_input(const ProcessPanelInputInfo *info)
         }
     }
     return FALSE;
+}
+
+albums_t artist_view::get_artist_albums(const string &artist_id)
+{
+    albums_t result;
+    json request_url = make_request_url(artist_id, 50);
+        
+    do
+    {
+        auto r = api_proxy->get(request_url, utils::http::session);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body);
+            request_url = data["next"];
+
+            const auto &albums = data["items"].get<albums_t>();
+            result.insert(result.end(), albums.begin(), albums.end());
+        }
+    }
+    while (!request_url.is_null());
+
+    return result;
+}
+
+auto artist_view::find_processor::get_items() const -> const items_t*
+{
+    size_t total_albums = 0;
+
+    auto r = api_proxy->get(make_request_url(artist_id, 1), utils::http::session);
+    if (utils::http::is_success(r->status))
+    {
+        json data = json::parse(r->body);
+        data["total"].get_to(total_albums);
+    }
+
+    static items_t items;
+    items.assign({
+        // it's a pure fake item, which holds the size of the total amount of followed artists,
+        // for the sake of showing it in the item's size column on the panel
+        { "", std::format(L"artist albums {}", utils::to_wstring(artist_id)),
+            L"", FILE_ATTRIBUTE_VIRTUAL, total_albums }
+    });
+
+    return &items;
 }
 
 } // namespace ui

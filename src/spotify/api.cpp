@@ -133,31 +133,6 @@ void api::tick()
         }, BS::pr::high);
     pool.wait();
 }
-artists_t api::get_followed_artists()
-{
-    artists_t result;
-    
-    json request_url = httplib::append_query_params("/v1/me/following", {
-        { "type", "artist" },
-        { "limit", std::to_string(50) },
-    });
-
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body)["artists"];
-            request_url = data["next"];
-
-            const auto &entries = data["items"].get<artists_t>();
-            result.insert(result.end(), entries.begin(), entries.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
-}
 
 artist api::get_artist(const string &artist_id)
 {
@@ -165,33 +140,6 @@ artist api::get_artist(const string &artist_id)
     if (http::is_success(r->status))
         return json::parse(r->body).get<artist>();
     return artist();
-}
-
-albums_t api::get_artist_albums(const string &artist_id)
-{
-    albums_t result;
-
-    json request_url = httplib::append_query_params(
-        std::format("/v1/artists/{}/albums", artist_id), {
-            { "limit", "50" },
-            { "include_groups", "album" }
-        });
-        
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &albums = data["items"].get<albums_t>();
-            result.insert(result.end(), albums.begin(), albums.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
 }
 
 tracks_t api::get_artist_top_tracks(const string &artist_id)
@@ -251,31 +199,6 @@ playlist api::get_playlist(const string &playlist_id)
     if (http::is_success(r->status))
         return json::parse(r->body).get<playlist>();
     return playlist();
-}
-
-simplified_playlists_t api::get_playlists()
-{
-    simplified_playlists_t result;
-
-    json request_url = httplib::append_query_params("/v1/me/playlists", {
-        { "limit", "50" }
-    });
-    
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &playlists = data["items"].get<simplified_playlists_t>();
-            result.insert(result.end(), playlists.begin(), playlists.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
 }
 
 playlist_tracks_t api::get_playlist_tracks(const string &playlist_id)
@@ -655,6 +578,14 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
                 api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
     }
+    else if (r->status == TooManyRequests_429)
+    {
+        // TODO: I hope it will not go into recursion one day, sorry guys
+        std::this_thread::sleep_for(1.5s);
+        log::api->debug("Postponing an api http request due to reached rate limits, {}", request_url);
+        return get(request_url, cache_for);
+    }
+
     return r;
 }
 
@@ -669,7 +600,7 @@ httplib::Result api::put(const string &request_url, const json &body)
     
     if (http::is_success(res->status))
     {
-        // invalidate all the cached repsonses with the same base urls
+        // invalidate all cached GET responses with the same base urls
         api_responses_cache.invalidate(request_url);
     }
 
@@ -691,8 +622,10 @@ httplib::Result api::del(const string &request_url, const json &body)
 
 void api::on_auth_status_changed(const spotify::auth &auth)
 {
+    // set up current session's valid access token
     client.set_bearer_token_auth(auth.access_token);
-    
+
+    // pick up the some device for playback
     devices->pick_up_device();
 }
 
