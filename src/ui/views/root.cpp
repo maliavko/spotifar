@@ -30,7 +30,7 @@ const wchar_t* root_view::get_title() const
     return title;
 }
 
-auto root_view::get_key_bar_info() -> const key_bar_info_t*
+const view::key_bar_info_t* root_view::get_key_bar_info()
 {
     // TODO: test data
     static key_bar_info_t key_bar{
@@ -40,7 +40,7 @@ auto root_view::get_key_bar_info() -> const key_bar_info_t*
     return &key_bar;
 }
 
-auto root_view::get_info_lines() -> const info_lines_t*
+const view::info_lines_t* root_view::get_info_lines()
 {
     // TODO: test data
     static info_lines_t lines{
@@ -51,7 +51,7 @@ auto root_view::get_info_lines() -> const info_lines_t*
     return &lines;
 }
 
-auto root_view::get_items() -> const items_t*
+const view::items_t* root_view::get_items() const
 {
     static items_t items{
         {
@@ -76,7 +76,7 @@ auto root_view::get_items() -> const items_t*
     return &items;
 }
 
-auto root_view::select_item(const string &view_id) -> intptr_t
+intptr_t root_view::select_item(const string &view_id)
 {
     if (view_id == artists_view_id)
     {
@@ -99,13 +99,15 @@ auto root_view::select_item(const string &view_id) -> intptr_t
     return FALSE;
 }
 
-auto root_view::get_find_processor(const string &view_id) -> std::shared_ptr<find_processor>
+std::shared_ptr<view::find_processor> root_view::get_find_processor(const string &view_id)
 {
     if (view_id == artists_view_id)
         return std::make_shared<artists_view::find_processor>(api_proxy);
 
     if (view_id == playlists_view_id)
         return std::make_shared<playlists_view::find_processor>(api_proxy);
+
+    // TODO: recents?
     
     return nullptr;
 }

@@ -4,8 +4,8 @@ namespace spotifar { namespace ui {
 
 const int slider_int_descriptor::set_offset_value(const int &s)
 {
-    if (offset * s < 0)
-        clear_offset();
+    // if (offset * s < 0)
+    //     clear_offset();
 
     offset += s;
     

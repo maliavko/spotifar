@@ -10,6 +10,7 @@ namespace spotifar { namespace ui {
 class view
 {
 public:
+    // @brief a proxy item, used for passing data from controllers to FAR panels api
     struct item_t
     {
         string id;
@@ -36,10 +37,10 @@ public:
     view() {}
     virtual ~view() {}
 
-    virtual const wchar_t* get_dir_name() const = 0;
-    virtual const wchar_t* get_title() const = 0;
+    virtual auto get_dir_name() const -> const wchar_t* = 0;
+    virtual auto get_title() const -> const wchar_t* = 0;
     
-    virtual auto get_items() -> const items_t* { return nullptr; }
+    virtual auto get_items() const -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual auto get_find_processor(const string &item_id) -> std::shared_ptr<find_processor> { return nullptr; }
@@ -48,7 +49,6 @@ public:
     virtual auto get_item_idx(const string &item_id) -> size_t { return 0; }
     virtual auto process_input(const ProcessPanelInputInfo *info) -> intptr_t { return FALSE; }
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
-
 protected:
     const wstring name;
 };

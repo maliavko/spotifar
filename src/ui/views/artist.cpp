@@ -1,24 +1,16 @@
 #include "artist.hpp"
 #include "ui/events.hpp"
+#include "ui/views/album.hpp"
 
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-static string make_request_url(const string &artist_id, size_t limit)
-{
-    return httplib::append_query_params(
-        std::format("/v1/artists/{}/albums", artist_id), {
-            { "limit", std::to_string(limit) },
-            { "include_groups", "album" }
-        });
-}
-
 artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
     api_proxy(api),
     artist(artist)
 {
-    for (const auto &a: get_artist_albums(artist.id))
+    for (const auto &a: api_proxy->get_artist_albums(artist.id))
         items.push_back({
             a.id, a.get_user_name(), L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL
         });
@@ -56,11 +48,8 @@ auto artist_view::select_item(const string &album_id) -> intptr_t
 
 auto artist_view::get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>
 {
-    // if (!album_id.empty())
-    // {
-    //     const spotify::album &album = api_proxy->get_album(album_id);
-    //     return std::make_shared<artist_view::find_processor>(api_proxy, artist, album);
-    // }
+    if (!album_id.empty())
+        return std::make_shared<album_view::find_processor>(api_proxy, artist.id, album_id);
     
     return nullptr;
 }
@@ -100,33 +89,16 @@ auto artist_view::process_input(const ProcessPanelInputInfo *info) -> intptr_t
     return FALSE;
 }
 
-albums_t artist_view::get_artist_albums(const string &artist_id)
-{
-    albums_t result;
-    json request_url = make_request_url(artist_id, 50);
-        
-    do
-    {
-        auto r = api_proxy->get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &albums = data["items"].get<albums_t>();
-            result.insert(result.end(), albums.begin(), albums.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
-}
-
 auto artist_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_albums = 0;
+    string request_url = httplib::append_query_params(
+        std::format("/v1/artists/{}/albums", artist_id), {
+            { "limit", "1" },
+            { "include_groups", "album" }
+        });
 
-    auto r = api_proxy->get(make_request_url(artist_id, 1), utils::http::session);
+    auto r = api_proxy->get(request_url, utils::http::session);
     if (utils::http::is_success(r->status))
     {
         json data = json::parse(r->body);

@@ -18,7 +18,7 @@ class plugin:
 {
 public:
     plugin();
-    virtual ~plugin();
+    ~plugin();
 
     void start();
     void shutdown();

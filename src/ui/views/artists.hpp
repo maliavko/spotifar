@@ -13,6 +13,7 @@ using namespace spotify;
 class artists_view: public view
 {
 public:
+    // @brief Artists view find processors, returns amount of following artists
     struct find_processor: public view::find_processor
     {
         api_abstract *api_proxy;
@@ -26,15 +27,11 @@ public:
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
-
-    auto get_items() -> const items_t* { return &items; }
+    auto get_items() const -> const items_t* { return &items; }
     auto update_panel_info(OpenPanelInfo *info) -> void;
 
     auto select_item(const string &artist_id) -> intptr_t;
     auto get_find_processor(const string &artist_id) -> std::shared_ptr<view::find_processor>;
-protected:
-    auto get_followed_artists() -> artists_t;
-
 private:
     api_abstract *api_proxy;
     items_t items;

@@ -58,5 +58,31 @@ size_t album_view::get_item_idx(const string &item_id)
     return 0;
 }
 
+auto album_view::find_processor::get_items() const -> const items_t*
+{
+    size_t total_tracks = 0;
+    string request_url = httplib::append_query_params(
+        std::format("/v1/albums/{}/tracks", album_id), {
+            { "limit", "50" },
+        });
+
+    auto r = api_proxy->get(request_url, utils::http::session);
+    if (utils::http::is_success(r->status))
+    {
+        json data = json::parse(r->body);
+        data["total"].get_to(total_tracks);
+    }
+
+    static items_t items;
+    items.assign({
+        // it's a pure fake item, which holds the size of the total amount of followed artists,
+        // for the sake of showing it in the item's size column on the panel
+        { "", std::format(L"album tracks {} {}", utils::to_wstring(artist_id), utils::to_wstring(album_id)),
+            L"", FILE_ATTRIBUTE_VIRTUAL, total_tracks }
+    });
+
+    return &items;
+}
+
 } // namespace ui
 } // namespace spotifar

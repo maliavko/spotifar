@@ -27,14 +27,11 @@ public:
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
-
-    auto get_items() -> const items_t* { return &items; }
+    auto get_items() const -> const items_t* { return &items; }
+    auto get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>;
 
     auto select_item(const string &album_id) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
-    auto get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>;
-protected:
-    auto get_artist_albums(const string &artist_id) -> albums_t;
 private:
     artist artist;
     api_abstract *api_proxy;

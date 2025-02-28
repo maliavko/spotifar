@@ -1,21 +1,15 @@
 #include "playlists.hpp"
 #include "ui/events.hpp"
+#include "ui/views/playlist.hpp"
 
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-static string make_request_url(size_t limit)
-{
-    return httplib::append_query_params("/v1/me/playlists", {
-        { "limit", std::to_string(limit) }
-    });
-}
-
 playlists_view::playlists_view(spotify::api_abstract *api):
     api_proxy(api)
 {
-    for (const auto &p: get_playlists())
+    for (const auto &p: api_proxy->get_playlists())
         items.push_back({p.id, p.name, L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
 }
 
@@ -47,11 +41,22 @@ intptr_t playlists_view::select_item(const string &playlist_id)
     return FALSE;
 }
 
+auto playlists_view::get_find_processor(const string &playlist_id) -> std::shared_ptr<view::find_processor>
+{
+    if (!playlist_id.empty())
+        return std::make_shared<playlist_view::find_processor>(api_proxy, playlist_id);
+    
+    return nullptr;
+}
+
 auto playlists_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_playlists = 0;
+    string request_url = httplib::append_query_params("/v1/me/playlists", {
+        { "limit", "1" }
+    });
     
-    auto r = api_proxy->get(make_request_url(1), utils::http::session);
+    auto r = api_proxy->get(request_url, utils::http::session);
     if (utils::http::is_success(r->status))
     {
         json data = json::parse(r->body);
@@ -66,28 +71,6 @@ auto playlists_view::find_processor::get_items() const -> const items_t*
     });
 
     return &items;
-}
-
-simplified_playlists_t playlists_view::get_playlists()
-{
-    simplified_playlists_t result;
-    json request_url = make_request_url(50);
-    
-    do
-    {
-        auto r = api_proxy->get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &playlists = data["items"].get<simplified_playlists_t>();
-            result.insert(result.end(), playlists.begin(), playlists.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
 }
 
 } // namespace ui

@@ -20,11 +20,14 @@ struct api_abstract
     // library & collections interface
     virtual auto get_available_devices() -> const devices_t& = 0;
     virtual auto get_playback_state() -> const playback_state& = 0;
+    virtual auto get_followed_artists() -> artists_t = 0;
     virtual auto get_artist(const string &artist_id) -> artist  = 0;
+    virtual auto get_artist_albums(const string &artist_id) -> albums_t  = 0;
     virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
     virtual auto get_album(const string &album_id) -> album = 0;
     virtual auto get_album_tracks(const string &album_id) -> simplified_tracks_t = 0;
     virtual auto get_playlist(const string &playlist_id) -> playlist = 0;
+    virtual auto get_playlists() -> simplified_playlists_t = 0;
     virtual auto get_playlist_tracks(const string &playlist_id) -> playlist_tracks_t = 0;
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool> = 0;
@@ -49,6 +52,14 @@ struct api_abstract
     virtual void set_repeat_state(const string &mode, const string &device_id = "") = 0;
     virtual void set_playback_volume(int volume_percent, const string &device_id = "") = 0;
     virtual void transfer_playback(const string &device_id, bool start_playing = false) = 0;
+
+    template<class T>
+    T::value_t request(const T &&request)
+    {
+        auto r = get(request.get_url({}), utils::http::session);
+        if (utils::http::is_success(r->status))
+            return request.parse_body(r->body);
+    }
 
     /// @brief Performs a HTTP GET request
     /// @param cache_for caches the requested data for the givem amount of time

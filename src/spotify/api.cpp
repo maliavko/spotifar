@@ -127,8 +127,7 @@ void api::shutdown()
 void api::tick()
 {
     pool.detach_loop(0ULL, caches.size(),
-        [&caches = this->caches](const std::size_t idx)
-        {
+        [&caches = this->caches](const std::size_t idx) {
             caches[idx]->resync();
         }, BS::pr::high);
     pool.wait();
@@ -140,6 +139,57 @@ artist api::get_artist(const string &artist_id)
     if (http::is_success(r->status))
         return json::parse(r->body).get<artist>();
     return artist();
+}
+
+artists_t api::get_followed_artists()
+{
+    artists_t result;
+    json request_url = httplib::append_query_params("/v1/me/following", {
+        { "type", "artist" },
+        { "limit", std::to_string(50) },
+    });
+
+    do
+    {
+        auto r = get(request_url, utils::http::session);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body)["artists"];
+            request_url = data["next"];
+
+            const auto &entries = data["items"].get<artists_t>();
+            result.insert(result.end(), entries.begin(), entries.end());
+        }
+    }
+    while (!request_url.is_null());
+
+    return result;
+}
+
+albums_t api::get_artist_albums(const string &artist_id)
+{
+    albums_t result;
+    json request_url = httplib::append_query_params(
+        std::format("/v1/artists/{}/albums", artist_id), {
+            { "limit", "50" },
+            { "include_groups", "album" }
+        });
+        
+    do
+    {
+        auto r = get(request_url, utils::http::session);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body);
+            request_url = data["next"];
+
+            const auto &albums = data["items"].get<albums_t>();
+            result.insert(result.end(), albums.begin(), albums.end());
+        }
+    }
+    while (!request_url.is_null());
+
+    return result;
 }
 
 tracks_t api::get_artist_top_tracks(const string &artist_id)
@@ -180,6 +230,30 @@ simplified_tracks_t api::get_album_tracks(const string &album_id)
 
             const auto &tracks = data["items"].get<simplified_tracks_t>();
             result.insert(result.end(), tracks.begin(), tracks.end());
+        }
+    }
+    while (!request_url.is_null());
+
+    return result;
+}
+
+simplified_playlists_t api::get_playlists()
+{
+    simplified_playlists_t result;
+    json request_url = httplib::append_query_params("/v1/me/playlists", {
+        { "limit", "1" }
+    });
+    
+    do
+    {
+        auto r = get(request_url, utils::http::session);
+        if (utils::http::is_success(r->status))
+        {
+            json data = json::parse(r->body);
+            request_url = data["next"];
+
+            const auto &playlists = data["items"].get<simplified_playlists_t>();
+            result.insert(result.end(), playlists.begin(), playlists.end());
         }
     }
     while (!request_url.is_null());
@@ -528,7 +602,7 @@ void api::start_playback(const json &body, const string &device_id)
 void api::clear_http_cache()
 {
     api_responses_cache.clear_all();
-    log::api->debug("Clearning caches");
+    log::api->debug("Clearning http caches");
 }
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
