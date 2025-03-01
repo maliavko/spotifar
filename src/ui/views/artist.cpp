@@ -1,6 +1,7 @@
 #include "artist.hpp"
+#include "album.hpp"
+#include "spotify/requests.hpp"
 #include "ui/events.hpp"
-#include "ui/views/album.hpp"
 
 namespace spotifar { namespace ui {
 

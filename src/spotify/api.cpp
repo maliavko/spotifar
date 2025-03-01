@@ -1,4 +1,5 @@
 #include "api.hpp"
+#include "requests.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -141,55 +142,14 @@ artist api::get_artist(const string &artist_id)
     return artist();
 }
 
-artists_t api::get_followed_artists()
+const artists_t& api::get_followed_artists()
 {
-    artists_t result;
-    json request_url = httplib::append_query_params("/v1/me/following", {
-        { "type", "artist" },
-        { "limit", std::to_string(50) },
-    });
-
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body)["artists"];
-            request_url = data["next"];
-
-            const auto &entries = data["items"].get<artists_t>();
-            result.insert(result.end(), entries.begin(), entries.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
+    return get_items_collection<followed_artists_requester>(MAX_LIMIT);
 }
 
-albums_t api::get_artist_albums(const string &artist_id)
+const albums_t& api::get_artist_albums(const string &artist_id)
 {
-    albums_t result;
-    json request_url = httplib::append_query_params(
-        std::format("/v1/artists/{}/albums", artist_id), {
-            { "limit", "50" },
-            { "include_groups", "album" }
-        });
-        
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &albums = data["items"].get<albums_t>();
-            result.insert(result.end(), albums.begin(), albums.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
+    return get_items_collection<artist_albums_requester>(artist_id, MAX_LIMIT);
 }
 
 tracks_t api::get_artist_top_tracks(const string &artist_id)
@@ -211,54 +171,14 @@ album api::get_album(const string &album_id)
     return album();
 }
 
-simplified_tracks_t api::get_album_tracks(const string &album_id)
+const simplified_tracks_t& api::get_album_tracks(const string &album_id)
 {
-    simplified_tracks_t result;
-    
-    json request_url = httplib::append_query_params(
-        std::format("/v1/albums/{}/tracks", album_id), {
-            { "limit", std::to_string(50) },
-        });
-        
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &tracks = data["items"].get<simplified_tracks_t>();
-            result.insert(result.end(), tracks.begin(), tracks.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
+    return get_items_collection<album_tracks_requester>(album_id, MAX_LIMIT);
 }
 
-simplified_playlists_t api::get_playlists()
+const simplified_playlists_t& api::get_playlists()
 {
-    simplified_playlists_t result;
-    json request_url = httplib::append_query_params("/v1/me/playlists", {
-        { "limit", "1" }
-    });
-    
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &playlists = data["items"].get<simplified_playlists_t>();
-            result.insert(result.end(), playlists.begin(), playlists.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
+    return get_items_collection<user_playlists_requester>(MAX_LIMIT);
 }
 
 playlist api::get_playlist(const string &playlist_id)
@@ -275,33 +195,9 @@ playlist api::get_playlist(const string &playlist_id)
     return playlist();
 }
 
-playlist_tracks_t api::get_playlist_tracks(const string &playlist_id)
+const playlist_tracks_t& api::get_playlist_tracks(const string &playlist_id)
 {
-    playlist_tracks_t result;
-    
-    static string fields = std::format("items({}),next,total", playlist_track::get_fields_filter());
-    json request_url = httplib::append_query_params(
-        std::format("/v1/playlists/{}/tracks", playlist_id), {
-            { "limit", std::to_string(50) },
-            { "additional_types", "track" },
-            { "fields", fields },
-        });
-
-    do
-    {
-        auto r = get(request_url, utils::http::session);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            request_url = data["next"];
-
-            const auto &entries = data["items"].get<playlist_tracks_t>();
-            result.insert(result.end(), entries.begin(), entries.end());
-        }
-    }
-    while (!request_url.is_null());
-
-    return result;
+    return get_items_collection<playlist_tracks_requester>(playlist_id, MAX_LIMIT);
 }
 
 bool api::check_saved_track(const string &track_id)

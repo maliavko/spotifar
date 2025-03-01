@@ -2,6 +2,7 @@
 #include "root.hpp"
 #include "artist.hpp"
 #include "ui/events.hpp"
+#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -99,17 +100,10 @@ auto artists_view::get_find_processor(const string &artist_id) -> std::shared_pt
 auto artists_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_artists = 0;
-    string request_url = httplib::append_query_params("/v1/me/following", {
-        { "type", "artist" },
-        { "limit", "1" },
-    });
 
-    auto r = api_proxy->get(request_url, utils::http::session);
-    if (utils::http::is_success(r->status))
-    {
-        json data = json::parse(r->body)["artists"];
-        data["total"].get_to(total_artists);
-    }
+    auto requester = followed_artists_requester(1);
+    if (requester(api_proxy))
+        total_artists = requester.get_total();
 
     static items_t items;
     items.assign({
@@ -117,8 +111,6 @@ auto artists_view::find_processor::get_items() const -> const items_t*
         // for the sake of showing it in the item's size column on the panel
         { "", L"followed artists", L"", FILE_ATTRIBUTE_VIRTUAL, total_artists }
     });
-
-    const auto &result = api_proxy->request(followed_artists_request());
 
     return &items;
 }

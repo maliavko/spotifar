@@ -157,32 +157,32 @@ namespace far3
     namespace dialogs
     {
         // dialog
-        void flush_vbuffer();
-        intptr_t send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
-        SMALL_RECT get_dialog_rect(HANDLE hdlg);
-        intptr_t enable_redraw(HANDLE hdlg, bool is_enable);
-        intptr_t close(HANDLE hdlg);
-        intptr_t resize_dialog(HANDLE hdlg, SHORT width, SHORT height);
-        intptr_t move_dialog_to(HANDLE hdlg, SHORT x = -1, SHORT y = -1);
-        intptr_t move_dialog_by(HANDLE hdlg, SHORT distance_x, SHORT distance_y);
+        auto flush_vbuffer() -> void;
+        auto send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2) -> intptr_t;
+        auto get_dialog_rect(HANDLE hdlg) -> SMALL_RECT;
+        auto enable_redraw(HANDLE hdlg, bool is_enable) -> intptr_t;
+        auto close(HANDLE hdlg) -> intptr_t;
+        auto resize_dialog(HANDLE hdlg, SHORT width, SHORT height) -> intptr_t;
+        auto move_dialog_to(HANDLE hdlg, SHORT x = -1, SHORT y = -1) -> intptr_t;
+        auto move_dialog_by(HANDLE hdlg, SHORT distance_x, SHORT distance_y) -> intptr_t;
 
         // controls
-        intptr_t enable(HANDLE hdlg, int ctrl_id, bool is_enabled);
-        bool is_enabled(HANDLE hdlg, int ctrl_id);
-        intptr_t set_focus(HANDLE hdlg, int ctrl_id);
-        intptr_t set_visible(HANDLE hdlg, int ctrl_id, bool is_visible);
-        bool is_visible(HANDLE hdlg, int ctrl_id);
-        intptr_t set_checked(HANDLE hdlg, int ctrl_id, bool is_checked);
-        bool is_checked(HANDLE hdlg, int ctrl_id);
-        intptr_t set_text(HANDLE hdlg, int ctrl_id, const wstring &text);
-        intptr_t set_text(HANDLE hdlg, int ctrl_id, const string &text);
-        wstring get_text(HANDLE hdlg, int ctrl_id);
-        intptr_t resize_item(HANDLE hdlg, int ctrl_id, SMALL_RECT rect);
-        intptr_t clear_list(HANDLE hdlg, int ctrl_id);
-        size_t get_list_current_pos(HANDLE hdlg, int ctrl_id);
-        intptr_t open_list(HANDLE hdlg, int ctrl_id, bool is_opened);
-        intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                               void *data = nullptr, size_t data_size = 0, bool is_selected = false);
+        auto enable(HANDLE hdlg, int ctrl_id, bool is_enabled) -> intptr_t;
+        auto is_enabled(HANDLE hdlg, int ctrl_id) -> bool;
+        auto set_focus(HANDLE hdlg, int ctrl_id) -> intptr_t;
+        auto set_visible(HANDLE hdlg, int ctrl_id, bool is_visible) -> intptr_t;
+        auto is_visible(HANDLE hdlg, int ctrl_id) -> bool;
+        auto set_checked(HANDLE hdlg, int ctrl_id, bool is_checked) -> intptr_t;
+        auto is_checked(HANDLE hdlg, int ctrl_id) -> bool;
+        auto set_text(HANDLE hdlg, int ctrl_id, const wstring &text) -> intptr_t;
+        auto set_text(HANDLE hdlg, int ctrl_id, const string &text) -> intptr_t;
+        auto get_text(HANDLE hdlg, int ctrl_id) -> wstring;
+        auto resize_item(HANDLE hdlg, int ctrl_id, SMALL_RECT rect) -> intptr_t;
+        auto clear_list(HANDLE hdlg, int ctrl_id) -> intptr_t;
+        auto get_list_current_pos(HANDLE hdlg, int ctrl_id) -> size_t;
+        auto open_list(HANDLE hdlg, int ctrl_id, bool is_opened) -> intptr_t;
+        auto add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
+                           void *data = nullptr, size_t data_size = 0, bool is_selected = false) -> intptr_t;
 
         /// @brief Get data from the list item
         /// @param hdlg dialog handle
@@ -208,15 +208,15 @@ namespace far3
 
     namespace panels
     {
-        intptr_t control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1 = 0, void *param2 = nullptr);
-        intptr_t redraw(HANDLE panel, size_t current_item_idx = 0, size_t top_item_idx = 0);
-        intptr_t update(HANDLE panel);
-        bool is_active(HANDLE panel);
-        bool does_exist(HANDLE panel);
-        intptr_t set_active(HANDLE panel);
-        intptr_t get_current_item(HANDLE panel);
-        intptr_t set_view_mode(HANDLE panel, size_t view_mode_idx);
-        intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false);
+        auto control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1 = 0, void *param2 = nullptr) -> intptr_t;
+        auto redraw(HANDLE panel, size_t current_item_idx = 0, size_t top_item_idx = 0) -> intptr_t;
+        auto update(HANDLE panel) -> intptr_t;
+        auto is_active(HANDLE panel) -> bool;
+        auto does_exist(HANDLE panel) -> bool;
+        auto set_active(HANDLE panel) -> intptr_t;
+        auto get_current_item(HANDLE panel) -> intptr_t;
+        auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
+        auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
 
         struct free_deleter
         {
@@ -242,10 +242,10 @@ namespace far3
 
     namespace actl
     {
-        intptr_t redraw_all();
-        HWND get_far_hwnd();
-        intptr_t quit(intptr_t exit_code);
-        intptr_t synchro(void *user_data);
+        auto redraw_all() -> intptr_t;
+        auto get_far_hwnd() -> HWND;
+        auto quit(intptr_t exit_code) -> intptr_t;
+        auto synchro(void *user_data) -> intptr_t;
     }
     
     /// @brief Localize given far string id

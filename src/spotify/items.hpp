@@ -243,35 +243,6 @@ typedef std::vector<playlist_track> playlist_tracks_t;
 typedef std::vector<simplified_playlist> simplified_playlists_t;
 typedef std::vector<playlist> playlists_t;
 
-template<class T>
-struct api_request_abstract
-{
-    typedef typename T value_t;
-
-    virtual const string get_url(httplib::Params params) const = 0;
-
-    virtual T parse_body(const string &body) const
-    {
-        return json::parse(body).get<T>();
-    }
-};
-
-struct followed_artists_request: public api_request_abstract<artists_t>
-{
-    virtual const string get_url(httplib::Params params) const
-    {
-        return httplib::append_query_params("/v1/me/following", {
-            { "type", "artist" },
-            { "limit", std::to_string(50) },
-        });
-    }
-
-    virtual artists_t parse_body(const string &body) const
-    {
-        return json::parse(body)["artists"].get<artists_t>();
-    }
-};
-
 } // namespace spotify
 } // namespace spotifar
 

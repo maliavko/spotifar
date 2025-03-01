@@ -7,6 +7,8 @@
 
 namespace spotifar { namespace spotify {
 
+using httplib::Result;
+
 struct api_abstract
 {
     virtual ~api_abstract() {}
@@ -20,15 +22,15 @@ struct api_abstract
     // library & collections interface
     virtual auto get_available_devices() -> const devices_t& = 0;
     virtual auto get_playback_state() -> const playback_state& = 0;
-    virtual auto get_followed_artists() -> artists_t = 0;
+    virtual auto get_followed_artists() -> const artists_t& = 0;
     virtual auto get_artist(const string &artist_id) -> artist  = 0;
-    virtual auto get_artist_albums(const string &artist_id) -> albums_t  = 0;
+    virtual auto get_artist_albums(const string &artist_id) -> const albums_t&  = 0;
     virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
     virtual auto get_album(const string &album_id) -> album = 0;
-    virtual auto get_album_tracks(const string &album_id) -> simplified_tracks_t = 0;
+    virtual auto get_album_tracks(const string &album_id) -> const simplified_tracks_t& = 0;
     virtual auto get_playlist(const string &playlist_id) -> playlist = 0;
-    virtual auto get_playlists() -> simplified_playlists_t = 0;
-    virtual auto get_playlist_tracks(const string &playlist_id) -> playlist_tracks_t = 0;
+    virtual auto get_playlists() -> const simplified_playlists_t& = 0;
+    virtual auto get_playlist_tracks(const string &playlist_id) -> const playlist_tracks_t& = 0;
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool> = 0;
     virtual auto save_tracks(const std::vector<string> &ids) -> bool = 0;
@@ -53,19 +55,105 @@ struct api_abstract
     virtual void set_playback_volume(int volume_percent, const string &device_id = "") = 0;
     virtual void transfer_playback(const string &device_id, bool start_playing = false) = 0;
 
-    template<class T>
-    T::value_t request(const T &&request)
+    /// @brief Performs an HTTP GET request
+    /// @param cache_for caches the requested data for the given amount of time
+    virtual Result get(const string &request_url, utils::clock_t::duration cache_for = {}) = 0;
+    virtual Result put(const string &request_url, const json &body = {}) = 0;
+    virtual Result del(const string &request_url, const json &body = {}) = 0;
+};
+
+/// @brief A class-helper for the API requests, incapsulates some simple logic for 
+/// common requests operations. Requests, validates response, parses result,
+/// returns mapped data.
+///
+/// @tparam T a resulting object type, json item
+template<class T>
+struct api_requester
+{
+    typedef typename T value_t;
+    
+    T result; // result holder
+    json data; // parsed result json data
+    string request_url; // initial request url string
+    string data_field; // some responses have nested data under `data_field` key name
+    Result response; // request httplib::Response
+
+    /// @param url initial request url
+    /// @param params request params object
+    /// @param data_field some responses have nested data under `data_field` key name
+    api_requester(const string &url, httplib::Params params = {}, const string &data_field = ""):
+        data_field(data_field)
     {
-        auto r = get(request.get_url({}), utils::http::session);
-        if (utils::http::is_success(r->status))
-            return request.parse_body(r->body);
+        request_url = httplib::append_query_params(url, params);
+    }
+    
+    /// @brief Returns a reference to the requested data.
+    /// @note The result is valid only after a successful response
+    const T& get() const { return result; }
+
+    /// @brief Whether the performed response is succeeded
+    bool is_success() const { return utils::http::is_success(response->status); }
+
+    /// @brief Executing an API request
+    /// @return a flag, whether the request succeeded or not
+    bool operator()(api_abstract *api)
+    {
+        response = api->get(request_url, utils::http::session);
+        if (is_success())
+        {
+            data = json::parse(response->body);
+
+            // the needed data is nested, we rebind references deeper
+            if (!data_field.empty())
+                data = data.at(data_field);
+            
+            on_success(data);
+
+            return true;
+        }
+        return false;
     }
 
-    /// @brief Performs a HTTP GET request
-    /// @param cache_for caches the requested data for the givem amount of time
-    virtual httplib::Result get(const string &request_url, utils::clock_t::duration cache_for = {}) = 0;
-    virtual httplib::Result put(const string &request_url, const json &body = {}) = 0;
-    virtual httplib::Result del(const string &request_url, const json &body = {}) = 0;
+    /// @brief The method is called right after the valid response is received and
+    /// data is parsed correctly. Base method also reads a resulting value in this method
+    virtual void on_success(const json &data)
+    {
+        data.get_to(result);
+    }
+};
+
+/// @brief A class-helpers to perform the API requests, for the paginated data.
+/// @tparam T a resulting data type
+template<class T>
+struct api_collection_requester: public api_requester<T>
+{
+    using api_requester<T>::api_requester; // base ctor
+
+    /// @brief Returns the total amount of entries in general
+    /// @note The result is valid only after a successful response
+    size_t get_total() const { return this->data["total"].get<size_t>(); }
+
+    /// @brief Can be further iterated or not 
+    bool has_more() const { return !this->request_url.empty(); }
+    
+    virtual void on_success(const json &data)
+    {
+        data["items"].get_to(this->result);
+
+        auto next = data["next"];
+        this->request_url = !next.is_null() ? next.get<string>() : "";
+    }
+
+    /// @brief Iterating items page by page of a given `limit` size
+    std::generator<T> fetch_by_pages(api_abstract *api)
+    {
+        do
+        {
+            if ((*this)(api))
+                co_yield this->result;
+        }
+        while (this->has_more());
+    }
 };
 
 /// @brief An interface to the class, which implements the functionality to cache the data

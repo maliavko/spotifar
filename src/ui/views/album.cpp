@@ -1,14 +1,15 @@
 #include "album.hpp"
 #include "ui/events.hpp"
+#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-album_view::album_view(spotify::api_abstract *api, const spotify::artist &artist, const spotify::album &album):
+album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar, const spotify::album &al):
     api_proxy(api),
-    album(album),
-    artist(artist)
+    album(al),
+    artist(ar)
 {
     for (const auto &track: api_proxy->get_album_tracks(album.id))
     {
@@ -61,17 +62,10 @@ size_t album_view::get_item_idx(const string &item_id)
 auto album_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_tracks = 0;
-    string request_url = httplib::append_query_params(
-        std::format("/v1/albums/{}/tracks", album_id), {
-            { "limit", "50" },
-        });
 
-    auto r = api_proxy->get(request_url, utils::http::session);
-    if (utils::http::is_success(r->status))
-    {
-        json data = json::parse(r->body);
-        data["total"].get_to(total_tracks);
-    }
+    auto requester = album_tracks_requester(album_id, 1);
+    if (requester(api_proxy))
+        total_tracks = requester.get_total();
 
     static items_t items;
     items.assign({

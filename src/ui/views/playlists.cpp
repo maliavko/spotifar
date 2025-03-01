@@ -1,6 +1,7 @@
 #include "playlists.hpp"
 #include "ui/events.hpp"
 #include "ui/views/playlist.hpp"
+#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -52,16 +53,10 @@ auto playlists_view::get_find_processor(const string &playlist_id) -> std::share
 auto playlists_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_playlists = 0;
-    string request_url = httplib::append_query_params("/v1/me/playlists", {
-        { "limit", "1" }
-    });
     
-    auto r = api_proxy->get(request_url, utils::http::session);
-    if (utils::http::is_success(r->status))
-    {
-        json data = json::parse(r->body);
-        data["total"].get_to(total_playlists);
-    }
+    auto requester = user_playlists_requester(1);
+    if (requester(api_proxy))
+        total_playlists = requester.get_total();
     
     static items_t items;
     items.assign({
