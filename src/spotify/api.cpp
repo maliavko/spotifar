@@ -136,10 +136,7 @@ void api::tick()
 
 artist api::get_artist(const string &artist_id)
 {
-    auto r = get(std::format("/v1/artists/{}", artist_id), utils::http::session);
-    if (http::is_success(r->status))
-        return json::parse(r->body).get<artist>();
-    return artist();
+    return get_item<artist_requester>(artist_id);
 }
 
 const artists_t& api::get_followed_artists()
@@ -154,21 +151,12 @@ const albums_t& api::get_artist_albums(const string &artist_id)
 
 tracks_t api::get_artist_top_tracks(const string &artist_id)
 {
-    auto r = get(std::format("/v1/artists/{}/top-tracks", artist_id), utils::http::session);
-    if (http::is_success(r->status))
-    {
-        json data = json::parse(r->body);
-        return data["tracks"].get<tracks_t>();
-    }
-    return {};
+    return get_item<artist_top_tracks_requester>(artist_id);
 }
     
 album api::get_album(const string &album_id)
 {
-    auto r = get(std::format("/v1/albums/{}", album_id), utils::http::session);
-    if (http::is_success(r->status))
-        return json::parse(r->body).get<album>();
-    return album();
+    return get_item<album_requester>(album_id);
 }
 
 const simplified_tracks_t& api::get_album_tracks(const string &album_id)
@@ -183,16 +171,7 @@ const simplified_playlists_t& api::get_playlists()
 
 playlist api::get_playlist(const string &playlist_id)
 {
-    json request_url = httplib::append_query_params(
-        std::format("/v1/playlists/{}", playlist_id), {
-            { "additional_types", "track" },
-            { "fields", playlist::get_fields_filter() },
-        });
-
-    auto r = get(request_url, utils::http::session);
-    if (http::is_success(r->status))
-        return json::parse(r->body).get<playlist>();
-    return playlist();
+    return get_item<playlist_requester>(playlist_id);
 }
 
 const playlist_tracks_t& api::get_playlist_tracks(const string &playlist_id)

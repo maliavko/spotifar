@@ -74,6 +74,10 @@ protected:
     Result put(const string &url, const json &body = {});
     Result del(const string &url, const json &body = {});
 
+    /// @brief a helpers function for getting one item from API
+    template<class R, typename... ArgumentsTypes>
+    auto get_item(ArgumentsTypes... args) -> typename R::value_t;
+
     /// @brief a helpers function for getting collection items from API
     template<class R, typename... ArgumentsTypes>
     auto get_items_collection(ArgumentsTypes... args) -> const typename R::value_t&;
@@ -94,6 +98,15 @@ private:
 
     std::vector<cached_data_abstract*> caches;
 };
+
+template<class R, typename... ArgumentsTypes>
+auto api::get_item(ArgumentsTypes... args) -> typename R::value_t
+{
+    auto requester = R(args...);
+    if (requester(this))
+        return requester.get();
+    return {};
+}
 
 template<class R, typename... ArgumentsTypes>
 auto api::get_items_collection(ArgumentsTypes... args) -> const typename R::value_t&
