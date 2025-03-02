@@ -15,30 +15,24 @@ artists_view::artists_view(api_abstract *api):
     {
         std::vector<wstring> column_data;
 
-        std::wstringstream followers;
-        followers << std::setw(6) << std::setprecision(4);
-
         // column C0 - followers count
-        if (a.followers_total < 1000)
-            followers << a.followers_total;
-        else if (a.followers_total < 1000000)
-            followers << a.followers_total / 1000.0 << L" K";
+        if (a.followers_total < 1000000)
+            column_data.push_back(std::format(L"{:9}", a.followers_total));
         else if (a.followers_total < 1000000000)
-            followers << a.followers_total / 1000000.0 << L" M";
+            column_data.push_back(std::format(L"{:7.2f} M", a.followers_total / 1000000.0));
         else if (a.followers_total < 1000000000000)
-            followers << a.followers_total / 1000000000.0 << L" B";
-        column_data.push_back(followers.str());
+            column_data.push_back(std::format(L"{:7.2f} B", a.followers_total / 1000000000.0));
 
         // column C1 - popularity
-        column_data.push_back(std::to_wstring(a.popularity));
+        column_data.push_back(std::format(L"{:5}", a.popularity));
 
-        // column C2 - genres
-        column_data.push_back(utils::to_wstring(utils::string_join(a.genres, ", ")));
+        // column C2 - first (main?) genre
+        column_data.push_back(a.genres.size() > 0 ? utils::to_wstring(a.genres[0]) : L"");
 
         items.push_back({
             a.id,
             a.name,
-            L"",
+            utils::to_wstring(utils::string_join(a.genres, ", ")),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             0,
             column_data
@@ -58,14 +52,45 @@ const wchar_t* artists_view::get_title() const
 
 void artists_view::update_panel_info(OpenPanelInfo *info)
 {
-    static const wchar_t* titles[] = {L"Name", L"Followers", L"%"};
+    static PanelMode modes[10];
 
-    static PanelMode modes[1];
-    modes[0].ColumnTypes = L"N,C0";
-    modes[0].ColumnWidths = L"20,0";
-    modes[0].ColumnTitles = titles;
-    modes[0].StatusColumnTypes = L"N,C0";
-    modes[0].StatusColumnWidths = L"20,0";
+    static const wchar_t* titles_3[] = { L"Name", L"Albums", L"Followers", L"Pop %" };
+    modes[3].ColumnTypes = L"NON,ST,C0,C1";
+    modes[3].ColumnWidths = L"0,6,9,5";
+    modes[3].ColumnTitles = titles_3;
+    modes[3].StatusColumnTypes = NULL;
+    modes[3].StatusColumnWidths = NULL;
+
+    modes[4].ColumnTypes = L"NON,ST";
+    modes[4].ColumnWidths = L"0,6";
+    modes[4].ColumnTitles = titles_3;
+    modes[4].StatusColumnTypes = NULL;
+    modes[4].StatusColumnWidths = NULL;
+
+    static const wchar_t* titles_5[] = { L"Name", L"Albums", L"Followers", L"Pop %", L"Genre" };
+    modes[5].ColumnTypes = L"NON,ST,C0,C1,C2";
+    modes[5].ColumnWidths = L"0,6,9,5,25";
+    modes[5].ColumnTitles = titles_5;
+    modes[5].StatusColumnTypes = NULL;
+    modes[5].StatusColumnWidths = NULL;
+    modes[5].Flags = PMFLAGS_FULLSCREEN;
+
+    static const wchar_t* titles_6[] = { L"Name", L"Genres" };
+    modes[6].ColumnTitles = titles_6;
+    modes[6].StatusColumnTypes = NULL;
+    modes[6].StatusColumnWidths = NULL;
+
+    static const wchar_t* titles_7[] = { L"Name", L"Albums", L"Genres" };
+    modes[7].ColumnTitles = titles_7;
+    modes[7].StatusColumnTypes = NULL;
+    modes[7].StatusColumnWidths = NULL;
+
+    modes[8] = modes[5]; // the same as 5th, but not fullscreen
+    modes[8].Flags &= ~PMFLAGS_FULLSCREEN;
+
+    modes[9] = modes[8];
+
+    modes[0] = modes[8];
 
     info->PanelModesArray = modes;
     info->PanelModesNumber = ARRAYSIZE(modes);

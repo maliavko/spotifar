@@ -57,6 +57,10 @@ struct simplified_album
     size_t total_tracks;
     string album_type;
     string release_date;
+    string release_date_precision; // "year", "month", "day"
+    string href;
+    std::vector<image> images;
+    std::vector<simplified_artist> artists;
 
     static string make_uri(const string &id) { return make_item_uri("album", id); }
     
@@ -64,6 +68,7 @@ struct simplified_album
     inline string get_uri() const { return make_uri(id); }
     inline bool is_single() const { return album_type == single; }
     string get_release_year() const;
+    wstring get_type_abbrev() const;
     wstring get_user_name() const;
     friend void from_json(const json &j, simplified_album &a);
     friend void to_json(json &j, const simplified_album &p);
@@ -236,7 +241,7 @@ struct playing_queue
 
 typedef std::vector<device> devices_t;
 typedef std::vector<artist> artists_t;
-typedef std::vector<simplified_album> albums_t;
+typedef std::vector<simplified_album> simplified_albums_t;
 typedef std::vector<simplified_track> simplified_tracks_t;
 typedef std::vector<track> tracks_t;
 typedef std::vector<playlist_track> playlist_tracks_t;

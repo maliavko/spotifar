@@ -28,10 +28,10 @@ public:
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
     auto get_items() const -> const items_t* { return &items; }
-    auto update_panel_info(OpenPanelInfo *info) -> void;
 
     auto select_item(const string &artist_id) -> intptr_t;
     auto get_find_processor(const string &artist_id) -> std::shared_ptr<view::find_processor>;
+    auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     api_abstract *api_proxy;
     items_t items;

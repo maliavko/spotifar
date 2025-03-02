@@ -54,6 +54,8 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->CurDir = view->get_dir_name();
     info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
+    info->StartPanelMode = '3';
+
     // filling in the info lines on the Ctrl+L panel
     const auto &info_lines = view->get_info_lines();
     if (info_lines != nullptr)
@@ -95,7 +97,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
         return view->update_panel_info(info);
 }
 
-auto panel::update_panel_items(GetFindDataInfo *info) -> intptr_t
+intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
     const view::items_t *items;
 
@@ -103,7 +105,8 @@ auto panel::update_panel_items(GetFindDataInfo *info) -> intptr_t
     {
         if (find_proc == nullptr)
         {
-            utils::log::global->error("An empty find processor while a request for find data has been received");
+            utils::log::global->error("An empty find processor while a request for "
+                "find data has been received");
             return FALSE;
         }
             
@@ -142,24 +145,20 @@ auto panel::update_panel_items(GetFindDataInfo *info) -> intptr_t
         panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
         panel_item[idx].UserData.Data = new far_user_data(item.id);
         panel_item[idx].UserData.FreeData = free_user_data;
-        // panel_item[idx].AllocationSize = 0;
         panel_item[idx].FileSize = item.size;
     }
 
     info->PanelItem = panel_item;
     info->ItemsNumber = items->size();
 
-    return TRUE;
-}
+    // NOTE: an experimental thing. The API class caches all the requests done during
+    // recursive OPM_FIND operation, so it can be already used without delay everywhere
+    // including panels. This code forces real panels to redraw and refill the data from
+    // caches
+    // if (info->OpMode & OPM_FIND)
+    //     utils::far3::panels::update(PANEL_ACTIVE);
 
-auto panel::get_find_items(GetFindDataInfo *info) -> intptr_t
-{
-    if (find_proc != nullptr)
-    {
-        //auto items = 
-        return TRUE;
-    }
-    return FALSE;
+    return TRUE;
 }
 
 void panel::free_panel_items(const FreeFindDataInfo *info)
@@ -211,7 +210,7 @@ void panel::show_artist_view(const artist &artist)
 
 void panel::show_album_view(const artist &artist, const album &album)
 {
-    change_view(std::make_shared<album_view>(api_proxy, artist, album));
+    return change_view(std::make_shared<album_view>(api_proxy, artist, album));
 }
 
 void panel::show_playlists_view()
@@ -239,7 +238,7 @@ auto panel::set_find_directory(const SetDirectoryInfo *info) -> intptr_t
     return (find_proc = view->get_find_processor(far_user_data::unpack(info))) != nullptr;
 }
 
-intptr_t panel::process_input(const ProcessPanelInputInfo *info)
+auto panel::process_input(const ProcessPanelInputInfo *info) -> intptr_t
 {
     return view && view->process_input(info);
 }

@@ -16,7 +16,7 @@ public:
     struct find_processor: public view::find_processor
     {
         api_abstract *api_proxy;
-        const string artist_id;
+        string artist_id;
 
         find_processor(api_abstract *api, const string &artist_id):
             api_proxy(api), artist_id(artist_id) {};
@@ -27,15 +27,15 @@ public:
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
-    auto get_items() const -> const items_t* { return &items; }
+    auto get_items() const -> const items_t*;
     auto get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>;
 
     auto select_item(const string &album_id) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     artist artist;
     api_abstract *api_proxy;
-    items_t items;
 };
 
 } // namespace ui

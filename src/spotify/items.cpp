@@ -56,6 +56,17 @@ string simplified_album::get_release_year() const
     return "----";
 }
 
+wstring simplified_album::get_type_abbrev() const
+{
+    if (album_type == album)
+        return L"LP";
+    if (album_type == single)
+        return L"EP";
+    if (album_type == compilation)
+        return L"COMP";
+    return L"??";
+}
+
 wstring simplified_album::get_user_name() const
 {
     wstring user_name = std::format(L"[{}] {}", utils::to_wstring(get_release_year()), name);
@@ -70,6 +81,10 @@ void from_json(const json &j, simplified_album &a)
     j.at("total_tracks").get_to(a.total_tracks);
     j.at("album_type").get_to(a.album_type);
     j.at("release_date").get_to(a.release_date);
+    j.at("release_date_precision").get_to(a.release_date_precision);
+    j.at("href").get_to(a.href);
+    j.at("images").get_to(a.images);
+    j.at("artists").get_to(a.artists);
 
     a.name = utils::utf8_decode(j.at("name").get<string>());
 }
@@ -81,6 +96,10 @@ void to_json(json &j, const simplified_album &a)
         { "total_tracks", a.total_tracks },
         { "album_type", a.album_type },
         { "release_date", a.release_date },
+        { "release_date_precision", a.release_date_precision },
+        { "href", a.href },
+        { "images", a.images },
+        { "artists", a.artists },
         { "name", utils::utf8_encode(a.name) },
     };
 }

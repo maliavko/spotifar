@@ -51,6 +51,38 @@ const view::info_lines_t* root_view::get_info_lines()
     return &lines;
 }
 
+void root_view::update_panel_info(OpenPanelInfo *info)
+{
+    static const wchar_t* titles[] = { L"Name", L"Size" };
+
+    static PanelMode modes[10];
+
+    modes[3].ColumnTypes = L"NON,ST";
+    modes[3].ColumnWidths = L"0,6";
+    modes[3].ColumnTitles = titles;
+    modes[3].StatusColumnTypes = NULL;
+    modes[3].StatusColumnWidths = NULL;
+
+    modes[4] = modes[3];
+
+    modes[5] = modes[3];
+    modes[5].Flags = PMFLAGS_FULLSCREEN;
+    
+    modes[8] = modes[3];
+
+    modes[9] = modes[3];
+
+    modes[0].ColumnTypes = L"NON,STC";
+    modes[0].ColumnWidths = L"0,6";
+    modes[0].ColumnTitles = titles;
+    modes[0].StatusColumnTypes = NULL;
+    modes[0].StatusColumnWidths = NULL;
+
+    info->PanelModesArray = modes;
+    info->PanelModesNumber = ARRAYSIZE(modes);
+}
+
+
 const view::items_t* root_view::get_items() const
 {
     static items_t items{

@@ -63,7 +63,7 @@ auto album_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_tracks = 0;
 
-    auto requester = album_tracks_requester(album_id, 1);
+    auto requester = album_tracks_requester(album_id);
     if (requester(api_proxy))
         total_tracks = requester.get_total();
 

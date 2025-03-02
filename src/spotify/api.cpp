@@ -144,7 +144,7 @@ const artists_t& api::get_followed_artists()
     return get_items_collection<followed_artists_requester>(MAX_LIMIT);
 }
 
-const albums_t& api::get_artist_albums(const string &artist_id)
+const simplified_albums_t& api::get_artist_albums(const string &artist_id)
 {
     return get_items_collection<artist_albums_requester>(artist_id, MAX_LIMIT);
 }
@@ -478,6 +478,12 @@ void api::clear_http_cache()
 {
     api_responses_cache.clear_all();
     log::api->debug("Clearning http caches");
+}
+
+bool api::is_request_cached(const string &url) const
+{
+    string u = trim_webapi_url(url);
+    return api_responses_cache.is_cached(u) && api_responses_cache.get(u).is_valid();
 }
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)

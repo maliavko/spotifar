@@ -132,6 +132,9 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
     {
         p.shutdown();
     }
+    if (info->Event == FE_REDRAW)
+    {
+    }
 
     return FALSE;
 }

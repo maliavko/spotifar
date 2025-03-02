@@ -16,6 +16,7 @@ struct api_abstract
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
 
+    virtual bool is_request_cached(const string &url) const = 0;
     virtual void set_frequent_syncs(bool is_on) = 0;
     virtual bool is_frequent_syncs() const = 0;
     
@@ -24,7 +25,7 @@ struct api_abstract
     virtual auto get_playback_state() -> const playback_state& = 0;
     virtual auto get_followed_artists() -> const artists_t& = 0;
     virtual auto get_artist(const string &artist_id) -> artist  = 0;
-    virtual auto get_artist_albums(const string &artist_id) -> const albums_t&  = 0;
+    virtual auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&  = 0;
     virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
     virtual auto get_album(const string &album_id) -> album = 0;
     virtual auto get_album_tracks(const string &album_id) -> const simplified_tracks_t& = 0;
@@ -57,9 +58,9 @@ struct api_abstract
 
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the requested data for the given amount of time
-    virtual Result get(const string &request_url, utils::clock_t::duration cache_for = {}) = 0;
-    virtual Result put(const string &request_url, const json &body = {}) = 0;
-    virtual Result del(const string &request_url, const json &body = {}) = 0;
+    virtual Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
+    virtual Result put(const string &url, const json &body = {}) = 0;
+    virtual Result del(const string &url, const json &body = {}) = 0;
 };
 
 /// @brief A class-helper for the API requests, incapsulates some simple logic for 
@@ -74,17 +75,17 @@ struct api_requester
     
     T result; // result holder
     json data; // parsed result json data
-    string request_url; // initial request url string
+    string url; // initial request url string
     string data_field; // some responses have nested data under `data_field` key name
     Result response; // request httplib::Response
 
-    /// @param url initial request url
+    /// @param request_url initial request url
     /// @param params request params object
     /// @param data_field some responses have nested data under `data_field` key name
-    api_requester(const string &url, httplib::Params params = {}, const string &data_field = ""):
+    api_requester(const string &request_url, httplib::Params params = {}, const string &data_field = ""):
         data_field(data_field)
     {
-        request_url = httplib::append_query_params(url, params);
+        url = httplib::append_query_params(request_url, params);
     }
     
     /// @brief Returns a reference to the requested data.
@@ -98,7 +99,7 @@ struct api_requester
     /// @return a flag, whether the request succeeded or not
     bool operator()(api_abstract *api)
     {
-        response = api->get(request_url, utils::http::session);
+        response = api->get(url, utils::http::session);
         if (is_success())
         {
             data = json::parse(response->body);
@@ -134,14 +135,14 @@ struct api_collection_requester: public api_requester<T>
     size_t get_total() const { return this->data["total"].get<size_t>(); }
 
     /// @brief Can be further iterated or not 
-    bool has_more() const { return !this->request_url.empty(); }
+    bool has_more() const { return !this->url.empty(); }
     
     virtual void on_success(const json &data)
     {
         data["items"].get_to(this->result);
 
         auto next = data["next"];
-        this->request_url = !next.is_null() ? next.get<string>() : "";
+        this->url = !next.is_null() ? next.get<string>() : "";
     }
 
     /// @brief Iterating items page by page of a given `limit` size

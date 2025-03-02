@@ -23,6 +23,7 @@ public:
 
     auto select_item(const string &view_id) -> intptr_t;
     auto get_find_processor(const string &item_id) -> std::shared_ptr<find_processor>;
+    auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     api_abstract *api_proxy;
 };

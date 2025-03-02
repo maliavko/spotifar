@@ -23,7 +23,9 @@ public:
     bool start();
     void shutdown();
     void tick();
+
     void clear_http_cache();
+    bool is_request_cached(const string &url) const;
 
     bool is_authenticated() const { return auth->is_authenticated(); }
 
@@ -35,7 +37,7 @@ public:
     auto get_playback_state() -> const playback_state& { return playback->get(); }
     auto get_followed_artists() -> const artists_t&;
     auto get_artist(const string &artist_id) -> artist;
-    auto get_artist_albums(const string &artist_id) -> const albums_t&;
+    auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&;
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
     auto get_album(const string &album_id) -> album;
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
@@ -118,7 +120,10 @@ auto api::get_items_collection(ArgumentsTypes... args) -> const typename R::valu
     // accumulating paged results into one container
     auto requester = R(args...);
     for (const auto &entries: requester.fetch_by_pages(this))
+    {
         result.insert(result.end(), entries.begin(), entries.end());
+        break; // TODO: remove! just for speeding up the testing
+    }
 
     return result;
 }

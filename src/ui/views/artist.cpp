@@ -1,7 +1,7 @@
 #include "artist.hpp"
 #include "album.hpp"
-#include "spotify/requests.hpp"
 #include "ui/events.hpp"
+#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -11,25 +11,78 @@ artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
     api_proxy(api),
     artist(artist)
 {
-    for (const auto &a: api_proxy->get_artist_albums(artist.id))
-        items.push_back({
-            a.id, a.get_user_name(), L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL
-        });
 }
 
-auto artist_view::get_dir_name() const -> const wchar_t*
+const wchar_t* artist_view::get_dir_name() const
 {
     static wchar_t dir_name[MAX_PATH];
     wcsncpy_s(dir_name, utils::strip_invalid_filename_chars(artist.name).c_str(), MAX_PATH);
     return dir_name;
 }
 
-auto artist_view::get_title() const -> const wchar_t*
+const wchar_t* artist_view::get_title() const
 {
     return artist.name.c_str();
 }
 
-auto artist_view::select_item(const string &album_id) -> intptr_t
+const view::items_t* artist_view::get_items() const
+{
+    static items_t items; items.clear();
+
+    for (const auto &a: api_proxy->get_artist_albums(artist.id))
+    {
+        std::vector<wstring> columns;
+
+        // TODO: saved-or-not column?
+        
+        // column C0 - release year
+        columns.push_back(std::format(L"{: ^6}", utils::to_wstring(a.get_release_year())));
+        
+        // column C1 - album type
+        columns.push_back(std::format(L"{: ^6}", a.get_type_abbrev()));
+        
+        // column C2 - total tracks
+        columns.push_back(std::format(L"{:3}", a.total_tracks));
+
+        // column C3 - full name
+        columns.push_back(a.get_user_name());
+
+        // column C4 - full release date
+        columns.push_back(std::format(L"{: ^10}", utils::to_wstring(a.release_date)));
+
+        // column C5 - album length
+        size_t total_length_ms = 0;
+        auto requester = album_tracks_requester(a.id);
+        if (api_proxy->is_request_cached(requester.url))
+        {
+            for (const auto &t: api_proxy->get_album_tracks(a.id))
+                total_length_ms += t.duration_ms;
+        }
+
+        if (total_length_ms > 0)
+            columns.push_back(std::format(L"{:%T >8}", std::chrono::milliseconds(total_length_ms)));
+        else
+            columns.push_back(L"");
+
+        // list of artists is used as a description field
+        std::vector<wstring> artists_names;
+        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
+            [](const auto &a) { return a.name; });
+
+        items.push_back({
+            a.id,
+            a.name,
+            utils::string_join(artists_names, L", "),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+            0,
+            columns
+        });
+    }
+
+    return &items;
+}
+
+intptr_t artist_view::select_item(const string &album_id)
 {
     if (album_id.empty())
     {
@@ -45,6 +98,51 @@ auto artist_view::select_item(const string &album_id) -> intptr_t
     }
 
     return FALSE;
+}
+
+void artist_view::update_panel_info(OpenPanelInfo *info)
+{
+    static PanelMode modes[10];
+
+    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"Ts", L"Time", L"Type" };
+    modes[3].ColumnTypes = L"C0,NON,C2,C5,C1";
+    modes[3].ColumnWidths = L"6,0,4,8,6";
+    modes[3].ColumnTitles = titles_3;
+    modes[3].StatusColumnTypes = NULL;
+    modes[3].StatusColumnWidths = NULL;
+
+    static const wchar_t* titles_4[] = { L"Yr", L"Name", L"Ts" };
+    modes[4].ColumnTypes = L"C0,NON,C2";
+    modes[4].ColumnWidths = L"6,0,4";
+    modes[4].ColumnTitles = titles_4;
+    modes[4].StatusColumnTypes = NULL;
+    modes[4].StatusColumnWidths = NULL;
+
+    static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Ts", L"Type", L"Release" };
+    modes[5].ColumnTypes = L"C0,NON,C2,C1,C4";
+    modes[5].ColumnWidths = L"6,0,4,6,10";
+    modes[5].ColumnTitles = titles_5;
+    modes[5].StatusColumnTypes = NULL;
+    modes[5].StatusColumnWidths = NULL;
+    modes[5].Flags = PMFLAGS_FULLSCREEN;
+
+    static const wchar_t* titles_6[] = { L"Yr", L"Name", L"Artists" };
+    modes[6].ColumnTypes = L"C0,NON,Z";
+    modes[6].ColumnWidths = L"6,0,0";
+    modes[6].ColumnTitles = titles_6;
+
+    modes[7] = modes[6];
+    modes[7].Flags = PMFLAGS_FULLSCREEN;
+
+    modes[8] = modes[5]; // the same as 5th, but not fullscreen
+    modes[8].Flags &= ~PMFLAGS_FULLSCREEN;
+
+    modes[9] = modes[8];
+
+    modes[0] = modes[8];
+
+    info->PanelModesArray = modes;
+    info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
 auto artist_view::get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>
@@ -93,18 +191,10 @@ auto artist_view::process_input(const ProcessPanelInputInfo *info) -> intptr_t
 auto artist_view::find_processor::get_items() const -> const items_t*
 {
     size_t total_albums = 0;
-    string request_url = httplib::append_query_params(
-        std::format("/v1/artists/{}/albums", artist_id), {
-            { "limit", "1" },
-            { "include_groups", "album" }
-        });
-
-    auto r = api_proxy->get(request_url, utils::http::session);
-    if (utils::http::is_success(r->status))
-    {
-        json data = json::parse(r->body);
-        data["total"].get_to(total_albums);
-    }
+    
+    auto requester = artist_albums_requester(artist_id);
+    if (requester(api_proxy))
+        total_albums = requester.get_total();
 
     static items_t items;
     items.assign({
