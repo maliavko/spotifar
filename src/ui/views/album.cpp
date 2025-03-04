@@ -4,22 +4,11 @@
 
 namespace spotifar { namespace ui {
 
-using utils::far3::get_text;
-
 album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar, const spotify::album &al):
     api_proxy(api),
     album(al),
     artist(ar)
 {
-    for (const auto &track: api_proxy->get_album_tracks(album.id))
-    {
-        items.push_back({
-            track.id,
-            std::format(L"{:02}. {}", track.track_number, track.name),
-            L"",
-            FILE_ATTRIBUTE_VIRTUAL
-        });
-    }
 }
 
 const wchar_t* album_view::get_dir_name() const
@@ -33,6 +22,48 @@ const wchar_t* album_view::get_dir_name() const
 const wchar_t* album_view::get_title() const
 {
     return get_dir_name();
+}
+
+const view::items_t* album_view::get_items()
+{
+    static view::items_t items; items.clear();
+
+    for (const auto &track: api_proxy->get_album_tracks(album.id))
+    {
+        std::vector<wstring> columns;
+        
+        // column C0 - track number
+        //columns.push_back(std::format(L"{: ^6}", utils::to_wstring(a.get_release_year())));
+
+        // artist, to distinguis feat.
+        // explicit
+        // check popularity; in artist's top pick it exists
+
+        items.push_back({
+            track.id,
+            std::format(L"{:02}. {}", track.track_number, track.name),
+            L"",
+            FILE_ATTRIBUTE_VIRTUAL, 0,
+            columns
+        });
+    }
+
+    return &items;
+}
+
+void album_view::update_panel_info(OpenPanelInfo *info)
+{
+    static PanelMode modes[10];
+
+    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"Ts", L"Time", L"Type" };
+    modes[3].ColumnTypes = L"C0,NON,C2,C5,C1";
+    modes[3].ColumnWidths = L"6,0,4,8,6";
+    modes[3].ColumnTitles = titles_3;
+    modes[3].StatusColumnTypes = NULL;
+    modes[3].StatusColumnWidths = NULL;
+
+    info->PanelModesArray = modes;
+    info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
 intptr_t album_view::select_item(const string &track_id)
@@ -49,33 +80,6 @@ intptr_t album_view::select_item(const string &track_id)
     }
     
     return FALSE;
-}
-
-size_t album_view::get_item_idx(const string &item_id)
-{
-    for (size_t idx = 0; idx < items.size(); idx++)
-        if (items[idx].id == item_id)
-            return idx;
-    return 0;
-}
-
-auto album_view::find_processor::get_items() const -> const items_t*
-{
-    size_t total_tracks = 0;
-
-    auto requester = album_tracks_requester(album_id);
-    if (requester(api_proxy))
-        total_tracks = requester.get_total();
-
-    static items_t items;
-    items.assign({
-        // it's a pure fake item, which holds the size of the total amount of followed artists,
-        // for the sake of showing it in the item's size column on the panel
-        { "", std::format(L"album tracks {} {}", utils::to_wstring(artist_id), utils::to_wstring(album_id)),
-            L"", FILE_ATTRIBUTE_VIRTUAL, total_tracks }
-    });
-
-    return &items;
 }
 
 } // namespace ui

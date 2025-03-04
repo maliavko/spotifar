@@ -68,6 +68,10 @@ void plugin::update_panel_info(OpenPanelInfo *info)
 
 intptr_t plugin::update_panel_items(GetFindDataInfo *info)
 {
+    // plugins does not use Far's traditional recursive search mechanism
+    if (info->OpMode & OPM_FIND)
+        return FALSE;
+        
     return panel.update_panel_items(info);
 }
 
@@ -78,8 +82,9 @@ void plugin::free_panel_items(const FreeFindDataInfo *info)
 
 intptr_t plugin::set_directory(const SetDirectoryInfo *info)
 {
+    // plugins does not use Far's traditional recursive search mechanism
     if (info->OpMode & OPM_FIND)
-        return panel.set_find_directory(info);
+        return FALSE;
     
     return panel.select_directory(info);
 }

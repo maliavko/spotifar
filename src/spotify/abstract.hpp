@@ -1,5 +1,6 @@
 #ifndef ABSTRACT_HPP_981E825E_A57D_4FB6_AA7D_FC27D37304A6
 #define ABSTRACT_HPP_981E825E_A57D_4FB6_AA7D_FC27D37304A6
+#pragma once
 
 #include "utils.hpp"
 #include "config.hpp"
@@ -87,6 +88,8 @@ struct api_requester
     {
         url = httplib::append_query_params(request_url, params);
     }
+    
+    const string &get_url() const { return url; }
     
     /// @brief Returns a reference to the requested data.
     /// @note The result is valid only after a successful response

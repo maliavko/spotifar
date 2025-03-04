@@ -1,7 +1,6 @@
 #include "root.hpp"
 #include "ui/events.hpp"
-#include "ui/views/artists.hpp"
-#include "ui/views/playlists.hpp"
+#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -34,7 +33,7 @@ const view::key_bar_info_t* root_view::get_key_bar_info()
 {
     // TODO: test data
     static key_bar_info_t key_bar{
-        { { VK_F4, 0 }, utils::far3::get_text(MKeyBarF4) },
+        { { VK_F4, 0 }, get_text(MKeyBarF4) },
     };
 
     return &key_bar;
@@ -53,11 +52,11 @@ const view::info_lines_t* root_view::get_info_lines()
 
 void root_view::update_panel_info(OpenPanelInfo *info)
 {
-    static const wchar_t* titles[] = { L"Name", L"Size" };
+    static const wchar_t* titles[] = { L"Name", L"Count" };
 
     static PanelMode modes[10];
 
-    modes[3].ColumnTypes = L"NON,ST";
+    modes[3].ColumnTypes = L"NON,C0";
     modes[3].ColumnWidths = L"0,6";
     modes[3].ColumnTitles = titles;
     modes[3].StatusColumnTypes = NULL;
@@ -72,7 +71,7 @@ void root_view::update_panel_info(OpenPanelInfo *info)
 
     modes[9] = modes[3];
 
-    modes[0].ColumnTypes = L"NON,STC";
+    modes[0].ColumnTypes = L"NON,C0";
     modes[0].ColumnWidths = L"0,6";
     modes[0].ColumnTitles = titles;
     modes[0].StatusColumnTypes = NULL;
@@ -82,29 +81,37 @@ void root_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
-
-const view::items_t* root_view::get_items() const
+const view::items_t* root_view::get_items()
 {
-    static items_t items{
-        {
+    static items_t items; items.clear();
+
+    {
+        items.push_back(pack_menu_item(
             artists_view_id,
-            get_text(MPanelArtistsItemLabel),
-            get_text(MPanelArtistsItemDescr),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-        },
-        {
+            MPanelArtistsItemLabel,
+            MPanelArtistsItemDescr,
+            followed_artists_requester()
+        ));
+    }
+
+    {
+        items.push_back(pack_menu_item(
             playlists_view_id,
-            get_text(MPanelPlaylistsItemLabel),
-            get_text(MPanelPlaylistsItemDescr),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-        },
-        {
+            MPanelPlaylistsItemLabel,
+            MPanelPlaylistsItemDescr,
+            user_playlists_requester()
+        ));
+    }
+
+    {
+        items.push_back({
             recents_view_id,
             get_text(MPanelRecentsItemLabel),
             get_text(MPanelRecentsItemDescr),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-        }
-    };
+        });
+    }
+
     return &items;
 }
 
@@ -131,17 +138,24 @@ intptr_t root_view::select_item(const string &view_id)
     return FALSE;
 }
 
-std::shared_ptr<view::find_processor> root_view::get_find_processor(const string &view_id)
+bool root_view::request_extra_info(const string &view_id)
 {
     if (view_id == artists_view_id)
-        return std::make_shared<artists_view::find_processor>(api_proxy);
+    {
+        auto requester = followed_artists_requester();
+        if (requester(api_proxy))
+            return true;
+    }
 
     if (view_id == playlists_view_id)
-        return std::make_shared<playlists_view::find_processor>(api_proxy);
+    {
+        auto requester = user_playlists_requester();
+        if (requester(api_proxy))
+            return true;
+    }
 
     // TODO: recents?
-    
-    return nullptr;
+    return false;
 }
 
 } // namespace ui

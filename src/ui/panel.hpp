@@ -22,13 +22,12 @@ public:
     auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
     auto free_panel_items(const FreeFindDataInfo *info) -> void;
     auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
-    auto set_find_directory(const SetDirectoryInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
 protected:
     void change_view(std::shared_ptr<ui::view> view);
 
     // views events' handlers
-    virtual void refresh_panels(const string &item_id);
+    virtual void refresh_panels(const string &item_id = "");
     virtual void show_root_view();
     virtual void show_artists_view();
     virtual void show_artist_view(const artist &artist);
@@ -38,7 +37,6 @@ protected:
     virtual void show_recents_view();
 private:
     std::shared_ptr<ui::view> view;
-    std::shared_ptr<view::find_processor> find_proc = nullptr;
     api_abstract *api_proxy;
 };
 

@@ -209,35 +209,31 @@ namespace far3
     namespace panels
     {
         auto control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1 = 0, void *param2 = nullptr) -> intptr_t;
-        auto redraw(HANDLE panel, size_t current_item_idx = 0, size_t top_item_idx = 0) -> intptr_t;
+        auto redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx) -> intptr_t;
+        auto redraw(HANDLE panel) -> intptr_t;
         auto update(HANDLE panel) -> intptr_t;
         auto is_active(HANDLE panel) -> bool;
         auto does_exist(HANDLE panel) -> bool;
         auto set_active(HANDLE panel) -> intptr_t;
-        auto get_current_item(HANDLE panel) -> intptr_t;
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
-
-        struct free_deleter
-        {
-            void operator()(void *data) { free(data); }
-        };
+        auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
 
         /// @brief Returns the shared_ptr with data object for the given command.
         /// The memory allocated will get freed automatically.
         /// @tparam T the data type to be returned
-        template<class T>
-        std::shared_ptr<T> get_data(HANDLE panel, FILE_CONTROL_COMMANDS cmd)
-        {
-            size_t size = control(panel, cmd, 0, 0); // getting the data size
+        // template<class T>
+        // std::shared_ptr<T> get_data(HANDLE panel, FILE_CONTROL_COMMANDS cmd)
+        // {
+        //     size_t size = control(panel, cmd, 0, 0); // getting the data size
 
-            // allocating a memory to store the data with the custom deleter
-            std::shared_ptr<T> data_ptr((T*)malloc(size), free_deleter());
-            if (data_ptr)
-                control(panel, cmd, size, data_ptr.get());
+        //     // allocating a memory to store the data with the custom deleter
+        //     std::shared_ptr<T> data_ptr((T*)malloc(size), free_deleter());
+        //     if (data_ptr)
+        //         control(panel, cmd, size, data_ptr.get());
             
-            return data_ptr;
-        }
+        //     return data_ptr;
+        // }
     }   
 
     namespace actl

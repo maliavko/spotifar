@@ -1,6 +1,4 @@
 #include "artists.hpp"
-#include "root.hpp"
-#include "artist.hpp"
 #include "ui/events.hpp"
 #include "spotify/requests.hpp"
 
@@ -11,33 +9,6 @@ using utils::far3::get_text;
 artists_view::artists_view(api_abstract *api):
     api_proxy(api)
 {
-    for (const auto &a: api_proxy->get_followed_artists())
-    {
-        std::vector<wstring> column_data;
-
-        // column C0 - followers count
-        if (a.followers_total < 1000000)
-            column_data.push_back(std::format(L"{:9}", a.followers_total));
-        else if (a.followers_total < 1000000000)
-            column_data.push_back(std::format(L"{:7.2f} M", a.followers_total / 1000000.0));
-        else if (a.followers_total < 1000000000000)
-            column_data.push_back(std::format(L"{:7.2f} B", a.followers_total / 1000000000.0));
-
-        // column C1 - popularity
-        column_data.push_back(std::format(L"{:5}", a.popularity));
-
-        // column C2 - first (main?) genre
-        column_data.push_back(a.genres.size() > 0 ? utils::to_wstring(a.genres[0]) : L"");
-
-        items.push_back({
-            a.id,
-            a.name,
-            utils::to_wstring(utils::string_join(a.genres, ", ")),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            0,
-            column_data
-        });
-    }
 }
 
 const wchar_t* artists_view::get_dir_name() const
@@ -55,20 +26,20 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     static PanelMode modes[10];
 
     static const wchar_t* titles_3[] = { L"Name", L"Albums", L"Followers", L"Pop %" };
-    modes[3].ColumnTypes = L"NON,ST,C0,C1";
+    modes[3].ColumnTypes = L"NON,C3,C0,C1";
     modes[3].ColumnWidths = L"0,6,9,5";
     modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
 
-    modes[4].ColumnTypes = L"NON,ST";
+    modes[4].ColumnTypes = L"NON,C3";
     modes[4].ColumnWidths = L"0,6";
     modes[4].ColumnTitles = titles_3;
     modes[4].StatusColumnTypes = NULL;
     modes[4].StatusColumnWidths = NULL;
 
     static const wchar_t* titles_5[] = { L"Name", L"Albums", L"Followers", L"Pop %", L"Genre" };
-    modes[5].ColumnTypes = L"NON,ST,C0,C1,C2";
+    modes[5].ColumnTypes = L"NON,C3,C0,C1,C2";
     modes[5].ColumnWidths = L"0,6,9,5,25";
     modes[5].ColumnTitles = titles_5;
     modes[5].StatusColumnTypes = NULL;
@@ -96,6 +67,48 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
+const view::items_t* artists_view::get_items()
+{
+    static view::items_t items; items.clear();
+
+    for (const auto &a: api_proxy->get_followed_artists())
+    {
+        std::vector<wstring> column_data;
+
+        // column C0 - followers count
+        if (a.followers_total < 1000000)
+            column_data.push_back(std::format(L"{:9}", a.followers_total));
+        else if (a.followers_total < 1000000000)
+            column_data.push_back(std::format(L"{:7.2f} M", a.followers_total / 1000000.0));
+        else if (a.followers_total < 1000000000000)
+            column_data.push_back(std::format(L"{:7.2f} B", a.followers_total / 1000000000.0));
+
+        // column C1 - popularity
+        column_data.push_back(std::format(L"{:5}", a.popularity));
+
+        // column C2 - first (main?) genre
+        column_data.push_back(a.genres.size() > 0 ? utils::to_wstring(a.genres[0]) : L"");
+        
+        // column C3 - total albums
+        wstring albums_count = L"";
+        auto requester = artist_albums_requester(a.id);
+        if (api_proxy->is_request_cached(requester.get_url()) && requester(api_proxy))
+            albums_count = std::format(L"{: >6}", (requester.get_total()));
+        column_data.push_back(albums_count);
+
+        items.push_back({
+            a.id,
+            a.name,
+            utils::to_wstring(utils::string_join(a.genres, ", ")),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+            0,
+            column_data
+        });
+    }
+
+    return &items;
+}
+
 intptr_t artists_view::select_item(const string &artist_id)
 {
     if (artist_id.empty())
@@ -114,30 +127,16 @@ intptr_t artists_view::select_item(const string &artist_id)
     return FALSE;
 }
 
-auto artists_view::get_find_processor(const string &artist_id) -> std::shared_ptr<view::find_processor>
+bool artists_view::request_extra_info(const string &artist_id)
 {
     if (!artist_id.empty())
-        return std::make_shared<artist_view::find_processor>(api_proxy, artist_id);
-    
-    return nullptr;
-}
+    {
+        auto requester = artist_albums_requester(artist_id);
+        if (requester(api_proxy))
+            return true;
+    }
 
-auto artists_view::find_processor::get_items() const -> const items_t*
-{
-    size_t total_artists = 0;
-
-    auto requester = followed_artists_requester(1);
-    if (requester(api_proxy))
-        total_artists = requester.get_total();
-
-    static items_t items;
-    items.assign({
-        // it's a pure fake item, which holds the size of the total amount of followed artists,
-        // for the sake of showing it in the item's size column on the panel
-        { "", L"followed artists", L"", FILE_ATTRIBUTE_VIRTUAL, total_artists }
-    });
-
-    return &items;
+    return false;
 }
 
 } // namespace ui

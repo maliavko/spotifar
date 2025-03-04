@@ -13,27 +13,17 @@ using namespace spotify;
 class playlists_view: public view
 {
 public:
-    // @brief Returns total amount of user's playlists
-    struct find_processor: public view::find_processor
-    {
-        api_abstract *api_proxy;
-
-        find_processor(api_abstract *api): api_proxy(api) {};
-        auto get_items() const -> const items_t*;
-    };
-
-public:
     playlists_view(api_abstract *api);
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
-    auto get_items() const -> const items_t* { return &items; }
-    auto get_find_processor(const string &item_id) -> std::shared_ptr<view::find_processor>;
+    auto get_items() -> const items_t*;
 
-    auto select_item(const string &track_id) -> intptr_t;
+    auto select_item(const string &playlist_id) -> intptr_t;
+    auto request_extra_info(const string &playlist_id) -> bool;
+    auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     api_abstract *api_proxy;
-    items_t items;
 };
 
 } // namespace ui

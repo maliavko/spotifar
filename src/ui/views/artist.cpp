@@ -25,63 +25,6 @@ const wchar_t* artist_view::get_title() const
     return artist.name.c_str();
 }
 
-const view::items_t* artist_view::get_items() const
-{
-    static items_t items; items.clear();
-
-    for (const auto &a: api_proxy->get_artist_albums(artist.id))
-    {
-        std::vector<wstring> columns;
-
-        // TODO: saved-or-not column?
-        
-        // column C0 - release year
-        columns.push_back(std::format(L"{: ^6}", utils::to_wstring(a.get_release_year())));
-        
-        // column C1 - album type
-        columns.push_back(std::format(L"{: ^6}", a.get_type_abbrev()));
-        
-        // column C2 - total tracks
-        columns.push_back(std::format(L"{:3}", a.total_tracks));
-
-        // column C3 - full name
-        columns.push_back(a.get_user_name());
-
-        // column C4 - full release date
-        columns.push_back(std::format(L"{: ^10}", utils::to_wstring(a.release_date)));
-
-        // column C5 - album length
-        size_t total_length_ms = 0;
-        auto requester = album_tracks_requester(a.id);
-        if (api_proxy->is_request_cached(requester.url))
-        {
-            for (const auto &t: api_proxy->get_album_tracks(a.id))
-                total_length_ms += t.duration_ms;
-        }
-
-        if (total_length_ms > 0)
-            columns.push_back(std::format(L"{:%T >8}", std::chrono::milliseconds(total_length_ms)));
-        else
-            columns.push_back(L"");
-
-        // list of artists is used as a description field
-        std::vector<wstring> artists_names;
-        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
-            [](const auto &a) { return a.name; });
-
-        items.push_back({
-            a.id,
-            a.name,
-            utils::string_join(artists_names, L", "),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            0,
-            columns
-        });
-    }
-
-    return &items;
-}
-
 intptr_t artist_view::select_item(const string &album_id)
 {
     if (album_id.empty())
@@ -145,17 +88,82 @@ void artist_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
-auto artist_view::get_find_processor(const string &album_id) -> std::shared_ptr<view::find_processor>
+const view::items_t* artist_view::get_items()
+{
+    static items_t items; items.clear();
+
+    for (const auto &a: api_proxy->get_artist_albums(artist.id))
+    {
+        std::vector<wstring> columns;
+
+        // TODO: saved-or-not column?
+        
+        // column C0 - release year
+        columns.push_back(std::format(L"{: ^6}", utils::to_wstring(a.get_release_year())));
+        
+        // column C1 - album type
+        columns.push_back(std::format(L"{: ^6}", a.get_type_abbrev()));
+        
+        // column C2 - total tracks
+        columns.push_back(std::format(L"{:3}", a.total_tracks));
+
+        // column C3 - full name
+        columns.push_back(a.get_user_name());
+
+        // column C4 - full release date
+        columns.push_back(std::format(L"{: ^10}", utils::to_wstring(a.release_date)));
+
+        // column C5 - album length
+        size_t total_length_ms = 0;
+        auto requester = album_tracks_requester(a.id);
+        if (api_proxy->is_request_cached(requester.url))
+        {
+            for (const auto &t: api_proxy->get_album_tracks(a.id))
+                total_length_ms += t.duration_ms;
+        }
+
+        // TODO: column C6 - copyrights
+        // album popularity
+        // music label
+        // external ids
+
+        if (total_length_ms > 0)
+            columns.push_back(std::format(L"{:%T >8}", std::chrono::milliseconds(total_length_ms)));
+        else
+            columns.push_back(L"");
+
+        // list of artists is used as a description field
+        std::vector<wstring> artists_names;
+        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
+            [](const auto &a) { return a.name; });
+
+        items.push_back({
+            a.id,
+            a.name,
+            utils::string_join(artists_names, L", "),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+            0,
+            columns
+        });
+    }
+    return &items;
+}
+
+bool artist_view::request_extra_info(const string &album_id)
 {
     if (!album_id.empty())
-        return std::make_shared<album_view::find_processor>(api_proxy, artist.id, album_id);
-    
-    return nullptr;
+    {
+        auto requester = album_tracks_requester(album_id);
+        if (requester(api_proxy))
+            return true;
+    }
+
+    return false;
 }
 
 auto artist_view::process_input(const ProcessPanelInputInfo *info) -> intptr_t
 {
-    auto& key_event = info->Rec.Event.KeyEvent;
+    auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
         int key = utils::far3::keys::make_combined(key_event);
@@ -163,48 +171,24 @@ auto artist_view::process_input(const ProcessPanelInputInfo *info) -> intptr_t
         {
             case VK_F4:
             {
-                // size_t size = config::ps_info.PanelControl(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
-                // PluginPanelItem *PPI=(PluginPanelItem*)malloc(size);
-                // if (PPI)
-                // {
-                //     FarGetPluginPanelItem FGPPI={sizeof(FarGetPluginPanelItem), size, PPI};
-                //     config::ps_info.PanelControl(PANEL_ACTIVE,FCTL_GETCURRENTPANELITEM, 0, &FGPPI);
-                    
-                //     const far_user_data* data = nullptr;
-                //     if (PPI->UserData.Data != nullptr)
-                //     {
-                //         data = static_cast<const far_user_data*>(PPI->UserData.Data);
-                //         spdlog::debug("current item {}", album::make_uri(data->id));
-                //         api->start_playback(album::make_uri(data->id));
-                //     }
-                    
-                //     free(PPI);
-                // }
+                auto item = utils::far3::panels::get_current_item(PANEL_ACTIVE);
+                if (item != nullptr)
+                {
+                    // TODO: the view cannot unpack user data, as it was packed by panel.
+                    // this over the idea, that the view should already receive here 
+                    // an event together with the cursor item
+
+                    // utils::log::global->info("An album is being picked for playback, {}", );
+                    // api_proxy->start_playback(album::make_uri(data->id));
+                }
+                else
+                    utils::log::global->error("There is an error occured while getting a current panel item");
 
                 return TRUE;
             }
         }
     }
     return FALSE;
-}
-
-auto artist_view::find_processor::get_items() const -> const items_t*
-{
-    size_t total_albums = 0;
-    
-    auto requester = artist_albums_requester(artist_id);
-    if (requester(api_proxy))
-        total_albums = requester.get_total();
-
-    static items_t items;
-    items.assign({
-        // it's a pure fake item, which holds the size of the total amount of followed artists,
-        // for the sake of showing it in the item's size column on the panel
-        { "", std::format(L"artist albums {}", utils::to_wstring(artist_id)),
-            L"", FILE_ATTRIBUTE_VIRTUAL, total_albums }
-    });
-
-    return &items;
 }
 
 } // namespace ui

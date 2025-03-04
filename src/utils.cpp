@@ -195,6 +195,11 @@ namespace far3
 
     namespace panels
     {
+        struct free_deleter
+        {
+            void operator()(void *data) { free(data); }
+        };
+
         intptr_t control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1, void *param2)
         {
             return config::ps_info.PanelControl(panel, cmd, param1, param2);
@@ -204,6 +209,11 @@ namespace far3
         {
             PanelRedrawInfo info{ sizeof(PanelRedrawInfo), current_item_idx, top_item_idx };
             return control(panel, FCTL_REDRAWPANEL, 0, &info);
+        }
+
+        intptr_t redraw(HANDLE panel)
+        {
+            return control(panel, FCTL_REDRAWPANEL, 0, NULL);
         }
         
         intptr_t update(HANDLE panel)
@@ -226,29 +236,6 @@ namespace far3
             return control(panel, FCTL_SETACTIVEPANEL);
         }
         
-        intptr_t get_current_item(HANDLE panel)
-        {
-            // TODO: unfinished
-            // size_t size = config::ps_info.PanelControl(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
-            // PluginPanelItem *PPI=(PluginPanelItem*)malloc(size);
-            // if (PPI)
-            // {
-            //     FarGetPluginPanelItem FGPPI={sizeof(FarGetPluginPanelItem), size, PPI};
-            //     config::ps_info.PanelControl(PANEL_ACTIVE,FCTL_GETCURRENTPANELITEM, 0, &FGPPI);
-                
-            //     const far_user_data* data = nullptr;
-            //     if (PPI->UserData.Data != nullptr)
-            //     {
-            //         data = static_cast<const far_user_data*>(PPI->UserData.Data);
-            //         spdlog::debug("current item {}", album::make_uri(data->id));
-            //         api->start_playback(album::make_uri(data->id));
-            //     }
-                
-            //     free(PPI);
-            // }
-            return 0;
-        }
-        
         intptr_t set_view_mode(HANDLE panel, size_t view_mode_idx)
         {
             return control(panel, FCTL_SETVIEWMODE, view_mode_idx, 0);
@@ -259,6 +246,20 @@ namespace far3
             auto r = control(panel, FCTL_SETSORTMODE, sort_mode, 0);
             control(panel, FCTL_SETSORTORDER, is_desc ? TRUE : FALSE, 0);
             return r;
+        }
+        
+        std::shared_ptr<PluginPanelItem> get_current_item(HANDLE panel)
+        {
+            size_t size = control(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
+            std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
+            if (ppi)
+            {
+                FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
+                control(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, &fgppi);
+
+                return ppi;
+            }
+            return nullptr;
         }
     }
     

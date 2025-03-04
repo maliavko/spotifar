@@ -15,18 +15,18 @@ struct far_user_data
 {
     string id;
 
-    static string unpack(const SetDirectoryInfo *info)
+    static string unpack(const UserDataItem &user_data)
     {
         string item_id = "";
-        if (info->UserData.Data != nullptr)
-            item_id = reinterpret_cast<const far_user_data*>(info->UserData.Data)->id;
+        if (user_data.Data != nullptr)
+            item_id = reinterpret_cast<const far_user_data*>(user_data.Data)->id;
         return item_id;
     }
 };
 
 static void WINAPI free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
 {
-    delete static_cast<const far_user_data*>(user_data);
+    delete reinterpret_cast<const far_user_data*>(user_data);
 }
 
 // the `F` keys, which can be overriden by the nested views
@@ -99,25 +99,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
-    const view::items_t *items;
-
-    if (info->OpMode & OPM_FIND)
-    {
-        if (find_proc == nullptr)
-        {
-            utils::log::global->error("An empty find processor while a request for "
-                "find data has been received");
-            return FALSE;
-        }
-            
-        items = find_proc->get_items();
-    }
-    else
-    {
-        items = view->get_items();
-    }
-
-    if (items == nullptr) return FALSE;
+    auto items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
     if (panel_item == nullptr)
@@ -151,13 +133,6 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
     info->PanelItem = panel_item;
     info->ItemsNumber = items->size();
 
-    // NOTE: an experimental thing. The API class caches all the requests done during
-    // recursive OPM_FIND operation, so it can be already used without delay everywhere
-    // including panels. This code forces real panels to redraw and refill the data from
-    // caches
-    // if (info->OpMode & OPM_FIND)
-    //     utils::far3::panels::update(PANEL_ACTIVE);
-
     return TRUE;
 }
 
@@ -186,11 +161,18 @@ void panel::refresh_panels(const string &item_id)
 {
     far3::panels::update(PANEL_ACTIVE);
 
-    size_t item_idx = 0;
-    if (!item_id.empty())
-        item_idx = view->get_item_idx(item_id) + 1; // 0 index is ".."
+    // TODO: this logic will not work when I implement sorting on the panels,
+    // the indices of the items array will not match
+    // if (!item_id.empty())
+    // {
+    //     auto item_idx = view->get_item_idx(item_id) + 1; // 0 index is ".."
+    //     if (item_idx > 0)
+    //     {
+    //         far3::panels::redraw(PANEL_ACTIVE, item_idx + 1, -1);
+    //     }
+    // }
 
-    far3::panels::redraw(PANEL_ACTIVE, item_idx);
+    far3::panels::redraw(PANEL_ACTIVE);
 }
 
 void panel::show_root_view()
@@ -230,16 +212,36 @@ void panel::show_recents_view()
 
 auto panel::select_directory(const SetDirectoryInfo *info) -> intptr_t
 {
-    return view->select_item(far_user_data::unpack(info));
-}
-
-auto panel::set_find_directory(const SetDirectoryInfo *info) -> intptr_t
-{
-    return (find_proc = view->get_find_processor(far_user_data::unpack(info))) != nullptr;
+    return view->select_item(far_user_data::unpack(info->UserData));
 }
 
 auto panel::process_input(const ProcessPanelInputInfo *info) -> intptr_t
 {
+
+    auto &key_event = info->Rec.Event.KeyEvent;
+    if (key_event.bKeyDown)
+    {
+        int key = far3::keys::make_combined(key_event);
+        switch (key)
+        {
+            case VK_F3:
+            {
+                auto item = far3::panels::get_current_item(PANEL_ACTIVE);
+                if (item != nullptr)
+                {
+                    if (view->request_extra_info(far_user_data::unpack(item->UserData)))
+                        // force a panel's items update after successful additional info request
+                        refresh_panels();
+                }
+                else
+                    utils::log::global->error("There is an error occured while getting a current panel item");
+        
+                // blocking F3 panel processing in general, as we have a custom one
+                return TRUE;
+            }
+        }
+    }
+
     return view && view->process_input(info);
 }
 

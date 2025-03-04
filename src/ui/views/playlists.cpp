@@ -1,6 +1,5 @@
 #include "playlists.hpp"
 #include "ui/events.hpp"
-#include "ui/views/playlist.hpp"
 #include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
@@ -10,8 +9,6 @@ using utils::far3::get_text;
 playlists_view::playlists_view(spotify::api_abstract *api):
     api_proxy(api)
 {
-    for (const auto &p: api_proxy->get_playlists())
-        items.push_back({p.id, p.name, L"", FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL});
 }
 
 const wchar_t* playlists_view::get_dir_name() const
@@ -42,30 +39,55 @@ intptr_t playlists_view::select_item(const string &playlist_id)
     return FALSE;
 }
 
-auto playlists_view::get_find_processor(const string &playlist_id) -> std::shared_ptr<view::find_processor>
+void playlists_view::update_panel_info(OpenPanelInfo *info)
 {
-    if (!playlist_id.empty())
-        return std::make_shared<playlist_view::find_processor>(api_proxy, playlist_id);
-    
-    return nullptr;
+    static PanelMode modes[10];
+
+    static const wchar_t* titles_3[] = { L"Name", L"Tracks" };
+    modes[3].ColumnTypes = L"NON,C0";
+    modes[3].ColumnWidths = L"0,6";
+    modes[3].ColumnTitles = titles_3;
+    modes[3].StatusColumnTypes = NULL;
+    modes[3].StatusColumnWidths = NULL;
+
+    info->PanelModesArray = modes;
+    info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
-auto playlists_view::find_processor::get_items() const -> const items_t*
+const view::items_t* playlists_view::get_items()
 {
-    size_t total_playlists = 0;
-    
-    auto requester = user_playlists_requester(1);
-    if (requester(api_proxy))
-        total_playlists = requester.get_total();
-    
-    static items_t items;
-    items.assign({
-        // it's a pure fake item, which holds the size of the total amount of followed artists,
-        // for the sake of showing it in the item's size column on the panel
-        { "", L"user playlists", L"", FILE_ATTRIBUTE_VIRTUAL, total_playlists }
-    });
+    static view::items_t items; items.clear();
+
+    for (const auto &p: api_proxy->get_playlists())
+    {
+        // column C0 - total playlist's tracks count
+        wstring tracks_count = L"";
+        auto requester = playlist_tracks_requester(p.id);
+        if (api_proxy->is_request_cached(requester.get_url()) && requester(api_proxy))
+            tracks_count = std::format(L"{: >6}", (requester.get_total()));
+        
+        items.push_back({
+            p.id, p.name, L"",
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL, 0,
+            {
+                tracks_count
+            }
+        });
+    }
 
     return &items;
+}
+
+bool playlists_view::request_extra_info(const string &playlist_id)
+{
+    if (!playlist_id.empty())
+    {
+        auto requester = playlist_tracks_requester(playlist_id);
+        if (requester(api_proxy))
+            return true;
+    }
+
+    return false;
 }
 
 } // namespace ui

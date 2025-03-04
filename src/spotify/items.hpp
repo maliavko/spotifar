@@ -4,6 +4,8 @@
 
 #include "stdafx.h"
 
+// TODO: to make a review of the methods, now some items have methods for formatting data,
+// which possibly is needed only for views
 namespace spotifar { namespace spotify {
 
 static const string invalid_id = "";
@@ -86,7 +88,9 @@ struct simplified_track
     wstring name;
     int duration_ms = 0;
     int duration = 0;
-    size_t track_number;  // TODO: track number could be duplicated for different discs
+    size_t disc_number;
+    size_t track_number;
+    bool is_explicit;
 
     static string make_uri(const string &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();

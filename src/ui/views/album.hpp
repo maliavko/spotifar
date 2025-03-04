@@ -13,30 +13,18 @@ using namespace spotify;
 class album_view: public view
 {
 public:
-    struct find_processor: public view::find_processor
-    {
-        api_abstract *api_proxy;
-        string album_id, artist_id;
-
-        find_processor(api_abstract *api, const string &artist_id, const string &album_id):
-            api_proxy(api), album_id(album_id), artist_id(artist_id) {};
-        auto get_items() const -> const items_t*;
-    };
-public:
     album_view(api_abstract *api, const artist &artist, const album &album);
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
-    auto get_item_idx(const string &item_id) -> size_t;
-    auto get_items() const -> const items_t* { return &items; }
+    auto get_items() -> const items_t*;
 
     auto select_item(const string &track_id) -> intptr_t;
+    auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     album album;
     artist artist;
     api_abstract *api_proxy;
-
-    items_t items;
 };
 
 } // namespace ui
