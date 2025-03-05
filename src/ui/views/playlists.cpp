@@ -21,8 +21,9 @@ const wchar_t* playlists_view::get_title() const
     return get_text(MPanelPlaylistsItemLabel);
 }
 
-intptr_t playlists_view::select_item(const string &playlist_id)
+intptr_t playlists_view::select_item(const SetDirectoryInfo *info)
 {
+    auto playlist_id = view::user_data_t::unpack(info->UserData)->id;
     if (playlist_id.empty())
     {
         events::show_root_view();
@@ -81,11 +82,7 @@ const view::items_t* playlists_view::get_items()
 bool playlists_view::request_extra_info(const string &playlist_id)
 {
     if (!playlist_id.empty())
-    {
-        auto requester = playlist_tracks_requester(playlist_id);
-        if (requester(api_proxy))
-            return true;
-    }
+        return playlist_tracks_requester(playlist_id)(api_proxy);
 
     return false;
 }

@@ -113,8 +113,8 @@ void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
 intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
-{
-    return static_cast<plugin*>(info->hPanel)->set_directory(info);
+{   
+    return info->UserData.Data == NULL || static_cast<plugin*>(info->hPanel)->set_directory(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
@@ -170,6 +170,7 @@ intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 /// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
 intptr_t WINAPI CompareW(const CompareInfo *info)
 {
+    //std::unique_ptr<plugin>(static_cast<plugin*>(info->hPanel));
     return -2;
 }
 

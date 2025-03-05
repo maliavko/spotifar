@@ -91,6 +91,7 @@ struct simplified_track
     size_t disc_number;
     size_t track_number;
     bool is_explicit;
+    std::vector<simplified_artist> artists;
 
     static string make_uri(const string &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();

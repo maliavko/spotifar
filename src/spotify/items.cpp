@@ -133,6 +133,7 @@ void from_json(const json &j, simplified_track &t)
     j.at("disc_number").get_to(t.disc_number);
     j.at("duration_ms").get_to(t.duration_ms);
     j.at("explicit").get_to(t.is_explicit);
+    j.at("artists").get_to(t.artists);
 
     t.duration = t.duration_ms / 1000;
     t.name = utils::utf8_decode(j.at("name").get<string>());
@@ -146,6 +147,7 @@ void to_json(json &j, const simplified_track &t)
         { "track_number", t.track_number },
         { "disc_number", t.disc_number },
         { "explicit", t.is_explicit },
+        { "artists", t.artists },
         { "name", utils::utf8_encode(t.name) },
     };
 }

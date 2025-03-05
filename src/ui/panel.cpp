@@ -125,9 +125,13 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;
         panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
-        panel_item[idx].UserData.Data = new far_user_data(item.id);
-        panel_item[idx].UserData.FreeData = free_user_data;
         panel_item[idx].FileSize = item.size;
+        
+        if (item.user_data != nullptr)
+        {
+            panel_item[idx].UserData.Data = item.user_data;
+            panel_item[idx].UserData.FreeData = item.user_data->free;
+        }
     }
 
     info->PanelItem = panel_item;
@@ -212,7 +216,7 @@ void panel::show_recents_view()
 
 auto panel::select_directory(const SetDirectoryInfo *info) -> intptr_t
 {
-    return view->select_item(far_user_data::unpack(info->UserData));
+    return view->select_item(info);
 }
 
 auto panel::process_input(const ProcessPanelInputInfo *info) -> intptr_t

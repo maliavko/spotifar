@@ -109,8 +109,9 @@ const view::items_t* artists_view::get_items()
     return &items;
 }
 
-intptr_t artists_view::select_item(const string &artist_id)
+intptr_t artists_view::select_item(const SetDirectoryInfo *info)
 {
+    auto artist_id = view::user_data_t::unpack(info->UserData)->id;
     if (artist_id.empty())
     {
         events::show_root_view();
@@ -130,11 +131,7 @@ intptr_t artists_view::select_item(const string &artist_id)
 bool artists_view::request_extra_info(const string &artist_id)
 {
     if (!artist_id.empty())
-    {
-        auto requester = artist_albums_requester(artist_id);
-        if (requester(api_proxy))
-            return true;
-    }
+        return artist_albums_requester(artist_id)(api_proxy);
 
     return false;
 }

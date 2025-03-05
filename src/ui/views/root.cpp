@@ -115,8 +115,9 @@ const view::items_t* root_view::get_items()
     return &items;
 }
 
-intptr_t root_view::select_item(const string &view_id)
+intptr_t root_view::select_item(const SetDirectoryInfo *info)
 {
+    auto view_id = view::user_data_t::unpack(info->UserData)->id;
     if (view_id == artists_view_id)
     {
         ui::events::show_artists_view();
@@ -141,18 +142,10 @@ intptr_t root_view::select_item(const string &view_id)
 bool root_view::request_extra_info(const string &view_id)
 {
     if (view_id == artists_view_id)
-    {
-        auto requester = followed_artists_requester();
-        if (requester(api_proxy))
-            return true;
-    }
+        return followed_artists_requester()(api_proxy);
 
     if (view_id == playlists_view_id)
-    {
-        auto requester = user_playlists_requester();
-        if (requester(api_proxy))
-            return true;
-    }
+        return user_playlists_requester()(api_proxy);
 
     // TODO: recents?
     return false;

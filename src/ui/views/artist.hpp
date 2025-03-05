@@ -19,7 +19,7 @@ public:
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
 
-    auto select_item(const string &album_id) -> intptr_t;
+    auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto request_extra_info(const string &artist_id) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;

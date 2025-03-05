@@ -26,8 +26,9 @@ const wchar_t* playlist_view::get_title() const
     return playlist.name.c_str();
 }
 
-intptr_t playlist_view::select_item(const string &track_id)
+intptr_t playlist_view::select_item(const SetDirectoryInfo *info)
 {
+    auto track_id = view::user_data_t::unpack(info->UserData)->id;
     if (track_id.empty())
     {
         events::show_playlists_view();

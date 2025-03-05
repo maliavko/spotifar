@@ -10,6 +10,31 @@ namespace spotifar { namespace ui {
 class view
 {
 public:
+    struct user_data_t
+    {
+        string id;
+        
+        static void WINAPI free(void *const user_data, const FarPanelItemFreeInfo *const info)
+        {
+            delete reinterpret_cast<const user_data_t*>(user_data);
+        }
+        
+        static const user_data_t* unpack(const UserDataItem &user_data)
+        {
+            if (user_data.Data != nullptr)
+                return reinterpret_cast<const user_data_t*>(user_data.Data);
+            return nullptr;
+        }
+
+        static const string unpack_item_id(const UserDataItem &user_data)
+        {
+            auto unpacked_data = unpack(user_data);
+            if (unpacked_data != nullptr)
+                return unpacked_data->id;
+            return "";
+        }
+    };
+
     /// @brief a proxy item, used for passing data from controllers to FAR panels api
     struct item_t
     {
@@ -17,11 +42,13 @@ public:
         wstring name;
         wstring description;
         uintptr_t file_attrs;
-        size_t size;
+        size_t size; // TODO: it seems, it is not used
         std::vector<wstring> custom_column_data;
+        user_data_t *user_data;
 
         item_t(const string &id, const wstring &name, const wstring &descr,
-            uintptr_t attrs, size_t size = 0, const std::vector<wstring> &columns_data = {});
+            uintptr_t attrs, size_t size = 0, const std::vector<wstring> &columns_data = {},
+            user_data_t *user_data = nullptr);
     };
 
     typedef std::vector<item_t> items_t;
@@ -39,7 +66,7 @@ public:
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
 
-    virtual auto select_item(const string &item_id) -> intptr_t { return FALSE; }
+    virtual auto select_item(const SetDirectoryInfo *info) -> intptr_t { return FALSE; }
     virtual auto get_item_idx(const string &item_id) -> size_t { return 0; }
     virtual auto process_input(const ProcessPanelInputInfo *info) -> intptr_t { return FALSE; }
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}

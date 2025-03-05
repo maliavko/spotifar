@@ -108,7 +108,8 @@ bool api::start()
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); });
 
     // initializing http responses cache
-    pool.detach_task([this, ctx] { api_responses_cache.start(*ctx); }, BS::pr::highest);
+    //pool.detach_task([this, ctx] { api_responses_cache.start(*ctx); }, BS::pr::highest);
+    api_responses_cache.start(*ctx);
 
     return true;
 }

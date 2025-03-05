@@ -21,7 +21,7 @@ public:
     auto get_key_bar_info() -> const key_bar_info_t*;
     auto get_info_lines() -> const info_lines_t*;
 
-    auto select_item(const string &view_id) -> intptr_t;
+    auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto request_extra_info(const string &view_id) -> bool;
 protected:
@@ -49,7 +49,8 @@ view::item_t root_view::pack_menu_item(const string &id, int name_msg_id, int de
         0,
         {
             entries_count
-        }
+        },
+        new view::user_data_t{ id },
     };
 }
 

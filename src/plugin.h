@@ -28,6 +28,7 @@ public:
     auto free_panel_items(const FreeFindDataInfo *info) -> void;
     auto set_directory(const SetDirectoryInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    //auto compare_items()
 
 protected:
     void launch_sync_worker();

@@ -25,8 +25,9 @@ const wchar_t* artist_view::get_title() const
     return artist.name.c_str();
 }
 
-intptr_t artist_view::select_item(const string &album_id)
+intptr_t artist_view::select_item(const SetDirectoryInfo *info)
 {
+    auto album_id = view::user_data_t::unpack(info->UserData)->id;
     if (album_id.empty())
     {
         events::show_artists_view();
@@ -152,11 +153,7 @@ const view::items_t* artist_view::get_items()
 bool artist_view::request_extra_info(const string &album_id)
 {
     if (!album_id.empty())
-    {
-        auto requester = album_tracks_requester(album_id);
-        if (requester(api_proxy))
-            return true;
-    }
+        return album_tracks_requester(album_id)(api_proxy);
 
     return false;
 }
