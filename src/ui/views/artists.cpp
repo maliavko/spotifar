@@ -116,6 +116,11 @@ const view::items_t* artists_view::get_items()
     return &items;
 }
 
+void artists_view::free_user_data(void *const user_data)
+{
+    delete reinterpret_cast<const artist_user_data_t*>(user_data);
+}
+
 intptr_t artists_view::select_item(const SetDirectoryInfo *info)
 {
     if (info->UserData.Data == nullptr)
@@ -181,8 +186,8 @@ intptr_t artists_view::process_key_input(int combined_key)
 intptr_t artists_view::compare_items(const CompareInfo *info)
 {
     const auto
-        item1 = artist_user_data_t::unpack(info->Item1->UserData),
-        item2 = artist_user_data_t::unpack(info->Item2->UserData);
+        &item1 = artist_user_data_t::unpack(info->Item1->UserData),
+        &item2 = artist_user_data_t::unpack(info->Item2->UserData);
 
     if (sort_mode == 1)
         return item1->name.compare(item2->name);
@@ -194,6 +199,11 @@ intptr_t artists_view::compare_items(const CompareInfo *info)
         return item1->followers_count - item2->followers_count;
     
     return -2;
+}
+    
+FARPANELITEMFREECALLBACK artists_view::get_free_user_data_callback()
+{
+    return artist_user_data_t::free;
 }
 
 } // namespace ui

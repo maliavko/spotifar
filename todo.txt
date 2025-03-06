@@ -27,11 +27,9 @@ application ideas
 
 bugs
 - after refreshing an access token, the plugin starts one more librespot process
-- on the album tracks view search files with Alt does not work properly due to year in the name
 - big http cache causes plugin to freeze while closing
-- metallica ride the lightning delux has multiply discs, show incorrect on the panel
+- metallica ride the lightning delux has multiply discs, show incorrectly on the panel
 - Bi-2, Мяу Кисс ми; 5th track is empty
-- I can select several items on the panel, but request_extra work only fot the item under cursor
 
 
 //// sample how to show loading splash screen

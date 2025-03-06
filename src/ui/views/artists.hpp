@@ -13,7 +13,7 @@ using namespace spotify;
 class artists_view: public view
 {
 public:
-    struct artist_user_data_t: public view::user_data_t
+    struct artist_user_data_t: public user_data_t
     {
         size_t popularity;
         size_t followers_count;
@@ -43,6 +43,8 @@ public:
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto compare_items(const CompareInfo *info) -> intptr_t;
     auto process_key_input(int combined_key) -> intptr_t ;
+    auto free_user_data(void *const user_data) -> void;
+    auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
 private:
     api_abstract *api_proxy;
     size_t sort_mode = 1;

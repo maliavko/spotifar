@@ -26,6 +26,7 @@ public:
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
     void change_view(std::shared_ptr<ui::view> view);
+    static void free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info);
 
     // views events' handlers
     virtual void refresh_panels(const string &item_id = "");

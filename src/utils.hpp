@@ -218,23 +218,12 @@ namespace far3
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
+
+        /// @brief Returns a list of the selected items on the panel. If there is none of the
+        /// selected items on the panel, so it returns the one under cursor or zero, if the the one
+        /// is ".." item 
+        auto get_selected_items(HANDLE panel) -> std::vector<std::shared_ptr<PluginPanelItem>>;
         auto get_info(HANDLE panel) -> PanelInfo;
-
-        /// @brief Returns the shared_ptr with data object for the given command.
-        /// The memory allocated will get freed automatically.
-        /// @tparam T the data type to be returned
-        // template<class T>
-        // std::shared_ptr<T> get_data(HANDLE panel, FILE_CONTROL_COMMANDS cmd)
-        // {
-        //     size_t size = control(panel, cmd, 0, 0); // getting the data size
-
-        //     // allocating a memory to store the data with the custom deleter
-        //     std::shared_ptr<T> data_ptr((T*)malloc(size), free_deleter());
-        //     if (data_ptr)
-        //         control(panel, cmd, size, data_ptr.get());
-            
-        //     return data_ptr;
-        // }
     }   
 
     namespace actl

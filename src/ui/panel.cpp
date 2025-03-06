@@ -113,7 +113,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         if (item.user_data != nullptr)
         {
             panel_item[idx].UserData.Data = item.user_data;
-            panel_item[idx].UserData.FreeData = item.user_data->free;
+            panel_item[idx].UserData.FreeData = view->get_free_user_data_callback();
         }
     }
 
@@ -137,6 +137,13 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
         free(const_cast<wchar_t**>(item.CustomColumnData));
     }
     free(info->PanelItem);
+}
+
+void panel::free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
+{
+    // if (view != nullptr)
+    //     view->free
+
 }
 
 void panel::change_view(std::shared_ptr<ui::view> view)
@@ -213,35 +220,13 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
         {
             case VK_F3:
             {
-                auto item = far3::panels::get_current_item(PANEL_ACTIVE);
-                if (item != nullptr)
-                {
-                    // request extra info for the item and force a panel's items update in case
-                    // of a successfully finished request
-                    // if (view->request_extra_info(item.get()))
-                    //     refresh_panels();
-                    struct free_deleter
-                    {
-                        void operator()(void *data) { free(data); }
-                    };
-                    
-                    auto panel_info = utils::far3::panels::get_info(PANEL_ACTIVE);
-                    for (size_t i = 0; i < panel_info.SelectedItemsNumber; i++)
-                    {
-                        size_t size = utils::far3::panels::control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
-                        std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
-                        if (ppi)
-                        {
-                            FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
-                            utils::far3::panels::control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, &fgppi);
-    
-                            int y = 0;
-                            spdlog::debug("{}", utils::to_string(ppi->FileName));
-                        }
-                    }
-                }
-                else
-                    utils::log::global->error("There is an error occured while getting a current panel item");
+                bool should_refresh = false;
+                for (const auto &ppi: far3::panels::get_selected_items(PANEL_ACTIVE))
+                    if (view->request_extra_info(ppi.get()))
+                        should_refresh = true;
+
+                if (should_refresh)
+                    refresh_panels();
         
                 // blocking F3 panel processing in general, as we have a custom one
                 return TRUE;

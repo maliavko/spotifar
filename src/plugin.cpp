@@ -52,10 +52,10 @@ void plugin::shutdown()
     shutdown_sync_worker();
     
     // sending a control stop event to the librespot process
-    GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
+    //GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
     
-    CloseHandle(m_hChildStd_OUT_Rd);
-    CloseHandle(m_hChildStd_OUT_Wr);
+    //CloseHandle(m_hChildStd_OUT_Rd);
+    //CloseHandle(m_hChildStd_OUT_Wr);
 
     player.hide();
     api.shutdown();
@@ -106,7 +106,7 @@ void plugin::launch_sync_worker()
                 background_tasks.process_all(); // ticking background tasks if any
 
                 check_global_hotkeys();
-                check_librespot_messages();
+                //check_librespot_messages(); // TODO: this one also hangs if there is no process e.g.
 
                 std::this_thread::sleep_for(50ms);
             }
@@ -223,9 +223,9 @@ void plugin::launch_librespot(const string &access_token)
     //     return;
     // }
 
-
-    DWORD dwMode = PIPE_READMODE_BYTE | PIPE_NOWAIT;
-    SetNamedPipeHandleState(m_hChildStd_OUT_Rd, &dwMode, NULL, NULL);
+    // TODO: this functiona somtimes hangs indefinitely
+    // DWORD dwMode = PIPE_READMODE_BYTE | PIPE_NOWAIT;
+    // SetNamedPipeHandleState(m_hChildStd_OUT_Rd, &dwMode, NULL, NULL);
 }
 
 void plugin::on_global_hotkeys_setting_changed(bool is_enabled)

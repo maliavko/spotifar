@@ -15,6 +15,11 @@ namespace spotifar { namespace ui {
         user_data(user_data)
     {
     }
+    
+    FARPANELITEMFREECALLBACK view::get_free_user_data_callback()
+    {
+        return user_data_t::free;
+    }
 
 } // namespace ui
 } // namespace spotifar

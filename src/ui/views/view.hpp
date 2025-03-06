@@ -65,6 +65,8 @@ public:
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
     virtual auto request_extra_info(const PluginPanelItem *item) -> bool { return false; }
     virtual auto compare_items(const CompareInfo *info) -> intptr_t { return -2; }
+    virtual auto free_user_data(void *const user_data) -> void {};
+    virtual auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
 protected:
     const wstring name;
 };

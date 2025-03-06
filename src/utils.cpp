@@ -262,6 +262,27 @@ namespace far3
             return nullptr;
         }
         
+        std::vector<std::shared_ptr<PluginPanelItem>> get_selected_items(HANDLE panel)
+        {
+            std::vector<std::shared_ptr<PluginPanelItem>> result;
+
+            auto panel_info = get_info(panel);
+            for (size_t i = 0; i < panel_info.SelectedItemsNumber; i++)
+            {
+                size_t size = control(panel, FCTL_GETSELECTEDPANELITEM, i, 0);
+                std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
+                if (ppi)
+                {
+                    FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
+                    control(panel, FCTL_GETSELECTEDPANELITEM, i, &fgppi);
+
+                    result.push_back(ppi);
+                }
+            }
+
+            return result;
+        }
+        
         PanelInfo get_info(HANDLE panel)
         {
             PanelInfo pinfo;
