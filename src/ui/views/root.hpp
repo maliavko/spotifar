@@ -23,7 +23,7 @@ public:
 
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
-    auto request_extra_info(const string &view_id) -> bool;
+    auto request_extra_info(const PluginPanelItem *item) -> bool;
 protected:
     template<class T>
     auto pack_menu_item(const string &id, int name_msg_id, int descr_msg_id,

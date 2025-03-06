@@ -20,7 +20,7 @@ public:
     auto get_items() -> const items_t*;
 
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
-    auto request_extra_info(const string &playlist_id) -> bool;
+    auto request_extra_info(const PluginPanelItem *item) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     api_abstract *api_proxy;

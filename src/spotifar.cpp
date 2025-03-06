@@ -114,13 +114,12 @@ void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
 intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 {   
-    return info->UserData.Data == NULL || static_cast<plugin*>(info->hPanel)->set_directory(info);
+    return static_cast<plugin*>(info->hPanel)->set_directory(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
 intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
-    // auto &plugin = *static_cast<Plugin*>(info->hPanel);
     return static_cast<plugin*>(info->hPanel)->process_input(info);
 }
 
@@ -131,9 +130,7 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
     if (info->Event == FE_CLOSE)
     {
         p.shutdown();
-    }
-    if (info->Event == FE_REDRAW)
-    {
+        return FALSE; // return TRUE if the panel should not close
     }
 
     return FALSE;
@@ -170,8 +167,7 @@ intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 /// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
 intptr_t WINAPI CompareW(const CompareInfo *info)
 {
-    //std::unique_ptr<plugin>(static_cast<plugin*>(info->hPanel));
-    return -2;
+    return static_cast<plugin*>(info->hPanel)->compare_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 

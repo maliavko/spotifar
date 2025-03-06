@@ -23,14 +23,14 @@ const wchar_t* playlists_view::get_title() const
 
 intptr_t playlists_view::select_item(const SetDirectoryInfo *info)
 {
-    auto playlist_id = view::user_data_t::unpack(info->UserData)->id;
-    if (playlist_id.empty())
+    if (info->UserData.Data == nullptr)
     {
         events::show_root_view();
         return TRUE;
     }
-    
-    auto playlist = api_proxy->get_playlist(playlist_id);
+
+    auto playlist_id = view::user_data_t::unpack(info->UserData)->id;
+    const auto &playlist = api_proxy->get_playlist(playlist_id);
     if (playlist.is_valid())
     {
         events::show_playlist_view(playlist);
@@ -72,15 +72,17 @@ const view::items_t* playlists_view::get_items()
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL, 0,
             {
                 tracks_count
-            }
+            },
+            new view::user_data_t{ p.id },
         });
     }
 
     return &items;
 }
 
-bool playlists_view::request_extra_info(const string &playlist_id)
+bool playlists_view::request_extra_info(const PluginPanelItem *item)
 {
+    auto playlist_id = view::user_data_t::unpack(item->UserData)->id;
     if (!playlist_id.empty())
         return playlist_tracks_requester(playlist_id)(api_proxy);
 

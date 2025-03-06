@@ -218,6 +218,7 @@ namespace far3
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
+        auto get_info(HANDLE panel) -> PanelInfo;
 
         /// @brief Returns the shared_ptr with data object for the given command.
         /// The memory allocated will get freed automatically.

@@ -117,6 +117,11 @@ const view::items_t* root_view::get_items()
 
 intptr_t root_view::select_item(const SetDirectoryInfo *info)
 {
+    if (info->UserData.Data == nullptr)
+    {
+        return FALSE;
+    }
+
     auto view_id = view::user_data_t::unpack(info->UserData)->id;
     if (view_id == artists_view_id)
     {
@@ -139,8 +144,9 @@ intptr_t root_view::select_item(const SetDirectoryInfo *info)
     return FALSE;
 }
 
-bool root_view::request_extra_info(const string &view_id)
+bool root_view::request_extra_info(const PluginPanelItem *item)
 {
+    auto view_id = view::user_data_t::unpack(item->UserData)->id;
     if (view_id == artists_view_id)
         return followed_artists_requester()(api_proxy);
 

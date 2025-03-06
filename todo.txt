@@ -31,7 +31,7 @@ bugs
 - big http cache causes plugin to freeze while closing
 - metallica ride the lightning delux has multiply discs, show incorrect on the panel
 - Bi-2, Мяу Кисс ми; 5th track is empty
-
+- I can select several items on the panel, but request_extra work only fot the item under cursor
 
 
 //// sample how to show loading splash screen

@@ -23,6 +23,7 @@ public:
     auto free_panel_items(const FreeFindDataInfo *info) -> void;
     auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
     void change_view(std::shared_ptr<ui::view> view);
 

@@ -117,7 +117,7 @@ void to_json(json &j, const album &a)
 
 const string& simplified_track::get_fields_filter()
 {
-    static string fields = "id,name,duration_ms,track_number";
+    static string fields = "id,name,duration_ms,disc_number,track_number,explicit,artists";
     return fields;
 }
 

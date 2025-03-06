@@ -27,14 +27,14 @@ const wchar_t* artist_view::get_title() const
 
 intptr_t artist_view::select_item(const SetDirectoryInfo *info)
 {
-    auto album_id = view::user_data_t::unpack(info->UserData)->id;
-    if (album_id.empty())
+    if (info->UserData.Data == nullptr)
     {
         events::show_artists_view();
         return TRUE;
     }
     
-    const spotify::album &album = api_proxy->get_album(album_id);
+    auto album_id = view::user_data_t::unpack(info->UserData)->id;
+    const album &album = api_proxy->get_album(album_id);
     if (album.is_valid())
     { 
         events::show_album_view(artist, album);
@@ -144,45 +144,42 @@ const view::items_t* artist_view::get_items()
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             0,
-            columns
+            columns,
+            new view::user_data_t{ a.id },
         });
     }
     return &items;
 }
 
-bool artist_view::request_extra_info(const string &album_id)
+bool artist_view::request_extra_info(const PluginPanelItem *item)
 {
+    auto album_id = view::user_data_t::unpack(item->UserData)->id;
     if (!album_id.empty())
         return album_tracks_requester(album_id)(api_proxy);
 
     return false;
 }
 
-auto artist_view::process_input(const ProcessPanelInputInfo *info) -> intptr_t
+intptr_t artist_view::process_key_input(int combined_key)
 {
-    auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
+    switch (combined_key)
     {
-        int key = utils::far3::keys::make_combined(key_event);
-        switch (key)
+        case VK_F4:
         {
-            case VK_F4:
+            auto item = utils::far3::panels::get_current_item(PANEL_ACTIVE);
+            if (item != nullptr)
             {
-                auto item = utils::far3::panels::get_current_item(PANEL_ACTIVE);
-                if (item != nullptr)
-                {
-                    // TODO: the view cannot unpack user data, as it was packed by panel.
-                    // this over the idea, that the view should already receive here 
-                    // an event together with the cursor item
+                // TODO: the view cannot unpack user data, as it was packed by panel.
+                // this over the idea, that the view should already receive here 
+                // an event together with the cursor item
 
-                    // utils::log::global->info("An album is being picked for playback, {}", );
-                    // api_proxy->start_playback(album::make_uri(data->id));
-                }
-                else
-                    utils::log::global->error("There is an error occured while getting a current panel item");
-
-                return TRUE;
+                // utils::log::global->info("An album is being picked for playback, {}", );
+                // api_proxy->start_playback(album::make_uri(data->id));
             }
+            else
+                utils::log::global->error("There is an error occured while getting a current panel item");
+
+            return TRUE;
         }
     }
     return FALSE;

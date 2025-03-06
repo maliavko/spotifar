@@ -144,16 +144,6 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
     {
         switch (far3::keys::make_combined(key_event))
         {
-            // case VK_F3:
-            // {
-            //     show_player_dialog();
-            //     return TRUE;
-            // }
-            case VK_F6:
-            {
-                far3::panels::set_view_mode(PANEL_ACTIVE, 0);
-                return TRUE;
-            }
             case VK_F8:
             {
                 api.clear_http_cache();
@@ -162,6 +152,11 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
         }
     }
     return panel.process_input(info);
+}
+
+intptr_t plugin::compare_items(const CompareInfo *info)
+{
+    return panel.compare_items(info);
 }
 
 void plugin::launch_librespot(const string &access_token)

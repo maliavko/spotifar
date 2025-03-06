@@ -261,6 +261,13 @@ namespace far3
             }
             return nullptr;
         }
+        
+        PanelInfo get_info(HANDLE panel)
+        {
+            PanelInfo pinfo;
+            control(panel, FCTL_GETPANELINFO, 0, &pinfo);
+            return pinfo;
+        }
     }
     
     namespace actl

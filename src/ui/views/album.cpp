@@ -49,7 +49,7 @@ const view::items_t* album_view::get_items()
         columns.push_back(std::format(L"{: ^6}", track_number));
 
         // column C1 - is explicit lyrics
-        columns.push_back(track.is_explicit ? L"[E]" : L"");
+        columns.push_back(track.is_explicit ? L" * " : L"");
 
         // column C2 - duration
         auto duration = std::chrono::milliseconds(track.duration_ms);
@@ -70,7 +70,8 @@ const view::items_t* album_view::get_items()
             track.name,
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_VIRTUAL, 0,
-            columns
+            columns,
+            new view::user_data_t{ track.id },
         });
     }
 
@@ -94,13 +95,14 @@ void album_view::update_panel_info(OpenPanelInfo *info)
 
 intptr_t album_view::select_item(const SetDirectoryInfo *info)
 {
-    auto track_id = view::user_data_t::unpack(info->UserData)->id;
-    if (track_id.empty())
+    if (info->UserData.Data == nullptr)
     {
         events::show_artist_view(artist);
         return TRUE;
     }
-    else
+
+    const auto &track_id = view::user_data_t::unpack(info->UserData)->id;
+    if (!track_id.empty())
     {
         api_proxy->start_playback(album.id, track_id);
         return TRUE; // TODO: or False as nothing has been changed on the panel

@@ -11,24 +11,6 @@ namespace spotifar { namespace ui {
 
 namespace far3 = utils::far3;
 
-struct far_user_data
-{
-    string id;
-
-    static string unpack(const UserDataItem &user_data)
-    {
-        string item_id = "";
-        if (user_data.Data != nullptr)
-            item_id = reinterpret_cast<const far_user_data*>(user_data.Data)->id;
-        return item_id;
-    }
-};
-
-static void WINAPI free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
-{
-    delete reinterpret_cast<const far_user_data*>(user_data);
-}
-
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
@@ -55,6 +37,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
     info->StartPanelMode = '3';
+    info->StartSortMode = SM_USER;
 
     // filling in the info lines on the Ctrl+L panel
     const auto &info_lines = view->get_info_lines();
@@ -214,12 +197,12 @@ void panel::show_recents_view()
     //return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
-auto panel::select_directory(const SetDirectoryInfo *info) -> intptr_t
+intptr_t panel::select_directory(const SetDirectoryInfo *info)
 {
     return view->select_item(info);
 }
 
-auto panel::process_input(const ProcessPanelInputInfo *info) -> intptr_t
+intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 {
 
     auto &key_event = info->Rec.Event.KeyEvent;
@@ -233,9 +216,29 @@ auto panel::process_input(const ProcessPanelInputInfo *info) -> intptr_t
                 auto item = far3::panels::get_current_item(PANEL_ACTIVE);
                 if (item != nullptr)
                 {
-                    if (view->request_extra_info(far_user_data::unpack(item->UserData)))
-                        // force a panel's items update after successful additional info request
-                        refresh_panels();
+                    // request extra info for the item and force a panel's items update in case
+                    // of a successfully finished request
+                    // if (view->request_extra_info(item.get()))
+                    //     refresh_panels();
+                    struct free_deleter
+                    {
+                        void operator()(void *data) { free(data); }
+                    };
+                    
+                    auto panel_info = utils::far3::panels::get_info(PANEL_ACTIVE);
+                    for (size_t i = 0; i < panel_info.SelectedItemsNumber; i++)
+                    {
+                        size_t size = utils::far3::panels::control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
+                        std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
+                        if (ppi)
+                        {
+                            FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
+                            utils::far3::panels::control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, &fgppi);
+    
+                            int y = 0;
+                            spdlog::debug("{}", utils::to_string(ppi->FileName));
+                        }
+                    }
                 }
                 else
                     utils::log::global->error("There is an error occured while getting a current panel item");
@@ -243,10 +246,38 @@ auto panel::process_input(const ProcessPanelInputInfo *info) -> intptr_t
                 // blocking F3 panel processing in general, as we have a custom one
                 return TRUE;
             }
+            default:
+                if (view && view->process_key_input(key))
+                    return TRUE;
         }
     }
+        
+    using far3::keys::mods::ctrl;
 
-    return view && view->process_input(info);
+    // the sorting hotkeys are blocked, due to custom plugin implementation
+    switch (far3::keys::make_combined(key_event))
+    {
+        case VK_F3 + ctrl:
+        case VK_F4 + ctrl:
+        case VK_F5 + ctrl:
+        case VK_F6 + ctrl:
+        case VK_F7 + ctrl:
+        case VK_F8 + ctrl:
+        case VK_F9 + ctrl:
+        case VK_F10 + ctrl:
+        case VK_F11 + ctrl:
+        case VK_F12 + ctrl:
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+intptr_t panel::compare_items(const CompareInfo *info)
+{
+    if (view)
+        return view->compare_items(info);
+    return -2;
 }
 
 } // namespace ui

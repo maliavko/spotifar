@@ -20,9 +20,9 @@ public:
     auto get_items() -> const items_t*;
 
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
-    auto request_extra_info(const string &artist_id) -> bool;
+    auto request_extra_info(const PluginPanelItem *item) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
-    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    auto process_key_input(int combined_key) -> intptr_t;
 private:
     api_abstract *api_proxy;
     artist artist;

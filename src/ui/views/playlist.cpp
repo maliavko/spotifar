@@ -10,8 +10,6 @@ playlist_view::playlist_view(api_abstract *api, const spotify::playlist &p):
     playlist(p),
     api_proxy(api)
 {
-    for (const auto &t: api_proxy->get_playlist_tracks(playlist.id))
-        items.push_back({t.track.id, t.track.name, L"", FILE_ATTRIBUTE_VIRTUAL});
 }
 
 const wchar_t* playlist_view::get_dir_name() const
@@ -26,14 +24,33 @@ const wchar_t* playlist_view::get_title() const
     return playlist.name.c_str();
 }
 
+const view::items_t* playlist_view::get_items()
+{
+    static view::items_t items; items.clear();
+
+    for (const auto &t: api_proxy->get_playlist_tracks(playlist.id))
+        items.push_back({
+            t.track.id,
+            t.track.name,
+            L"",
+            FILE_ATTRIBUTE_VIRTUAL,
+            0,
+            {},
+            new view::user_data_t{ t.track.id },
+        });
+
+    return &items;
+}
+
 intptr_t playlist_view::select_item(const SetDirectoryInfo *info)
 {
-    auto track_id = view::user_data_t::unpack(info->UserData)->id;
-    if (track_id.empty())
+    if (info->UserData.Data == nullptr)
     {
         events::show_playlists_view();
         return TRUE;
     }
+
+    const auto &track_id = view::user_data_t::unpack(info->UserData)->id;
     
     // TODO: what to do here? start playing?
     // auto playlist = api->get_playlist(playlist_id);

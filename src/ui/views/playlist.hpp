@@ -17,13 +17,12 @@ public:
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
-    auto get_items() -> const items_t* { return &items; }
+    auto get_items() -> const items_t*;
 
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
 private:
     api_abstract *api_proxy;
     playlist playlist;
-    items_t items;
 };
 
 } // naemspace ui
