@@ -17,9 +17,6 @@ static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6,
 panel::panel(spotify::api_abstract *api):
     api_proxy(api)
 {
-    // TODO: process correctly selected item on the panel
-    // https://api.farmanager.com/ru/structures/pluginpanelitem.html
-    // PPIF_SELECTED
     ObserverManager::subscribe<ui_events_observer>(this);
 }
 
@@ -137,13 +134,6 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
         free(const_cast<wchar_t**>(item.CustomColumnData));
     }
     free(info->PanelItem);
-}
-
-void panel::free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
-{
-    // if (view != nullptr)
-    //     view->free
-
 }
 
 void panel::change_view(std::shared_ptr<ui::view> view)

@@ -5,10 +5,16 @@
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
+using namespace utils::far3::keys;
 
 artists_view::artists_view(api_abstract *api):
     api_proxy(api)
 {
+    sort_modes.assign({
+        { L"Name", SM_NAME, VK_F3 + mods::ctrl },
+        { L"Followers", SM_SIZE, VK_F4 + mods::ctrl },
+        { L"Popularity", SM_OWNER, VK_F5 + mods::ctrl },
+    });
 }
 
 const wchar_t* artists_view::get_dir_name() const
@@ -28,8 +34,8 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     static wstring column_name;
     
     column_name = L"Name";
-    if (sort_mode == 1)
-        column_name += is_desc ?  L'▼' : L'▲';
+    // if (sort_mode == 1)
+    //     column_name += is_desc ?  L'▼' : L'▲';
 
     static const wchar_t* titles_3[] = { column_name.c_str(), L"Albums", L"Followers", L"Pop %" };
     modes[3].ColumnTypes = L"NON,C3,C0,C1";
@@ -116,11 +122,6 @@ const view::items_t* artists_view::get_items()
     return &items;
 }
 
-void artists_view::free_user_data(void *const user_data)
-{
-    delete reinterpret_cast<const artist_user_data_t*>(user_data);
-}
-
 intptr_t artists_view::select_item(const SetDirectoryInfo *info)
 {
     if (info->UserData.Data == nullptr)
@@ -129,7 +130,7 @@ intptr_t artists_view::select_item(const SetDirectoryInfo *info)
         return TRUE;
     }
     
-    auto artist_id = artist_user_data_t::unpack(info->UserData)->id;
+    auto artist_id = unpack_user_data<artist_user_data_t>(info->UserData)->id;
     const auto &artist = api_proxy->get_artist(artist_id);
     if (artist.is_valid())
     {
@@ -142,62 +143,31 @@ intptr_t artists_view::select_item(const SetDirectoryInfo *info)
 
 bool artists_view::request_extra_info(const PluginPanelItem *item)
 {
-    auto artist_id = artist_user_data_t::unpack(item->UserData)->id;
+    auto artist_id = unpack_user_data<artist_user_data_t>(item->UserData)->id;
     if (!artist_id.empty())
         return artist_albums_requester(artist_id)(api_proxy);
 
     return false;
 }
 
-intptr_t artists_view::process_key_input(int combined_key)
-{
-    using namespace utils::far3::keys;
-
-    switch (combined_key)
-    {
-        case VK_F3 + mods::ctrl:
-            if (sort_mode == 1)
-                is_desc = !is_desc;
-            else
-                is_desc = false;
-            sort_mode = 1;
-            utils::far3::panels::set_sort_mode(PANEL_ACTIVE, SM_USER, is_desc);
-            return TRUE;
-        case VK_F4 + mods::ctrl:
-            if (sort_mode == 2)
-                is_desc = !is_desc;
-            else
-                is_desc = true;
-            sort_mode = 2;
-            utils::far3::panels::set_sort_mode(PANEL_ACTIVE, SM_USER, is_desc);
-            return TRUE;
-        case VK_F5 + mods::ctrl:
-            if (sort_mode == 3)
-                is_desc = !is_desc;
-            else
-                is_desc = true;
-            sort_mode = 3;
-            utils::far3::panels::set_sort_mode(PANEL_ACTIVE, SM_USER, is_desc);
-            return TRUE;
-    }
-    return FALSE;
-}
-
 intptr_t artists_view::compare_items(const CompareInfo *info)
 {
     const auto
-        &item1 = artist_user_data_t::unpack(info->Item1->UserData),
-        &item2 = artist_user_data_t::unpack(info->Item2->UserData);
+        &item1 = unpack_user_data<artist_user_data_t>(info->Item1->UserData),
+        &item2 = unpack_user_data<artist_user_data_t>(info->Item2->UserData);
 
-    if (sort_mode == 1)
-        return item1->name.compare(item2->name);
+    const auto &sort_mode = get_sort_mode();
+    switch (sort_mode.far_sort_mode)
+    {
+        case SM_NAME:
+            return item1->name.compare(item2->name);
 
-    if (sort_mode == 2)
-        return item1->popularity - item2->popularity;
+        case SM_OWNER:
+            return item1->popularity - item2->popularity;
 
-    if (sort_mode == 3)
-        return item1->followers_count - item2->followers_count;
-    
+        case SM_SIZE:
+            return item1->followers_count - item2->followers_count;
+    }
     return -2;
 }
     

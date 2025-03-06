@@ -22,13 +22,6 @@ public:
         {
             delete reinterpret_cast<const artist_user_data_t*>(user_data);
         }
-        
-        static const artist_user_data_t* unpack(const UserDataItem &user_data)
-        {
-            if (user_data.Data != nullptr)
-                return reinterpret_cast<const artist_user_data_t*>(user_data.Data);
-            return nullptr;
-        }
     };
 
 public:
@@ -42,13 +35,9 @@ public:
     auto request_extra_info(const PluginPanelItem *item) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto compare_items(const CompareInfo *info) -> intptr_t;
-    auto process_key_input(int combined_key) -> intptr_t ;
-    auto free_user_data(void *const user_data) -> void;
     auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
 private:
     api_abstract *api_proxy;
-    size_t sort_mode = 1;
-    bool is_desc = false;
 };
 
 } // namespace ui

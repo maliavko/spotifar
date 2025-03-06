@@ -122,7 +122,7 @@ intptr_t root_view::select_item(const SetDirectoryInfo *info)
         return FALSE;
     }
 
-    auto view_id = view::user_data_t::unpack(info->UserData)->id;
+    auto view_id = unpack_user_data<user_data_t>(info->UserData)->id;
     if (view_id == artists_view_id)
     {
         ui::events::show_artists_view();
@@ -146,7 +146,7 @@ intptr_t root_view::select_item(const SetDirectoryInfo *info)
 
 bool root_view::request_extra_info(const PluginPanelItem *item)
 {
-    auto view_id = view::user_data_t::unpack(item->UserData)->id;
+    auto view_id = unpack_user_data<user_data_t>(item->UserData)->id;
     if (view_id == artists_view_id)
         return followed_artists_requester()(api_proxy);
 

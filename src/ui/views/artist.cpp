@@ -33,7 +33,7 @@ intptr_t artist_view::select_item(const SetDirectoryInfo *info)
         return TRUE;
     }
     
-    auto album_id = view::user_data_t::unpack(info->UserData)->id;
+    auto album_id = unpack_user_data<user_data_t>(info->UserData)->id;
     const album &album = api_proxy->get_album(album_id);
     if (album.is_valid())
     { 
@@ -153,7 +153,7 @@ const view::items_t* artist_view::get_items()
 
 bool artist_view::request_extra_info(const PluginPanelItem *item)
 {
-    auto album_id = view::user_data_t::unpack(item->UserData)->id;
+    auto album_id = unpack_user_data<user_data_t>(item->UserData)->id;
     if (!album_id.empty())
         return album_tracks_requester(album_id)(api_proxy);
 

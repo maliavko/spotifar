@@ -101,7 +101,7 @@ intptr_t album_view::select_item(const SetDirectoryInfo *info)
         return TRUE;
     }
 
-    const auto &track_id = view::user_data_t::unpack(info->UserData)->id;
+    const auto &track_id = unpack_user_data<user_data_t>(info->UserData)->id;
     if (!track_id.empty())
     {
         api_proxy->start_playback(album.id, track_id);

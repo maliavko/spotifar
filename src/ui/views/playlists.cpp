@@ -29,7 +29,7 @@ intptr_t playlists_view::select_item(const SetDirectoryInfo *info)
         return TRUE;
     }
 
-    auto playlist_id = view::user_data_t::unpack(info->UserData)->id;
+    auto playlist_id = unpack_user_data<user_data_t>(info->UserData)->id;
     const auto &playlist = api_proxy->get_playlist(playlist_id);
     if (playlist.is_valid())
     {
@@ -82,7 +82,7 @@ const view::items_t* playlists_view::get_items()
 
 bool playlists_view::request_extra_info(const PluginPanelItem *item)
 {
-    auto playlist_id = view::user_data_t::unpack(item->UserData)->id;
+    auto playlist_id = unpack_user_data<user_data_t>(item->UserData)->id;
     if (!playlist_id.empty())
         return playlist_tracks_requester(playlist_id)(api_proxy);
 

@@ -26,17 +26,16 @@ public:
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
     void change_view(std::shared_ptr<ui::view> view);
-    static void free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info);
 
     // views events' handlers
-    virtual void refresh_panels(const string &item_id = "");
-    virtual void show_root_view();
-    virtual void show_artists_view();
-    virtual void show_artist_view(const artist &artist);
-    virtual void show_album_view(const artist &artist, const album &album);
-    virtual void show_playlists_view();
-    virtual void show_playlist_view(const playlist &playlist);
-    virtual void show_recents_view();
+    void refresh_panels(const string &item_id = "");
+    void show_root_view();
+    void show_artists_view();
+    void show_artist_view(const artist &artist);
+    void show_album_view(const artist &artist, const album &album);
+    void show_playlists_view();
+    void show_playlist_view(const playlist &playlist);
+    void show_recents_view();
 private:
     std::shared_ptr<ui::view> view;
     api_abstract *api_proxy;

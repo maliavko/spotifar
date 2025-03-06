@@ -50,7 +50,7 @@ intptr_t playlist_view::select_item(const SetDirectoryInfo *info)
         return TRUE;
     }
 
-    const auto &track_id = view::user_data_t::unpack(info->UserData)->id;
+    const auto &track_id = unpack_user_data<user_data_t>(info->UserData)->id;
     
     // TODO: what to do here? start playing?
     // auto playlist = api->get_playlist(playlist_id);
