@@ -93,22 +93,16 @@ void album_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = ARRAYSIZE(modes);
 }
 
-intptr_t album_view::select_item(const SetDirectoryInfo *info)
+intptr_t album_view::select_item(const user_data_t* data)
 {
-    if (info->UserData.Data == nullptr)
+    if (data == nullptr)
     {
         events::show_artist_view(artist);
         return TRUE;
     }
 
-    const auto &track_id = unpack_user_data<user_data_t>(info->UserData)->id;
-    if (!track_id.empty())
-    {
-        api_proxy->start_playback(album.id, track_id);
-        return TRUE; // TODO: or False as nothing has been changed on the panel
-    }
-    
-    return FALSE;
+    api_proxy->start_playback(album.id, data->id);
+    return TRUE; // TODO: or False as nothing has been changed on the panel
 }
 
 } // namespace ui

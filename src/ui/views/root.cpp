@@ -115,27 +115,26 @@ const view::items_t* root_view::get_items()
     return &items;
 }
 
-intptr_t root_view::select_item(const SetDirectoryInfo *info)
+intptr_t root_view::select_item(const user_data_t* data)
 {
-    if (info->UserData.Data == nullptr)
+    if (data == nullptr)
     {
         return FALSE;
     }
 
-    auto view_id = unpack_user_data<user_data_t>(info->UserData)->id;
-    if (view_id == artists_view_id)
+    if (data->id == artists_view_id)
     {
         ui::events::show_artists_view();
         return TRUE;
     }
     
-    if (view_id == playlists_view_id)
+    if (data->id == playlists_view_id)
     {
         ui::events::show_playlists_view();
         return TRUE;
     }
     
-    if (view_id == recents_view_id)
+    if (data->id == recents_view_id)
     {
         ui::events::show_recents_view();
         return TRUE;
@@ -144,13 +143,12 @@ intptr_t root_view::select_item(const SetDirectoryInfo *info)
     return FALSE;
 }
 
-bool root_view::request_extra_info(const PluginPanelItem *item)
+bool root_view::request_extra_info(const user_data_t* data)
 {
-    auto view_id = unpack_user_data<user_data_t>(item->UserData)->id;
-    if (view_id == artists_view_id)
+    if (data->id == artists_view_id)
         return followed_artists_requester()(api_proxy);
 
-    if (view_id == playlists_view_id)
+    if (data->id == playlists_view_id)
         return user_playlists_requester()(api_proxy);
 
     // TODO: recents?

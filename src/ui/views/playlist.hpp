@@ -19,7 +19,7 @@ public:
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
 
-    auto select_item(const SetDirectoryInfo *info) -> intptr_t;
+    auto select_item(const user_data_t* data) -> intptr_t;
 private:
     api_abstract *api_proxy;
     playlist playlist;

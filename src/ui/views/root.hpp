@@ -21,9 +21,9 @@ public:
     auto get_key_bar_info() -> const key_bar_info_t*;
     auto get_info_lines() -> const info_lines_t*;
 
-    auto select_item(const SetDirectoryInfo *info) -> intptr_t;
+    auto select_item(const user_data_t* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
-    auto request_extra_info(const PluginPanelItem *item) -> bool;
+    auto request_extra_info(const user_data_t* data) -> bool;
 protected:
     template<class T>
     auto pack_menu_item(const string &id, int name_msg_id, int descr_msg_id,

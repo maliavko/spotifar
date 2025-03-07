@@ -34,7 +34,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
     info->StartPanelMode = '3';
-    info->StartSortMode = SM_USER;
+    info->StartSortMode = SM_CHTIME;
 
     // filling in the info lines on the Ctrl+L panel
     const auto &info_lines = view->get_info_lines();
@@ -196,7 +196,7 @@ void panel::show_recents_view()
 
 intptr_t panel::select_directory(const SetDirectoryInfo *info)
 {
-    return view->select_item(info);
+    return view->select_item(view->unpack_user_data(info->UserData));
 }
 
 intptr_t panel::process_input(const ProcessPanelInputInfo *info)
@@ -212,7 +212,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             {
                 bool should_refresh = false;
                 for (const auto &ppi: far3::panels::get_selected_items(PANEL_ACTIVE))
-                    if (view->request_extra_info(ppi.get()))
+                    if (view->request_extra_info(view->unpack_user_data(ppi->UserData)))
                         should_refresh = true;
 
                 if (should_refresh)
@@ -251,7 +251,10 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 intptr_t panel::compare_items(const CompareInfo *info)
 {
     if (view)
-        return view->compare_items(info);
+        return view->compare_items(
+            view->unpack_user_data(info->Item1->UserData),
+            view->unpack_user_data(info->Item2->UserData)
+        );
     return -2;
 }
 

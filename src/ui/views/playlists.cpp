@@ -21,16 +21,15 @@ const wchar_t* playlists_view::get_title() const
     return get_text(MPanelPlaylistsItemLabel);
 }
 
-intptr_t playlists_view::select_item(const SetDirectoryInfo *info)
+intptr_t playlists_view::select_item(const user_data_t* data)
 {
-    if (info->UserData.Data == nullptr)
+    if (data == nullptr)
     {
         events::show_root_view();
         return TRUE;
     }
 
-    auto playlist_id = unpack_user_data<user_data_t>(info->UserData)->id;
-    const auto &playlist = api_proxy->get_playlist(playlist_id);
+    const auto &playlist = api_proxy->get_playlist(data->id);
     if (playlist.is_valid())
     {
         events::show_playlist_view(playlist);
@@ -80,11 +79,10 @@ const view::items_t* playlists_view::get_items()
     return &items;
 }
 
-bool playlists_view::request_extra_info(const PluginPanelItem *item)
+bool playlists_view::request_extra_info(const user_data_t* data)
 {
-    auto playlist_id = unpack_user_data<user_data_t>(item->UserData)->id;
-    if (!playlist_id.empty())
-        return playlist_tracks_requester(playlist_id)(api_proxy);
+    if (data != nullptr)
+        return playlist_tracks_requester(data->id)(api_proxy);
 
     return false;
 }

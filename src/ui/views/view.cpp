@@ -43,6 +43,13 @@ namespace spotifar { namespace ui {
     {
         delete reinterpret_cast<const user_data_t*>(user_data);
     }
+    
+    const view::user_data_t* view::unpack_user_data(const UserDataItem &user_data)
+    {
+        if (user_data.Data != nullptr)
+            return reinterpret_cast<const view::user_data_t*>(user_data.Data);
+        return nullptr;
+    }
 
 } // namespace ui
 } // namespace spotifar

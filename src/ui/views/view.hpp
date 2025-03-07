@@ -59,19 +59,14 @@ public:
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual auto get_item_idx(const string &item_id) -> size_t { return 0; }
 
-    virtual auto select_item(const SetDirectoryInfo *info) -> intptr_t { return FALSE; }
+    virtual auto select_item(const user_data_t* data) -> intptr_t { return FALSE; }
     virtual auto process_key_input(int combined_key) -> intptr_t;
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
-    virtual auto request_extra_info(const PluginPanelItem *item) -> bool { return false; }
-    virtual auto compare_items(const CompareInfo *info) -> intptr_t { return -2; }
+    virtual auto request_extra_info(const user_data_t* data) -> bool { return false; }
+    virtual auto compare_items(const user_data_t* data1, const user_data_t* data2) -> intptr_t { return -2; }
     virtual auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
+    virtual auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
 protected:
-    // TODO: consider removing the usage of the method everywhere in subclass by
-    // unpacking all the data already in the panel and passing over only unpacked
-    // ids
-    template<class T>
-    const T* unpack_user_data(const UserDataItem &user_data);
-
     const sort_mode_t &get_sort_mode() const { return sort_modes[sort_mode_idx]; }
 protected:
     const wstring name;
@@ -80,14 +75,6 @@ protected:
     size_t sort_mode_idx = 0;
     bool is_descending = false;
 };
-
-template<class T>
-const T* view::unpack_user_data(const UserDataItem &user_data)
-{
-    if (user_data.Data != nullptr)
-        return reinterpret_cast<const T*>(user_data.Data);
-    return nullptr;
-}
 
 } // namespace ui
 } // namespace spotifar

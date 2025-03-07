@@ -122,16 +122,15 @@ const view::items_t* artists_view::get_items()
     return &items;
 }
 
-intptr_t artists_view::select_item(const SetDirectoryInfo *info)
+intptr_t artists_view::select_item(const user_data_t* data)
 {
-    if (info->UserData.Data == nullptr)
+    if (data == nullptr)
     {
         events::show_root_view();
         return TRUE;
     }
     
-    auto artist_id = unpack_user_data<artist_user_data_t>(info->UserData)->id;
-    const auto &artist = api_proxy->get_artist(artist_id);
+    const auto &artist = api_proxy->get_artist(data->id);
     if (artist.is_valid())
     {
         events::show_artist_view(artist);
@@ -141,20 +140,19 @@ intptr_t artists_view::select_item(const SetDirectoryInfo *info)
     return FALSE;
 }
 
-bool artists_view::request_extra_info(const PluginPanelItem *item)
+bool artists_view::request_extra_info(const user_data_t* data)
 {
-    auto artist_id = unpack_user_data<artist_user_data_t>(item->UserData)->id;
-    if (!artist_id.empty())
-        return artist_albums_requester(artist_id)(api_proxy);
+    if (data != nullptr)
+        return artist_albums_requester(data->id)(api_proxy);
 
     return false;
 }
 
-intptr_t artists_view::compare_items(const CompareInfo *info)
+intptr_t artists_view::compare_items(const user_data_t* data1, const user_data_t* data2)
 {
     const auto
-        &item1 = unpack_user_data<artist_user_data_t>(info->Item1->UserData),
-        &item2 = unpack_user_data<artist_user_data_t>(info->Item2->UserData);
+        &item1 = static_cast<const artist_user_data_t*>(data1),
+        &item2 = static_cast<const artist_user_data_t*>(data2);
 
     const auto &sort_mode = get_sort_mode();
     switch (sort_mode.far_sort_mode)
@@ -174,6 +172,12 @@ intptr_t artists_view::compare_items(const CompareInfo *info)
 FARPANELITEMFREECALLBACK artists_view::get_free_user_data_callback()
 {
     return artist_user_data_t::free;
+}
+
+void WINAPI artists_view::artist_user_data_t::free(void *const user_data,
+    const FarPanelItemFreeInfo *const info)
+{
+    delete reinterpret_cast<const artist_user_data_t*>(user_data);
 }
 
 } // namespace ui

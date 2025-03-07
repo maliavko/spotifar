@@ -25,16 +25,15 @@ const wchar_t* artist_view::get_title() const
     return artist.name.c_str();
 }
 
-intptr_t artist_view::select_item(const SetDirectoryInfo *info)
+intptr_t artist_view::select_item(const user_data_t* data)
 {
-    if (info->UserData.Data == nullptr)
+    if (data == nullptr)
     {
         events::show_artists_view();
         return TRUE;
     }
     
-    auto album_id = unpack_user_data<user_data_t>(info->UserData)->id;
-    const album &album = api_proxy->get_album(album_id);
+    const album &album = api_proxy->get_album(data->id);
     if (album.is_valid())
     { 
         events::show_album_view(artist, album);
@@ -151,11 +150,10 @@ const view::items_t* artist_view::get_items()
     return &items;
 }
 
-bool artist_view::request_extra_info(const PluginPanelItem *item)
+bool artist_view::request_extra_info(const view::user_data_t* data)
 {
-    auto album_id = unpack_user_data<user_data_t>(item->UserData)->id;
-    if (!album_id.empty())
-        return album_tracks_requester(album_id)(api_proxy);
+    if (data != nullptr)
+        return album_tracks_requester(data->id)(api_proxy);
 
     return false;
 }

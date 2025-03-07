@@ -18,10 +18,8 @@ public:
         size_t popularity;
         size_t followers_count;
         
-        static void WINAPI free(void *const user_data, const FarPanelItemFreeInfo *const info)
-        {
-            delete reinterpret_cast<const artist_user_data_t*>(user_data);
-        }
+        static void WINAPI free(void *const user_data,
+            const FarPanelItemFreeInfo *const info);
     };
 
 public:
@@ -31,10 +29,10 @@ public:
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
 
-    auto select_item(const SetDirectoryInfo *info) -> intptr_t;
-    auto request_extra_info(const PluginPanelItem *item) -> bool;
+    auto select_item(const user_data_t* data) -> intptr_t;
+    auto request_extra_info(const user_data_t* data) -> bool;
+    auto compare_items(const user_data_t* data1, const user_data_t* data2) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
-    auto compare_items(const CompareInfo *info) -> intptr_t;
     auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
 private:
     api_abstract *api_proxy;
