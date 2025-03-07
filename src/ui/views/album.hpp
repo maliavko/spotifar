@@ -13,14 +13,27 @@ using namespace spotify;
 class album_view: public view
 {
 public:
+    struct track_user_data_t: public user_data_t
+    {
+        wstring track_number;
+        int duration_ms;
+        
+        static void WINAPI free(void *const user_data,
+            const FarPanelItemFreeInfo *const info);
+    };
+public:
     album_view(api_abstract *api, const artist &artist, const album &album);
 
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
+    auto get_sort_modes() -> const sort_modes_t*;
 
     auto select_item(const user_data_t* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
+    auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
+    auto compare_items(view::sort_mode_t sort_mode, const user_data_t *data1,
+        const user_data_t *data2) -> intptr_t;
 private:
     album album;
     artist artist;

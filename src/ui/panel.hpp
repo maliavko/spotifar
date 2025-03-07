@@ -39,6 +39,10 @@ protected:
 private:
     std::shared_ptr<ui::view> view;
     api_abstract *api_proxy;
+
+    view::sort_modes_t sort_modes;
+    size_t sort_mode_idx = 0;
+    bool is_descending = false;
 };
 
 } // namespace ui

@@ -21,7 +21,6 @@ public:
 
     struct sort_mode_t
     {
-        //typedef 
         wstring name;
         OPENPANELINFO_SORTMODES far_sort_mode;
         int combined_key;
@@ -43,6 +42,7 @@ public:
             user_data_t *user_data = nullptr);
     };
 
+    typedef std::vector<sort_mode_t> sort_modes_t;
     typedef std::vector<item_t> items_t;
     typedef std::unordered_map<FarKey, wstring> key_bar_info_t;
     typedef std::vector<InfoPanelLine> info_lines_t;
@@ -57,23 +57,19 @@ public:
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
+    virtual auto get_sort_modes() -> const sort_modes_t* { return nullptr; }
     virtual auto get_item_idx(const string &item_id) -> size_t { return 0; }
 
-    virtual auto select_item(const user_data_t* data) -> intptr_t { return FALSE; }
-    virtual auto process_key_input(int combined_key) -> intptr_t;
+    virtual auto select_item(const user_data_t *data) -> intptr_t { return FALSE; }
+    virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
-    virtual auto request_extra_info(const user_data_t* data) -> bool { return false; }
-    virtual auto compare_items(const user_data_t* data1, const user_data_t* data2) -> intptr_t { return -2; }
+    virtual auto request_extra_info(const user_data_t *data) -> bool { return false; }
+    virtual auto compare_items(sort_mode_t sort_mode, const user_data_t *data1,
+        const user_data_t *data2) -> intptr_t { return -2; }
     virtual auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
     virtual auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
 protected:
-    const sort_mode_t &get_sort_mode() const { return sort_modes[sort_mode_idx]; }
-protected:
     const wstring name;
-
-    std::vector<sort_mode_t> sort_modes;
-    size_t sort_mode_idx = 0;
-    bool is_descending = false;
 };
 
 } // namespace ui

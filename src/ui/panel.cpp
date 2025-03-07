@@ -34,7 +34,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
     info->StartPanelMode = '3';
-    info->StartSortMode = SM_CHTIME;
+    info->StartSortMode = SM_NAME;
 
     // filling in the info lines on the Ctrl+L panel
     const auto &info_lines = view->get_info_lines();
@@ -136,27 +136,93 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
     free(info->PanelItem);
 }
 
+intptr_t panel::select_directory(const SetDirectoryInfo *info)
+{
+    return view->select_item(view->unpack_user_data(info->UserData));
+}
+
+intptr_t panel::process_input(const ProcessPanelInputInfo *info)
+{
+
+    auto &key_event = info->Rec.Event.KeyEvent;
+    if (key_event.bKeyDown)
+    {
+        int key = far3::keys::make_combined(key_event);
+        switch (key)
+        {
+            case VK_F3:
+            {
+                bool should_refresh = false;
+                for (const auto &ppi: far3::panels::get_selected_items(PANEL_ACTIVE))
+                    if (view->request_extra_info(view->unpack_user_data(ppi->UserData)))
+                        should_refresh = true;
+
+                if (should_refresh) // refreshing only in case something has changed
+                    refresh_panels();
+        
+                // blocking F3 panel processing in general, as we have a custom one
+                return TRUE;
+            }
+            default:
+                if (view && view->process_key_input(key))
+                    return TRUE;
+        }
+        
+        // processing sortings on the panel
+        for (size_t idx = 0; idx < sort_modes.size(); idx++)
+        {
+            const auto &smode = sort_modes[idx];
+            if (key == smode.combined_key)
+            {
+                if (idx == sort_mode_idx)
+                    is_descending = !is_descending;
+                else
+                    sort_mode_idx = idx;
+                far3::panels::set_sort_mode(PANEL_ACTIVE, smode.far_sort_mode, is_descending);
+                return TRUE;
+            }
+        }
+    }
+
+    using far3::keys::mods::ctrl;
+
+    // the sorting hotkeys are blocked, due to custom plugin implementation
+    switch (far3::keys::make_combined(key_event))
+    {
+        case VK_F3 + ctrl:
+        case VK_F4 + ctrl:
+        case VK_F5 + ctrl:
+        case VK_F6 + ctrl:
+        case VK_F7 + ctrl:
+        case VK_F8 + ctrl:
+        case VK_F9 + ctrl:
+        case VK_F10 + ctrl:
+        case VK_F11 + ctrl:
+        case VK_F12 + ctrl:
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
+intptr_t panel::compare_items(const CompareInfo *info)
+{
+    if (view && sort_modes.size() > sort_mode_idx)
+        return view->compare_items(
+            sort_modes[sort_mode_idx],
+            view->unpack_user_data(info->Item1->UserData),
+            view->unpack_user_data(info->Item2->UserData)
+        );
+    return -2;
+}
+
 void panel::change_view(std::shared_ptr<ui::view> view)
 {
     this->view = view;
-}
 
-void panel::refresh_panels(const string &item_id)
-{
-    far3::panels::update(PANEL_ACTIVE);
-
-    // TODO: this logic will not work when I implement sorting on the panels,
-    // the indices of the items array will not match
-    // if (!item_id.empty())
-    // {
-    //     auto item_idx = view->get_item_idx(item_id) + 1; // 0 index is ".."
-    //     if (item_idx > 0)
-    //     {
-    //         far3::panels::redraw(PANEL_ACTIVE, item_idx + 1, -1);
-    //     }
-    // }
-
-    far3::panels::redraw(PANEL_ACTIVE);
+    const auto modes = view->get_sort_modes();
+    if (modes != nullptr)
+        sort_modes = *modes;
 }
 
 void panel::show_root_view()
@@ -194,68 +260,22 @@ void panel::show_recents_view()
     //return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
-intptr_t panel::select_directory(const SetDirectoryInfo *info)
+void panel::refresh_panels(const string &item_id)
 {
-    return view->select_item(view->unpack_user_data(info->UserData));
-}
+    far3::panels::update(PANEL_ACTIVE);
 
-intptr_t panel::process_input(const ProcessPanelInputInfo *info)
-{
+    // TODO: this logic will not work when I implement sorting on the panels,
+    // the indices of the items array will not match
+    // if (!item_id.empty())
+    // {
+    //     auto item_idx = view->get_item_idx(item_id) + 1; // 0 index is ".."
+    //     if (item_idx > 0)
+    //     {
+    //         far3::panels::redraw(PANEL_ACTIVE, item_idx + 1, -1);
+    //     }
+    // }
 
-    auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
-    {
-        int key = far3::keys::make_combined(key_event);
-        switch (key)
-        {
-            case VK_F3:
-            {
-                bool should_refresh = false;
-                for (const auto &ppi: far3::panels::get_selected_items(PANEL_ACTIVE))
-                    if (view->request_extra_info(view->unpack_user_data(ppi->UserData)))
-                        should_refresh = true;
-
-                if (should_refresh)
-                    refresh_panels();
-        
-                // blocking F3 panel processing in general, as we have a custom one
-                return TRUE;
-            }
-            default:
-                if (view && view->process_key_input(key))
-                    return TRUE;
-        }
-    }
-        
-    using far3::keys::mods::ctrl;
-
-    // the sorting hotkeys are blocked, due to custom plugin implementation
-    switch (far3::keys::make_combined(key_event))
-    {
-        case VK_F3 + ctrl:
-        case VK_F4 + ctrl:
-        case VK_F5 + ctrl:
-        case VK_F6 + ctrl:
-        case VK_F7 + ctrl:
-        case VK_F8 + ctrl:
-        case VK_F9 + ctrl:
-        case VK_F10 + ctrl:
-        case VK_F11 + ctrl:
-        case VK_F12 + ctrl:
-            return TRUE;
-    }
-
-    return FALSE;
-}
-
-intptr_t panel::compare_items(const CompareInfo *info)
-{
-    if (view)
-        return view->compare_items(
-            view->unpack_user_data(info->Item1->UserData),
-            view->unpack_user_data(info->Item2->UserData)
-        );
-    return -2;
+    far3::panels::redraw(PANEL_ACTIVE);
 }
 
 } // namespace ui

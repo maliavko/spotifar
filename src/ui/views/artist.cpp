@@ -25,6 +25,17 @@ const wchar_t* artist_view::get_title() const
     return artist.name.c_str();
 }
 
+const view::sort_modes_t* artist_view::get_sort_modes()
+{
+    using namespace utils::far3::keys;
+    static sort_modes_t modes = {
+        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
+        { L"Release",       SM_ATIME,   VK_F4 + mods::ctrl },
+        { L"Tracks",        SM_SIZE,    VK_F5 + mods::ctrl },
+    };
+    return &modes;
+}
+
 intptr_t artist_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
@@ -41,6 +52,27 @@ intptr_t artist_view::select_item(const user_data_t* data)
     }
 
     return FALSE;
+}
+
+intptr_t artist_view::compare_items(view::sort_mode_t sort_mode,
+    const user_data_t *data1, const user_data_t *data2)
+{
+    const auto
+        &item1 = static_cast<const album_user_data_t*>(data1),
+        &item2 = static_cast<const album_user_data_t*>(data2);
+
+    switch (sort_mode.far_sort_mode)
+    {
+        case SM_NAME:
+            return item1->name.compare(item2->name);
+
+        case SM_ATIME:
+            return item1->release_year.compare(item2->release_year);
+
+        case SM_SIZE:
+            return item1->tracks_total - item2->tracks_total;
+    }
+    return -2;
 }
 
 void artist_view::update_panel_info(OpenPanelInfo *info)
@@ -144,7 +176,7 @@ const view::items_t* artist_view::get_items()
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             0,
             columns,
-            new view::user_data_t{ a.id },
+            new album_user_data_t{ a.id, a.name, a.get_release_year(), a.total_tracks, },
         });
     }
     return &items;
@@ -181,6 +213,17 @@ intptr_t artist_view::process_key_input(int combined_key)
         }
     }
     return FALSE;
+}
+    
+FARPANELITEMFREECALLBACK artist_view::get_free_user_data_callback()
+{
+    return album_user_data_t::free;
+}
+
+void WINAPI artist_view::album_user_data_t::free(void *const user_data,
+    const FarPanelItemFreeInfo *const info)
+{
+    delete reinterpret_cast<const album_user_data_t*>(user_data);
 }
 
 } // namespace ui

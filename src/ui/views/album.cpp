@@ -24,6 +24,17 @@ const wchar_t* album_view::get_title() const
     return get_dir_name();
 }
 
+const view::sort_modes_t* album_view::get_sort_modes()
+{
+    using namespace utils::far3::keys;
+    static sort_modes_t modes = {
+        { L"Number",        SM_EXT,     VK_F4 + mods::ctrl },
+        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
+        { L"Duration",      SM_SIZE,    VK_F5 + mods::ctrl },
+    };
+    return &modes;
+}
+
 const view::items_t* album_view::get_items()
 {
     static view::items_t items; items.clear();
@@ -71,7 +82,7 @@ const view::items_t* album_view::get_items()
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_VIRTUAL, 0,
             columns,
-            new view::user_data_t{ track.id },
+            new track_user_data_t{ track.id, track.name, track_number, track.duration_ms, },
         });
     }
 
@@ -103,6 +114,38 @@ intptr_t album_view::select_item(const user_data_t* data)
 
     api_proxy->start_playback(album.id, data->id);
     return TRUE; // TODO: or False as nothing has been changed on the panel
+}
+
+intptr_t album_view::compare_items(view::sort_mode_t sort_mode,
+    const user_data_t *data1, const user_data_t *data2)
+{
+    const auto
+        &item1 = static_cast<const track_user_data_t*>(data1),
+        &item2 = static_cast<const track_user_data_t*>(data2);
+
+    switch (sort_mode.far_sort_mode)
+    {
+        case SM_NAME:
+            return item1->name.compare(item2->name);
+
+        case SM_EXT:
+            return item1->track_number.compare(item2->track_number);
+
+        case SM_SIZE:
+            return item1->duration_ms - item2->duration_ms;
+    }
+    return -2;
+}
+    
+FARPANELITEMFREECALLBACK album_view::get_free_user_data_callback()
+{
+    return track_user_data_t::free;
+}
+
+void WINAPI album_view::track_user_data_t::free(void *const user_data,
+    const FarPanelItemFreeInfo *const info)
+{
+    delete reinterpret_cast<const track_user_data_t*>(user_data);
 }
 
 } // namespace ui

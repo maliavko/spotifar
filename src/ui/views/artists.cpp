@@ -5,16 +5,10 @@
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
-using namespace utils::far3::keys;
 
 artists_view::artists_view(api_abstract *api):
     api_proxy(api)
 {
-    sort_modes.assign({
-        { L"Name", SM_NAME, VK_F3 + mods::ctrl },
-        { L"Followers", SM_SIZE, VK_F4 + mods::ctrl },
-        { L"Popularity", SM_OWNER, VK_F5 + mods::ctrl },
-    });
 }
 
 const wchar_t* artists_view::get_dir_name() const
@@ -25,6 +19,17 @@ const wchar_t* artists_view::get_dir_name() const
 const wchar_t* artists_view::get_title() const
 {
     return get_text(MPanelArtistsItemLabel);
+}
+
+const view::sort_modes_t* artists_view::get_sort_modes()
+{
+    using namespace utils::far3::keys;
+    static sort_modes_t modes = {
+        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
+        { L"Followers",     SM_SIZE,    VK_F4 + mods::ctrl },
+        { L"Popularity",    SM_OWNER,   VK_F5 + mods::ctrl },
+    };
+    return &modes;
 }
 
 void artists_view::update_panel_info(OpenPanelInfo *info)
@@ -122,7 +127,7 @@ const view::items_t* artists_view::get_items()
     return &items;
 }
 
-intptr_t artists_view::select_item(const user_data_t* data)
+intptr_t artists_view::select_item(const user_data_t *data)
 {
     if (data == nullptr)
     {
@@ -140,7 +145,7 @@ intptr_t artists_view::select_item(const user_data_t* data)
     return FALSE;
 }
 
-bool artists_view::request_extra_info(const user_data_t* data)
+bool artists_view::request_extra_info(const user_data_t *data)
 {
     if (data != nullptr)
         return artist_albums_requester(data->id)(api_proxy);
@@ -148,13 +153,13 @@ bool artists_view::request_extra_info(const user_data_t* data)
     return false;
 }
 
-intptr_t artists_view::compare_items(const user_data_t* data1, const user_data_t* data2)
+intptr_t artists_view::compare_items(view::sort_mode_t sort_mode,
+    const user_data_t *data1, const user_data_t *data2)
 {
     const auto
         &item1 = static_cast<const artist_user_data_t*>(data1),
         &item2 = static_cast<const artist_user_data_t*>(data2);
 
-    const auto &sort_mode = get_sort_mode();
     switch (sort_mode.far_sort_mode)
     {
         case SM_NAME:
