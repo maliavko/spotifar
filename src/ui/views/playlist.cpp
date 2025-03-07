@@ -7,6 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 playlist_view::playlist_view(api_abstract *api, const spotify::playlist &p):
+    view("playlist_view"),
     playlist(p),
     api_proxy(api)
 {

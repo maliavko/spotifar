@@ -8,6 +8,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
+    view("artist_view"),
     api_proxy(api),
     artist(artist)
 {

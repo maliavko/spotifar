@@ -48,12 +48,13 @@ public:
     typedef std::vector<InfoPanelLine> info_lines_t;
 
 public:
-    view() {}
+    view(const string &uid): uid(uid) {}
     virtual ~view() {}
 
     virtual auto get_dir_name() const -> const wchar_t* = 0;
     virtual auto get_title() const -> const wchar_t* = 0;
     
+    virtual auto get_uid() const -> const string& { return uid; };
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
@@ -68,8 +69,8 @@ public:
         const user_data_t *data2) -> intptr_t { return -2; }
     virtual auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
     virtual auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
-protected:
-    const wstring name;
+private:
+    string uid;
 };
 
 } // namespace ui

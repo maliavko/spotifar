@@ -117,6 +117,22 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
     info->PanelItem = panel_item;
     info->ItemsNumber = items->size();
 
+    if (is_view_first_initialization)
+    {
+        const auto &key_name = std::format(L"sorting/{}", utils::to_wstring(view->get_uid()));
+        auto settings = config::lock_settings(key_name);
+        sort_mode_idx = (size_t)settings->get_int(L"sort_mode_idx", 0);
+        is_descending = settings->get_bool(L"descending", false);
+        
+        utils::log::global->debug("Setting sort mode idx to {}, is_descending {}",
+            sort_mode_idx, is_descending);
+        
+        // if (view && sort_modes.size() > sort_mode_idx)
+        //     far3::panels::set_sort_mode(PANEL_ACTIVE, sort_modes[sort_mode_idx].far_sort_mode,
+        //         is_descending);
+
+        is_view_first_initialization = false;
+    }
     return TRUE;
 }
 
@@ -143,6 +159,7 @@ intptr_t panel::select_directory(const SetDirectoryInfo *info)
 
 intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 {
+    using far3::keys::mods::ctrl;
 
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
@@ -182,26 +199,12 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 return TRUE;
             }
         }
+
+        // the sorting hotkeys are blocked, due to custom plugin implementation
+        for (int key_code = VK_F3; key_code <= VK_F12; key_code++)
+            if (key == key_code + ctrl)
+                return TRUE;
     }
-
-    using far3::keys::mods::ctrl;
-
-    // the sorting hotkeys are blocked, due to custom plugin implementation
-    switch (far3::keys::make_combined(key_event))
-    {
-        case VK_F3 + ctrl:
-        case VK_F4 + ctrl:
-        case VK_F5 + ctrl:
-        case VK_F6 + ctrl:
-        case VK_F7 + ctrl:
-        case VK_F8 + ctrl:
-        case VK_F9 + ctrl:
-        case VK_F10 + ctrl:
-        case VK_F11 + ctrl:
-        case VK_F12 + ctrl:
-            return TRUE;
-    }
-
     return FALSE;
 }
 
@@ -216,13 +219,30 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return -2;
 }
 
-void panel::change_view(std::shared_ptr<ui::view> view)
+void panel::change_view(std::shared_ptr<ui::view> v)
+
 {
-    this->view = view;
+    if (view != nullptr)
+    {
+        const auto &key_name = std::format(L"sorting/{}", utils::to_wstring(view->get_uid()));
+        // TODO: remove the usage of lock_settings, it creates freezes
+        auto settings = config::lock_settings(key_name);
+        settings->set_int(L"sort_mode_idx", (int)sort_mode_idx);
+        settings->set_bool(L"descending", is_descending);
+    }
+
+    this->view = v;
 
     const auto modes = view->get_sort_modes();
     if (modes != nullptr)
         sort_modes = *modes;
+
+    // after the view is changed, some operations make sense to perform
+    // already after the panel and all the items are updated, which is happening
+    // in the subsequence calls of the respective far api methods.
+    // The flag is used to identify that the view is freshly created, and right after
+    // performing them the flag is invalidated
+    is_view_first_initialization = true;
 }
 
 void panel::show_root_view()

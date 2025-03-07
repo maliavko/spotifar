@@ -5,6 +5,7 @@
 namespace spotifar { namespace ui {
 
 album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar, const spotify::album &al):
+    view("album_view"),
     api_proxy(api),
     album(al),
     artist(ar)

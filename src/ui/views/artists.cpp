@@ -7,6 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 artists_view::artists_view(api_abstract *api):
+    view("artists_view"),
     api_proxy(api)
 {
 }

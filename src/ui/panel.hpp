@@ -37,12 +37,13 @@ protected:
     void show_playlist_view(const playlist &playlist);
     void show_recents_view();
 private:
-    std::shared_ptr<ui::view> view;
-    api_abstract *api_proxy;
+    std::shared_ptr<ui::view> view = nullptr;
+    api_abstract *api_proxy = nullptr;
 
     view::sort_modes_t sort_modes;
     size_t sort_mode_idx = 0;
     bool is_descending = false;
+    bool is_view_first_initialization = false;
 };
 
 } // namespace ui

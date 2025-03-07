@@ -12,6 +12,7 @@ static const string
     recents_view_id = "recents";
 
 root_view::root_view(api_abstract *api):
+    view("root_view"),
     api_proxy(api)
 {
 }
