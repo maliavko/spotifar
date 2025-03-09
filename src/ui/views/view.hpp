@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "utils.hpp"
+#include "config.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -48,28 +49,35 @@ public:
     typedef std::vector<InfoPanelLine> info_lines_t;
 
 public:
-    view(const string &uid): uid(uid) {}
+    view(const string &uid);
     virtual ~view() {}
+
+    auto init() -> void;
+    auto on_items_updated() -> void;
 
     virtual auto get_dir_name() const -> const wchar_t* = 0;
     virtual auto get_title() const -> const wchar_t* = 0;
+    virtual auto get_default_settings() const -> config::settings::view_t = 0;
     
-    virtual auto get_uid() const -> const string& { return uid; };
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
-    virtual auto get_sort_modes() -> const sort_modes_t* { return nullptr; }
     virtual auto get_item_idx(const string &item_id) -> size_t { return 0; }
+    virtual auto get_sort_modes() const -> const sort_modes_t* { return nullptr; }
 
     virtual auto select_item(const user_data_t *data) -> intptr_t { return FALSE; }
-    virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
-    virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
     virtual auto request_extra_info(const user_data_t *data) -> bool { return false; }
-    virtual auto compare_items(sort_mode_t sort_mode, const user_data_t *data1,
-        const user_data_t *data2) -> intptr_t { return -2; }
+    virtual auto process_key_input(int combined_key) -> intptr_t;
+    virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
     virtual auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
     virtual auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
+    virtual auto compare_items(const user_data_t *data1,
+        const user_data_t *data2) -> intptr_t { return FALSE; }
+protected:
+    sort_modes_t sort_modes;
+    config::settings::view_t *settings;
 private:
+    bool is_first_initialization = true;
     string uid;
 };
 

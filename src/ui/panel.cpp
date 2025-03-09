@@ -73,6 +73,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
                 kbl.Text = kbl.LongText = L"";
         }
 
+    // allowing view to customize OpenPanelInfo struct
     if (view)
         return view->update_panel_info(info);
 }
@@ -90,8 +91,8 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
 
     for (size_t idx = 0; idx < items->size(); idx++)
     {
-        auto &item = (*items)[idx];
-        auto &columns = item.custom_column_data;
+        const auto &item = (*items)[idx];
+        const auto &columns = item.custom_column_data;
 
         // TODO: what if no memory allocated?
         auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
@@ -117,22 +118,10 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
     info->PanelItem = panel_item;
     info->ItemsNumber = items->size();
 
-    if (is_view_first_initialization)
-    {
-        const auto &key_name = std::format(L"sorting/{}", utils::to_wstring(view->get_uid()));
-        auto settings = config::lock_settings(key_name);
-        sort_mode_idx = (size_t)settings->get_int(L"sort_mode_idx", 0);
-        is_descending = settings->get_bool(L"descending", false);
-        
-        utils::log::global->debug("Setting sort mode idx to {}, is_descending {}",
-            sort_mode_idx, is_descending);
-        
-        // if (view && sort_modes.size() > sort_mode_idx)
-        //     far3::panels::set_sort_mode(PANEL_ACTIVE, sort_modes[sort_mode_idx].far_sort_mode,
-        //         is_descending);
+    // notifying view that the items have been populated
+    if (view != nullptr)
+        view->on_items_updated();
 
-        is_view_first_initialization = false;
-    }
     return TRUE;
 }
 
@@ -184,21 +173,6 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 if (view && view->process_key_input(key))
                     return TRUE;
         }
-        
-        // processing sortings on the panel
-        for (size_t idx = 0; idx < sort_modes.size(); idx++)
-        {
-            const auto &smode = sort_modes[idx];
-            if (key == smode.combined_key)
-            {
-                if (idx == sort_mode_idx)
-                    is_descending = !is_descending;
-                else
-                    sort_mode_idx = idx;
-                far3::panels::set_sort_mode(PANEL_ACTIVE, smode.far_sort_mode, is_descending);
-                return TRUE;
-            }
-        }
 
         // the sorting hotkeys are blocked, due to custom plugin implementation
         for (int key_code = VK_F3; key_code <= VK_F12; key_code++)
@@ -210,9 +184,8 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 
 intptr_t panel::compare_items(const CompareInfo *info)
 {
-    if (view && sort_modes.size() > sort_mode_idx)
+    if (view)
         return view->compare_items(
-            sort_modes[sort_mode_idx],
             view->unpack_user_data(info->Item1->UserData),
             view->unpack_user_data(info->Item2->UserData)
         );
@@ -220,29 +193,9 @@ intptr_t panel::compare_items(const CompareInfo *info)
 }
 
 void panel::change_view(std::shared_ptr<ui::view> v)
-
 {
-    if (view != nullptr)
-    {
-        const auto &key_name = std::format(L"sorting/{}", utils::to_wstring(view->get_uid()));
-        // TODO: remove the usage of lock_settings, it creates freezes
-        auto settings = config::lock_settings(key_name);
-        settings->set_int(L"sort_mode_idx", (int)sort_mode_idx);
-        settings->set_bool(L"descending", is_descending);
-    }
-
-    this->view = v;
-
-    const auto modes = view->get_sort_modes();
-    if (modes != nullptr)
-        sort_modes = *modes;
-
-    // after the view is changed, some operations make sense to perform
-    // already after the panel and all the items are updated, which is happening
-    // in the subsequence calls of the respective far api methods.
-    // The flag is used to identify that the view is freshly created, and right after
-    // performing them the flag is invalidated
-    is_view_first_initialization = true;
+    view = v;
+    view->init();
 }
 
 void panel::show_root_view()

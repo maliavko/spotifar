@@ -1,4 +1,4 @@
-﻿#include "config.hpp"
+#include "config.hpp"
 #include "utils.hpp"
 
 namespace spotifar { namespace config {
@@ -9,6 +9,7 @@ static const wchar_t
     *add_to_disk_menu_opt = L"AddToDisksMenu",
     *activate_global_hotkeys_opt = L"ActivateGlobalHotkeys",
     *verbose_logging_enabled_opt = L"EnableVerboseLogging",
+    *views_settings_opt = L"ViewsSettings",
     *spotify_client_id_opt = L"SpotifyClientID",
     *spotify_client_secret_opt = L"SpotifyClientSecret",
     *localhost_service_port_opt = L"LocalhostServicePort";
@@ -88,7 +89,7 @@ int settings_context::get_int(const wstring &name, int def)
     return ps.Get(subkey_idx, name.c_str(), def);
 }
 
-const wstring settings_context::get_wstr(const wstring &name, const wstring &def)
+wstring settings_context::get_wstr(const wstring &name, const wstring &def)
 {
     return ps.Get(subkey_idx, name.c_str(), def.c_str());
 }
@@ -188,6 +189,11 @@ void read(const PluginStartupInfo *info)
     _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
     _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, false);
+
+    auto views_settings_json = ctx->get_str(views_settings_opt, "");
+    if (!views_settings_json.empty())
+        json::parse(views_settings_json).get_to(_settings.views);
+
     _settings.plugin_startup_folder = get_plugin_launch_folder(info);
     _settings.plugin_data_folder = get_user_app_data_folder();
 
@@ -209,6 +215,7 @@ void write()
     ctx->set_wstr(spotify_client_id_opt, _settings.spotify_client_id);
     ctx->set_wstr(spotify_client_secret_opt, _settings.spotify_client_secret);
     ctx->set_int(localhost_service_port_opt, _settings.localhost_service_port);
+    ctx->set_str(views_settings_opt, json(_settings.views).dump());
 
     for (const auto &[key, p]: _settings.hotkeys)
         ctx->set_int64(get_hotkey_node_name(key), MAKELONG(p.second, p.first));
@@ -254,12 +261,18 @@ const wstring& get_plugin_data_folder()
     return _settings.plugin_data_folder;
 }
 
-std::pair<WORD, WORD>* get_hotkey(int hotkey_id)
+const std::pair<WORD, WORD>* get_hotkey(int hotkey_id)
 {
     auto it = _settings.hotkeys.find(hotkey_id);
     if (it != _settings.hotkeys.end())
         return &it->second;
     return nullptr;
+}
+
+settings::view_t* get_panel_settings(const string &view_uid, const settings::view_t &def)
+{
+    _settings.views.emplace(view_uid, def);
+    return &_settings.views.at(view_uid);
 }
 
 } // namespace config

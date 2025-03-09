@@ -118,7 +118,7 @@ intptr_t playlist_view::select_item(const user_data_t* data)
     return FALSE;
 }
 
-const view::sort_modes_t* playlist_view::get_sort_modes()
+const view::sort_modes_t* playlist_view::get_sort_modes() const
 {
     using namespace utils::far3::keys;
     static sort_modes_t modes = {
@@ -130,7 +130,7 @@ const view::sort_modes_t* playlist_view::get_sort_modes()
     return &modes;
 }
 
-intptr_t playlist_view::compare_items(view::sort_mode_t sort_mode,
+intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
     const user_data_t *data1, const user_data_t *data2)
 {
     const auto

@@ -25,7 +25,7 @@ const wchar_t* album_view::get_title() const
     return get_dir_name();
 }
 
-const view::sort_modes_t* album_view::get_sort_modes()
+const view::sort_modes_t* album_view::get_sort_modes() const
 {
     using namespace utils::far3::keys;
     static sort_modes_t modes = {
@@ -117,7 +117,7 @@ intptr_t album_view::select_item(const user_data_t* data)
     return TRUE; // TODO: or False as nothing has been changed on the panel
 }
 
-intptr_t album_view::compare_items(view::sort_mode_t sort_mode,
+intptr_t album_view::compare_items(const sort_mode_t &sort_mode,
     const user_data_t *data1, const user_data_t *data2)
 {
     const auto

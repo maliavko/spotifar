@@ -1,4 +1,4 @@
-﻿#ifndef CONFIG_HPP_B490198E_23A2_4583_A1B8_80FA1450E83B
+#ifndef CONFIG_HPP_B490198E_23A2_4583_A1B8_80FA1450E83B
 #define CONFIG_HPP_B490198E_23A2_4583_A1B8_80FA1450E83B
 #pragma once
 
@@ -30,16 +30,31 @@ namespace hotkeys
 
 struct settings
 {
+    struct view_t
+    {
+        int sort_mode_idx;
+        bool is_descending;
+        int view_mode;
+        
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(view_t, sort_mode_idx,
+            is_descending, view_mode);
+    };
+
     /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }
     typedef std::unordered_map<int, std::pair<WORD, WORD>> hotkeys_t;
+    /// @brief { view_uid, { sort mode idx, is order descending, panel view mode } }
+    typedef std::unordered_map<string, view_t> views_t;
 
     bool add_to_disk_menu;
     bool is_global_hotkeys_enabled;
     bool verbose_logging;
     int localhost_service_port;
-    wstring spotify_client_id, spotify_client_secret;
-    wstring plugin_startup_folder, plugin_data_folder;
+    wstring spotify_client_id;
+    wstring spotify_client_secret;
+    wstring plugin_startup_folder;
+    wstring plugin_data_folder;
     hotkeys_t hotkeys;
+    views_t views;
 };
 
 struct config_observer: public BaseObserverProtocol
@@ -61,11 +76,11 @@ public:
     ///                 e.g. "subkey1", "subkey1/key2/key3"
     settings_context(const wstring &subkey);
 
-    bool get_bool(const wstring &name, bool def);
-    std::int64_t get_int64(const wstring &name, std::int64_t def);
-    int get_int(const wstring &name, int def);
-    const wstring get_wstr(const wstring &name, const wstring &def);
-    string get_str(const wstring &name, const string &def);
+    auto get_bool(const wstring &name, bool def) -> bool;
+    auto get_int64(const wstring &name, std::int64_t def) -> std::int64_t;
+    auto get_int(const wstring &name, int def) -> int;
+    auto get_wstr(const wstring &name, const wstring &def) -> wstring;
+    auto get_str(const wstring &name, const string &def) -> string;
     
     void set_bool(const wstring &name, bool value);
     void set_int64(const wstring &name, std::int64_t value);
@@ -100,7 +115,7 @@ private:
 /// to the plugin settings
 /// @param subkey a settings subkey to get settings context for. Can be nested
 ///                 like "subkey1/subkey2/key3"
-std::shared_ptr<settings_context> lock_settings(const wstring &subkey = L"");
+auto lock_settings(const wstring &subkey = L"") -> std::shared_ptr<settings_context>;
 
 /// @brief Initialize settings
 void read(const PluginStartupInfo *info);
@@ -118,22 +133,24 @@ bool is_global_hotkeys_enabled();
 bool is_verbose_logging_enabled();
 
 /// @brief Returns the Spotify client id, set by user
-string get_client_id();
+auto get_client_id() -> string;
 
 /// @brief Returns the Spotify client secret, set by user
-string get_client_secret();
+auto get_client_secret() -> string;
 
 /// @brief Returns the localhost service port, set by user
-int get_localhost_port();
+auto get_localhost_port() -> int;
 
 /// @brief The absolute folder path, containing plugin files
-const wstring& get_plugin_launch_folder();
+auto get_plugin_launch_folder() -> const wstring&;
 
 /// @brief The absolute folder path, pointer to the users AppData/spotify folder
-const wstring& get_plugin_data_folder();
+auto get_plugin_data_folder() -> const wstring&;
 
 /// @brief Returning a pair(virtual key code, modifiers) pointer or nullptr
-std::pair<WORD, WORD>* get_hotkey(int hotkey_id);
+auto get_hotkey(int hotkey_id) -> const std::pair<WORD, WORD>*;
+
+auto get_panel_settings(const string &view_uid, const settings::view_t &def) -> settings::view_t*;
 
 
 /// @brief An interface to the class, which provides functionality to write
@@ -167,8 +184,8 @@ public:
     virtual void write(settings_context &ctx);
     virtual void clear(settings_context &ctx);
 
-    const value_t& get() const { return data; }
-    void set(const value_t &d) { data = d; }
+    auto get() const -> const value_t& { return data; }
+    auto set(const value_t &d) -> void { data = d; }
 
 protected:
     /// @brief Implements the correct way to read and interpret data from the storage

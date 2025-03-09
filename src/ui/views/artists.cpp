@@ -22,17 +22,6 @@ const wchar_t* artists_view::get_title() const
     return get_text(MPanelArtistsItemLabel);
 }
 
-const view::sort_modes_t* artists_view::get_sort_modes()
-{
-    using namespace utils::far3::keys;
-    static sort_modes_t modes = {
-        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
-        { L"Followers",     SM_SIZE,    VK_F4 + mods::ctrl },
-        { L"Popularity",    SM_OWNER,   VK_F5 + mods::ctrl },
-    };
-    return &modes;
-}
-
 void artists_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
@@ -154,7 +143,18 @@ bool artists_view::request_extra_info(const user_data_t *data)
     return false;
 }
 
-intptr_t artists_view::compare_items(view::sort_mode_t sort_mode,
+const view::sort_modes_t* artists_view::get_sort_modes() const
+{
+    using namespace utils::far3::keys;
+    static sort_modes_t modes = {
+        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
+        { L"Followers",     SM_SIZE,    VK_F4 + mods::ctrl },
+        { L"Popularity",    SM_OWNER,   VK_F5 + mods::ctrl },
+    };
+    return &modes;
+}
+
+intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
     const user_data_t *data1, const user_data_t *data2)
 {
     const auto

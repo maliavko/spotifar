@@ -27,12 +27,14 @@ public:
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
-    auto get_sort_modes() -> const sort_modes_t*;
+    auto get_sort_modes() const -> const sort_modes_t*;
+    auto get_default_settings() const -> config::settings::view_t { return {}; }
 
     auto select_item(const user_data_t* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
-    auto compare_items(view::sort_mode_t sort_mode, const user_data_t *data1,
+protected:
+    auto compare_items(const sort_mode_t &sort_mode, const user_data_t *data1,
         const user_data_t *data2) -> intptr_t;
 private:
     album album;
