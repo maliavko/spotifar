@@ -19,6 +19,7 @@ public:
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
     auto get_default_settings() const -> config::settings::view_t { return {}; }
+    virtual auto get_sort_modes() const -> const sort_modes_t&;
 
     auto select_item(const user_data_t* data) -> intptr_t;
     auto request_extra_info(const user_data_t* data) -> bool;

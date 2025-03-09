@@ -26,7 +26,7 @@ const wchar_t* artist_view::get_title() const
     return artist.name.c_str();
 }
 
-const view::sort_modes_t* artist_view::get_sort_modes() const
+const view::sort_modes_t& artist_view::get_sort_modes() const
 {
     using namespace utils::far3::keys;
     static sort_modes_t modes = {
@@ -34,7 +34,7 @@ const view::sort_modes_t* artist_view::get_sort_modes() const
         { L"Release",       SM_ATIME,   VK_F4 + mods::ctrl },
         { L"Tracks",        SM_SIZE,    VK_F5 + mods::ctrl },
     };
-    return &modes;
+    return modes;
 }
 
 intptr_t artist_view::select_item(const user_data_t* data)

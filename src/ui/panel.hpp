@@ -39,6 +39,11 @@ protected:
 private:
     std::shared_ptr<ui::view> view = nullptr;
     api_abstract *api_proxy = nullptr;
+    
+    /// @brief the flag is used to force sort update after the view is changed
+    bool is_first_update_after_change = true;
+    view::sort_modes_t sort_modes;
+    config::settings::view_t *settings;
 };
 
 } // namespace ui

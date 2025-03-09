@@ -117,10 +117,15 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
 
     info->PanelItem = panel_item;
     info->ItemsNumber = items->size();
-
-    // notifying view that the items have been populated
-    if (view != nullptr)
-        view->on_items_updated();
+    
+    if (is_first_update_after_change)
+    {
+        is_first_update_after_change = false;
+        
+        if (sort_modes.size() > settings->sort_mode_idx)
+            utils::far3::panels::set_sort_mode(PANEL_ACTIVE,
+                sort_modes[settings->sort_mode_idx].far_sort_mode, settings->is_descending);
+    }
 
     return TRUE;
 }
@@ -173,6 +178,20 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 if (view && view->process_key_input(key))
                     return TRUE;
         }
+        
+        for (int idx = 0; idx < sort_modes.size(); idx++)
+        {
+            const auto &smode = sort_modes[idx];
+            if (key == smode.combined_key)
+            {
+                if (idx == settings->sort_mode_idx)
+                    settings->is_descending = !settings->is_descending;
+                else
+                    settings->sort_mode_idx = idx;
+                utils::far3::panels::set_sort_mode(PANEL_ACTIVE, smode.far_sort_mode, settings->is_descending);
+                return TRUE;
+            }
+        }
 
         // the sorting hotkeys are blocked, due to custom plugin implementation
         for (int key_code = VK_F3; key_code <= VK_F12; key_code++)
@@ -184,8 +203,9 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 
 intptr_t panel::compare_items(const CompareInfo *info)
 {
-    if (view)
+    if (view && sort_modes.size() > settings->sort_mode_idx)
         return view->compare_items(
+            sort_modes[settings->sort_mode_idx],
             view->unpack_user_data(info->Item1->UserData),
             view->unpack_user_data(info->Item2->UserData)
         );
@@ -195,7 +215,10 @@ intptr_t panel::compare_items(const CompareInfo *info)
 void panel::change_view(std::shared_ptr<ui::view> v)
 {
     view = v;
-    view->init();
+    
+    settings = view->get_settings();
+    sort_modes = view->get_sort_modes();
+    is_first_update_after_change = true;
 }
 
 void panel::show_root_view()

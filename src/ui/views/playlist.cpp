@@ -118,7 +118,7 @@ intptr_t playlist_view::select_item(const user_data_t* data)
     return FALSE;
 }
 
-const view::sort_modes_t* playlist_view::get_sort_modes() const
+const view::sort_modes_t& playlist_view::get_sort_modes() const
 {
     using namespace utils::far3::keys;
     static sort_modes_t modes = {
@@ -127,7 +127,7 @@ const view::sort_modes_t* playlist_view::get_sort_modes() const
         { L"Length",        SM_SIZE,    VK_F5 + mods::ctrl },
         { L"Year",          SM_ATIME,   VK_F6 + mods::ctrl },
     };
-    return &modes;
+    return modes;
 }
 
 intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,

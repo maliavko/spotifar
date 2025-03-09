@@ -29,7 +29,7 @@ public:
     auto get_dir_name() const -> const wchar_t*;
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
-    auto get_sort_modes() const -> const sort_modes_t*;
+    auto get_sort_modes() const -> const sort_modes_t&;
     auto get_default_settings() const -> config::settings::view_t { return {}; }
 
     auto update_panel_info(OpenPanelInfo *info) -> void;

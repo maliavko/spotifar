@@ -143,7 +143,7 @@ bool artists_view::request_extra_info(const user_data_t *data)
     return false;
 }
 
-const view::sort_modes_t* artists_view::get_sort_modes() const
+const view::sort_modes_t& artists_view::get_sort_modes() const
 {
     using namespace utils::far3::keys;
     static sort_modes_t modes = {
@@ -151,7 +151,7 @@ const view::sort_modes_t* artists_view::get_sort_modes() const
         { L"Followers",     SM_SIZE,    VK_F4 + mods::ctrl },
         { L"Popularity",    SM_OWNER,   VK_F5 + mods::ctrl },
     };
-    return &modes;
+    return modes;
 }
 
 intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,

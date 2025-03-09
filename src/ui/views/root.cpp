@@ -51,6 +51,15 @@ const view::info_lines_t* root_view::get_info_lines()
     return &lines;
 }
 
+const view::sort_modes_t& root_view::get_sort_modes() const
+{
+    using namespace utils::far3::keys;
+    static sort_modes_t modes = {
+        { L"Name", SM_NAME, VK_F3 + mods::ctrl },
+    };
+    return modes;
+}
+
 void root_view::update_panel_info(OpenPanelInfo *info)
 {
     static const wchar_t* titles[] = { L"Name", L"Count" };

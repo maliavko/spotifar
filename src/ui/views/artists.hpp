@@ -28,6 +28,7 @@ public:
     auto get_title() const -> const wchar_t*;
     auto get_items() -> const items_t*;
     auto get_default_settings() const -> config::settings::view_t { return {}; }
+    auto get_sort_modes() const -> const sort_modes_t&;
 
     auto select_item(const user_data_t *data) -> intptr_t;
     auto request_extra_info(const user_data_t *data) -> bool;
@@ -35,8 +36,6 @@ public:
     auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
     auto compare_items(const sort_mode_t &sort_mode, const user_data_t *data1,
         const user_data_t *data2) -> intptr_t;
-protected:
-    auto get_sort_modes() const -> const sort_modes_t*;
 private:
     api_abstract *api_proxy;
 };

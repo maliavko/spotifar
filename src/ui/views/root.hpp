@@ -21,6 +21,7 @@ public:
     auto get_key_bar_info() -> const key_bar_info_t*;
     auto get_info_lines() -> const info_lines_t*;
     auto get_default_settings() const -> config::settings::view_t { return {}; }
+    virtual auto get_sort_modes() const -> const sort_modes_t&;
 
     auto select_item(const user_data_t* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
