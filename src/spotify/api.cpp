@@ -269,7 +269,7 @@ void api::resume_playback(const string &device_id)
 
 void api::toggle_playback(const string &device_id)
 {
-    playback->resync();
+    playback->resync(true);
     auto &state = playback->get();
     if (!state.is_playing)
         return start_playback(json(), device_id);
