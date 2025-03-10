@@ -157,6 +157,30 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
                     player.show();
                 return TRUE;
             }
+            case VK_F12 + keys::mods::ctrl:
+            {
+                FarMenuItem items[] = {
+                    { 0,                    L"Test1            Ctrl+F3" },
+                    { MIF_CHECKED | L'▼',   L"Test2            Ctrl+F7" },
+                    { 0,                    L"Test3            Cltr+F4" },
+                    { 0,                    L"Test4            Ctrl+F5" },
+                    { 0,                    L"Test5            Ctrl+F6" },
+                };
+
+                auto r = config::ps_info.Menu(
+                    &FarMessageGuid,
+                    {},
+                    -1, -1, 0,
+                    FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
+                    L"Sort by",
+                    {}, {}, {}, {},
+                    items,
+                    std::size(items)
+                );
+                spdlog::debug("menu result {}", r);
+
+                return TRUE;
+            }
         }
     }
     return panel.process_input(info);
