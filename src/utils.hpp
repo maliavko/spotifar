@@ -217,13 +217,13 @@ namespace far3
         auto set_active(HANDLE panel) -> intptr_t;
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
+        auto get_info(HANDLE panel) -> PanelInfo;
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
 
-        /// @brief Returns a list of the selected items on the panel. If there is none of the
-        /// selected items on the panel, so it returns the one under cursor or zero, if the the one
-        /// is ".." item 
-        auto get_selected_items(HANDLE panel) -> std::vector<std::shared_ptr<PluginPanelItem>>;
-        auto get_info(HANDLE panel) -> PanelInfo;
+        /// @brief Returns the items, currently placed on the `panel`.
+        /// @param filter_selected returns only selected items, in case there is no selected items - returns
+        /// the one under cursor, or none if the itme under cursor is `..`
+        auto get_items(HANDLE panel, bool filter_selected = false) -> std::vector<std::shared_ptr<PluginPanelItem>>;
     }   
 
     namespace actl

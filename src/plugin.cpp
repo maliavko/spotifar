@@ -139,6 +139,8 @@ void plugin::shutdown_sync_worker()
 
 intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
 {
+    namespace keys = far3::keys;
+
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
@@ -148,6 +150,12 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             {
                 api.clear_http_cache();
                 log::global->debug("Cache has been cleared");
+            }
+            case keys::q + keys::mods::alt:
+            {
+                if (!player.is_visible())
+                    player.show();
+                return TRUE;
             }
         }
     }

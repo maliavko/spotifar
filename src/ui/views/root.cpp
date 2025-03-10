@@ -60,6 +60,11 @@ const view::sort_modes_t& root_view::get_sort_modes() const
     return modes;
 }
 
+config::settings::view_t root_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
 void root_view::update_panel_info(OpenPanelInfo *info)
 {
     static const wchar_t* titles[] = { L"Name", L"Count" };

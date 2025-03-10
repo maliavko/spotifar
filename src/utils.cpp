@@ -262,19 +262,29 @@ namespace far3
             return nullptr;
         }
         
-        std::vector<std::shared_ptr<PluginPanelItem>> get_selected_items(HANDLE panel)
+        std::vector<std::shared_ptr<PluginPanelItem>> get_items(HANDLE panel, bool filter_selected)
         {
             std::vector<std::shared_ptr<PluginPanelItem>> result;
 
             auto panel_info = get_info(panel);
-            for (size_t i = 0; i < panel_info.SelectedItemsNumber; i++)
+
+            FILE_CONTROL_COMMANDS cmd = FCTL_GETPANELITEM;
+            size_t items_number = panel_info.ItemsNumber;
+
+            if (filter_selected)
             {
-                size_t size = control(panel, FCTL_GETSELECTEDPANELITEM, i, 0);
+                cmd = FCTL_GETSELECTEDPANELITEM;
+                items_number = panel_info.SelectedItemsNumber;
+            }
+
+            for (size_t i = 0; i < items_number; i++)
+            {
+                size_t size = control(panel, cmd, i, 0);
                 std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
                 if (ppi)
                 {
                     FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
-                    control(panel, FCTL_GETSELECTEDPANELITEM, i, &fgppi);
+                    control(panel, cmd, i, &fgppi);
 
                     result.push_back(ppi);
                 }

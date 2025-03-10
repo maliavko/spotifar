@@ -15,9 +15,6 @@ public:
     {
         string id;
         wstring name;
-        
-        static void WINAPI free(void *const user_data,
-            const FarPanelItemFreeInfo *const info);
     };
 
     struct sort_mode_t
@@ -34,13 +31,9 @@ public:
         wstring name;
         wstring description;
         uintptr_t file_attrs;
-        size_t size; // TODO: it seems, it is not used
         std::vector<wstring> custom_column_data;
         user_data_t *user_data;
-
-        item_t(const string &id, const wstring &name, const wstring &descr,
-            uintptr_t attrs, size_t size = 0, const std::vector<wstring> &columns_data = {},
-            user_data_t *user_data = nullptr);
+        FARPANELITEMFREECALLBACK free_user_data_callback;
     };
 
     typedef std::vector<sort_mode_t> sort_modes_t;
@@ -52,30 +45,52 @@ public:
     view(const string &uid);
     virtual ~view() {}
 
-    auto get_settings() const -> config::settings::view_t*;
+    // a panel's interface to the view data
+
+    /// a helper event from outside, its called right after the items
+    /// are populated on the panel
+    auto on_items_updated() -> void;
+    auto compare_items(const CompareInfo *info) -> intptr_t;
+    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    auto select_item(const SetDirectoryInfo *info) -> intptr_t;
+    auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
+    auto get_item_idx(const string &item_id) -> size_t;
 
     virtual auto get_dir_name() const -> const wchar_t* = 0;
     virtual auto get_title() const -> const wchar_t* = 0;
-    virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
-    virtual auto get_default_settings() const -> config::settings::view_t = 0;
-    
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
-    virtual auto get_item_idx(const string &item_id) -> size_t { return 0; }
-
-    virtual auto select_item(const user_data_t *data) -> intptr_t { return FALSE; }
-    virtual auto request_extra_info(const user_data_t *data) -> bool { return false; }
-    virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
-    virtual auto get_free_user_data_callback() -> FARPANELITEMFREECALLBACK;
-    virtual auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
+protected:
+    /// @brief A helper method for freeing allocated user data
+    /// @tparam T user data object type
+    template<class T>
+    static auto free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info) -> void;
+
+    /// @brief A helper function to unpack user data from the far items
+    static auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
+
+    // derived classes' interface to the internal view mechanisms
+    virtual auto request_extra_info(const user_data_t *data) -> bool { return false; }
+    virtual auto select_item(const user_data_t *data) -> intptr_t { return FALSE; }
+    virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
+    virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
+    virtual auto get_default_settings() const -> config::settings::view_t = 0;
     virtual auto compare_items(const sort_mode_t &modes, const user_data_t *data1,
         const user_data_t *data2) -> intptr_t { return -2; }
 private:
-    bool is_first_initialization = true;
+    bool is_first_init = true; // data is ready flag
+    sort_modes_t sort_modes;
+    config::settings::view_t *settings;
     string uid;
 };
+
+template<class T>
+void view::free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
+{
+    delete reinterpret_cast<const T*>(user_data);
+}
 
 } // namespace ui
 } // namespace spotifar

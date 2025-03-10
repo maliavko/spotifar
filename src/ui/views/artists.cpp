@@ -108,9 +108,9 @@ const view::items_t* artists_view::get_items()
             a.name,
             utils::to_wstring(utils::string_join(a.genres, ", ")),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            0,
             column_data,
             new artist_user_data_t{ a.id, a.name, a.popularity, a.followers_total, },
+            free_user_data<artist_user_data_t>
         });
     }
 
@@ -154,6 +154,11 @@ const view::sort_modes_t& artists_view::get_sort_modes() const
     return modes;
 }
 
+config::settings::view_t artists_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
 intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
     const user_data_t *data1, const user_data_t *data2)
 {
@@ -173,17 +178,6 @@ intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
             return item1->followers_count - item2->followers_count;
     }
     return -2;
-}
-    
-FARPANELITEMFREECALLBACK artists_view::get_free_user_data_callback()
-{
-    return artist_user_data_t::free;
-}
-
-void WINAPI artists_view::artist_user_data_t::free(void *const user_data,
-    const FarPanelItemFreeInfo *const info)
-{
-    delete reinterpret_cast<const artist_user_data_t*>(user_data);
 }
 
 } // namespace ui

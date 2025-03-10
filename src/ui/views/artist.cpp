@@ -17,7 +17,7 @@ artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
 const wchar_t* artist_view::get_dir_name() const
 {
     static wchar_t dir_name[MAX_PATH];
-    wcsncpy_s(dir_name, utils::strip_invalid_filename_chars(artist.name).c_str(), MAX_PATH);
+    wcsncpy_s(dir_name, artist.name.c_str(), MAX_PATH);
     return dir_name;
 }
 
@@ -35,6 +35,11 @@ const view::sort_modes_t& artist_view::get_sort_modes() const
         { L"Tracks",        SM_SIZE,    VK_F5 + mods::ctrl },
     };
     return modes;
+}
+
+config::settings::view_t artist_view::get_default_settings() const
+{
+    return { 1, false, 3 };
 }
 
 intptr_t artist_view::select_item(const user_data_t* data)
@@ -175,9 +180,9 @@ const view::items_t* artist_view::get_items()
             a.name,
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            0,
             columns,
             new album_user_data_t{ a.id, a.name, a.get_release_year(), a.total_tracks, },
+            free_user_data<album_user_data_t>
         });
     }
     return &items;
@@ -214,17 +219,6 @@ intptr_t artist_view::process_key_input(int combined_key)
         }
     }
     return FALSE;
-}
-    
-FARPANELITEMFREECALLBACK artist_view::get_free_user_data_callback()
-{
-    return album_user_data_t::free;
-}
-
-void WINAPI artist_view::album_user_data_t::free(void *const user_data,
-    const FarPanelItemFreeInfo *const info)
-{
-    delete reinterpret_cast<const album_user_data_t*>(user_data);
 }
 
 } // namespace ui

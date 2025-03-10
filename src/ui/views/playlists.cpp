@@ -31,6 +31,11 @@ const view::sort_modes_t& playlists_view::get_sort_modes() const
     return modes;
 }
 
+config::settings::view_t playlists_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
 intptr_t playlists_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
@@ -78,11 +83,11 @@ const view::items_t* playlists_view::get_items()
         
         items.push_back({
             p.id, p.name, L"",
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL, 0,
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             {
                 tracks_count
             },
-            new view::user_data_t{ p.id },
+            new user_data_t{ p.id, p.name, }, free_user_data<user_data_t>
         });
     }
 

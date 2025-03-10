@@ -20,9 +20,9 @@ public:
     auto get_items() -> const items_t*;
     auto get_key_bar_info() -> const key_bar_info_t*;
     auto get_info_lines() -> const info_lines_t*;
-    auto get_default_settings() const -> config::settings::view_t { return {}; }
-    virtual auto get_sort_modes() const -> const sort_modes_t&;
-
+protected:
+    auto get_sort_modes() const -> const sort_modes_t&;
+    auto get_default_settings() const -> config::settings::view_t;
     auto select_item(const user_data_t* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto request_extra_info(const user_data_t* data) -> bool;
@@ -43,16 +43,17 @@ view::item_t root_view::pack_menu_item(const string &id, int name_msg_id, int de
     if (api_proxy->is_request_cached(req.get_url()) && req(api_proxy))
         entries_count = std::format(L"{: >6}", (req.get_total()));
 
+    auto name = utils::far3::get_text(name_msg_id);
+
     return {
         id,
-        utils::far3::get_text(name_msg_id),
+        name,
         utils::far3::get_text(descr_msg_id),
         FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-        0,
         {
             entries_count
         },
-        new view::user_data_t{ id },
+        new user_data_t{ id, name, }, free_user_data<user_data_t>
     };
 }
 

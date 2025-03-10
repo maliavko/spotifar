@@ -24,10 +24,9 @@ public:
     void cleanup();
     void tick();
 
+    bool is_visible() const { return visible; }
     bool is_expanded() const;
     void expand(bool is_unfolded);
-
-    inline bool is_visible() const { return visible; }
 
     // controls' event handlers
     bool on_skip_to_next_btn_click(void* = nullptr);
@@ -63,16 +62,16 @@ protected:
     void update_playing_queue(bool is_visible);
 
     // api even handlers
-    virtual void on_playback_sync_finished(const string &err_msg);
-    virtual void on_devices_changed(const devices_t &devices);
-    virtual void on_track_changed(const track &track);
-    virtual void on_track_progress_changed(int duration, int progress);
-    virtual void on_volume_changed(int volume);
-    virtual void on_shuffle_state_changed(bool state);
-    virtual void on_repeat_state_changed(const string &state);
-    virtual void on_state_changed(bool is_playing);
-    virtual void on_context_changed(const context &ctx);
-    virtual void on_permissions_changed(const spotify::actions &actions);
+    void on_playback_sync_finished(const string &err_msg);
+    void on_devices_changed(const devices_t &devices);
+    void on_track_changed(const track &track);
+    void on_track_progress_changed(int duration, int progress);
+    void on_volume_changed(int volume);
+    void on_shuffle_state_changed(bool state);
+    void on_repeat_state_changed(const string &state);
+    void on_state_changed(bool is_playing);
+    void on_context_changed(const context &ctx);
+    void on_permissions_changed(const spotify::actions &actions);
 
     // helpers
     intptr_t set_control_text(int control_id, const wstring &text);
