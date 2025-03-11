@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "config.hpp"
 #include "utils.hpp"
-#include "ui/config_dialog.hpp"
+#include "ui/dialogs.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -263,7 +263,52 @@ bool config_dialog::show()
     }
     config::ps_info.DialogFree(hdlg);
 
-    return false;
+    return true;
+}
+
+int sort_dialog::show(const view &v)
+{
+    using namespace utils;
+
+    const auto &modes = v.get_sort_modes();
+    const auto &settings = v.get_settings();
+
+    std::vector<FarMenuItem> result;
+    for (size_t idx = 0; idx < modes.size(); idx++)
+    {
+        auto &sm = modes[idx];
+
+        // the width of the dialog is 28, the sort mode name is aligned to the left,
+        // while the hotkey name - to the right
+        wstring label = std::format(L"{: <18}{: >10}", sm.name,
+            keys::combined_to_string(sm.combined_key));
+
+        MENUITEMFLAGS flags = MIF_NONE;
+        if (idx == settings->sort_mode_idx)
+            flags |= MIF_CHECKED | (settings->is_descending ? L'▼' : L'▲');
+
+        result.push_back({ flags, _wcsdup(label.c_str()) });
+    }
+
+    // to emulate a behaviour of the standard sort dialog, which stacks
+    // to the left border of the active panel
+    auto info = far3::panels::get_info(PANEL_ACTIVE);
+
+    auto sort_idx = config::ps_info.Menu(
+        &SortDialogGuid,
+        {},
+        info.PanelRect.left + 5, -1, 0,
+        FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
+        far3::get_text(MSortDialogTitle),
+        {}, {}, {}, {},
+        &result[0],
+        result.size()
+    );
+
+    for (auto &item: result)
+        free(const_cast<wchar_t*>(item.Text));
+
+    return (int)sort_idx;
 }
 
 } // namespace ui

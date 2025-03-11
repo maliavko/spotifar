@@ -24,7 +24,7 @@ add_library(${PROJECT_NAME} SHARED
 	spotify/cache.cpp
 	ui/panel.cpp
 	ui/player.cpp
-	ui/config_dialog.cpp
+	ui/dialogs.cpp
 	ui/events.cpp
 	ui/controls.cpp
 	ui/views/view.cpp
@@ -34,7 +34,6 @@ add_library(${PROJECT_NAME} SHARED
 	ui/views/playlist.cpp
 	ui/views/artist.cpp
 	ui/views/album.cpp
-	ui/views/sort_dialog.cpp
 	../thirdparty/ObserverManager/ObserverManager/ObserverManager.cpp
 	../thirdparty/ObserverManager/ObserverManager/BaseObserverProtocol.cpp
 	spotifar.vc.def

@@ -38,24 +38,15 @@ namespace keys
         std::vector<wstring> keys;
 
         if (combined_key & mods::ctrl)
-        {
-            combined_key &= ~mods::ctrl;
             keys.push_back(L"Ctrl");
-        }
 
         if (combined_key & mods::alt)
-        {
-            combined_key &= ~mods::alt;
             keys.push_back(L"Alt");
-        }
 
         if (combined_key & mods::shift)
-        {
-            combined_key &= ~mods::shift;
             keys.push_back(L"Shift");
-        }
 
-        keys.push_back(vk_to_string(combined_key));
+        keys.push_back(vk_to_string(LOWORD(combined_key)));
             
         return string_join(keys, L"+");
     }

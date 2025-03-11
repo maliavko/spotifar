@@ -55,7 +55,8 @@ public:
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
     auto get_item_idx(const string &item_id) -> size_t;
-    auto get_settings() -> config::settings::view_t*;
+    auto get_settings() const -> config::settings::view_t*;
+    auto select_sort_mode(int sort_mode_idx) -> void;
 
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
     virtual auto get_dir_name() const -> const wchar_t* = 0;

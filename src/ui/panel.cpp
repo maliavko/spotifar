@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ui/panel.hpp"
+#include "ui/dialogs.hpp"
 #include "ui/views/root.hpp"
 #include "ui/views/artists.hpp"
 #include "ui/views/artist.hpp"
@@ -167,40 +168,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             }
             case VK_F12 + keys::mods::ctrl:
             {
-                const auto &modes = view->get_sort_modes();
-                const auto &settings = view->get_settings();
-
-                std::vector<FarMenuItem> result;
-                for (size_t idx = 0; idx < modes.size(); idx++)
-                {
-                    auto &sm = modes[idx];
-
-                    wstring label = std::format(L"{: <18}{: >10}", sm.name,
-                        keys::combined_to_string(sm.combined_key));
-
-                    MENUITEMFLAGS flags = MIF_NONE;
-                    if (idx == settings->sort_mode_idx)
-                        flags |= MIF_CHECKED | (settings->is_descending ? L'▼' : L'▲');
-
-                    result.push_back({ flags, _wcsdup(label.c_str()) });
-                }
-
-                // TODO: move dialog to some other file and process the result
-                auto r = config::ps_info.Menu(
-                    &FarMessageGuid,
-                    {},
-                    -1, -1, 0,
-                    FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-                    L"Sort by",
-                    {}, {}, {}, {},
-                    &result[0],
-                    result.size()
-                );
-                spdlog::debug("menu result {}", r);
-
-                for (auto &item: result)
-                    free(const_cast<wchar_t*>(item.Text));
-
+                view->select_sort_mode(sort_dialog::show(*view));
                 return TRUE;
             }
         }

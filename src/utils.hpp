@@ -114,10 +114,11 @@ namespace keys
 
     namespace mods
     {
+        // all the modifiers are placed in the HIWORD
         static const int
-            ctrl    = 0x100000,
-            alt     = 0x200000,
-            shift   = 0x400000;
+            ctrl    = 0x10000,
+            alt     = 0x20000,
+            shift   = 0x40000;
     }
 
     /// @brief Whether the given virtual key is pressed at the moment

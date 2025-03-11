@@ -8,9 +8,31 @@ view::view(const string &uid):
 {
 }
 
-config::settings::view_t* view::get_settings()
+config::settings::view_t* view::get_settings() const
 {
     return config::get_panel_settings(uid, get_default_settings());
+}
+
+void view::select_sort_mode(int idx)
+{
+    if (idx > sort_modes.size())
+    {
+        utils::log::global->error("Given sort mode index is out of range, index {}, "
+            "view uid {}, modes cout {}", idx, uid, sort_modes.size());
+        return;
+    }
+
+    const auto &sm = sort_modes[idx];
+
+    if (idx == settings->sort_mode_idx)
+        // if the sort mode index is the same as the current one - we invert
+        // the sorting direction
+        settings->is_descending = !settings->is_descending;
+    else
+        // otherwise just change the sort mode
+        settings->sort_mode_idx = idx;
+    
+    utils::far3::panels::set_sort_mode(PANEL_ACTIVE, sm.far_sort_mode, settings->is_descending);
 }
 
 void view::on_items_updated()
@@ -58,11 +80,7 @@ intptr_t view::process_input(const ProcessPanelInputInfo *info)
             const auto &smode = sort_modes[idx];
             if (key == smode.combined_key)
             {
-                if (idx == settings->sort_mode_idx)
-                    settings->is_descending = !settings->is_descending;
-                else
-                    settings->sort_mode_idx = idx;
-                utils::far3::panels::set_sort_mode(PANEL_ACTIVE, smode.far_sort_mode, settings->is_descending);
+                select_sort_mode(idx);
                 return TRUE;
             }
         }

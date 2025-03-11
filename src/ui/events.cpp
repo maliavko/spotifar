@@ -1,6 +1,6 @@
 #include "events.hpp"
 #include "utils.hpp"
-#include "config_dialog.hpp"
+#include "dialogs.hpp"
 
 namespace spotifar { namespace ui {
 

@@ -13,6 +13,8 @@ namespace spotifar
         MError,
         MYes,
 
+        MSortDialogTitle,
+
         MConfigAddToDisksMenu,
         MConfigSpotifySettings,
         MConfigSpotifyClientID,
