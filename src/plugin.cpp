@@ -83,12 +83,12 @@ intptr_t plugin::set_directory(const SetDirectoryInfo *info)
 
 intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
 {
-    namespace keys = far3::keys;
+    namespace keys = utils::keys;
 
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        switch (far3::keys::make_combined(key_event))
+        switch (keys::make_combined(key_event))
         {
             case VK_F8:
             {
@@ -99,30 +99,6 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             {
                 if (!player.is_visible())
                     player.show();
-                return TRUE;
-            }
-            case VK_F12 + keys::mods::ctrl:
-            {
-                FarMenuItem items[] = {
-                    { 0,                    L"Test1            Ctrl+F3" },
-                    { MIF_CHECKED | L'▼',   L"Test2            Ctrl+F7" },
-                    { 0,                    L"Test3            Cltr+F4" },
-                    { 0,                    L"Test4            Ctrl+F5" },
-                    { 0,                    L"Test5            Ctrl+F6" },
-                };
-
-                auto r = config::ps_info.Menu(
-                    &FarMessageGuid,
-                    {},
-                    -1, -1, 0,
-                    FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-                    L"Sort by",
-                    {}, {}, {}, {},
-                    items,
-                    std::size(items)
-                );
-                spdlog::debug("menu result {}", r);
-
                 return TRUE;
             }
         }
@@ -198,7 +174,7 @@ void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
             if (is_enabled) // then reinitialize those, which are enabled
             {
                 auto *hotkey = config::get_hotkey(hotkey_id);
-                if (hotkey != nullptr && hotkey->first != far3::keys::none)
+                if (hotkey != nullptr && hotkey->first != utils::keys::none)
                 {
                     if (!RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
                     {
@@ -226,14 +202,14 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
 
 void plugin::on_auth_status_changed(const spotify::auth &auth)
 {
-    if (auth.is_valid() && !librespot.is_launched())
-        if (!librespot.launch(auth.access_token))
-        {
-            librespot.shutdown(); // cleaning up the allocated resources if any
-            utils::far3::show_far_error_dlg(
-                MFarMessageErrorStartup, L"There is a problem launching Librespot "
-                "process, look into logs");
-        }
+    // if (auth.is_valid() && !librespot.is_launched())
+    //     if (!librespot.launch(auth.access_token))
+    //     {
+    //         librespot.shutdown(); // cleaning up the allocated resources if any
+    //         utils::far3::show_far_error_dlg(
+    //             MFarMessageErrorStartup, L"There is a problem launching Librespot "
+    //             "process, look into logs");
+    //     }
 }
 
 void plugin::show_player_dialog()

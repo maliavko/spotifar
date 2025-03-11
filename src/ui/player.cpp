@@ -4,7 +4,7 @@
 namespace spotifar { namespace ui {
 
 namespace far3 = utils::far3;
-namespace keys = far3::keys;
+namespace keys = utils::keys;
 namespace colors = far3::colors;
 namespace synchro_tasks = far3::synchro_tasks;
 

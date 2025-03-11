@@ -8,13 +8,18 @@ view::view(const string &uid):
 {
 }
 
+config::settings::view_t* view::get_settings()
+{
+    return config::get_panel_settings(uid, get_default_settings());
+}
+
 void view::on_items_updated()
 {
     if (is_first_init)
     {
         is_first_init = false;
 
-        settings = config::get_panel_settings(uid, get_default_settings());
+        settings = get_settings();
         sort_modes = get_sort_modes();
         
         if (sort_modes.size() > settings->sort_mode_idx)
@@ -46,7 +51,7 @@ intptr_t view::process_input(const ProcessPanelInputInfo *info)
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        int key = utils::far3::keys::make_combined(key_event);
+        int key = utils::keys::make_combined(key_event);
         
         for (int idx = 0; idx < sort_modes.size(); idx++)
         {

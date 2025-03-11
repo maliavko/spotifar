@@ -14,6 +14,89 @@ bool operator==(const FarKey &lhs, const FarKey &rhs)
 
 namespace spotifar { namespace utils {
 
+namespace keys
+{
+    bool is_pressed(int virtual_key)
+    {
+        return GetKeyState(virtual_key) < 0;
+    }
+
+    int make_combined(const KEY_EVENT_RECORD &kir)
+    {
+        int key = static_cast<int>(kir.wVirtualKeyCode);
+        const auto state = kir.dwControlKeyState;
+        
+        if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= keys::mods::ctrl;
+        if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= keys::mods::alt;
+        if (state & SHIFT_PRESSED) key |= keys::mods::shift;
+
+        return key;
+    }
+    
+    wstring combined_to_string(int combined_key)
+    {
+        std::vector<wstring> keys;
+
+        if (combined_key & mods::ctrl)
+        {
+            combined_key &= ~mods::ctrl;
+            keys.push_back(L"Ctrl");
+        }
+
+        if (combined_key & mods::alt)
+        {
+            combined_key &= ~mods::alt;
+            keys.push_back(L"Alt");
+        }
+
+        if (combined_key & mods::shift)
+        {
+            combined_key &= ~mods::shift;
+            keys.push_back(L"Shift");
+        }
+
+        keys.push_back(vk_to_string(combined_key));
+            
+        return string_join(keys, L"+");
+    }
+
+    wstring vk_to_string(WORD virtual_key_code)
+    {
+        // if the key is a text key
+        if (virtual_key_code >= keys::a && virtual_key_code <= keys::z)
+            return wstring(1, (char)virtual_key_code);
+
+        // if it is a special key
+        switch (virtual_key_code)
+        {
+            case VK_DOWN: return L"Down";
+            case VK_LEFT: return L"Left";
+            case VK_RIGHT: return L"Right";
+            case VK_UP: return L"Up";
+            case VK_END: return L"End";
+            case VK_NAVIGATION_DOWN: return L"Pg Down";
+            case VK_NAVIGATION_UP: return L"Pg Up";
+            case VK_CAPITAL: return L"Caps";
+            case VK_OEM_PERIOD: return L".";
+            case VK_OEM_COMMA: return L",";
+            case VK_OEM_1: return L";";
+            case VK_OEM_2: return L"/";
+            case VK_OEM_3: return L"";
+            case VK_OEM_4: return L"[";
+            case VK_OEM_5: return L"\\";
+            case VK_OEM_6: return L"]";
+            case VK_OEM_7: return L"'";
+        }
+        
+        // the rest we'll try to map via winapi
+        wchar_t buf[32]{};
+        auto scan_code = MapVirtualKeyA(virtual_key_code, MAPVK_VK_TO_VSC);
+        GetKeyNameTextW(scan_code << 16, buf, sizeof(buf));
+
+        return buf;
+    }
+}
+
 namespace far3
 {
     string get_plugin_version()
@@ -24,26 +107,6 @@ namespace far3
             PLUGIN_VERSION.Revision,
             PLUGIN_VERSION.Build,
             (int)PLUGIN_VERSION.Stage);
-    }
-
-    namespace keys
-    {
-        bool is_pressed(int virtual_key)
-        {
-            return GetKeyState(virtual_key) < 0;
-        }
-
-        int make_combined(const KEY_EVENT_RECORD &kir)
-        {
-            int key = static_cast<int>(kir.wVirtualKeyCode);
-            const auto state = kir.dwControlKeyState;
-            
-            if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= keys::mods::ctrl;
-            if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= keys::mods::alt;
-            if (state & SHIFT_PRESSED) key |= keys::mods::shift;
-    
-            return key;
-        }
     }
 
     namespace dialogs

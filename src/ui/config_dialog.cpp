@@ -172,46 +172,6 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     control(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP, L"Cancel"),
 };
 
-/// @brief The function `GetKeyNameTextW` works no great, for some corner cases
-/// it returns empty or error translation. Plus the text will depend on the 
-/// locale language selected by user in OS. The function tries to be not
-/// dependent on these problems
-static wstring get_key_name(WORD virtual_key_code)
-{
-    // if the key is a text key
-    if (virtual_key_code >= utils::far3::keys::a && virtual_key_code <= utils::far3::keys::z)
-        return wstring(1, (char)virtual_key_code);
-
-    // if it is a special key
-    switch (virtual_key_code)
-    {
-        case VK_DOWN: return L"Down";
-        case VK_LEFT: return L"Left";
-        case VK_RIGHT: return L"Right";
-        case VK_UP: return L"Up";
-        case VK_END: return L"End";
-        case VK_NAVIGATION_DOWN: return L"Pg Down";
-        case VK_NAVIGATION_UP: return L"Pg Up";
-        case VK_CAPITAL: return L"Caps";
-        case VK_OEM_PERIOD: return L".";
-        case VK_OEM_COMMA: return L",";
-        case VK_OEM_1: return L";";
-        case VK_OEM_2: return L"/";
-        case VK_OEM_3: return L"";
-        case VK_OEM_4: return L"[";
-        case VK_OEM_5: return L"\\";
-        case VK_OEM_6: return L"]";
-        case VK_OEM_7: return L"'";
-    }
-    
-    // the rest we'll try to map via winapi
-    wchar_t buf[32]{};
-    auto scan_code = MapVirtualKeyA(virtual_key_code, MAPVK_VK_TO_VSC);
-    GetKeyNameTextW(scan_code << 16, buf, sizeof(buf));
-
-    return buf;
-}
-
 static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 {
     if (msg == DN_CONTROLINPUT && hotkey_edits.contains((controls)param1))
@@ -220,7 +180,7 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
         auto &key_event = record->Event.KeyEvent;
         if (record->EventType == KEY_EVENT && key_event.bKeyDown)
         {
-            int key = keys::make_combined(key_event), edit_id = (int)param1;
+            int key = utils::keys::make_combined(key_event), edit_id = (int)param1;
             if (key == VK_BACK)
             {
                 dialogs::set_text(hdlg, edit_id, L"");
@@ -232,7 +192,7 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
             }
             else if (key != VK_ESCAPE)
             {
-                auto key_name = get_key_name(key_event.wVirtualKeyCode);
+                auto key_name = utils::keys::vk_to_string(key_event.wVirtualKeyCode);
                 auto key_code = std::to_wstring(key_event.wVirtualKeyCode);
 
                 // disallowing to pick the already selected key
@@ -268,7 +228,7 @@ bool config_dialog::show()
         if (key_and_mods == nullptr)
             continue;
 
-        dialogs::set_text(hdlg, ctrl_id, get_key_name(key_and_mods->first));
+        dialogs::set_text(hdlg, ctrl_id, utils::keys::vk_to_string(key_and_mods->first));
         dialogs::set_text(hdlg, ctrl_id + 1, std::to_wstring(key_and_mods->first));
         dialogs::set_checked(hdlg, ctrl_id + 2, key_and_mods->second & MOD_CONTROL);
         dialogs::set_checked(hdlg, ctrl_id + 3, key_and_mods->second & MOD_SHIFT);

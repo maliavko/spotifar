@@ -55,7 +55,9 @@ public:
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
     auto get_item_idx(const string &item_id) -> size_t;
+    auto get_settings() -> config::settings::view_t*;
 
+    virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
     virtual auto get_dir_name() const -> const wchar_t* = 0;
     virtual auto get_title() const -> const wchar_t* = 0;
     virtual auto get_items() -> const items_t* { return nullptr; }
@@ -75,7 +77,6 @@ protected:
     virtual auto request_extra_info(const user_data_t *data) -> bool { return false; }
     virtual auto select_item(const user_data_t *data) -> intptr_t { return FALSE; }
     virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
-    virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
     virtual auto compare_items(const sort_mode_t &modes, const user_data_t *data1,
         const user_data_t *data2) -> intptr_t { return -2; }

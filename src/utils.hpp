@@ -99,6 +99,44 @@ namespace log
     void enable_verbose_logs(bool is_verbose);
 }
 
+namespace keys
+{
+    static const int
+        none = 0x00,
+        a = 0x41,
+        d = 0x44,
+        q = 0x51,
+        r = 0x52,
+        s = 0x53,
+        z = 0x5A,
+        key_0 = 0x30,
+        key_9 = 0x39;
+
+    namespace mods
+    {
+        static const int
+            ctrl    = 0x100000,
+            alt     = 0x200000,
+            shift   = 0x400000;
+    }
+
+    /// @brief Whether the given virtual key is pressed at the moment
+    bool is_pressed(int virtual_key);
+
+    /// @brief Converts the given input record to the combined int, including a pressed
+    /// key + all the modifiers, so it can be used later as key_a + mods::ctrl + mods::shift e.g.
+    int make_combined(const KEY_EVENT_RECORD &kir);
+
+    /// @brief Returns a beautiful user readable string of the key plus modifiers
+    wstring combined_to_string(int combined_key);
+
+    /// @brief The function `GetKeyNameTextW` works no great, for some corner cases
+    /// it returns empty or error translation. Plus the text will depend on the 
+    /// locale language selected by user in OS. The function tries to be not
+    /// dependent on these problems
+    wstring vk_to_string(WORD virtual_key_code);
+}
+
 namespace far3
 {
     /// @brief Far3 16 palette colors
@@ -123,35 +161,6 @@ namespace far3
             yellow,
             white,
         };
-    }
-
-    namespace keys
-    {
-        static const int
-            none = 0x00,
-            a = 0x41,
-            d = 0x44,
-            q = 0x51,
-            r = 0x52,
-            s = 0x53,
-            z = 0x5A,
-            key_0 = 0x30,
-            key_9 = 0x39;
-
-        namespace mods
-        {
-            static const int
-                ctrl = 0x100000,
-                alt = 0x200000,
-                shift = 0x400000;
-        }
-
-        /// @brief Whether the given virtual key is pressed at the moment
-        bool is_pressed(int virtual_key);
-
-        /// @brief Converts the given input record to the combined int, including a pressed
-        /// key + all the modifiers, so it can be used later as key_a + mods::ctrl + mods::shift e.g.
-        int make_combined(const KEY_EVENT_RECORD &kir);
     }
 
     /// @brief Returns plugin version in the format "Major.Minor.Revision.Build.Stage"

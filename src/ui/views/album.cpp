@@ -26,9 +26,9 @@ const wchar_t* album_view::get_title() const
 
 const view::sort_modes_t& album_view::get_sort_modes() const
 {
-    using namespace utils::far3::keys;
+    using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Number",        SM_EXT,     VK_F4 + mods::ctrl },
+        { L"Track Number",  SM_EXT,     VK_F4 + mods::ctrl },
         { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
         { L"Duration",      SM_SIZE,    VK_F5 + mods::ctrl },
     };

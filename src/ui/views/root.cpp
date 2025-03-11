@@ -53,7 +53,7 @@ const view::info_lines_t* root_view::get_info_lines()
 
 const view::sort_modes_t& root_view::get_sort_modes() const
 {
-    using namespace utils::far3::keys;
+    using namespace utils::keys;
     static sort_modes_t modes = {
         { L"Name", SM_NAME, VK_F3 + mods::ctrl },
     };

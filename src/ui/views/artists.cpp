@@ -29,8 +29,6 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     static wstring column_name;
     
     column_name = L"Name";
-    // if (sort_mode == 1)
-    //     column_name += is_desc ?  L'▼' : L'▲';
 
     static const wchar_t* titles_3[] = { column_name.c_str(), L"Albums", L"Followers", L"Pop %" };
     modes[3].ColumnTypes = L"NON,C3,C0,C1";
@@ -145,7 +143,7 @@ bool artists_view::request_extra_info(const user_data_t *data)
 
 const view::sort_modes_t& artists_view::get_sort_modes() const
 {
-    using namespace utils::far3::keys;
+    using namespace utils::keys;
     static sort_modes_t modes = {
         { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
         { L"Followers",     SM_SIZE,    VK_F4 + mods::ctrl },

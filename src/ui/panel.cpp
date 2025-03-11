@@ -144,12 +144,12 @@ intptr_t panel::select_directory(const SetDirectoryInfo *info)
 
 intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 {
-    namespace keys = far3::keys;
+    namespace keys = utils::keys;
 
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        int key = far3::keys::make_combined(key_event);
+        auto key = keys::make_combined(key_event);
         switch (key)
         {
             case VK_F3:
@@ -163,6 +163,44 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                     refresh_panels();
         
                 // blocking F3 panel processing in general, as we have a custom one
+                return TRUE;
+            }
+            case VK_F12 + keys::mods::ctrl:
+            {
+                const auto &modes = view->get_sort_modes();
+                const auto &settings = view->get_settings();
+
+                std::vector<FarMenuItem> result;
+                for (size_t idx = 0; idx < modes.size(); idx++)
+                {
+                    auto &sm = modes[idx];
+
+                    wstring label = std::format(L"{: <18}{: >10}", sm.name,
+                        keys::combined_to_string(sm.combined_key));
+
+                    MENUITEMFLAGS flags = MIF_NONE;
+                    if (idx == settings->sort_mode_idx)
+                        flags |= MIF_CHECKED | (settings->is_descending ? L'▼' : L'▲');
+
+                    result.push_back({ flags, _wcsdup(label.c_str()) });
+                }
+
+                // TODO: move dialog to some other file and process the result
+                auto r = config::ps_info.Menu(
+                    &FarMessageGuid,
+                    {},
+                    -1, -1, 0,
+                    FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
+                    L"Sort by",
+                    {}, {}, {}, {},
+                    &result[0],
+                    result.size()
+                );
+                spdlog::debug("menu result {}", r);
+
+                for (auto &item: result)
+                    free(const_cast<wchar_t*>(item.Text));
+
                 return TRUE;
             }
         }

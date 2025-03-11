@@ -120,7 +120,7 @@ intptr_t playlist_view::select_item(const user_data_t* data)
 
 const view::sort_modes_t& playlist_view::get_sort_modes() const
 {
-    using namespace utils::far3::keys;
+    using namespace utils::keys;
     static sort_modes_t modes = {
         { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
         { L"Added",         SM_MTIME,   VK_F4 + mods::ctrl },
