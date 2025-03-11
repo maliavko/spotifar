@@ -14,6 +14,9 @@ struct config_dialog
 
 struct sort_dialog
 {
+    /// @brief Opens a sort dialog with the all available sort modes
+    /// for the given `view`. If a new mode is picked, its index will
+    /// be returned; if the dialog is closed via Esc - "-1"
     static int show(const view &v);
 };
 

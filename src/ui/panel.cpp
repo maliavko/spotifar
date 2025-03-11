@@ -168,7 +168,9 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             }
             case VK_F12 + keys::mods::ctrl:
             {
-                view->select_sort_mode(sort_dialog::show(*view));
+                auto sort_modex_idx = sort_dialog::show(*view);
+                if (sort_modex_idx > -1)
+                    view->select_sort_mode(sort_modex_idx);
                 return TRUE;
             }
         }

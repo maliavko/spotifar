@@ -18,7 +18,7 @@ void view::select_sort_mode(int idx)
     if (idx > sort_modes.size())
     {
         utils::log::global->error("Given sort mode index is out of range, index {}, "
-            "view uid {}, modes cout {}", idx, uid, sort_modes.size());
+            "view uid {}, modes count {}", idx, uid, sort_modes.size());
         return;
     }
 
