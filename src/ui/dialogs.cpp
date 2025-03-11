@@ -295,8 +295,8 @@ int sort_dialog::show(const view &v)
     auto info = far3::panels::get_info(PANEL_ACTIVE);
 
     auto sort_idx = config::ps_info.Menu(
+        &MainGuid,
         &SortDialogGuid,
-        {},
         info.PanelRect.left + 5, -1, 0,
         FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
         far3::get_text(MSortDialogTitle),
