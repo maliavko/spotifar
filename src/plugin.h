@@ -8,6 +8,7 @@
 #include "ui/player.hpp"
 #include "ui/events.hpp"
 #include "utils.hpp"
+#include "librespot.hpp"
 
 namespace spotifar {
 
@@ -33,31 +34,25 @@ public:
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
-
-    void launch_librespot(const string &access_token);
     
     void check_global_hotkeys();
-    void check_librespot_messages();
 
-    virtual void on_global_hotkeys_setting_changed(bool is_enabled);
-    virtual void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys);
-    virtual void on_logging_verbocity_changed(bool is_verbose);
-    virtual void on_auth_status_changed(const spotify::auth &auth);
-    virtual void show_player_dialog();
+    // event handlers
+    void on_global_hotkeys_setting_changed(bool is_enabled);
+    void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys);
+    void on_logging_verbocity_changed(bool is_verbose);
+    void on_auth_status_changed(const spotify::auth &auth);
+    void show_player_dialog();
 
 private:
     std::mutex sync_worker_mutex;
     std::atomic<bool> is_worker_listening = false;
-
     utils::tasks_queue background_tasks;
+
+    librespot_handler librespot;
     spotify::api api;
     ui::panel panel;
     ui::player player;
-    
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    HANDLE m_hChildStd_OUT_Rd = NULL;
-    HANDLE m_hChildStd_OUT_Wr = NULL;
 };
 
 } // namespace spotifar

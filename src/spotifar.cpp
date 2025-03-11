@@ -95,8 +95,7 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html
 void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 {
-    auto &p = *static_cast<plugin*>(info->hPanel);
-    p.update_panel_info(info);
+    return static_cast<plugin*>(info->hPanel)->update_panel_info(info);
 }
 
 /// @brief https://api.farmanager.com/ru/structures/getfinddatainfo.html

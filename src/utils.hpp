@@ -42,6 +42,9 @@ string to_string(const wstring &ws);
 /// with the underscore
 wstring strip_invalid_filename_chars(const wstring &filename);
 
+/// @brief Returns the message of GetLastError function
+string get_last_system_error();
+
 /// @brief Join a vector of string into one, using given `delimeter`
 /// @param parts string parts
 /// @param delim delimeter

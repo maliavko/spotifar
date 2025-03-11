@@ -326,6 +326,7 @@ namespace far3
 
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
     {
+        // TODO: refactor dialog system
         auto err_msg = get_text(error_msg_id);
         const wchar_t* msgs[] = {
             get_text(MFarMessageErrorTitle),
@@ -463,6 +464,33 @@ wstring strip_invalid_filename_chars(const wstring &filename)
 {
     static auto r = std::wregex(L"[\?\\\\/:*<>|]");
     return std::regex_replace(filename, r, L"_");
+}
+
+string get_last_system_error()
+{
+    struct deleter
+    {
+        void operator()(void *data) {
+            if (data != NULL) LocalFree(data);
+        }
+    };
+
+    LPVOID lpMsgBuf;
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        GetLastError(),
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR) &lpMsgBuf,
+        0,
+        NULL);
+
+    // wrapping up the message pointer to free it up right after the result
+    // is returned
+    std::shared_ptr<const TCHAR[]> msg((LPTSTR)lpMsgBuf, deleter());
+    
+    return utils::to_string((LPCTSTR)lpMsgBuf);
 }
 
 string trim(const string &s)
