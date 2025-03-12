@@ -13,7 +13,7 @@ FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x
 
 intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 {
-    auto d = far3::dialogs::get_dlg_data<dialog>(hdlg);
+    auto d = far3::dialogs::get_dlg_data<modal_dialog>(hdlg);
     if (msg == DN_INITDIALOG)
     {
         d->init();
@@ -31,34 +31,26 @@ intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param
     return config::ps_info.DefDlgProc(hdlg, msg, param1, param2);
 }
 
-dialog::dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout, FARDIALOGFLAGS flags):
-    is_modal((flags & FDLG_NONMODAL) == 0)
+modal_dialog::modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
+                           FARDIALOGFLAGS flags)
 {
     hdlg = config::ps_info.DialogInit(&MainGuid, dlg_guid, -1, -1, width, height, 0,
-        &layout[0], layout.size(), 0, flags, &dlg_proc, this);
-
-    are_dlg_events_suppressed = false;
+        &layout[0], layout.size(), 0, flags & ~FDLG_NONMODAL, &dlg_proc, this);
 }
 
-dialog::~dialog()
+modal_dialog::~modal_dialog()
 {
-    if (is_modal)
-        config::ps_info.DialogFree(hdlg);
+    config::ps_info.DialogFree(hdlg);
 }
 
-bool dialog::run()
+bool modal_dialog::run()
 {
-    if (is_modal)
-        return handle_result(config::ps_info.DialogRun(hdlg)) == TRUE;
-    return false;
+    return handle_result(config::ps_info.DialogRun(hdlg)) == TRUE;
 }
 
-bool dialog::handle_dlg_proc_event(intptr_t msg_id, int control_id, void *param)
+bool modal_dialog::handle_dlg_proc_event(intptr_t msg_id, int control_id, void *param)
 {
     using utils::keys::make_combined;
-
-    if (are_dlg_events_suppressed)
-        return false;
         
     if (msg_id == DN_CONTROLINPUT)
     {

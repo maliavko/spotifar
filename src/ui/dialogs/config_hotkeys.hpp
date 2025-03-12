@@ -7,7 +7,7 @@
 
 namespace spotifar { namespace ui {
 
-class config_hotkeys_dialog: public dialog
+class config_hotkeys_dialog: public modal_dialog
 {
 public:
     config_hotkeys_dialog();

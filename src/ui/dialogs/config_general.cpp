@@ -57,7 +57,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 };
 
 config_general_dialog::config_general_dialog():
-    dialog(&ConfigGeneralDialogGuid, width, height, dlg_items_layout)
+    modal_dialog(&ConfigGeneralDialogGuid, width, height, dlg_items_layout)
 {
 
     dialogs::set_checked(hdlg, add_to_disk_checkbox, config::is_added_to_disk_menu());

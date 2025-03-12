@@ -9,18 +9,14 @@ namespace spotifar { namespace ui {
 FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
     FARDIALOGITEMFLAGS flags, const wchar_t *data = L"");
 
-class dialog
+class modal_dialog
 {
 public:
-    //typedef bool (dialog::*event_handler_t)(void*);
-    typedef std::function<bool(void*)> event_handler_t;
-    typedef std::unordered_map<FARMESSAGE, event_handler_t> event_handlers_t;
-    typedef std::unordered_map<int, event_handlers_t> handlers_map_t;
     typedef std::vector<FarDialogItem> layout_t;
 public:
-    dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
+    modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
         FARDIALOGFLAGS flags = FDLG_NONE);
-    virtual ~dialog();
+    virtual ~modal_dialog();
 
     auto run() -> bool;
 
@@ -34,9 +30,6 @@ private:
     friend static auto WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2) -> intptr_t;
 protected:
     HANDLE hdlg;
-private:
-    bool are_dlg_events_suppressed = true;
-    bool is_modal;
 };
 
 } // namespace ui

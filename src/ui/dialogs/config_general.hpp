@@ -7,7 +7,7 @@
 
 namespace spotifar { namespace ui {
 
-class config_general_dialog: public dialog
+class config_general_dialog: public modal_dialog
 {
 public:
     config_general_dialog();

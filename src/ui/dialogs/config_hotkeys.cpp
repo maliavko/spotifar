@@ -142,7 +142,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 };
 
 config_hotkeys_dialog::config_hotkeys_dialog():
-    dialog(&ConfigHotkeysDialogGuid, width, height, dlg_items_layout)
+    modal_dialog(&ConfigHotkeysDialogGuid, width, height, dlg_items_layout)
 {
     dialogs::set_checked(hdlg, hotkeys_checkbox, config::is_global_hotkeys_enabled());
 
