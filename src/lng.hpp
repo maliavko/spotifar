@@ -15,6 +15,11 @@ namespace spotifar
 
         MSortDialogTitle,
 
+        MConfigDialogMenuTitle,
+        MConfigDialogMenuGeneralOpt,
+        MConfigDialogMenuBackendOpt,
+        MConfigDialogMenuHotkeysOpt,
+
         MConfigAddToDisksMenu,
         MConfigSpotifySettings,
         MConfigSpotifyClientID,

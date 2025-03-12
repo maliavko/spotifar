@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "config.hpp"
 #include "plugin.h"
-#include "ui/dialogs.hpp"
+#include "ui/dialogs/menus.hpp"
 
 namespace spotifar {
 
@@ -138,7 +138,7 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/configurew.html 
 intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 {
-    return ui::config_dialog::show();
+    return ui::show_config_menu();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html 

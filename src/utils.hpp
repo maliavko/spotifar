@@ -179,6 +179,12 @@ namespace far3
         auto move_dialog_to(HANDLE hdlg, SHORT x = -1, SHORT y = -1) -> intptr_t;
         auto move_dialog_by(HANDLE hdlg, SHORT distance_x, SHORT distance_y) -> intptr_t;
 
+        template<class T>
+        auto get_dlg_data(HANDLE hdlg) -> T*
+        {
+            return reinterpret_cast<T*>(send(hdlg, DM_GETDLGDATA, 0, 0));
+        }
+
         // controls
         auto enable(HANDLE hdlg, int ctrl_id, bool is_enabled) -> intptr_t;
         auto is_enabled(HANDLE hdlg, int ctrl_id) -> bool;

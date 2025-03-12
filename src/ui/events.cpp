@@ -1,6 +1,6 @@
 #include "events.hpp"
 #include "utils.hpp"
-#include "dialogs.hpp"
+#include "dialogs/menus.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -48,7 +48,7 @@ namespace events {
     
     void show_config_dialog()
     {
-        config_dialog::show();
+        show_config_menu();
     }
     
     void refresh_panels(const string &item_id)

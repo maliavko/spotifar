@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ui/panel.hpp"
-#include "ui/dialogs.hpp"
+#include "ui/dialogs/menus.hpp"
 #include "ui/views/root.hpp"
 #include "ui/views/artists.hpp"
 #include "ui/views/artist.hpp"
@@ -168,7 +168,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             }
             case VK_F12 + keys::mods::ctrl:
             {
-                auto sort_modex_idx = sort_dialog::show(*view);
+                auto sort_modex_idx = show_sort_dialog(*view);
                 if (sort_modex_idx > -1)
                     view->select_sort_mode(sort_modex_idx);
                 return TRUE;

@@ -271,8 +271,8 @@ const std::pair<WORD, WORD>* get_hotkey(int hotkey_id)
 
 settings::view_t* get_panel_settings(const string &view_uid, const settings::view_t &def)
 {
-    _settings.views.emplace(view_uid, def);
-    return &_settings.views.at(view_uid);
+    auto result = _settings.views.emplace(view_uid, def);
+    return &result.first->second;
 }
 
 } // namespace config
