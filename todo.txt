@@ -2,35 +2,50 @@ project infrastructure
 - gcc support
 
 refactor
-- the librespot and process winapi is written poorly, wrap it up well; add possibility to register it as a win service to avoid interrupting music when far is closed
+- add possibility to register librespot as a win service to avoid interrupting music when far is closed
 - working with plpaylists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
 - parallelize playlists and saved tracks request via pool, using offset and limit fields
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 
 application ideas
-- grab lyrics from here? https://coda.io/@musixmatch/musixmatch-lyrics-api
+- grab lyrics from here? https://lrclib.net/
 - is there other way to track fresh releases?
 - panels
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
     - managing playlists via standard Far functions: create folder, move/remove from panel
-    - while an album or playlist is on the panel and player is shown, update a selection of file in accordance to the playing track
     - F3 on folders -> start playback
-    - custom columns to show additional info, track lenght and etc
-    - local far hotkey to open app player even if a spotifar panel is passive
     - comamnds for console input?
     - show track progress on the win tray icon with ACTL_SETPROGRESSSTATE
 - player UI
     - goto playlist
-    - extended player view with the list of tracks (or maybe on panel?)
     - recreate a volume control into slider?
 
 bugs
-- after refreshing an access token, the plugin starts one more librespot process
 - big http cache causes plugin to freeze while closing
 - metallica ride the lightning delux has multiply discs, show incorrectly on the panel
 - Bi-2, Мяу Кисс ми; 5th track is empty
 
+
+user's profile
+root menu
+    - collection
+        - artists
+            - top tracks
+            - albums
+            - related artists? no knows source so far
+        - playlists
+        - albums
+        - tracks
+    - recents
+        - releases
+        - history
+            - artists
+            - albums
+            - playlists
+            - tracks
+        - top items
+        - search?
 
 //// sample how to show loading splash screen
 

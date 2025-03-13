@@ -32,8 +32,14 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->StructSize = sizeof(*info);
     
     info->CurDir = view->get_dir_name();
-    info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
 
+    // filling the panel top title label
+    static wchar_t title[64];
+    config::fsf.snprintf(title, std::size(title), L" %s: %s ",
+        far3::get_text(MPluginUserName), view->get_title());
+    info->PanelTitle = title;
+
+    info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
     info->StartPanelMode = '3';
     info->StartSortMode = SM_NAME;
 
@@ -44,12 +50,6 @@ void panel::update_panel_info(OpenPanelInfo *info)
         info->InfoLines = info_lines->data();
         info->InfoLinesNumber = info_lines->size();
     }
-
-    // filling the panel top title label
-    static wchar_t title[64];
-    config::fsf.snprintf(title, std::size(title), L" %s: %s ",
-        far3::get_text(MPluginUserName), view->get_title());
-    info->PanelTitle = title;
 
     // every update we clear out all the refreshable `F` keys and fill them up
     // by demand with the overriding info from the nested view
@@ -80,6 +80,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
+    // TODO: convert to ref?
     auto items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
@@ -102,7 +103,8 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
         panel_item[idx].FileAttributes = item.file_attrs;
         panel_item[idx].Flags = PPIF_PROCESSDESCR;
-        panel_item[idx].FileName = _wcsdup(item.name.c_str());
+        // panel_item[idx].FileName = _wcsdup(item.name.c_str());
+        panel_item[idx].FileName = _wcsdup(utils::strip_invalid_filename_chars(item.name).c_str());
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;
         panel_item[idx].CustomColumnNumber = item.custom_column_data.size();

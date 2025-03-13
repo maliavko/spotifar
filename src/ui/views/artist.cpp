@@ -85,21 +85,21 @@ void artist_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
-    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"Ts", L"Time", L"Type" };
+    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"Tx", L"Time", L"Type" };
     modes[3].ColumnTypes = L"C0,NON,C2,C5,C1";
     modes[3].ColumnWidths = L"6,0,4,8,6";
     modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_4[] = { L"Yr", L"Name", L"Ts" };
+    static const wchar_t* titles_4[] = { L"Yr", L"Name", L"Tx" };
     modes[4].ColumnTypes = L"C0,NON,C2";
     modes[4].ColumnWidths = L"6,0,4";
     modes[4].ColumnTitles = titles_4;
     modes[4].StatusColumnTypes = NULL;
     modes[4].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Ts", L"Type", L"Release" };
+    static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Tx", L"Type", L"Release" };
     modes[5].ColumnTypes = L"C0,NON,C2,C1,C4";
     modes[5].ColumnWidths = L"6,0,4,6,10";
     modes[5].ColumnTitles = titles_5;

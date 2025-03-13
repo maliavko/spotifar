@@ -122,7 +122,7 @@ auto api::get_items_collection(ArgumentsTypes... args) -> const typename R::valu
     for (const auto &entries: requester.fetch_by_pages(this))
     {
         result.insert(result.end(), entries.begin(), entries.end());
-        break; // TODO: remove! just for speeding up the testing
+        //break; // TODO: remove! just for speeding up the testing
     }
 
     return result;

@@ -4,7 +4,8 @@
 
 namespace spotifar { namespace ui {
 
-album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar, const spotify::album &al):
+album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar,
+                       const spotify::album &al):
     view("album_view"),
     api_proxy(api),
     album(al),
@@ -61,8 +62,8 @@ const view::items_t* album_view::get_items()
         // eaither just 01,02 or in a multisdics case - 1/02, 1/02 etc.
         wstring track_number = std::format(L"{:02}", track.track_number);
         if (discs_number > 1)
-            track_number = std::format(L"{}/{}", track.disc_number, track_number);
-        columns.push_back(std::format(L"{: ^6}", track_number));
+            track_number = std::format(L"{:02}/{}", track.disc_number, track_number);
+        columns.push_back(std::format(L"{: ^7}", track_number));
 
         // column C1 - is explicit lyrics
         columns.push_back(track.is_explicit ? L" * " : L"");
@@ -99,9 +100,10 @@ void album_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
+    // TODO: if there is no multidics, the first column can be shorter
     static const wchar_t* titles_3[] = { L"##", L"Name", L"[E]", L"Time" };
     modes[3].ColumnTypes = L"C0,NON,C1,C2";
-    modes[3].ColumnWidths = L"6,0,3,5";
+    modes[3].ColumnWidths = L"7,0,3,5";
     modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
