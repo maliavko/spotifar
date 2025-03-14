@@ -12,12 +12,16 @@ using namespace spotify;
 struct ui_events_observer: public BaseObserverProtocol
 {
     virtual void show_root_view() {}
+    virtual void show_collection_view() {}
+    virtual void show_recents_view() {}
+    virtual void show_browse_view() {}
     virtual void show_artists_view() {}
+    virtual void show_albums_view() {}
+    virtual void show_tracks_view() {}
+    virtual void show_playlists_view() {}
     virtual void show_artist_view(const artist &artist) {}
     virtual void show_album_view(const artist &artist, const album &album) {}
-    virtual void show_playlists_view() {}
     virtual void show_playlist_view(const playlist &playlist) {}
-    virtual void show_recents_view() {}
     virtual void show_player_dialog() {}
     virtual void refresh_panels(const string &item_id) {}
 };
@@ -26,7 +30,17 @@ namespace events {
 
     void show_root_view();
 
+    void show_collection_view();
+
+    void show_recents_view();
+
+    void show_browse_view();
+
     void show_artists_view();
+
+    void show_albums_view();
+
+    void show_tracks_view();
 
     void show_playlists_view();
 
@@ -35,8 +49,6 @@ namespace events {
     void show_artist_view(const artist &artist);
 
     void show_album_view(const artist &artist, const album &album);
-
-    void show_recents_view();
     
     void show_player_dialog();
     

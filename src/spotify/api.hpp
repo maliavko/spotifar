@@ -43,7 +43,7 @@ public:
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
     auto get_playlist(const string &playlist_id) -> playlist;
     auto get_playlists() -> const simplified_playlists_t&;
-    auto get_playlist_tracks(const string &playlist_id) -> const playlist_tracks_t&;
+    auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t&;
     auto check_saved_track(const string &track_id) -> bool;
     auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool>;
     auto save_tracks(const std::vector<string> &ids) -> bool;

@@ -2,6 +2,9 @@
 #include "ui/panel.hpp"
 #include "ui/dialogs/menus.hpp"
 #include "ui/views/root.hpp"
+#include "ui/views/collection.hpp"
+//#include "ui/views/browse.hpp"
+//#include "ui/views/recents.hpp"
 #include "ui/views/artists.hpp"
 #include "ui/views/artist.hpp"
 #include "ui/views/album.hpp"
@@ -227,9 +230,17 @@ void panel::show_playlist_view(const spotify::playlist &playlist)
     return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
+void panel::show_collection_view()
+{
+    return change_view(std::make_shared<collection_view>(api_proxy));
+}
+
+void panel::show_browse_view()
+{
+}
+
 void panel::show_recents_view()
 {
-    //return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
 void panel::refresh_panels(const string &item_id)

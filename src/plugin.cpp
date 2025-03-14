@@ -92,8 +92,9 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
         {
             case VK_F8:
             {
+                log::global->debug("Clearing http cache");
                 api.clear_http_cache();
-                log::global->debug("Cache has been cleared");
+                return TRUE;
             }
             case keys::q + keys::mods::alt:
             {

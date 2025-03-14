@@ -11,9 +11,34 @@ namespace events {
         return ObserverManager::notify(&ui_events_observer::show_root_view);
     }
 
+    void show_collection_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_collection_view);
+    }
+
+    void show_browse_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_browse_view);
+    }
+
+    void show_recents_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_recents_view);
+    }
+
     void show_artists_view()
     {
         return ObserverManager::notify(&ui_events_observer::show_artists_view);
+    }
+
+    void show_albums_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_albums_view);
+    }
+
+    void show_tracks_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_tracks_view);
     }
 
     void show_playlists_view()
@@ -34,11 +59,6 @@ namespace events {
     void show_album_view(const artist &artist, const album &album)
     {
         return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album);
-    }
-    
-    void show_recents_view()
-    {
-        return ObserverManager::notify(&ui_events_observer::show_recents_view);
     }
     
     void show_player_dialog()

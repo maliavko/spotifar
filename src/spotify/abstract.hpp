@@ -32,7 +32,7 @@ struct api_abstract
     virtual auto get_album_tracks(const string &album_id) -> const simplified_tracks_t& = 0;
     virtual auto get_playlist(const string &playlist_id) -> playlist = 0;
     virtual auto get_playlists() -> const simplified_playlists_t& = 0;
-    virtual auto get_playlist_tracks(const string &playlist_id) -> const playlist_tracks_t& = 0;
+    virtual auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t& = 0;
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool> = 0;
     virtual auto save_tracks(const std::vector<string> &ids) -> bool = 0;

@@ -175,7 +175,7 @@ playlist api::get_playlist(const string &playlist_id)
     return get_item<playlist_requester>(playlist_id);
 }
 
-const playlist_tracks_t& api::get_playlist_tracks(const string &playlist_id)
+const saved_tracks_t& api::get_playlist_tracks(const string &playlist_id)
 {
     return get_items_collection<playlist_tracks_requester>(playlist_id, MAX_LIMIT);
 }
