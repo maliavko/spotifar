@@ -1,6 +1,7 @@
 #include "events.hpp"
 #include "dialogs/menus.hpp"
 #include "views/root.hpp"
+#include "views/collection.hpp"
 #include "views/artists.hpp"
 #include "views/playlists.hpp"
 #include "views/playlist.hpp"
@@ -18,39 +19,39 @@ namespace events {
             &ui_events_observer::show_panel_view, std::make_shared<T>(args...));
     }
 
-    void show_collection_view()
+    void show_root_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_collection_view);
+        return show_panel_view<root_view>(api);
     }
 
-    void show_albums_view()
+    void show_collection_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_albums_view);
+        return show_panel_view<collection_view>(api);
     }
 
-    void show_tracks_view()
+    void show_artists_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_tracks_view);
+        return show_panel_view<artists_view>(api);
     }
 
-    void show_browse_view()
+    void show_albums_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_browse_view);
+        // TODO: unfinished
     }
 
-    void show_recents_view()
+    void show_tracks_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_playlist_view, playlist);
-    }
-    
-    void show_artist_view(api_abstract *api, const artist &artist)
-    {
-        return ObserverManager::notify(&ui_events_observer::show_albums_view);
+        // TODO: unfinished
     }
 
-    void show_tracks_view()
+    void show_browse_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_tracks_view);
+        // TODO: unfinished
+    }
+
+    void show_recents_view(api_abstract *api)
+    {
+        // TODO: unfinished
     }
 
     void show_playlists_view(api_abstract *api)
@@ -71,12 +72,6 @@ namespace events {
     void show_album_view(api_abstract *api, const album &album)
     {
         return show_panel_view<album_view>(api, album);
-    }
-    
-    void show_recents_view(api_abstract *api)
-    {
-        //TODO: unfinished
-        //return show_panel_view<album_view>(api, album);
     }
     
     void show_player_dialog()

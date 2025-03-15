@@ -22,17 +22,17 @@ namespace events {
 
     void show_root_view(api_abstract *api);
 
-    void show_collection_view();
+    void show_collection_view(api_abstract *api);
 
-    void show_recents_view();
+    void show_recents_view(api_abstract *api);
 
-    void show_browse_view();
+    void show_browse_view(api_abstract *api);
 
     void show_artists_view(api_abstract *api);
 
-    void show_albums_view();
+    void show_albums_view(api_abstract *api);
 
-    void show_tracks_view();
+    void show_tracks_view(api_abstract *api);
 
     void show_playlists_view(api_abstract *api);
 
@@ -41,8 +41,6 @@ namespace events {
     void show_artist_view(api_abstract *api, const artist &artist);
 
     void show_album_view(api_abstract *api, const album &album);
-
-    void show_recents_view(api_abstract *api);
     
     void show_player_dialog();
     

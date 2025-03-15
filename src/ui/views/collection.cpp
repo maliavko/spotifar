@@ -18,15 +18,10 @@ collection_view::collection_view(api_abstract *api):
 {
 }
 
-const wchar_t* collection_view::get_dir_name() const
+const wstring& collection_view::get_dir_name() const
 {
-    return get_title();
-}
-
-const wchar_t* collection_view::get_title() const
-{
-    static const wchar_t *title = { L"Collection" };
-    return title;
+    static const wstring dir_name(L"Collection");
+    return dir_name;
 }
 
 const view::sort_modes_t& collection_view::get_sort_modes() const
@@ -113,31 +108,31 @@ intptr_t collection_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
     {
-        ui::events::show_root_view();
+        ui::events::show_root_view(api_proxy);
         return TRUE;
     }
 
     if (data->id == artists_view_id)
     {
-        ui::events::show_artists_view();
+        ui::events::show_artists_view(api_proxy);
         return TRUE;
     }
 
     if (data->id == albums_view_id)
     {
-        ui::events::show_albums_view();
+        ui::events::show_albums_view(api_proxy);
         return TRUE;
     }
 
     if (data->id == tracks_view_id)
     {
-        ui::events::show_tracks_view();
+        ui::events::show_tracks_view(api_proxy);
         return TRUE;
     }
     
     if (data->id == playlists_view_id)
     {
-        ui::events::show_playlists_view();
+        ui::events::show_playlists_view(api_proxy);
         return TRUE;
     }
 
