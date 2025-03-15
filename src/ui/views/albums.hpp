@@ -24,14 +24,14 @@ public:
         {}
 
     auto get_sort_modes() const -> const sort_modes_t&;
-
     auto select_item(const user_data_t* data) -> intptr_t;
     auto request_extra_info(const user_data_t* data) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto process_key_input(int combined_key) -> intptr_t;
+protected:
     auto compare_items(const sort_mode_t &sort_mode, const user_data_t *data1,
         const user_data_t *data2) -> intptr_t;
-protected:
+    
     virtual auto goto_root_folder() -> void = 0;
     virtual auto pack_custom_columns(std::vector<wstring> &columns, const simplified_album &a) -> void;
 protected:
@@ -50,7 +50,6 @@ public:
     auto get_dir_name() const -> const wstring&;
 protected:
     auto goto_root_folder() -> void;
-    auto get_panel_items() -> const simplified_albums_t&;
 private:
     artist artist;
 };
@@ -75,7 +74,6 @@ public:
     auto get_sort_modes() const -> const sort_modes_t&;
 protected:
     auto goto_root_folder() -> void;
-    auto get_panel_items() -> const simplified_albums_t&;
     auto compare_items(const sort_mode_t &sort_mode,
         const user_data_t *data1, const user_data_t *data2) -> intptr_t;
 };

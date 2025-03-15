@@ -15,7 +15,7 @@ public:
     virtual ~devices_cache() { api_proxy = nullptr; }
 
     virtual bool is_active() const;
-    void pick_up_device(const string &device_id = "");
+    bool pick_up_device(const string &device_id = "");
 protected:
     virtual bool request_data(devices_t &data);
     virtual void on_data_synced(const devices_t &data, const devices_t &prev_data);

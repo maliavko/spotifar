@@ -6,137 +6,6 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-
-artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
-    albums_base_view(api, "artist_view"),
-    artist(artist)
-{
-}
-
-const wstring& artist_view::get_dir_name() const
-{
-    return artist.name;
-}
-
-config::settings::view_t artist_view::get_default_settings() const
-{
-    return { 1, false, 3 };
-}
-
-void artist_view::goto_root_folder()
-{
-    events::show_artists_view(api_proxy);
-}
-
-const view::items_t* artist_view::get_items()
-{
-    static items_t items; items.clear();
-
-    for (const auto &a: api_proxy->get_artist_albums(artist.id))
-    {
-        std::vector<wstring> columns;
-        pack_custom_columns(columns, a);
-        
-        // list of artists is used as a description field
-        std::vector<wstring> artists_names;
-        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
-            [](const auto &a) { return a.name; });
-
-        items.push_back({
-            a.id,
-            a.name,
-            utils::string_join(artists_names, L", "),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            columns,
-            new album_user_data_t{ a.id, a.name, a.get_release_year(), a.total_tracks, },
-            free_user_data<album_user_data_t>
-        });
-    }
-    return &items;
-}
-
-
-albums_collection_view::albums_collection_view(api_abstract *api):
-    albums_base_view(api, "albums_collection_view")
-{
-}
-
-const wstring& albums_collection_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
-    return dir_name;
-}
-
-config::settings::view_t albums_collection_view::get_default_settings() const
-{
-    return { 1, false, 6 };
-}
-
-void albums_collection_view::goto_root_folder()
-{
-    events::show_collection_view(api_proxy);
-}
-
-const view::items_t* albums_collection_view::get_items()
-{
-    static items_t items; items.clear();
-
-    for (const auto &sa: api_proxy->get_saved_albums())
-    {
-        const auto &a = sa.album;
-
-        std::vector<wstring> columns;
-        pack_custom_columns(columns, sa.album);
-
-        // TODO: sa.added_at
-        
-        // list of artists is used as a description field
-        std::vector<wstring> artists_names;
-        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
-            [](const auto &a) { return a.name; });
-
-        items.push_back({
-            a.id,
-            a.name,
-            utils::string_join(artists_names, L", "),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            columns,
-            new saved_album_user_data_t{ a.id, a.name, a.get_release_year(), a.total_tracks, sa.added_at },
-            free_user_data<saved_album_user_data_t>
-        });
-    }
-    return &items;
-}
-
-const view::sort_modes_t& albums_collection_view::get_sort_modes() const
-{
-    using namespace utils::keys;
-
-    static sort_modes_t modes;
-    if (!modes.size())
-    {
-        modes = albums_base_view::get_sort_modes();
-        modes.push_back({ L"Added", SM_MTIME, VK_F6 + mods::ctrl });
-    }
-
-    return modes;
-}
-
-intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
-    const user_data_t *data1, const user_data_t *data2)
-{
-    if (sort_mode.far_sort_mode == SM_MTIME)
-    {
-        const auto
-            &item1 = static_cast<const saved_album_user_data_t*>(data1),
-            &item2 = static_cast<const saved_album_user_data_t*>(data2);
-
-        return item1->added_at.compare(item2->added_at);
-    }
-    return albums_base_view::compare_items(sort_mode, data1, data2);
-}
-
-
 const view::sort_modes_t& albums_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
@@ -159,7 +28,7 @@ intptr_t albums_base_view::select_item(const user_data_t* data)
     const album &album = api_proxy->get_album(data->id);
     if (album.is_valid())
     { 
-        events::show_album_view(api_proxy, album);
+        events::show_album_tracks_view(api_proxy, album);
         return TRUE;
     }
 
@@ -299,6 +168,134 @@ intptr_t albums_base_view::process_key_input(int combined_key)
         }
     }
     return FALSE;
+}
+artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
+    albums_base_view(api, "artist_view"),
+    artist(artist)
+{
+}
+
+const wstring& artist_view::get_dir_name() const
+{
+    return artist.name;
+}
+
+config::settings::view_t artist_view::get_default_settings() const
+{
+    return { 1, false, 3 };
+}
+
+void artist_view::goto_root_folder()
+{
+    events::show_artists_collection_view(api_proxy);
+}
+
+const view::items_t* artist_view::get_items()
+{
+    static items_t items; items.clear();
+
+    for (const auto &a: api_proxy->get_artist_albums(artist.id))
+    {
+        std::vector<wstring> columns;
+        pack_custom_columns(columns, a);
+        
+        // list of artists is used as a description field
+        std::vector<wstring> artists_names;
+        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
+            [](const auto &a) { return a.name; });
+
+        items.push_back({
+            a.id,
+            a.name,
+            utils::string_join(artists_names, L", "),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+            columns,
+            new album_user_data_t{ a.id, a.name, a.get_release_year(), a.total_tracks, },
+            free_user_data<album_user_data_t>
+        });
+    }
+    return &items;
+}
+
+
+albums_collection_view::albums_collection_view(api_abstract *api):
+    albums_base_view(api, "albums_collection_view")
+{
+}
+
+const wstring& albums_collection_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t albums_collection_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+void albums_collection_view::goto_root_folder()
+{
+    events::show_collections_view(api_proxy);
+}
+
+const view::items_t* albums_collection_view::get_items()
+{
+    static items_t items; items.clear();
+
+    for (const auto &sa: api_proxy->get_saved_albums())
+    {
+        const auto &a = sa.album;
+
+        std::vector<wstring> columns;
+        pack_custom_columns(columns, sa.album);
+
+        // TODO: sa.added_at
+        
+        // list of artists is used as a description field
+        std::vector<wstring> artists_names;
+        std::transform(a.artists.cbegin(), a.artists.cend(), back_inserter(artists_names),
+            [](const auto &a) { return a.name; });
+
+        items.push_back({
+            a.id,
+            a.name,
+            utils::string_join(artists_names, L", "),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
+            columns,
+            new saved_album_user_data_t{ a.id, a.name, a.get_release_year(), a.total_tracks, sa.added_at },
+            free_user_data<saved_album_user_data_t>
+        });
+    }
+    return &items;
+}
+
+const view::sort_modes_t& albums_collection_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = albums_base_view::get_sort_modes();
+        modes.push_back({ L"Added", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+
+    return modes;
+}
+
+intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
+    const user_data_t *data1, const user_data_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const saved_album_user_data_t*>(data1),
+            &item2 = static_cast<const saved_album_user_data_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return albums_base_view::compare_items(sort_mode, data1, data2);
 }
 
 } // namespace ui

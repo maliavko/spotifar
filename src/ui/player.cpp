@@ -528,7 +528,7 @@ bool player::on_track_label_input_received(void *input_record)
     {
         hide();
 
-        ui::events::show_album_view(api_proxy, playback.item.album);
+        ui::events::show_album_tracks_view(api_proxy, playback.item.album);
         ui::events::refresh_panels(playback.item.id);
     }
 

@@ -111,7 +111,7 @@ intptr_t root_view::select_item(const user_data_t *data)
 
     if (data->id == collection_view_id)
     {
-        ui::events::show_collection_view(api_proxy);
+        ui::events::show_collections_view(api_proxy);
         return TRUE;
     }
     

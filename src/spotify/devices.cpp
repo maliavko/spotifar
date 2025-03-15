@@ -19,7 +19,7 @@ clock_t::duration devices_cache::get_sync_interval() const
     return 950ms;
 }
 
-void devices_cache::pick_up_device(const string &device_id)
+bool devices_cache::pick_up_device(const string &device_id)
 {
     resync(true); // to make sure we have the latest data
 
@@ -30,7 +30,7 @@ void devices_cache::pick_up_device(const string &device_id)
     if (device_it != available_devices.end())
     {
         log::api->info("Some device is already active, {}", device_it->to_str());
-        return;
+        return true;
     }
 
     // let's transfer a playback to the device with the given id, if it is not selected already
@@ -38,21 +38,23 @@ void devices_cache::pick_up_device(const string &device_id)
         if (d.id == device_id && !d.is_active)
         {
             log::api->debug("Picking up a device with a given {}", d.to_str());
-            return api_proxy->transfer_playback(device_id);
+            api_proxy->transfer_playback(device_id);
+            return true;
         }
 
-    // ...or transfer a playback to the first available device, if it is not selected
-    // if (available_devices.size() > 0)
-    // {
-    //     auto device = available_devices[0];
-    //     if (device.is_active)
-    //         return;
+    if (available_devices.size() > 0)
+    {
+        auto device = available_devices[0];
+        if (device.is_active)
+            return true;
         
-    //     log::api->debug("Picking up a first available device {}", device.to_str());
-    //     return api_proxy->transfer_playback(device.id);
-    // }
+        log::api->debug("Picking up a first available device {}", device.to_str());
+        api_proxy->transfer_playback(device.id);
+        return true;
+    }
     
     log::api->warn("No available devices for picking up, playback is not transferred");
+    return false;
 }
 
 void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_data)

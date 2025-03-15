@@ -115,7 +115,7 @@ intptr_t artists_view::select_item(const user_data_t *data)
 {
     if (data == nullptr)
     {
-        events::show_collection_view(api_proxy);
+        events::show_collections_view(api_proxy);
         return TRUE;
     }
     

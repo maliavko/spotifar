@@ -110,7 +110,7 @@ intptr_t collection_view::select_item(const user_data_t* data)
 
     if (data->id == artists_view_id)
     {
-        ui::events::show_artists_view(api_proxy);
+        ui::events::show_artists_collection_view(api_proxy);
         return TRUE;
     }
 
@@ -122,7 +122,7 @@ intptr_t collection_view::select_item(const user_data_t* data)
 
     if (data->id == tracks_view_id)
     {
-        ui::events::show_tracks_view(api_proxy);
+        ui::events::show_tracks_collection_view(api_proxy);
         return TRUE;
     }
     
