@@ -29,16 +29,27 @@ panel::~panel()
 
 void panel::update_panel_info(OpenPanelInfo *info)
 {
-    info->StructSize = sizeof(*info);
+    static wchar_t dir_name[64], title[64];
     
-    info->CurDir = view->get_dir_name();
+    const auto &view_cur_dir = view->get_dir_name();
+    if (!view_cur_dir.empty())
+    {
+        // showing "Spotifar: Menu Item Name" title in case a cur dir is not empty
+        config::fsf.snprintf(title, std::size(title), L" %s: %s ",
+            far3::get_text(MPluginUserName), view_cur_dir.c_str());
+    }
+    else
+    {
+        // ...or just "Spotifar" plugin name
+        config::fsf.snprintf(title, std::size(title), far3::get_text(MPluginUserName));
+    }
+    
+    config::fsf.snprintf(dir_name, std::size(dir_name),
+        utils::strip_invalid_filename_chars(view_cur_dir).c_str());
 
-    // filling the panel top title label
-    static wchar_t title[64];
-    config::fsf.snprintf(title, std::size(title), L" %s: %s ",
-        far3::get_text(MPluginUserName), view->get_title());
+    info->StructSize = sizeof(*info);
+    info->CurDir = dir_name;
     info->PanelTitle = title;
-
     info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
     info->StartPanelMode = '3';
     info->StartSortMode = SM_NAME;
@@ -103,7 +114,6 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
         panel_item[idx].FileAttributes = item.file_attrs;
         panel_item[idx].Flags = PPIF_PROCESSDESCR;
-        // panel_item[idx].FileName = _wcsdup(item.name.c_str());
         panel_item[idx].FileName = _wcsdup(utils::strip_invalid_filename_chars(item.name).c_str());
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;

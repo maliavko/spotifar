@@ -17,17 +17,11 @@ root_view::root_view(api_abstract *api):
 {
 }
 
-const wchar_t* root_view::get_dir_name() const
+const wstring& root_view::get_dir_name() const
 {
     // should be empty, so Far closes plugin in case of hitting ".."
-    static const wchar_t *cur_dir = { L"" };
+    static wstring cur_dir(L"");
     return cur_dir;
-}
-
-const wchar_t* root_view::get_title() const
-{
-    static const wchar_t *title = { L"Root Menu" };
-    return title;
 }
 
 const view::key_bar_info_t* root_view::get_key_bar_info()
@@ -93,7 +87,7 @@ void root_view::update_panel_info(OpenPanelInfo *info)
     modes[0].StatusColumnWidths = NULL;
 
     info->PanelModesArray = modes;
-    info->PanelModesNumber = ARRAYSIZE(modes);
+    info->PanelModesNumber = std::size(modes);
 }
 
 const view::items_t* root_view::get_items()

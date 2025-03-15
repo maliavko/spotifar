@@ -23,8 +23,6 @@ application ideas
 
 bugs
 - big http cache causes plugin to freeze while closing
-- metallica ride the lightning delux has multiply discs, show incorrectly on the panel
-- Bi-2, Мяу Кисс ми; 5th track is empty
 
 
 user's profile

@@ -59,8 +59,7 @@ public:
     auto select_sort_mode(int sort_mode_idx) -> void;
 
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
-    virtual auto get_dir_name() const -> const wchar_t* = 0;
-    virtual auto get_title() const -> const wchar_t* = 0;
+    virtual auto get_dir_name() const -> const wstring& = 0;
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }

@@ -13,16 +13,9 @@ playlist_view::playlist_view(api_abstract *api, const spotify::playlist &p):
 {
 }
 
-const wchar_t* playlist_view::get_dir_name() const
+const wstring& playlist_view::get_dir_name() const
 {
-    static wchar_t dir_name[MAX_PATH];
-    wcsncpy_s(dir_name, playlist.name.c_str(), MAX_PATH);
-    return dir_name;
-}
-
-const wchar_t* playlist_view::get_title() const
-{
-    return playlist.name.c_str();
+    return playlist.name;
 }
 
 void playlist_view::update_panel_info(OpenPanelInfo *info)
@@ -51,7 +44,7 @@ void playlist_view::update_panel_info(OpenPanelInfo *info)
     modes[5].StatusColumnWidths = NULL;
 
     info->PanelModesArray = modes;
-    info->PanelModesNumber = ARRAYSIZE(modes);
+    info->PanelModesNumber = std::size(modes);
 }
 
 const view::items_t* playlist_view::get_items()

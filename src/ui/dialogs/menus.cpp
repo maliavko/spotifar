@@ -26,7 +26,7 @@ intptr_t show_config_menu()
             FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
             far3::get_text(MConfigDialogMenuTitle), L"",
             {}, {}, {}, // no break codes, no help topic
-            items, ARRAYSIZE(items)
+            items, std::size(items)
         );
 
         if (opt_idx == -1)

@@ -13,16 +13,9 @@ album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar,
 {
 }
 
-const wchar_t* album_view::get_dir_name() const
+const wstring& album_view::get_dir_name() const
 {
-    static wchar_t dir_name[MAX_PATH];
-    wcsncpy_s(dir_name, album.name.c_str(), MAX_PATH);
-    return dir_name;
-}
-
-const wchar_t* album_view::get_title() const
-{
-    return get_dir_name();
+    return album.name;
 }
 
 const view::sort_modes_t& album_view::get_sort_modes() const
@@ -109,7 +102,7 @@ void album_view::update_panel_info(OpenPanelInfo *info)
     modes[3].StatusColumnWidths = NULL;
 
     info->PanelModesArray = modes;
-    info->PanelModesNumber = ARRAYSIZE(modes);
+    info->PanelModesNumber = std::size(modes);
 }
 
 intptr_t album_view::select_item(const user_data_t* data)

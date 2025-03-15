@@ -12,14 +12,10 @@ playlists_view::playlists_view(spotify::api_abstract *api):
 {
 }
 
-const wchar_t* playlists_view::get_dir_name() const
+const wstring& playlists_view::get_dir_name() const
 {
-    return get_title();
-}
-
-const wchar_t* playlists_view::get_title() const
-{
-    return get_text(MPanelPlaylistsItemLabel);
+    static wstring dir_name(get_text(MPanelPlaylistsItemLabel));
+    return dir_name;
 }
 
 const view::sort_modes_t& playlists_view::get_sort_modes() const
@@ -66,7 +62,7 @@ void playlists_view::update_panel_info(OpenPanelInfo *info)
     modes[3].StatusColumnWidths = NULL;
 
     info->PanelModesArray = modes;
-    info->PanelModesNumber = ARRAYSIZE(modes);
+    info->PanelModesNumber = std::size(modes);
 }
 
 const view::items_t* playlists_view::get_items()

@@ -12,14 +12,10 @@ artists_view::artists_view(api_abstract *api):
 {
 }
 
-const wchar_t* artists_view::get_dir_name() const
+const wstring& artists_view::get_dir_name() const
 {
-    return get_title();
-}
-
-const wchar_t* artists_view::get_title() const
-{
-    return get_text(MPanelArtistsItemLabel);
+    static wstring dir_name(get_text(MPanelArtistsItemLabel));
+    return dir_name;
 }
 
 void artists_view::update_panel_info(OpenPanelInfo *info)
@@ -69,7 +65,7 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     modes[0] = modes[8];
 
     info->PanelModesArray = modes;
-    info->PanelModesNumber = ARRAYSIZE(modes);
+    info->PanelModesNumber = std::size(modes);
 }
 
 const view::items_t* artists_view::get_items()

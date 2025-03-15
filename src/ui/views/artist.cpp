@@ -14,16 +14,9 @@ artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
 {
 }
 
-const wchar_t* artist_view::get_dir_name() const
+const wstring& artist_view::get_dir_name() const
 {
-    static wchar_t dir_name[MAX_PATH];
-    wcsncpy_s(dir_name, artist.name.c_str(), MAX_PATH);
-    return dir_name;
-}
-
-const wchar_t* artist_view::get_title() const
-{
-    return artist.name.c_str();
+    return artist.name;
 }
 
 const view::sort_modes_t& artist_view::get_sort_modes() const
@@ -123,7 +116,7 @@ void artist_view::update_panel_info(OpenPanelInfo *info)
     modes[0] = modes[8];
 
     info->PanelModesArray = modes;
-    info->PanelModesNumber = ARRAYSIZE(modes);
+    info->PanelModesNumber = std::size(modes);
 }
 
 const view::items_t* artist_view::get_items()

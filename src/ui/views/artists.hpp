@@ -21,8 +21,7 @@ public:
 public:
     artists_view(api_abstract *api);
 
-    auto get_dir_name() const -> const wchar_t*;
-    auto get_title() const -> const wchar_t*;
+    auto get_dir_name() const -> const wstring&;
     auto get_items() -> const items_t*;
 protected:
     auto get_sort_modes() const -> const sort_modes_t&;

@@ -392,7 +392,7 @@ namespace far3
         if (extra_message.empty() && GetLastError())  // if there's no error code, no need to show it in the dialog
             flags |= FMSG_ERRORTYPE;
 
-        return config::ps_info.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, ARRAYSIZE(msgs), 1);
+        return config::ps_info.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, std::size(msgs), 1);
     }
     
     intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message)
