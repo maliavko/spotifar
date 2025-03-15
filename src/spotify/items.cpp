@@ -195,7 +195,7 @@ void to_json(json &j, const track &t)
     });
 }
 
-const string& playlist_track::get_fields_filter()
+const string& saved_track::get_fields_filter()
 {
     static string fields = std::format("added_at,track({})", track::get_fields_filter());
     return fields;

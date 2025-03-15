@@ -82,6 +82,13 @@ struct album: public simplified_album
     friend void to_json(json &j, const album &p);
 };
 
+struct saved_album
+{
+    string added_at;
+    album album;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(saved_album, added_at, album);
+};
+
 struct simplified_track
 {
     string id = invalid_id;
@@ -118,14 +125,14 @@ struct track: public simplified_track
     friend void to_json(json &j, const track &p);
 };
 
-struct playlist_track
+struct saved_track
 {
     string added_at;
     track track;
     
     static const string& get_fields_filter();
     
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(playlist_track, added_at, track);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(saved_track, added_at, track);
 };
 
 struct simplified_playlist
@@ -150,7 +157,7 @@ struct simplified_playlist
 
 struct playlist: public simplified_playlist
 {
-    //std::vector<playlist_track> tracks;
+    //std::vector<saved_track> tracks;
     static const string& get_fields_filter();
 };
 
@@ -247,9 +254,10 @@ struct playing_queue
 typedef std::vector<device> devices_t;
 typedef std::vector<artist> artists_t;
 typedef std::vector<simplified_album> simplified_albums_t;
+typedef std::vector<saved_album> saved_albums_t;
 typedef std::vector<simplified_track> simplified_tracks_t;
 typedef std::vector<track> tracks_t;
-typedef std::vector<playlist_track> playlist_tracks_t;
+typedef std::vector<saved_track> saved_tracks_t;
 typedef std::vector<simplified_playlist> simplified_playlists_t;
 typedef std::vector<playlist> playlists_t;
 

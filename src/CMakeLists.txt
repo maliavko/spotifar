@@ -28,11 +28,14 @@ add_library(${PROJECT_NAME} SHARED
 	ui/controls.cpp
 	ui/views/view.cpp
 	ui/views/root.cpp
-	ui/views/artists.cpp
-	ui/views/playlists.cpp
 	ui/views/playlist.cpp
 	ui/views/artist.cpp
 	ui/views/album.cpp
+	ui/views/collection.cpp
+	ui/views/albums.cpp
+	ui/views/artists.cpp
+	ui/views/tracks.cpp
+	ui/views/playlists.cpp
 	ui/dialogs/menus.cpp
 	ui/dialogs/dialog.cpp
 	ui/dialogs/config_hotkeys.cpp

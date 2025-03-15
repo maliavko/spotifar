@@ -18,14 +18,39 @@ namespace events {
             &ui_events_observer::show_panel_view, std::make_shared<T>(args...));
     }
 
-    void show_root_view(api_abstract *api)
+    void show_collection_view()
     {
-        return show_panel_view<root_view>(api);
+        return ObserverManager::notify(&ui_events_observer::show_collection_view);
     }
 
-    void show_artists_view(api_abstract *api)
+    void show_albums_view()
     {
-        return show_panel_view<artists_view>(api);
+        return ObserverManager::notify(&ui_events_observer::show_albums_view);
+    }
+
+    void show_tracks_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_tracks_view);
+    }
+
+    void show_browse_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_browse_view);
+    }
+
+    void show_recents_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_playlist_view, playlist);
+    }
+    
+    void show_artist_view(api_abstract *api, const artist &artist)
+    {
+        return ObserverManager::notify(&ui_events_observer::show_albums_view);
+    }
+
+    void show_tracks_view()
+    {
+        return ObserverManager::notify(&ui_events_observer::show_tracks_view);
     }
 
     void show_playlists_view(api_abstract *api)

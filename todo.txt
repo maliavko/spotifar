@@ -25,7 +25,6 @@ bugs
 - big http cache causes plugin to freeze while closing
 
 
-user's profile
 root menu
     - collection
         - artists
@@ -35,15 +34,18 @@ root menu
         - playlists
         - albums
         - tracks
+        - [episodes]
+        - [shows]
+    - browse
+        - new releases
+        - categories
+        - search
+        - user's top items
     - recents
-        - releases
-        - history
-            - artists
-            - albums
-            - playlists
-            - tracks
-        - top items
-        - search?
+        - artists
+        - albums
+        - playlists
+        - tracks
 
 //// sample how to show loading splash screen
 

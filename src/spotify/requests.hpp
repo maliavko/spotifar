@@ -19,6 +19,26 @@ struct followed_artists_requester: public api_collection_requester<artists_t>
         {}
 };
 
+/// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
+struct saved_albums_requester: public api_collection_requester<saved_albums_t>
+{
+    saved_albums_requester(size_t limit = MAX_LIMIT):
+        api_collection_requester("/v1/me/albums", {
+            { "limit", std::to_string(limit) }
+        })
+        {}
+};
+
+/// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
+struct saved_tracks_requester: public api_collection_requester<saved_tracks_t>
+{
+    saved_tracks_requester(size_t limit = MAX_LIMIT):
+        api_collection_requester("/v1/me/tracks", {
+            { "limit", std::to_string(limit) }
+        })
+        {}
+};
+
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artist
 struct artist_requester: public api_requester<artist>
 {
@@ -86,12 +106,12 @@ struct playlist_requester: public api_requester<playlist>
 };
 
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
-struct playlist_tracks_requester: public api_collection_requester<playlist_tracks_t>
+struct playlist_tracks_requester: public api_collection_requester<saved_tracks_t>
 {
     playlist_tracks_requester(const string &playlist_id, size_t limit = MAX_LIMIT):
         api_collection_requester(std::format("/v1/playlists/{}/tracks", playlist_id), {
             { "additional_types", "track" },
-            { "fields", std::format("items({}),next,total", playlist_track::get_fields_filter()) },
+            { "fields", std::format("items({}),next,total", saved_track::get_fields_filter()) },
             { "limit", std::to_string(limit) },
         })
         {}

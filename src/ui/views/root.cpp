@@ -7,8 +7,8 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 static const string
-    artists_view_id = "artists",
-    playlists_view_id = "playlists",
+    collection_view_id = "collection",
+    browse_view_id = "browse",
     recents_view_id = "recents";
 
 root_view::root_view(api_abstract *api):
@@ -49,14 +49,15 @@ const view::sort_modes_t& root_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name", SM_NAME, VK_F3 + mods::ctrl },
+        { L"Name",      SM_NAME,        VK_F3 + mods::ctrl },
+        { L"Unsorted",  SM_UNSORTED,    VK_F7 + mods::ctrl },
     };
     return modes;
 }
 
 config::settings::view_t root_view::get_default_settings() const
 {
-    return { 0, false, 3 };
+    return { 1, false, 3 };
 }
 
 void root_view::update_panel_info(OpenPanelInfo *info)
@@ -92,54 +93,31 @@ void root_view::update_panel_info(OpenPanelInfo *info)
 
 const view::items_t* root_view::get_items()
 {
-    static items_t items; items.clear();
-
-    {
-        items.push_back(pack_menu_item(
-            artists_view_id,
-            MPanelArtistsItemLabel,
-            MPanelArtistsItemDescr,
-            followed_artists_requester()
-        ));
-    }
-
-    {
-        items.push_back(pack_menu_item(
-            playlists_view_id,
-            MPanelPlaylistsItemLabel,
-            MPanelPlaylistsItemDescr,
-            user_playlists_requester()
-        ));
-    }
-
-    {
-        items.push_back({
-            recents_view_id,
-            get_text(MPanelRecentsItemLabel),
-            get_text(MPanelRecentsItemDescr),
-            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-        });
-    }
+    static items_t items;
+    
+    items.assign({
+        pack_menu_item(collection_view_id, MPanelCollectionItemLabel, MPanelCollectionItemDescr),
+        pack_menu_item(browse_view_id, MPanelBrowseItemLabel, MPanelBrowseItemDescr),
+        pack_menu_item(recents_view_id, MPanelRecentsItemLabel, MPanelRecentsItemDescr),
+    });
 
     return &items;
 }
 
-intptr_t root_view::select_item(const user_data_t* data)
+intptr_t root_view::select_item(const user_data_t *data)
 {
     if (data == nullptr)
-    {
         return FALSE;
-    }
 
-    if (data->id == artists_view_id)
+    if (data->id == collection_view_id)
     {
-        ui::events::show_artists_view(api_proxy);
+        ui::events::show_collection_view();
         return TRUE;
     }
     
-    if (data->id == playlists_view_id)
+    if (data->id == browse_view_id)
     {
-        ui::events::show_playlists_view(api_proxy);
+        ui::events::show_browse_view();
         return TRUE;
     }
     
@@ -152,16 +130,13 @@ intptr_t root_view::select_item(const user_data_t* data)
     return FALSE;
 }
 
-bool root_view::request_extra_info(const user_data_t* data)
+view::items_t::value_type root_view::pack_menu_item(const string &id, int label_id, int descr_id)
 {
-    if (data->id == artists_view_id)
-        return followed_artists_requester()(api_proxy);
-
-    if (data->id == playlists_view_id)
-        return user_playlists_requester()(api_proxy);
-
-    // TODO: recents?
-    return false;
+    return {
+        id, get_text(label_id), get_text(descr_id),
+        FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL, {},
+        new user_data_t{ id }, view::free_user_data<view::user_data_t>
+    };
 }
 
 } // namespace ui
