@@ -150,6 +150,11 @@ const simplified_albums_t& api::get_artist_albums(const string &artist_id)
     return get_items_collection<artist_albums_requester>(artist_id, MAX_LIMIT);
 }
 
+const saved_albums_t& api::get_saved_albums()
+{
+    return get_items_collection<saved_albums_requester>(MAX_LIMIT);
+}
+
 tracks_t api::get_artist_top_tracks(const string &artist_id)
 {
     return get_item<artist_top_tracks_requester>(artist_id);

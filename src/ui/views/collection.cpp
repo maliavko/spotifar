@@ -77,26 +77,22 @@ const view::items_t* collection_view::get_items()
     items.assign({
         pack_menu_item(
             artists_view_id,
-            MPanelArtistsItemLabel,
-            MPanelArtistsItemDescr,
+            MPanelArtistsItemLabel, MPanelArtistsItemDescr,
             followed_artists_requester()
         ),
         pack_menu_item(
             albums_view_id,
-            MPanelAlbumsItemLabel,
-            MPanelAlbumsItemDescr,
+            MPanelAlbumsItemLabel, MPanelAlbumsItemDescr,
             saved_albums_requester()
         ),
         pack_menu_item(
             tracks_view_id,
-            MPanelTracksItemLabel,
-            MPanelTracksItemDescr,
+            MPanelTracksItemLabel, MPanelTracksItemDescr,
             saved_tracks_requester()
         ),
         pack_menu_item(
             playlists_view_id,
-            MPanelPlaylistsItemLabel,
-            MPanelPlaylistsItemDescr,
+            MPanelPlaylistsItemLabel, MPanelPlaylistsItemDescr,
             user_playlists_requester()
         ),
     });
@@ -120,7 +116,7 @@ intptr_t collection_view::select_item(const user_data_t* data)
 
     if (data->id == albums_view_id)
     {
-        ui::events::show_albums_view(api_proxy);
+        ui::events::show_albums_collection_view(api_proxy);
         return TRUE;
     }
 

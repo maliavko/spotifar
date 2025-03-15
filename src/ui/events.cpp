@@ -5,7 +5,7 @@
 #include "views/artists.hpp"
 #include "views/playlists.hpp"
 #include "views/playlist.hpp"
-#include "views/artist.hpp"
+#include "views/albums.hpp"
 #include "views/album.hpp"
 
 namespace spotifar { namespace ui {
@@ -29,14 +29,14 @@ namespace events {
         return show_panel_view<collection_view>(api);
     }
 
+    void show_albums_collection_view(api_abstract *api)
+    {
+        return show_panel_view<albums_collection_view>(api);
+    }
+
     void show_artists_view(api_abstract *api)
     {
         return show_panel_view<artists_view>(api);
-    }
-
-    void show_albums_view(api_abstract *api)
-    {
-        // TODO: unfinished
     }
 
     void show_tracks_view(api_abstract *api)

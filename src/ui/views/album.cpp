@@ -109,6 +109,7 @@ intptr_t album_view::select_item(const user_data_t* data)
     {
         //TODO: unfinished
         //events::show_artist_view(artist);
+        events::show_albums_collection_view(api_proxy);
         return TRUE;
     }
 

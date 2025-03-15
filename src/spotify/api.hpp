@@ -38,6 +38,7 @@ public:
     auto get_followed_artists() -> const artists_t&;
     auto get_artist(const string &artist_id) -> artist;
     auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&;
+    auto get_saved_albums() -> const saved_albums_t&;
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
     auto get_album(const string &album_id) -> album;
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
@@ -122,7 +123,7 @@ auto api::get_items_collection(ArgumentsTypes... args) -> const typename R::valu
     for (const auto &entries: requester.fetch_by_pages(this))
     {
         result.insert(result.end(), entries.begin(), entries.end());
-        //break; // TODO: remove! just for speeding up the testing
+        break; // TODO: remove! just for speeding up the testing
     }
 
     return result;

@@ -180,7 +180,8 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             }
         }
 
-        view->process_input(info);
+        if (view->process_input(info))
+            return TRUE;
 
         // the sorting hotkeys are blocked, due to custom plugin implementation
         for (int key_code = VK_F3; key_code <= VK_F12; key_code++)
