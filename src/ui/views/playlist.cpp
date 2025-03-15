@@ -99,7 +99,7 @@ intptr_t playlist_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
     {
-        events::show_playlists_view();
+        events::show_playlists_view(api_proxy);
         return TRUE;
     }
 

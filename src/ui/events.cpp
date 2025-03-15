@@ -1,44 +1,57 @@
 #include "events.hpp"
-#include "utils.hpp"
 #include "dialogs/menus.hpp"
+#include "views/root.hpp"
+#include "views/artists.hpp"
+#include "views/playlists.hpp"
+#include "views/playlist.hpp"
+#include "views/artist.hpp"
+#include "views/album.hpp"
 
 namespace spotifar { namespace ui {
 
 namespace events {
 
-    void show_root_view()
+    template <class T, typename... MethodArgumentTypes>
+    static void show_panel_view(MethodArgumentTypes... args)
     {
-        return ObserverManager::notify(&ui_events_observer::show_root_view);
+        return ObserverManager::notify(
+            &ui_events_observer::show_panel_view, std::make_shared<T>(args...));
     }
 
-    void show_artists_view()
+    void show_root_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_artists_view);
+        return show_panel_view<root_view>(api);
     }
 
-    void show_playlists_view()
+    void show_artists_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_playlists_view);
+        return show_panel_view<artists_view>(api);
     }
 
-    void show_playlist_view(const playlist &playlist)
+    void show_playlists_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_playlist_view, playlist);
+        return show_panel_view<playlists_view>(api);
+    }
+
+    void show_playlist_view(api_abstract *api, const playlist &playlist)
+    {
+        return show_panel_view<playlist_view>(api, playlist);
     }
     
-    void show_artist_view(const artist &artist)
+    void show_artist_view(api_abstract *api, const artist &artist)
     {
-        return ObserverManager::notify(&ui_events_observer::show_artist_view, artist);
+        return show_panel_view<artist_view>(api, artist);
     }
     
-    void show_album_view(const artist &artist, const album &album)
+    void show_album_view(api_abstract *api, const album &album)
     {
-        return ObserverManager::notify(&ui_events_observer::show_album_view, artist, album);
+        return show_panel_view<album_view>(api, album);
     }
     
-    void show_recents_view()
+    void show_recents_view(api_abstract *api)
     {
-        return ObserverManager::notify(&ui_events_observer::show_recents_view);
+        //TODO: unfinished
+        //return show_panel_view<album_view>(api, album);
     }
     
     void show_player_dialog()

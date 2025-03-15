@@ -19,7 +19,7 @@ public:
         int duration_ms;
     };
 public:
-    album_view(api_abstract *api, const artist &artist, const album &album);
+    album_view(api_abstract *api, const album &album);
 
     auto get_dir_name() const -> const wstring&;
     auto get_items() -> const items_t*;
@@ -33,7 +33,6 @@ protected:
         const user_data_t *data2) -> intptr_t;
 private:
     album album;
-    artist artist;
     api_abstract *api_proxy;
 };
 

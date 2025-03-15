@@ -1,12 +1,5 @@
-#include "stdafx.h"
 #include "ui/panel.hpp"
 #include "ui/dialogs/menus.hpp"
-#include "ui/views/root.hpp"
-#include "ui/views/artists.hpp"
-#include "ui/views/artist.hpp"
-#include "ui/views/album.hpp"
-#include "ui/views/playlists.hpp"
-#include "ui/views/playlist.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -202,44 +195,9 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
-void panel::change_view(std::shared_ptr<ui::view> v)
+void panel::show_panel_view(std::shared_ptr<ui::view> v)
 {
     view = v;
-}
-
-void panel::show_root_view()
-{
-    return change_view(std::make_shared<root_view>(api_proxy));
-}
-
-void panel::show_artists_view()
-{
-    return change_view(std::make_shared<artists_view>(api_proxy));
-}
-
-void panel::show_artist_view(const artist &artist)
-{
-    return change_view(std::make_shared<artist_view>(api_proxy, artist));
-}
-
-void panel::show_album_view(const artist &artist, const album &album)
-{
-    return change_view(std::make_shared<album_view>(api_proxy, artist, album));
-}
-
-void panel::show_playlists_view()
-{
-    return change_view(std::make_shared<playlists_view>(api_proxy));
-}
-
-void panel::show_playlist_view(const spotify::playlist &playlist)
-{
-    return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
-}
-
-void panel::show_recents_view()
-{
-    //return change_view(std::make_shared<playlist_view>(api_proxy, playlist));
 }
 
 void panel::refresh_panels(const string &item_id)

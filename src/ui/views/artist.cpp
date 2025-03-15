@@ -7,9 +7,9 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
+
 artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
-    view("artist_view"),
-    api_proxy(api),
+    albums_base_view(api, "artist_view"),
     artist(artist)
 {
 }
@@ -19,7 +19,26 @@ const wstring& artist_view::get_dir_name() const
     return artist.name;
 }
 
-const view::sort_modes_t& artist_view::get_sort_modes() const
+config::settings::view_t artist_view::get_default_settings() const
+{
+    return { 1, false, 3 };
+}
+
+void artist_view::goto_root_folder()
+{
+    events::show_artists_view(api_proxy);
+}
+
+const simplified_albums_t& artist_view::get_panel_items()
+{
+    return api_proxy->get_artist_albums(artist.id);
+}
+
+
+
+
+
+const view::sort_modes_t& albums_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
@@ -30,30 +49,25 @@ const view::sort_modes_t& artist_view::get_sort_modes() const
     return modes;
 }
 
-config::settings::view_t artist_view::get_default_settings() const
-{
-    return { 1, false, 3 };
-}
-
-intptr_t artist_view::select_item(const user_data_t* data)
+intptr_t albums_base_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
     {
-        events::show_artists_view();
+        goto_root_folder();
         return TRUE;
     }
     
     const album &album = api_proxy->get_album(data->id);
     if (album.is_valid())
     { 
-        events::show_album_view(artist, album);
+        events::show_album_view(api_proxy, album);
         return TRUE;
     }
 
     return FALSE;
 }
 
-intptr_t artist_view::compare_items(const sort_mode_t &sort_mode,
+intptr_t albums_base_view::compare_items(const sort_mode_t &sort_mode,
     const user_data_t *data1, const user_data_t *data2)
 {
     const auto
@@ -74,7 +88,7 @@ intptr_t artist_view::compare_items(const sort_mode_t &sort_mode,
     return -2;
 }
 
-void artist_view::update_panel_info(OpenPanelInfo *info)
+void albums_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
@@ -119,11 +133,11 @@ void artist_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view::items_t* artist_view::get_items()
+const view::items_t* albums_base_view::get_items()
 {
     static items_t items; items.clear();
 
-    for (const auto &a: api_proxy->get_artist_albums(artist.id))
+    for (const auto &a: get_panel_items())
     {
         std::vector<wstring> columns;
 
@@ -181,7 +195,7 @@ const view::items_t* artist_view::get_items()
     return &items;
 }
 
-bool artist_view::request_extra_info(const view::user_data_t* data)
+bool albums_base_view::request_extra_info(const view::user_data_t* data)
 {
     if (data != nullptr)
         return album_tracks_requester(data->id)(api_proxy);
@@ -189,7 +203,7 @@ bool artist_view::request_extra_info(const view::user_data_t* data)
     return false;
 }
 
-intptr_t artist_view::process_key_input(int combined_key)
+intptr_t albums_base_view::process_key_input(int combined_key)
 {
     switch (combined_key)
     {

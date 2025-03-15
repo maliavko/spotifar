@@ -4,12 +4,10 @@
 
 namespace spotifar { namespace ui {
 
-album_view::album_view(spotify::api_abstract *api, const spotify::artist &ar,
-                       const spotify::album &al):
+album_view::album_view(spotify::api_abstract *api, const spotify::album &al):
     view("album_view"),
     api_proxy(api),
-    album(al),
-    artist(ar)
+    album(al)
 {
 }
 
@@ -109,7 +107,8 @@ intptr_t album_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
     {
-        events::show_artist_view(artist);
+        //TODO: unfinished
+        //events::show_artist_view(artist);
         return TRUE;
     }
 

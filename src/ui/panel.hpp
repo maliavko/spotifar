@@ -2,6 +2,7 @@
 #define PANEL_HPP_A9BFB4E5_8B2C_4800_A7C3_11571828163B
 #pragma once
 
+#include "stdafx.h"
 #include "spotify/abstract.hpp"
 #include "ui/views/view.hpp"
 #include "ui/events.hpp" // ui_events_observer
@@ -25,17 +26,8 @@ public:
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
-    void change_view(std::shared_ptr<ui::view> view);
-
-    // views events' handlers
+    void show_panel_view(std::shared_ptr<ui::view> view);
     void refresh_panels(const string &item_id = "");
-    void show_root_view();
-    void show_artists_view();
-    void show_artist_view(const artist &artist);
-    void show_album_view(const artist &artist, const album &album);
-    void show_playlists_view();
-    void show_playlist_view(const playlist &playlist);
-    void show_recents_view();
 private:
     std::shared_ptr<ui::view> view = nullptr;
     api_abstract *api_proxy = nullptr;

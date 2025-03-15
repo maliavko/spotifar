@@ -36,14 +36,14 @@ intptr_t playlists_view::select_item(const user_data_t* data)
 {
     if (data == nullptr)
     {
-        events::show_root_view();
+        events::show_root_view(api_proxy);
         return TRUE;
     }
 
     const auto &playlist = api_proxy->get_playlist(data->id);
     if (playlist.is_valid())
     {
-        events::show_playlist_view(playlist);
+        events::show_playlist_view(api_proxy, playlist);
         return TRUE;
     }
 

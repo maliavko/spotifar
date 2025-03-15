@@ -10,7 +10,7 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class artist_view: public view
+class albums_base_view: public view
 {
 public:
     struct album_user_data_t: public user_data_t
@@ -19,12 +19,12 @@ public:
         size_t tracks_total;
     };
 public:
-    artist_view(api_abstract *api, const artist &artist);
+    albums_base_view(api_abstract *api, const string &view_uid):
+        view(view_uid), api_proxy(api)
+        {}
 
-    auto get_dir_name() const -> const wstring&;
     auto get_items() -> const items_t*;
     auto get_sort_modes() const -> const sort_modes_t&;
-    auto get_default_settings() const -> config::settings::view_t;
 
     auto select_item(const user_data_t* data) -> intptr_t;
     auto request_extra_info(const user_data_t* data) -> bool;
@@ -32,9 +32,34 @@ public:
     auto process_key_input(int combined_key) -> intptr_t;
     auto compare_items(const sort_mode_t &sort_mode, const user_data_t *data1,
         const user_data_t *data2) -> intptr_t;
-private:
+protected:
+    virtual auto goto_root_folder() -> void = 0;
+    virtual auto get_panel_items() -> const simplified_albums_t& = 0;
+protected:
     api_abstract *api_proxy;
+};
+
+
+class artist_view: public albums_base_view
+{
+public:
+    artist_view(api_abstract *api, const artist &artist);
+    
+    auto get_default_settings() const -> config::settings::view_t;
+    auto get_dir_name() const -> const wstring&;
+protected:
+    auto goto_root_folder() -> void;
+    auto get_panel_items() -> const simplified_albums_t&;
+private:
     artist artist;
+};
+
+class albums_collection_view: public albums_base_view
+{
+public:
+    albums_collection_view(api_abstract *api):
+        albums_base_view(api, "albums_collection_view")
+        {}
 };
 
 } // namespace ui

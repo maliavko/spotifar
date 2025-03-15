@@ -133,19 +133,19 @@ intptr_t root_view::select_item(const user_data_t* data)
 
     if (data->id == artists_view_id)
     {
-        ui::events::show_artists_view();
+        ui::events::show_artists_view(api_proxy);
         return TRUE;
     }
     
     if (data->id == playlists_view_id)
     {
-        ui::events::show_playlists_view();
+        ui::events::show_playlists_view(api_proxy);
         return TRUE;
     }
     
     if (data->id == recents_view_id)
     {
-        ui::events::show_recents_view();
+        ui::events::show_recents_view(api_proxy);
         return TRUE;
     }
 

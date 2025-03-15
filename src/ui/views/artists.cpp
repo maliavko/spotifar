@@ -115,14 +115,14 @@ intptr_t artists_view::select_item(const user_data_t *data)
 {
     if (data == nullptr)
     {
-        events::show_root_view();
+        events::show_root_view(api_proxy);
         return TRUE;
     }
     
     const auto &artist = api_proxy->get_artist(data->id);
     if (artist.is_valid())
     {
-        events::show_artist_view(artist);
+        events::show_artist_view(api_proxy, artist);
         return TRUE;
     }
     
