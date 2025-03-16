@@ -5,18 +5,13 @@
 #include "stdafx.h"
 #include "utils.hpp"
 #include "config.hpp"
+#include "spotify/items.hpp"
 
 namespace spotifar { namespace ui {
 
 class view
 {
 public:
-    struct user_data_t
-    {
-        string id;
-        wstring name;
-    };
-
     struct sort_mode_t
     {
         wstring name;
@@ -32,8 +27,7 @@ public:
         wstring description;
         uintptr_t file_attrs;
         std::vector<wstring> custom_column_data;
-        user_data_t *user_data;
-        FARPANELITEMFREECALLBACK free_user_data_callback;
+        spotify::data_item *user_data;
     };
 
     typedef std::vector<sort_mode_t> sort_modes_t;
@@ -65,33 +59,22 @@ public:
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
 protected:
-    /// @brief A helper method for freeing allocated user data
-    /// @tparam T user data object type
-    template<class T>
-    static auto free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info) -> void;
-
     /// @brief A helper function to unpack user data from the far items
-    static auto unpack_user_data(const UserDataItem &user_data) -> const user_data_t*;
+    static auto unpack_user_data(const UserDataItem &user_data) -> const spotify::data_item*;
 
     // derived classes' interface to the internal view mechanisms
-    virtual auto request_extra_info(const user_data_t *data) -> bool { return false; }
-    virtual auto select_item(const user_data_t *data) -> intptr_t { return FALSE; }
+    virtual auto request_extra_info(const spotify::data_item *data) -> bool { return false; }
+    virtual auto select_item(const spotify::data_item *data) -> intptr_t { return FALSE; }
     virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
-    virtual auto compare_items(const sort_mode_t &modes, const user_data_t *data1,
-        const user_data_t *data2) -> intptr_t { return -2; }
+    virtual auto compare_items(const sort_mode_t &modes, const spotify::data_item *data1,
+        const spotify::data_item *data2) -> intptr_t { return -2; }
 private:
     bool is_first_init = true; // data is ready flag
     sort_modes_t sort_modes;
     config::settings::view_t *settings;
     string uid;
 };
-
-template<class T>
-void view::free_user_data(void *const user_data, const FarPanelItemFreeInfo *const info)
-{
-    delete reinterpret_cast<const T*>(user_data);
-}
 
 } // namespace ui
 } // namespace spotifar

@@ -50,10 +50,10 @@ void view::on_items_updated()
     }
 }
 
-const view::user_data_t* view::unpack_user_data(const UserDataItem &user_data)
+const spotify::data_item* view::unpack_user_data(const UserDataItem &user_data)
 {
     if (user_data.Data != nullptr)
-        return reinterpret_cast<const user_data_t*>(user_data.Data);
+        return reinterpret_cast<const spotify::data_item*>(user_data.Data);
     return nullptr;
 }
 
@@ -107,7 +107,7 @@ size_t view::get_item_idx(const string &item_id)
     {
         auto user_data = unpack_user_data(items[idx]->UserData);
         if (user_data != nullptr && user_data->id == item_id)
-            return idx;
+           return idx;
     }
     return 0;
 }

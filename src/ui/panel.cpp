@@ -113,10 +113,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
         
         if (item.user_data != nullptr)
-        {
             panel_item[idx].UserData.Data = item.user_data;
-            panel_item[idx].UserData.FreeData = item.free_user_data_callback;
-        }
     }
 
     view->on_items_updated();

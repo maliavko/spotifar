@@ -32,7 +32,7 @@ config::settings::view_t playlists_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-intptr_t playlists_view::select_item(const user_data_t* data)
+intptr_t playlists_view::select_item(const spotify::data_item* data)
 {
     if (data == nullptr)
     {
@@ -83,14 +83,14 @@ const view::items_t* playlists_view::get_items()
             {
                 tracks_count
             },
-            new user_data_t{ p.id, p.name, }, free_user_data<user_data_t>
+            const_cast<simplified_playlist*>(&p)
         });
     }
 
     return &items;
 }
 
-bool playlists_view::request_extra_info(const user_data_t* data)
+bool playlists_view::request_extra_info(const spotify::data_item* data)
 {
     if (data != nullptr)
         return playlist_tracks_requester(data->id)(api_proxy);

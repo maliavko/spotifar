@@ -21,6 +21,49 @@ const view::sort_modes_t& tracks_base_view::get_sort_modes() const
     return modes;
 }
 
+const view::items_t* tracks_base_view::get_items()
+{
+    static view::items_t items; items.clear();
+
+    for (const auto &track: get_tracks())
+    {
+        std::vector<wstring> columns;
+        
+        // column C0 - is explicit lyrics
+        columns.push_back(track.is_explicit ? L" * " : L"");
+
+        // column C1 - duration
+        auto duration = std::chrono::milliseconds(track.duration_ms);
+        wstring track_length;
+        if (duration < 1h)
+            track_length = std::format(L"{:%M:%S}", duration);
+        else
+            track_length = std::format(L"{:%Hh%M}", duration);
+        columns.push_back(track_length.substr(0, 5));
+        
+        // column C2 - track number
+        // eaither just 01,02 or in a multisdics case - 1/02, 1/02 etc.
+        wstring track_number = std::format(L"{:02}", track.track_number);
+        columns.push_back(std::format(L"{: ^7}", track_number));
+
+        // list of artists is used as a description field
+        std::vector<wstring> artists_names;
+        std::transform(track.artists.cbegin(), track.artists.cend(), back_inserter(artists_names),
+            [](const auto &a) { return a.name; });
+
+        items.push_back({
+            track.id,
+            track.name,
+            utils::string_join(artists_names, L", "),
+            FILE_ATTRIBUTE_VIRTUAL,
+            columns,
+            const_cast<simplified_track*>(&track)
+        });
+    }
+
+    return &items;
+}
+
 void tracks_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
@@ -38,51 +81,7 @@ void tracks_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view::items_t* album_tracks_view::get_items()
-{
-    static view::items_t items; items.clear();
-
-    const auto &tracks = api_proxy->get_album_tracks(album.id);
-
-    // performing an extra loop across all the tracks to determine the total number of
-    // the discs on the album
-    size_t discs_number = 0;
-    for (const auto &track: tracks)
-        if (track.disc_number > discs_number)
-            discs_number += 1;
-
-    for (const auto &track: tracks)
-    {
-        std::vector<wstring> columns;
-        pack_custom_columns(columns, track);
-        
-        // column C2 - track number
-        // eaither just 01,02 or in a multisdics case - 1/02, 1/02 etc.
-        wstring track_number = std::format(L"{:02}", track.track_number);
-        if (discs_number > 1)
-            track_number = std::format(L"{:02}/{}", track.disc_number, track_number);
-        columns.push_back(std::format(L"{: ^7}", track_number));
-
-        // list of artists is used as a description field
-        std::vector<wstring> artists_names;
-        std::transform(track.artists.cbegin(), track.artists.cend(), back_inserter(artists_names),
-            [](const auto &a) { return a.name; });
-
-        items.push_back({
-            track.id,
-            track.name,
-            utils::string_join(artists_names, L", "),
-            FILE_ATTRIBUTE_VIRTUAL,
-            columns,
-            new track_user_data_t{ track.id, track.name, track_number, track.duration_ms, },
-            free_user_data<track_user_data_t>
-        });
-    }
-
-    return &items;
-}
-
-intptr_t tracks_base_view::select_item(const user_data_t* data)
+intptr_t tracks_base_view::select_item(const spotify::data_item* data)
 {
     if (data == nullptr)
         return goto_root_folder();
@@ -91,11 +90,11 @@ intptr_t tracks_base_view::select_item(const user_data_t* data)
 }
 
 intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
-    const user_data_t *data1, const user_data_t *data2)
+    const spotify::data_item *data1, const spotify::data_item *data2)
 {
     const auto
-        &item1 = static_cast<const track_user_data_t*>(data1),
-        &item2 = static_cast<const track_user_data_t*>(data2);
+        &item1 = static_cast<const spotify::simplified_track*>(data1),
+        &item2 = static_cast<const spotify::simplified_track*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {
@@ -103,27 +102,14 @@ intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
             return item1->name.compare(item2->name);
 
         case SM_EXT:
-            return item1->track_number.compare(item2->track_number);
+            if (item1->disc_number == item2->disc_number)
+                return item1->track_number - item2->track_number;
+            return item1->disc_number - item2->disc_number;
 
         case SM_SIZE:
             return item1->duration_ms - item2->duration_ms;
     }
     return -2;
-}
-
-void tracks_base_view::pack_custom_columns(std::vector<wstring> &columns, const simplified_track &track)
-{
-    // column C0 - is explicit lyrics
-    columns.push_back(track.is_explicit ? L" * " : L"");
-
-    // column C1 - duration
-    auto duration = std::chrono::milliseconds(track.duration_ms);
-    wstring track_length;
-    if (duration < 1h)
-        track_length = std::format(L"{:%M:%S}", duration);
-    else
-        track_length = std::format(L"{:%Hh%M}", duration);
-    columns.push_back(track_length.substr(0, 5));
 }
 
 intptr_t tracks_base_view::process_key_input(int combined_key)
@@ -138,11 +124,13 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
                 if (auto *user_data = unpack_user_data(item->UserData))
                 {
                     utils::log::global->info("Starting playback from the tracks view, {}", user_data->id);
-                    if (start_playback(user_data->id))
-                    {
-                        events::show_player_dialog();
-                        return TRUE;
-                    }
+                    // if (start_playback(user_data->id))
+                    // {
+                    //     events::show_player_dialog();
+                    //     return TRUE;
+                    // }
+                    start_playback(user_data->id);
+                    return TRUE;
                 }
             }
             else
@@ -187,6 +175,12 @@ bool album_tracks_view::start_playback(const string &track_id)
 {
     api_proxy->start_playback(album.get_uri(), track::make_uri(track_id));
     return true;
+}
+
+std::generator<const simplified_track&> album_tracks_view::get_tracks()
+{
+    for (const auto &t: api_proxy->get_album_tracks(album.id))
+        co_yield t;
 }
 
 } // namespace ui

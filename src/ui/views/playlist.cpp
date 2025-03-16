@@ -59,10 +59,10 @@ const view::items_t* playlist_view::get_items()
         columns.push_back(std::format(L"{}", utils::to_wstring(t.added_at)));
 
         // column C1 - artist
-        columns.push_back(std::format(L"{}", t.track.artists[0].name));
+        columns.push_back(std::format(L"{}", t.artists[0].name));
 
         // column C2 - duration
-        auto duration = std::chrono::milliseconds(t.track.duration_ms);
+        auto duration = std::chrono::milliseconds(t.duration_ms);
         wstring track_length;
         if (duration < 1h)
             track_length = std::format(L"{:%M:%S}", duration);
@@ -71,31 +71,28 @@ const view::items_t* playlist_view::get_items()
         columns.push_back(track_length.substr(0, 5));
 
         // column C3 - combined name: Artist Name - Track Name
-        columns.push_back(std::format(L"{} - {}", t.track.artists[0].name, t.track.name));
+        columns.push_back(std::format(L"{} - {}", t.artists[0].name, t.name));
 
         // column C4 - album name
-        columns.push_back(std::format(L"{}", t.track.album.name));
+        columns.push_back(std::format(L"{}", t.album.name));
 
         // column C5 - album year
-        columns.push_back(std::format(L"{: ^6}", utils::to_wstring(t.track.album.get_release_year())));
+        columns.push_back(std::format(L"{: ^6}", utils::to_wstring(t.album.get_release_year())));
 
         items.push_back({
-            t.track.id,
-            t.track.name,
+            t.id,
+            t.name,
             L"",
             FILE_ATTRIBUTE_VIRTUAL,
             columns,
-            new playlist_track_user_data_t{
-                t.track.id, t.track.name, t.added_at, t.track.duration_ms,
-                t.track.album.name, t.track.album.get_release_year() },
-            free_user_data<playlist_track_user_data_t>
+            const_cast<saved_track*>(&t)
         });
     }
 
     return &items;
 }
 
-intptr_t playlist_view::select_item(const user_data_t* data)
+intptr_t playlist_view::select_item(const spotify::data_item* data)
 {
     if (data == nullptr)
     {
@@ -115,10 +112,10 @@ const view::sort_modes_t& playlist_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
-        { L"Year",          SM_ATIME,   VK_F4 + mods::ctrl },
-        { L"Length",        SM_SIZE,    VK_F5 + mods::ctrl },
-        { L"Added",         SM_MTIME,   VK_F6 + mods::ctrl },
+        { L"Name",      SM_NAME,    VK_F3 + mods::ctrl },
+        { L"Year",      SM_ATIME,   VK_F4 + mods::ctrl },
+        { L"Length",    SM_SIZE,    VK_F5 + mods::ctrl },
+        { L"Added",     SM_MTIME,   VK_F6 + mods::ctrl },
     };
     return modes;
 }
@@ -129,11 +126,11 @@ config::settings::view_t playlist_view::get_default_settings() const
 }
 
 intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
-    const user_data_t *data1, const user_data_t *data2)
+    const spotify::data_item *data1, const spotify::data_item *data2)
 {
     const auto
-        &item1 = static_cast<const playlist_track_user_data_t*>(data1),
-        &item2 = static_cast<const playlist_track_user_data_t*>(data2);
+        &item1 = static_cast<const spotify::saved_track*>(data1),
+        &item2 = static_cast<const spotify::saved_track*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {
@@ -144,7 +141,7 @@ intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
             return item1->duration_ms - item2->duration_ms;
 
         case SM_ATIME:
-            return item1->album_release_year.compare(item2->album_release_year);
+            return item1->album.release_date.compare(item2->album.release_date);
 
         case SM_MTIME:
             return item1->added_at.compare(item2->added_at);

@@ -13,25 +13,20 @@ using namespace spotify;
 class tracks_base_view: public view
 {
 public:
-    struct track_user_data_t: public user_data_t
-    {
-        wstring track_number;
-        int duration_ms;
-    };
-public:
     tracks_base_view(api_abstract *api, const string &view_uid);
 
+    auto get_items() -> const items_t*;
     auto get_sort_modes() const -> const sort_modes_t&;
-    auto select_item(const user_data_t* data) -> intptr_t;
+    auto select_item(const spotify::data_item* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
 protected:
-    auto compare_items(const sort_mode_t &sort_mode, const user_data_t *data1,
-        const user_data_t *data2) -> intptr_t;
+    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item *data1,
+        const spotify::data_item *data2) -> intptr_t;
     auto process_key_input(int combined_key) -> intptr_t;
 
     virtual auto goto_root_folder() -> bool = 0;
     virtual auto start_playback(const string &track_id) -> bool = 0;
-    virtual auto pack_custom_columns(std::vector<wstring> &columns, const simplified_track &t) -> void;
+    virtual auto get_tracks() -> std::generator<const simplified_track&> = 0;
 protected:
     api_abstract *api_proxy;
 };
@@ -43,12 +38,12 @@ class album_tracks_view: public tracks_base_view
 public:
     album_tracks_view(api_abstract *api, const album &album);
     
-    auto get_items() -> const items_t*;
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
     auto goto_root_folder() -> bool;
     auto start_playback(const string &track_id) -> bool;
+    auto get_tracks() -> std::generator<const simplified_track&>;
 private:
     album album;
 };

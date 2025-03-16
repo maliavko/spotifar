@@ -381,7 +381,7 @@ void api::toggle_shuffle_plus(bool is_on)
         {
             const auto &tracks = get_playlist_tracks(state.context.get_item_id());
             std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
-                            [](const auto &t) { return t.track.get_uri(); });
+                            [](const auto &t) { return t.get_uri(); });
         }
         else if (state.context.is_artist())
         {

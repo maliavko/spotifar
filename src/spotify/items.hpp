@@ -15,6 +15,11 @@ static const string invalid_id = "";
 /// @param id spotify item id
 string make_item_uri(const string &item_type_name, const string &id);
 
+struct data_item
+{
+    string id = invalid_id;
+};
+
 struct image
 {
     string url;
@@ -22,9 +27,8 @@ struct image
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(image, url, width, height);
 };
 
-struct simplified_artist
+struct simplified_artist: public data_item
 {
-    string id = invalid_id;
     wstring name;
     
     static string make_uri(const string &id) { return make_item_uri("artist", id); }
@@ -46,7 +50,7 @@ struct artist: public simplified_artist
     friend void to_json(json &j, const artist &a);
 };
 
-struct simplified_album
+struct simplified_album: public data_item
 {
     inline static const string
         album = "album",
@@ -54,7 +58,6 @@ struct simplified_album
         compilation = "compilation",
         appears_on = "appears_on";
 
-    string id = invalid_id;
     wstring name;
     size_t total_tracks;
     string album_type;
@@ -82,16 +85,16 @@ struct album: public simplified_album
     friend void to_json(json &j, const album &p);
 };
 
-struct saved_album
+struct saved_album: public album
 {
     string added_at;
-    album album;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(saved_album, added_at, album);
+    
+    friend void from_json(const json &j, saved_album &a);
+    friend void to_json(json &j, const saved_album &a);
 };
 
-struct simplified_track
+struct simplified_track: public data_item
 {
-    string id = invalid_id;
     wstring name;
     int duration_ms = 0;
     int duration = 0;
@@ -125,19 +128,18 @@ struct track: public simplified_track
     friend void to_json(json &j, const track &p);
 };
 
-struct saved_track
+struct saved_track: public track
 {
     string added_at;
-    track track;
     
     static const string& get_fields_filter();
     
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(saved_track, added_at, track);
+    friend void from_json(const json &j, saved_track &t);
+    friend void to_json(json &j, const saved_track &t);
 };
 
-struct simplified_playlist
+struct simplified_playlist: public data_item
 {
-    string id = invalid_id;
     string href;
     string snapshot_id;
     wstring name;

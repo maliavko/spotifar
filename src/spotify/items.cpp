@@ -115,6 +115,20 @@ void to_json(json &j, const album &a)
     //j.update
 }
 
+void from_json(const json &j, saved_album &a)
+{
+    from_json(j.at("album"), dynamic_cast<album&>(a));
+    j.at("added_at").get_to(a.added_at);
+}
+
+void to_json(json &j, const saved_album &a)
+{
+    j = json{
+        { "added_at", a.added_at },
+        { "album", dynamic_cast<const album&>(a) },
+    };
+}
+
 const string& simplified_track::get_fields_filter()
 {
     static string fields = "id,name,duration_ms,disc_number,track_number,explicit,artists";
@@ -199,6 +213,20 @@ const string& saved_track::get_fields_filter()
 {
     static string fields = std::format("added_at,track({})", track::get_fields_filter());
     return fields;
+}
+
+void from_json(const json &j, saved_track &t)
+{
+    from_json(j.at("track"), dynamic_cast<track&>(t));
+    j.at("added_at").get_to(t.added_at);
+}
+
+void to_json(json &j, const saved_track &t)
+{
+    j = json{
+        { "added_at", t.added_at },
+        { "track", dynamic_cast<const track&>(t) },
+    };
 }
 
 void from_json(const json &j, simplified_playlist &p)

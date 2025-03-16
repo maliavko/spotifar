@@ -7,9 +7,20 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 static const string
-    collection_view_id = "collection",
-    browse_view_id = "browse",
-    recents_view_id = "recents";
+    collection_id = "collection",
+    browse_id = "browse",
+    recents_id = "recents";
+
+struct root_data_t: public spotify::data_item
+{
+    int name_key, descr_key;
+};
+
+static std::vector<root_data_t> menu_items{
+    { { collection_id }, MPanelCollectionItemLabel, MPanelCollectionItemDescr },
+    { { browse_id }, MPanelBrowseItemLabel, MPanelBrowseItemDescr },
+    { { recents_id }, MPanelRecentsItemLabel, MPanelRecentsItemDescr },
+};
 
 root_view::root_view(api_abstract *api):
     view("root_view"),
@@ -93,50 +104,45 @@ void root_view::update_panel_info(OpenPanelInfo *info)
 
 const view::items_t* root_view::get_items()
 {
-    static items_t items;
+    static items_t items; items.clear();
     
-    items.assign({
-        pack_menu_item(collection_view_id, MPanelCollectionItemLabel, MPanelCollectionItemDescr),
-        pack_menu_item(browse_view_id, MPanelBrowseItemLabel, MPanelBrowseItemDescr),
-        pack_menu_item(recents_view_id, MPanelRecentsItemLabel, MPanelRecentsItemDescr),
-    });
+    for (auto &item: menu_items)
+    {
+        items.push_back({
+            item.id,
+            get_text(item.name_key), get_text(item.descr_key),
+            FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL, {},
+            &item
+        });
+    }
 
     return &items;
 }
 
-intptr_t root_view::select_item(const user_data_t *data)
+intptr_t root_view::select_item(const spotify::data_item *data)
 {
     if (data == nullptr)
         return FALSE;
 
-    if (data->id == collection_view_id)
+    if (data->id == collection_id)
     {
         ui::events::show_collections_view(api_proxy);
         return TRUE;
     }
     
-    if (data->id == browse_view_id)
+    if (data->id == browse_id)
     {
         ui::events::show_browse_view(api_proxy);
         return TRUE;
     }
     
-    if (data->id == recents_view_id)
+    if (data->id == recents_id)
     {
         ui::events::show_recents_view(api_proxy);
         return TRUE;
     }
 
     return FALSE;
-}
-
-view::items_t::value_type root_view::pack_menu_item(const string &id, int label_id, int descr_id)
-{
-    return {
-        id, get_text(label_id), get_text(descr_id),
-        FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL, {},
-        new user_data_t{ id }, view::free_user_data<view::user_data_t>
-    };
 }
 
 } // namespace ui

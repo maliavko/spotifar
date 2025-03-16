@@ -103,15 +103,14 @@ const view::items_t* artists_view::get_items()
             utils::to_wstring(utils::string_join(a.genres, ", ")),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             column_data,
-            new artist_user_data_t{ a.id, a.name, a.popularity, a.followers_total, },
-            free_user_data<artist_user_data_t>
+            const_cast<artist*>(&a)
         });
     }
 
     return &items;
 }
 
-intptr_t artists_view::select_item(const user_data_t *data)
+intptr_t artists_view::select_item(const spotify::data_item *data)
 {
     if (data == nullptr)
     {
@@ -119,17 +118,18 @@ intptr_t artists_view::select_item(const user_data_t *data)
         return TRUE;
     }
     
-    const auto &artist = api_proxy->get_artist(data->id);
-    if (artist.is_valid())
+    //const auto &artist = api_proxy->get_artist(data->id);
+    const auto *artist = static_cast<const spotify::artist*>(data);
+    if (artist->is_valid())
     {
-        events::show_artist_view(api_proxy, artist);
+        events::show_artist_view(api_proxy, *artist);
         return TRUE;
     }
     
     return FALSE;
 }
 
-bool artists_view::request_extra_info(const user_data_t *data)
+bool artists_view::request_extra_info(const spotify::data_item *data)
 {
     if (data != nullptr)
         return artist_albums_requester(data->id)(api_proxy);
@@ -154,11 +154,11 @@ config::settings::view_t artists_view::get_default_settings() const
 }
 
 intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
-    const user_data_t *data1, const user_data_t *data2)
+    const spotify::data_item *data1, const spotify::data_item *data2)
 {
     const auto
-        &item1 = static_cast<const artist_user_data_t*>(data1),
-        &item2 = static_cast<const artist_user_data_t*>(data2);
+        &item1 = static_cast<const spotify::artist*>(data1),
+        &item2 = static_cast<const spotify::artist*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {
@@ -169,7 +169,7 @@ intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
             return item1->popularity - item2->popularity;
 
         case SM_SIZE:
-            return item1->followers_count - item2->followers_count;
+            return item1->followers_total - item2->followers_total;
     }
     return -2;
 }
