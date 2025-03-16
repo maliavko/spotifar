@@ -50,10 +50,10 @@ void view::on_items_updated()
     }
 }
 
-const spotify::data_item* view::unpack_user_data(const UserDataItem &user_data)
+const data_item_t* view::unpack_user_data(const UserDataItem &user_data)
 {
     if (user_data.Data != nullptr)
-        return reinterpret_cast<const spotify::data_item*>(user_data.Data);
+        return reinterpret_cast<const data_item_t*>(user_data.Data);
     return nullptr;
 }
 

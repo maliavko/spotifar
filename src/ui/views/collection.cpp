@@ -12,7 +12,7 @@ static const string
     tracks_id = "tracks",
     playlists_id = "playlists";
 
-struct collection_data_t: public spotify::data_item
+struct collection_data_t: public data_item_t
 {
     int name_key, descr_key;
 };
@@ -137,7 +137,7 @@ const view::items_t* collection_view::get_items()
     return &items;
 }
 
-intptr_t collection_view::select_item(const spotify::data_item* data)
+intptr_t collection_view::select_item(const data_item_t* data)
 {
     if (data == nullptr)
     {
@@ -172,7 +172,7 @@ intptr_t collection_view::select_item(const spotify::data_item* data)
     return FALSE;
 }
 
-bool collection_view::request_extra_info(const spotify::data_item* data)
+bool collection_view::request_extra_info(const data_item_t* data)
 {
     return calculate_totals(api_proxy, data->id) > 0;
 }

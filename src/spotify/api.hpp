@@ -34,29 +34,29 @@ public:
     
     // library api interface
     auto get_available_devices() -> const devices_t& { return devices->get(); }
-    auto get_playback_state() -> const playback_state& { return playback->get(); }
+    auto get_playback_state() -> const playback_state_t& { return playback->get(); }
     auto get_followed_artists() -> const artists_t&;
-    auto get_artist(const string &artist_id) -> artist;
+    auto get_artist(const string &artist_id) -> artist_t;
     auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&;
     auto get_saved_albums() -> const saved_albums_t&;
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
-    auto get_album(const string &album_id) -> album;
+    auto get_album(const string &album_id) -> album_t;
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
-    auto get_playlist(const string &playlist_id) -> playlist;
+    auto get_playlist(const string &playlist_id) -> playlist_t;
     auto get_playlists() -> const simplified_playlists_t&;
     auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t&;
     auto check_saved_track(const string &track_id) -> bool;
     auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool>;
     auto save_tracks(const std::vector<string> &ids) -> bool;
     auto remove_saved_tracks(const std::vector<string> &ids) -> bool;
-    auto get_playing_queue() -> playing_queue;
+    auto get_playing_queue() -> playing_queue_t;
 
     // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",
                         int position_ms = 0, const string &device_id = "");
     void start_playback(const std::vector<string> &uris, const string &device_id = "");
-    void start_playback(const simplified_album &album, const simplified_track &track);
-    void start_playback(const simplified_playlist &playlist, const simplified_track &track);
+    void start_playback(const simplified_album_t &album, const simplified_track_t &track);
+    void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track);
     void resume_playback(const string &device_id = "");
     void toggle_playback(const string &device_id = "");
     void pause_playback(const string &device_id = "");
@@ -85,7 +85,7 @@ protected:
     template<class R, typename... ArgumentsTypes>
     auto get_items_collection(ArgumentsTypes... args) -> const typename R::value_t&;
     
-    void on_auth_status_changed(const auth &auth);
+    void on_auth_status_changed(const auth_t &auth);
 
 private:
     BS::thread_pool pool;

@@ -8,7 +8,7 @@
 
 namespace spotifar { namespace spotify {
 
-class playback_cache: public json_cache<playback_state>
+class playback_cache: public json_cache<playback_state_t>
 {
 public:
     //playback_cache(api_abstract *api): json_cache(L"PlaybackState"), api_proxy(api) {}
@@ -19,8 +19,8 @@ public:
     /// @param tracks_uris list of spotify tracks' URIs
     void activate_super_shuffle(const std::vector<string> &tracks_uris);
 protected:
-    virtual void on_data_synced(const playback_state &data, const playback_state &prev_data);
-    virtual bool request_data(playback_state &data);
+    virtual void on_data_synced(const playback_state_t &data, const playback_state_t &prev_data);
+    virtual bool request_data(playback_state_t &data);
     virtual clock_t::duration get_sync_interval() const;
 
 private:
@@ -31,7 +31,7 @@ struct playback_observer: public BaseObserverProtocol
 {
     /// @brief A track has changed
     /// @param track a new track, which jsut started playing
-    virtual void on_track_changed(const track &track) {};
+    virtual void on_track_changed(const track_t &track) {};
 
     /// @brief A track's progress has changed
     /// @param duration a total track duration in seconds
@@ -51,10 +51,10 @@ struct playback_observer: public BaseObserverProtocol
     virtual void on_state_changed(bool is_playing) {};
 
     /// @brief A playing context has changed
-    virtual void on_context_changed(const context &ctx) {};
+    virtual void on_context_changed(const context_t &ctx) {};
 
     /// @brief Playing permissions have changed
-    virtual void on_permissions_changed(const spotify::actions &actions) {};
+    virtual void on_permissions_changed(const actions_t &actions) {};
 };
 
 } // namespace spotify

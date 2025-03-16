@@ -6,7 +6,7 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-playlist_view::playlist_view(api_abstract *api, const spotify::playlist &p):
+playlist_view::playlist_view(api_abstract *api, const playlist_t &p):
     view("playlist_view"),
     playlist(p),
     api_proxy(api)
@@ -85,14 +85,14 @@ const view::items_t* playlist_view::get_items()
             L"",
             FILE_ATTRIBUTE_VIRTUAL,
             columns,
-            const_cast<saved_track*>(&t)
+            const_cast<saved_track_t*>(&t)
         });
     }
 
     return &items;
 }
 
-intptr_t playlist_view::select_item(const spotify::data_item* data)
+intptr_t playlist_view::select_item(const data_item_t* data)
 {
     if (data == nullptr)
     {
@@ -126,11 +126,11 @@ config::settings::view_t playlist_view::get_default_settings() const
 }
 
 intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
-    const spotify::data_item *data1, const spotify::data_item *data2)
+    const data_item_t *data1, const data_item_t *data2)
 {
     const auto
-        &item1 = static_cast<const spotify::saved_track*>(data1),
-        &item2 = static_cast<const spotify::saved_track*>(data2);
+        &item1 = static_cast<const saved_track_t*>(data1),
+        &item2 = static_cast<const saved_track_t*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {

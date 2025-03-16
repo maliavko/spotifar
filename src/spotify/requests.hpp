@@ -40,7 +40,7 @@ struct saved_tracks_requester: public api_collection_requester<saved_tracks_t>
 };
 
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artist
-struct artist_requester: public api_requester<artist>
+struct artist_requester: public api_requester<artist_t>
 {
     artist_requester(const string &artist_id):
         api_requester(std::format("/v1/artists/{}", artist_id))
@@ -67,7 +67,7 @@ struct artist_albums_requester: public api_collection_requester<simplified_album
 };
 
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
-struct album_requester: public api_requester<album>
+struct album_requester: public api_requester<album_t>
 {
     album_requester(const string &album_id):
         api_requester(std::format("/v1/albums/{}", album_id))
@@ -95,12 +95,12 @@ struct user_playlists_requester: public api_collection_requester<simplified_play
 };
 
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlist
-struct playlist_requester: public api_requester<playlist>
+struct playlist_requester: public api_requester<playlist_t>
 {
     playlist_requester(const string &playlist_id):
         api_requester(std::format("/v1/playlists/{}", playlist_id), {
             { "additional_types", "track" },
-            { "fields", playlist::get_fields_filter() },
+            { "fields", playlist_t::get_fields_filter() },
         })
         {}
 };
@@ -111,7 +111,7 @@ struct playlist_tracks_requester: public api_collection_requester<saved_tracks_t
     playlist_tracks_requester(const string &playlist_id, size_t limit = MAX_LIMIT):
         api_collection_requester(std::format("/v1/playlists/{}/tracks", playlist_id), {
             { "additional_types", "track" },
-            { "fields", std::format("items({}),next,total", saved_track::get_fields_filter()) },
+            { "fields", std::format("items({}),next,total", saved_track_t::get_fields_filter()) },
             { "limit", std::to_string(limit) },
         })
         {}

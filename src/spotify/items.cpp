@@ -10,14 +10,14 @@ string make_item_uri(const string &item_type_name, const string &id)
     return std::format("spotify:{}:{}", item_type_name, id);
 }
 
-void from_json(const json &j, simplified_artist &a)
+void from_json(const json &j, simplified_artist_t &a)
 {
     j.at("id").get_to(a.id);
 
     a.name = utils::utf8_decode(j.at("name").get<string>());
 }
 
-void to_json(json &j, const simplified_artist &a)
+void to_json(json &j, const simplified_artist_t &a)
 {
     j = json{
         { "id", a.id },
@@ -25,9 +25,9 @@ void to_json(json &j, const simplified_artist &a)
     };
 }
 
-void from_json(const json &j, artist &a)
+void from_json(const json &j, artist_t &a)
 {
-    from_json(j, dynamic_cast<simplified_artist&>(a));
+    from_json(j, dynamic_cast<simplified_artist_t&>(a));
 
     j.at("popularity").get_to(a.popularity);
     j.at("genres").get_to(a.genres);
@@ -35,9 +35,9 @@ void from_json(const json &j, artist &a)
     j.at("followers").at("total").get_to(a.followers_total);
 }
 
-void to_json(json &j, const artist &a)
+void to_json(json &j, const artist_t &a)
 {
-    to_json(j, dynamic_cast<const simplified_artist&>(a));
+    to_json(j, dynamic_cast<const simplified_artist_t&>(a));
 
     j.update({
         { "popularity", a.popularity },
@@ -47,7 +47,7 @@ void to_json(json &j, const artist &a)
     });
 }
 
-string simplified_album::get_release_year() const
+string simplified_album_t::get_release_year() const
 {
     static auto r = std::regex("[\\d]{4}");	
     std::smatch match;
@@ -56,7 +56,7 @@ string simplified_album::get_release_year() const
     return "----";
 }
 
-wstring simplified_album::get_type_abbrev() const
+wstring simplified_album_t::get_type_abbrev() const
 {
     if (album_type == album)
         return L"LP";
@@ -67,7 +67,7 @@ wstring simplified_album::get_type_abbrev() const
     return L"??";
 }
 
-wstring simplified_album::get_user_name() const
+wstring simplified_album_t::get_user_name() const
 {
     wstring user_name = std::format(L"[{}] {}", utils::to_wstring(get_release_year()), name);
     if (is_single())
@@ -75,7 +75,7 @@ wstring simplified_album::get_user_name() const
     return user_name;
 }
 
-void from_json(const json &j, simplified_album &a)
+void from_json(const json &j, simplified_album_t &a)
 {
     j.at("id").get_to(a.id);
     j.at("total_tracks").get_to(a.total_tracks);
@@ -89,7 +89,7 @@ void from_json(const json &j, simplified_album &a)
     a.name = utils::utf8_decode(j.at("name").get<string>());
 }
 
-void to_json(json &j, const simplified_album &a)
+void to_json(json &j, const simplified_album_t &a)
 {
     j = json{
         { "id", a.id },
@@ -104,43 +104,43 @@ void to_json(json &j, const simplified_album &a)
     };
 }
 
-void from_json(const json &j, album &a)
+void from_json(const json &j, album_t &a)
 {
-    from_json(j, dynamic_cast<simplified_album&>(a));
+    from_json(j, dynamic_cast<simplified_album_t&>(a));
 }
 
-void to_json(json &j, const album &a)
+void to_json(json &j, const album_t &a)
 {
-    to_json(j, dynamic_cast<const simplified_album&>(a));
+    to_json(j, dynamic_cast<const simplified_album_t&>(a));
     //j.update
 }
 
-void from_json(const json &j, saved_album &a)
+void from_json(const json &j, saved_album_t &a)
 {
-    from_json(j.at("album"), dynamic_cast<album&>(a));
+    from_json(j.at("album"), dynamic_cast<album_t&>(a));
     j.at("added_at").get_to(a.added_at);
 }
 
-void to_json(json &j, const saved_album &a)
+void to_json(json &j, const saved_album_t &a)
 {
     j = json{
         { "added_at", a.added_at },
-        { "album", dynamic_cast<const album&>(a) },
+        { "album", dynamic_cast<const album_t&>(a) },
     };
 }
 
-const string& simplified_track::get_fields_filter()
+const string& simplified_track_t::get_fields_filter()
 {
     static string fields = "id,name,duration_ms,disc_number,track_number,explicit,artists";
     return fields;
 }
 
-bool operator==(const simplified_track &lhs, const simplified_track &rhs)
+bool operator==(const simplified_track_t &lhs, const simplified_track_t &rhs)
 {
     return lhs.id == rhs.id;
 }
 
-void from_json(const json &j, simplified_track &t)
+void from_json(const json &j, simplified_track_t &t)
 {
     j.at("id").get_to(t.id);
     j.at("track_number").get_to(t.track_number);
@@ -153,7 +153,7 @@ void from_json(const json &j, simplified_track &t)
     t.name = utils::utf8_decode(j.at("name").get<string>());
 }
 
-void to_json(json &j, const simplified_track &t)
+void to_json(json &j, const simplified_track_t &t)
 {
     j = json{
         { "id", t.id },
@@ -166,13 +166,13 @@ void to_json(json &j, const simplified_track &t)
     };
 }
 
-const string& track::get_fields_filter()
+const string& track_t::get_fields_filter()
 {
-    static string fields = std::format("{},album,artists", simplified_track::get_fields_filter());
+    static string fields = std::format("{},album,artists", simplified_track_t::get_fields_filter());
     return fields;
 }
 
-wstring track::get_artists_full_name() const
+wstring track_t::get_artists_full_name() const
 {
     std::vector<wstring> artists_names;
     std::transform(artists.cbegin(), artists.cend(), back_inserter(artists_names),
@@ -180,28 +180,28 @@ wstring track::get_artists_full_name() const
     return utils::string_join(artists_names, L", ");
 }
 
-wstring track::get_artist_name() const
+wstring track_t::get_artist_name() const
 {
     if (artists.size() > 0)
         return artists[0].name;
     return L"Unknown"; // TODO: localize
 }
 
-wstring track::get_long_name() const
+wstring track_t::get_long_name() const
 {
     return std::format(L"{} - {}", get_artist_name(), name);
 }
 
-void from_json(const json &j, track &t)
+void from_json(const json &j, track_t &t)
 {
-    from_json(j, dynamic_cast<simplified_track&>(t));
+    from_json(j, dynamic_cast<simplified_track_t&>(t));
     j.at("album").get_to(t.album);
     j.at("artists").get_to(t.artists);
 }
 
-void to_json(json &j, const track &t)
+void to_json(json &j, const track_t &t)
 {
-    to_json(j, dynamic_cast<const simplified_track&>(t));
+    to_json(j, dynamic_cast<const simplified_track_t&>(t));
 
     j.update({
         {"album", t.album},
@@ -209,27 +209,27 @@ void to_json(json &j, const track &t)
     });
 }
 
-const string& saved_track::get_fields_filter()
+const string& saved_track_t::get_fields_filter()
 {
-    static string fields = std::format("added_at,track({})", track::get_fields_filter());
+    static string fields = std::format("added_at,track({})", track_t::get_fields_filter());
     return fields;
 }
 
-void from_json(const json &j, saved_track &t)
+void from_json(const json &j, saved_track_t &t)
 {
-    from_json(j.at("track"), dynamic_cast<track&>(t));
+    from_json(j.at("track"), dynamic_cast<track_t&>(t));
     j.at("added_at").get_to(t.added_at);
 }
 
-void to_json(json &j, const saved_track &t)
+void to_json(json &j, const saved_track_t &t)
 {
     j = json{
         { "added_at", t.added_at },
-        { "track", dynamic_cast<const track&>(t) },
+        { "track", dynamic_cast<const track_t&>(t) },
     };
 }
 
-void from_json(const json &j, simplified_playlist &p)
+void from_json(const json &j, simplified_playlist_t &p)
 {
     j.at("id").get_to(p.id);
     j.at("snapshot_id").get_to(p.snapshot_id);
@@ -243,20 +243,20 @@ void from_json(const json &j, simplified_playlist &p)
     p.description = utils::utf8_decode(j.at("description").get<string>());
 }
 
-const string& simplified_playlist::get_fields_filter()
+const string& simplified_playlist_t::get_fields_filter()
 {
     static string fields = std::format("id,href,name,collaborative,public,description,"
         "tracks(total),owner(display_name),snapshot_id");
     return fields;
 }
 
-const string& playlist::get_fields_filter()
+const string& playlist_t::get_fields_filter()
 {
-    static string fields = std::format("{}", simplified_playlist::get_fields_filter());
+    static string fields = std::format("{}", simplified_playlist_t::get_fields_filter());
     return fields;
 }
 
-void from_json(const json &j, playback_state &p)
+void from_json(const json &j, playback_state_t &p)
 {
     j.at("device").get_to(p.device);
     j.at("repeat_state").get_to(p.repeat_state);
@@ -274,7 +274,7 @@ void from_json(const json &j, playback_state &p)
         j.at("item").get_to(p.item);
 }
 
-void to_json(json &j, const playback_state &p)
+void to_json(json &j, const playback_state_t &p)
 {
     j = json{
         { "device", p.device },
@@ -288,7 +288,7 @@ void to_json(json &j, const playback_state &p)
     };
 }
 
-void from_json(const json &j, playing_queue &p)
+void from_json(const json &j, playing_queue_t &p)
 {
     if (j.contains("currently_playing") && !j.at("currently_playing").is_null())
         j.at("currently_playing").get_to(p.currently_playing);
@@ -296,7 +296,7 @@ void from_json(const json &j, playing_queue &p)
     j.at("queue").get_to(p.queue);
 }
 
-void to_json(json &j, const playing_queue &p)
+void to_json(json &j, const playing_queue_t &p)
 {
     j = json{
         { "queue", p.queue },
@@ -304,7 +304,7 @@ void to_json(json &j, const playing_queue &p)
     };
 }
 
-bool operator==(const actions &lhs, const actions &rhs)
+bool operator==(const actions_t &lhs, const actions_t &rhs)
 {
     return (
         lhs.interrupting_playback == rhs.interrupting_playback &&
@@ -320,7 +320,7 @@ bool operator==(const actions &lhs, const actions &rhs)
     );
 }
 
-void from_json(const json &j, actions &p)
+void from_json(const json &j, actions_t &p)
 {
     if (j.is_null())
         return;
@@ -337,13 +337,13 @@ void from_json(const json &j, actions &p)
     p.trasferring_playback = j.value("trasferring_playback", false);
 }
 
-void to_json(json &j, const actions &p)
+void to_json(json &j, const actions_t &p)
 {
     // TODO: unfinished
     j = json{};
 }
 
-string context::get_item_id() const
+string context_t::get_item_id() const
 {
     static auto r = std::regex("(\\w+):(\\w+):(\\w+)");	
     std::smatch match;
@@ -352,13 +352,13 @@ string context::get_item_id() const
     return "";
 }
 
-bool operator==(const context &lhs, const context &rhs)
+bool operator==(const context_t &lhs, const context_t &rhs)
 {
     return lhs.href == rhs.href;
 }
 
 
-void from_json(const json &j, device &d)
+void from_json(const json &j, device_t &d)
 {
     j.at("id").get_to(d.id);
     j.at("is_active").get_to(d.is_active);
@@ -369,7 +369,7 @@ void from_json(const json &j, device &d)
     d.name = utils::utf8_decode(j.at("name").get<string>());
 }
 
-void to_json(json &j, const device &d)
+void to_json(json &j, const device_t &d)
 {
     j = json{
         { "id", d.id },
@@ -381,12 +381,12 @@ void to_json(json &j, const device &d)
     };
 }
 
-string device::to_str() const
+string device_t::to_str() const
 {
     return std::format("device(name={}, id={})", utils::to_string(name), id);
 }
 
-bool operator==(const device &lhs, const device &rhs)
+bool operator==(const device_t &lhs, const device_t &rhs)
 {
     return lhs.id == rhs.id;
 }

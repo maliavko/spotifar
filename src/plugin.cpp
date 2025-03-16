@@ -201,7 +201,7 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
     log::enable_verbose_logs(is_verbose);
 }
 
-void plugin::on_auth_status_changed(const spotify::auth &auth)
+void plugin::on_auth_status_changed(const spotify::auth_t &auth)
 {
     // if (auth.is_valid() && !librespot.is_launched())
     //     if (!librespot.launch(auth.access_token))

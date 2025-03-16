@@ -135,7 +135,7 @@ void api::tick()
     pool.wait();
 }
 
-artist api::get_artist(const string &artist_id)
+artist_t api::get_artist(const string &artist_id)
 {
     return get_item<artist_requester>(artist_id);
 }
@@ -160,7 +160,7 @@ tracks_t api::get_artist_top_tracks(const string &artist_id)
     return get_item<artist_top_tracks_requester>(artist_id);
 }
     
-album api::get_album(const string &album_id)
+album_t api::get_album(const string &album_id)
 {
     return get_item<album_requester>(album_id);
 }
@@ -175,7 +175,7 @@ const simplified_playlists_t& api::get_playlists()
     return get_items_collection<user_playlists_requester>(MAX_LIMIT);
 }
 
-playlist api::get_playlist(const string &playlist_id)
+playlist_t api::get_playlist(const string &playlist_id)
 {
     return get_item<playlist_requester>(playlist_id);
 }
@@ -221,12 +221,12 @@ bool api::remove_saved_tracks(const std::vector<string> &ids)
     return http::is_success(r->status);
 }
 
-playing_queue api::get_playing_queue()
+playing_queue_t api::get_playing_queue()
 {
     auto r = get("/v1/me/player/queue");
     if (http::is_success(r->status))
-        return json::parse(r->body).get<playing_queue>();
-    return playing_queue();
+        return json::parse(r->body).get<playing_queue_t>();
+    return {};
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
@@ -257,12 +257,12 @@ void api::start_playback(const std::vector<string> &uris, const string &device_i
     start_playback(body, device_id);
 }
 
-void api::start_playback(const simplified_album &album, const simplified_track &track)
+void api::start_playback(const simplified_album_t &album, const simplified_track_t &track)
 {
     return start_playback(album.get_uri(), track.get_uri());
 }
 
-void api::start_playback(const simplified_playlist &playlist, const simplified_track &track)
+void api::start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track)
 {
     return start_playback(playlist.get_uri(), track.get_uri());
 }
@@ -581,7 +581,7 @@ httplib::Result api::del(const string &request_url, const json &body)
     return res;
 }
 
-void api::on_auth_status_changed(const spotify::auth &auth)
+void api::on_auth_status_changed(const auth_t &auth)
 {
     // set up current session's valid access token
     client.set_bearer_token_auth(auth.access_token);

@@ -19,15 +19,15 @@ public:
 
     auto get_items() -> const items_t*;
     auto get_sort_modes() const -> const sort_modes_t&;
-    auto select_item(const spotify::data_item* data) -> intptr_t;
-    auto request_extra_info(const spotify::data_item* data) -> bool;
+    auto select_item(const data_item_t* data) -> intptr_t;
+    auto request_extra_info(const data_item_t* data) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto process_key_input(int combined_key) -> intptr_t;
 protected:
-    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item *data1,
-        const spotify::data_item *data2) -> intptr_t;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t;
     
-    virtual auto get_albums() -> std::generator<const simplified_album&> = 0;
+    virtual auto get_albums() -> std::generator<const simplified_album_t&> = 0;
     virtual auto goto_root_folder() -> void = 0;
 protected:
     api_abstract *api_proxy;
@@ -38,15 +38,15 @@ protected:
 class artist_view: public albums_base_view
 {
 public:
-    artist_view(api_abstract *api, const artist &artist);
+    artist_view(api_abstract *api, const artist_t &artist);
     
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
     auto goto_root_folder() -> void;
-    auto get_albums() -> std::generator<const simplified_album&>;
+    auto get_albums() -> std::generator<const simplified_album_t&>;
 private:
-    artist artist;
+    artist_t artist;
 };
 
 
@@ -63,9 +63,9 @@ public:
     auto get_sort_modes() const -> const sort_modes_t&;
 protected:
     auto goto_root_folder() -> void;
-    auto get_albums() -> std::generator<const simplified_album&>;
+    auto get_albums() -> std::generator<const simplified_album_t&>;
     auto compare_items(const sort_mode_t &sort_mode,
-        const spotify::data_item *data1, const spotify::data_item *data2) -> intptr_t;
+        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
 };
 
 } // namespace ui

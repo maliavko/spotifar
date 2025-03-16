@@ -64,14 +64,14 @@ protected:
     // api even handlers
     void on_playback_sync_finished(const string &err_msg);
     void on_devices_changed(const devices_t &devices);
-    void on_track_changed(const track &track);
+    void on_track_changed(const track_t &track);
     void on_track_progress_changed(int duration, int progress);
     void on_volume_changed(int volume);
     void on_shuffle_state_changed(bool state);
     void on_repeat_state_changed(const string &state);
     void on_state_changed(bool is_playing);
-    void on_context_changed(const context &ctx);
-    void on_permissions_changed(const spotify::actions &actions);
+    void on_context_changed(const context_t &ctx);
+    void on_permissions_changed(const spotify::actions_t &actions);
 
     // helpers
     intptr_t set_control_text(int control_id, const wstring &text);

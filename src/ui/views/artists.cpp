@@ -103,14 +103,14 @@ const view::items_t* artists_view::get_items()
             utils::to_wstring(utils::string_join(a.genres, ", ")),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             column_data,
-            const_cast<artist*>(&a)
+            const_cast<artist_t*>(&a)
         });
     }
 
     return &items;
 }
 
-intptr_t artists_view::select_item(const spotify::data_item *data)
+intptr_t artists_view::select_item(const data_item_t *data)
 {
     if (data == nullptr)
     {
@@ -118,9 +118,8 @@ intptr_t artists_view::select_item(const spotify::data_item *data)
         return TRUE;
     }
     
-    //const auto &artist = api_proxy->get_artist(data->id);
-    const auto *artist = static_cast<const spotify::artist*>(data);
-    if (artist->is_valid())
+    const auto *artist = static_cast<const artist_t*>(data);
+    if (artist != nullptr)
     {
         events::show_artist_view(api_proxy, *artist);
         return TRUE;
@@ -129,7 +128,7 @@ intptr_t artists_view::select_item(const spotify::data_item *data)
     return FALSE;
 }
 
-bool artists_view::request_extra_info(const spotify::data_item *data)
+bool artists_view::request_extra_info(const data_item_t *data)
 {
     if (data != nullptr)
         return artist_albums_requester(data->id)(api_proxy);
@@ -154,11 +153,11 @@ config::settings::view_t artists_view::get_default_settings() const
 }
 
 intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
-    const spotify::data_item *data1, const spotify::data_item *data2)
+    const data_item_t *data1, const data_item_t *data2)
 {
     const auto
-        &item1 = static_cast<const spotify::artist*>(data1),
-        &item2 = static_cast<const spotify::artist*>(data2);
+        &item1 = static_cast<const artist_t*>(data1),
+        &item2 = static_cast<const artist_t*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {

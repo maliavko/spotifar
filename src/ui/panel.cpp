@@ -8,7 +8,7 @@ namespace far3 = utils::far3;
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
-panel::panel(spotify::api_abstract *api):
+panel::panel(api_abstract *api):
     api_proxy(api)
 {
     ObserverManager::subscribe<ui_events_observer>(this);

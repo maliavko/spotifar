@@ -17,16 +17,16 @@ public:
 
     auto get_items() -> const items_t*;
     auto get_sort_modes() const -> const sort_modes_t&;
-    auto select_item(const spotify::data_item* data) -> intptr_t;
+    auto select_item(const data_item_t* data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
 protected:
-    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item *data1,
-        const spotify::data_item *data2) -> intptr_t;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t;
     auto process_key_input(int combined_key) -> intptr_t;
 
     virtual auto goto_root_folder() -> bool = 0;
     virtual auto start_playback(const string &track_id) -> bool = 0;
-    virtual auto get_tracks() -> std::generator<const simplified_track&> = 0;
+    virtual auto get_tracks() -> std::generator<const simplified_track_t&> = 0;
 protected:
     api_abstract *api_proxy;
 };
@@ -36,16 +36,16 @@ protected:
 class album_tracks_view: public tracks_base_view
 {
 public:
-    album_tracks_view(api_abstract *api, const album &album);
+    album_tracks_view(api_abstract *api, const album_t &album);
     
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
     auto goto_root_folder() -> bool;
     auto start_playback(const string &track_id) -> bool;
-    auto get_tracks() -> std::generator<const simplified_track&>;
+    auto get_tracks() -> std::generator<const simplified_track_t&>;
 private:
-    album album;
+    album_t album;
 };
 
 } // namespace ui

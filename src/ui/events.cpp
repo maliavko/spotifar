@@ -59,17 +59,17 @@ namespace events {
         return show_panel_view<playlists_view>(api);
     }
 
-    void show_playlist_view(api_abstract *api, const playlist &playlist)
+    void show_playlist_view(api_abstract *api, const playlist_t &playlist)
     {
         return show_panel_view<playlist_view>(api, playlist);
     }
     
-    void show_artist_view(api_abstract *api, const artist &artist)
+    void show_artist_view(api_abstract *api, const artist_t &artist)
     {
         return show_panel_view<artist_view>(api, artist);
     }
     
-    void show_album_tracks_view(api_abstract *api, const album &album)
+    void show_album_tracks_view(api_abstract *api, const album_t &album)
     {
         return show_panel_view<album_tracks_view>(api, album);
     }

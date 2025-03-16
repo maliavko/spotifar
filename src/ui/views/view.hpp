@@ -9,6 +9,8 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
+
 class view
 {
 public:
@@ -27,7 +29,7 @@ public:
         wstring description;
         uintptr_t file_attrs;
         std::vector<wstring> custom_column_data;
-        spotify::data_item *user_data;
+        data_item_t *user_data;
     };
 
     typedef std::vector<sort_mode_t> sort_modes_t;
@@ -60,15 +62,15 @@ public:
     virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
 protected:
     /// @brief A helper function to unpack user data from the far items
-    static auto unpack_user_data(const UserDataItem &user_data) -> const spotify::data_item*;
+    static auto unpack_user_data(const UserDataItem &user_data) -> const data_item_t*;
 
     // derived classes' interface to the internal view mechanisms
-    virtual auto request_extra_info(const spotify::data_item *data) -> bool { return false; }
-    virtual auto select_item(const spotify::data_item *data) -> intptr_t { return FALSE; }
+    virtual auto request_extra_info(const data_item_t *data) -> bool { return false; }
+    virtual auto select_item(const data_item_t *data) -> intptr_t { return FALSE; }
     virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
-    virtual auto compare_items(const sort_mode_t &modes, const spotify::data_item *data1,
-        const spotify::data_item *data2) -> intptr_t { return -2; }
+    virtual auto compare_items(const sort_mode_t &modes, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t { return -2; }
 private:
     bool is_first_init = true; // data is ready flag
     sort_modes_t sort_modes;

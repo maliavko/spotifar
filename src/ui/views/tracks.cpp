@@ -4,7 +4,7 @@
 
 namespace spotifar { namespace ui {
 
-tracks_base_view::tracks_base_view(spotify::api_abstract *api, const string &view_uid):
+tracks_base_view::tracks_base_view(api_abstract *api, const string &view_uid):
     view(view_uid),
     api_proxy(api)
 {
@@ -57,7 +57,7 @@ const view::items_t* tracks_base_view::get_items()
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_VIRTUAL,
             columns,
-            const_cast<simplified_track*>(&track)
+            const_cast<simplified_track_t*>(&track)
         });
     }
 
@@ -81,7 +81,7 @@ void tracks_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-intptr_t tracks_base_view::select_item(const spotify::data_item* data)
+intptr_t tracks_base_view::select_item(const data_item_t* data)
 {
     if (data == nullptr)
         return goto_root_folder();
@@ -90,11 +90,11 @@ intptr_t tracks_base_view::select_item(const spotify::data_item* data)
 }
 
 intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
-    const spotify::data_item *data1, const spotify::data_item *data2)
+    const data_item_t *data1, const data_item_t *data2)
 {
     const auto
-        &item1 = static_cast<const spotify::simplified_track*>(data1),
-        &item2 = static_cast<const spotify::simplified_track*>(data2);
+        &item1 = static_cast<const simplified_track_t*>(data1),
+        &item2 = static_cast<const simplified_track_t*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {
@@ -143,7 +143,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 }
 
 
-album_tracks_view::album_tracks_view(spotify::api_abstract *api, const spotify::album &album):
+album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album):
     tracks_base_view(api, "album_tracks_view"),
     album(album)
 {
@@ -173,11 +173,11 @@ bool album_tracks_view::goto_root_folder()
 
 bool album_tracks_view::start_playback(const string &track_id)
 {
-    api_proxy->start_playback(album.get_uri(), track::make_uri(track_id));
+    api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
     return true;
 }
 
-std::generator<const simplified_track&> album_tracks_view::get_tracks()
+std::generator<const simplified_track_t&> album_tracks_view::get_tracks()
 {
     for (const auto &t: api_proxy->get_album_tracks(album.id))
         co_yield t;

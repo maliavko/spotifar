@@ -51,7 +51,7 @@ clock_t::duration auth_cache::get_sync_interval() const
     return std::chrono::seconds(get().expires_in - 60);
 }
 
-void auth_cache::on_data_synced(const auth &data, const auth &prev_data)
+void auth_cache::on_data_synced(const auth_t &data, const auth_t &prev_data)
 {
     log::api->info("A valid access token is found, expires in {}",
         std::format("{:%T}", get_expires_at() - clock_t::now()));
@@ -62,7 +62,7 @@ void auth_cache::on_data_synced(const auth &data, const auth &prev_data)
     utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data);
 }
 
-bool auth_cache::request_data(auth &data)
+bool auth_cache::request_data(auth_t &data)
 {
     auto refresh_token = get().refresh_token;
     // TODO: check errors
@@ -80,7 +80,7 @@ bool auth_cache::request_data(auth &data)
     return true;
 }
 
-auth auth_cache::auth_with_code(const string &auth_code)
+auth_t auth_cache::auth_with_code(const string &auth_code)
 {
     log::api->info("Trying to obtain a spotify access token with auth code");
     return authenticate(
@@ -92,7 +92,7 @@ auth auth_cache::auth_with_code(const string &auth_code)
     );
 }
 
-auth auth_cache::auth_with_refresh_token(const string &refresh_token)
+auth_t auth_cache::auth_with_refresh_token(const string &refresh_token)
 {
     log::api->info("Trying to obtain a spotify access token with stored refresh token");
     return authenticate(
@@ -103,7 +103,7 @@ auth auth_cache::auth_with_refresh_token(const string &refresh_token)
     );
 }
 
-auth auth_cache::authenticate(const httplib::Params &params)
+auth_t auth_cache::authenticate(const httplib::Params &params)
 {
     httplib::Headers headers{
         { "Authorization", "Basic " + httplib::detail::base64_encode(client_id + ":" + client_secret) }
@@ -115,7 +115,7 @@ auth auth_cache::authenticate(const httplib::Params &params)
         "application/x-www-form-urlencoded");
 
     // TODO: error handling
-    return json::parse(res->body).get<auth>();
+    return json::parse(res->body).get<auth_t>();
 }
 
 string auth_cache::request_auth_code()
@@ -164,7 +164,7 @@ string auth_cache::get_auth_callback_url() const
     return std::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
-void from_json(const json &j, auth &a)
+void from_json(const json &j, auth_t &a)
 {
     j.at("access_token").get_to(a.access_token);
     j.at("scope").get_to(a.scope);
@@ -173,7 +173,7 @@ void from_json(const json &j, auth &a)
     a.refresh_token = j.value("refresh_token", "");
 }
 
-void to_json(json &j, const auth &a)
+void to_json(json &j, const auth_t &a)
 {
     j = json{
         { "access_token", a.access_token },

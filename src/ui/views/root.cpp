@@ -11,7 +11,7 @@ static const string
     browse_id = "browse",
     recents_id = "recents";
 
-struct root_data_t: public spotify::data_item
+struct root_data_t: public data_item_t
 {
     int name_key, descr_key;
 };
@@ -119,7 +119,7 @@ const view::items_t* root_view::get_items()
     return &items;
 }
 
-intptr_t root_view::select_item(const spotify::data_item *data)
+intptr_t root_view::select_item(const data_item_t *data)
 {
     if (data == nullptr)
         return FALSE;

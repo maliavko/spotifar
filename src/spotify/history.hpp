@@ -11,8 +11,8 @@ namespace spotifar
     {
         struct HistoryItem
         {
-            track track;
-            spotify::context context;
+            track_t track;
+            context_t context;
             string played_at;
             
             friend void from_json(const json &j, HistoryItem &p);

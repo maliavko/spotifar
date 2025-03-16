@@ -18,7 +18,7 @@ clock_t::duration playback_cache::get_sync_interval() const
     return 950ms;
 }
 
-void playback_cache::on_data_synced(const playback_state &data, const playback_state &prev_data)
+void playback_cache::on_data_synced(const playback_state_t &data, const playback_state_t &prev_data)
 {
     if (data.item != prev_data.item)
         dispatch_event(&playback_observer::on_track_changed, data.item);
@@ -47,7 +47,7 @@ void playback_cache::on_data_synced(const playback_state &data, const playback_s
     // TODO: send changes in permissions
 }
 
-bool playback_cache::request_data(playback_state &data)
+bool playback_cache::request_data(playback_state_t &data)
 {
     auto res = api_proxy->get("/v1/me/player");
     if (res->status == httplib::OK_200)

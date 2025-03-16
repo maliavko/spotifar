@@ -6,7 +6,7 @@
 
 namespace spotifar { namespace spotify {
 
-struct auth
+struct auth_t
 {
     string access_token;
     string scope;
@@ -14,25 +14,25 @@ struct auth
     string refresh_token;
     
     bool is_valid() const { return !access_token.empty(); }
-    friend void from_json(const json &j, auth &a);
-    friend void to_json(json &j, const auth &a);
+    friend void from_json(const json &j, auth_t &a);
+    friend void to_json(json &j, const auth_t &a);
 };
 
-class auth_cache: public json_cache<auth>
+class auth_cache: public json_cache<auth_t>
 {
 public:
     auth_cache(api_abstract *api, const string &client_id, const string &client_secret, int port);
     virtual ~auth_cache() { api_proxy = nullptr; }
     bool is_authenticated() const { return is_logged_in; }
 protected:
-    virtual bool request_data(auth &data);
+    virtual bool request_data(auth_t &data);
     virtual clock_t::duration get_sync_interval() const;
-    virtual void on_data_synced(const auth &data, const auth &prev_data);
+    virtual void on_data_synced(const auth_t &data, const auth_t &prev_data);
     
     string request_auth_code();
-    auth auth_with_code(const string &auth_code);
-    auth auth_with_refresh_token(const string &refresh_token);
-    auth authenticate(const httplib::Params &params);
+    auth_t auth_with_code(const string &auth_code);
+    auth_t auth_with_refresh_token(const string &refresh_token);
+    auth_t authenticate(const httplib::Params &params);
     string get_auth_callback_url() const;
 
 private:
@@ -46,7 +46,7 @@ private:
 struct auth_observer: public BaseObserverProtocol
 {
     /// @brief An auth status has been changed
-    virtual void on_auth_status_changed(const spotify::auth &auth) {};
+    virtual void on_auth_status_changed(const auth_t &auth) {};
 };
 
 } // namespace spotify

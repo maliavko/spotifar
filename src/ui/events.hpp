@@ -36,11 +36,11 @@ namespace events {
 
     void show_browse_view(api_abstract *api);
 
-    void show_playlist_view(api_abstract *api, const playlist &playlist);
+    void show_playlist_view(api_abstract *api, const playlist_t &playlist);
 
-    void show_artist_view(api_abstract *api, const artist &artist);
+    void show_artist_view(api_abstract *api, const artist_t &artist);
 
-    void show_album_tracks_view(api_abstract *api, const album &album);
+    void show_album_tracks_view(api_abstract *api, const album_t &album);
     
     void show_player_dialog();
     

@@ -17,7 +17,7 @@ const view::sort_modes_t& albums_base_view::get_sort_modes() const
     return modes;
 }
 
-intptr_t albums_base_view::select_item(const spotify::data_item* data)
+intptr_t albums_base_view::select_item(const data_item_t* data)
 {
     if (data == nullptr)
     {
@@ -25,10 +25,10 @@ intptr_t albums_base_view::select_item(const spotify::data_item* data)
         return TRUE;
     }
     
-    const album &album = api_proxy->get_album(data->id);
-    if (album.is_valid())
+    const auto *album = static_cast<const album_t*>(data);
+    if (album != nullptr)
     { 
-        events::show_album_tracks_view(api_proxy, album);
+        events::show_album_tracks_view(api_proxy, *album);
         return TRUE;
     }
 
@@ -36,11 +36,11 @@ intptr_t albums_base_view::select_item(const spotify::data_item* data)
 }
 
 intptr_t albums_base_view::compare_items(const sort_mode_t &sort_mode,
-    const spotify::data_item *data1, const spotify::data_item *data2)
+    const data_item_t *data1, const data_item_t *data2)
 {
     const auto
-        &item1 = static_cast<const spotify::album*>(data1),
-        &item2 = static_cast<const spotify::album*>(data2);
+        &item1 = static_cast<const album_t*>(data1),
+        &item2 = static_cast<const album_t*>(data2);
 
     switch (sort_mode.far_sort_mode)
     {
@@ -101,7 +101,7 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-bool albums_base_view::request_extra_info(const spotify::data_item* data)
+bool albums_base_view::request_extra_info(const data_item_t* data)
 {
     if (data != nullptr)
         return album_tracks_requester(data->id)(api_proxy);
@@ -120,7 +120,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             {
                 auto *user_data = unpack_user_data(item->UserData);
                 utils::log::global->info("Starting playback from the panel, {}", user_data->id);
-                api_proxy->start_playback(album::make_uri(user_data->id));
+                api_proxy->start_playback(album_t::make_uri(user_data->id));
             }
             else
                 utils::log::global->error("There is an error occured while getting a current panel item");
@@ -186,7 +186,7 @@ const view::items_t* albums_base_view::get_items()
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             columns,
-            const_cast<simplified_album*>(&a)
+            const_cast<simplified_album_t*>(&a)
         });
     }
     return &items;
@@ -194,7 +194,7 @@ const view::items_t* albums_base_view::get_items()
 
 
 
-artist_view::artist_view(api_abstract *api, const spotify::artist &artist):
+artist_view::artist_view(api_abstract *api, const artist_t &artist):
     albums_base_view(api, "artist_view"),
     artist(artist)
 {
@@ -215,7 +215,7 @@ void artist_view::goto_root_folder()
     events::show_artists_collection_view(api_proxy);
 }
 
-std::generator<const simplified_album&> artist_view::get_albums()
+std::generator<const simplified_album_t&> artist_view::get_albums()
 {
     for (const auto &a: api_proxy->get_artist_albums(artist.id))
         co_yield a;
@@ -245,7 +245,7 @@ void albums_collection_view::goto_root_folder()
     events::show_collections_view(api_proxy);
 }
 
-std::generator<const simplified_album&> albums_collection_view::get_albums()
+std::generator<const simplified_album_t&> albums_collection_view::get_albums()
 {
     for (const auto &a: api_proxy->get_saved_albums())
         co_yield a;
@@ -265,13 +265,13 @@ const view::sort_modes_t& albums_collection_view::get_sort_modes() const
 }
 
 intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
-    const spotify::data_item *data1, const spotify::data_item *data2)
+    const data_item_t *data1, const data_item_t *data2)
 {
     if (sort_mode.far_sort_mode == SM_MTIME)
     {
         const auto
-            &item1 = static_cast<const spotify::saved_album*>(data1),
-            &item2 = static_cast<const spotify::saved_album*>(data2);
+            &item1 = static_cast<const saved_album_t*>(data1),
+            &item2 = static_cast<const saved_album_t*>(data2);
 
         return item1->added_at.compare(item2->added_at);
     }

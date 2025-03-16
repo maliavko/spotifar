@@ -6,7 +6,7 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-playlists_view::playlists_view(spotify::api_abstract *api):
+playlists_view::playlists_view(api_abstract *api):
     view("playlists_view"),
     api_proxy(api)
 {
@@ -32,7 +32,7 @@ config::settings::view_t playlists_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-intptr_t playlists_view::select_item(const spotify::data_item* data)
+intptr_t playlists_view::select_item(const data_item_t* data)
 {
     if (data == nullptr)
     {
@@ -83,14 +83,14 @@ const view::items_t* playlists_view::get_items()
             {
                 tracks_count
             },
-            const_cast<simplified_playlist*>(&p)
+            const_cast<simplified_playlist_t*>(&p)
         });
     }
 
     return &items;
 }
 
-bool playlists_view::request_extra_info(const spotify::data_item* data)
+bool playlists_view::request_extra_info(const data_item_t* data)
 {
     if (data != nullptr)
         return playlist_tracks_requester(data->id)(api_proxy);

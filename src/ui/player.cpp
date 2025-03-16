@@ -180,15 +180,15 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
 };
 
-player::player(spotify::api_abstract *api):
+player::player(api_abstract *api):
     api_proxy(api),
     volume(0, 100, 1),
     track_progress(0, 0, 5),
     shuffle_state({ true, false }),
     repeat_state({
-        playback_state::repeat_off,
-        playback_state::repeat_track,
-        playback_state::repeat_context })
+        playback_state_t::repeat_off,
+        playback_state_t::repeat_track,
+        playback_state_t::repeat_context })
 {
 }
 
@@ -647,7 +647,7 @@ bool player::on_shuffle_btn_style_applied(void *dialog_item_colors)
 bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
 {
     FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
-    if (repeat_state.get_offset_value() != playback_state::repeat_off)
+    if (repeat_state.get_offset_value() != playback_state_t::repeat_off)
     {
         dic->Colors->ForegroundColor = colors::black;
     }
@@ -731,7 +731,7 @@ void player::on_devices_changed(const devices_t &devices)
     }
 }
 
-void player::on_track_changed(const track &track)
+void player::on_track_changed(const track_t &track)
 {
     no_redraw nr(hdlg);
 
@@ -883,7 +883,7 @@ void player::on_state_changed(bool is_playing)
     set_control_text(controls::play_btn, is_playing ? pause_btn_label : play_btn_label);
 }
 
-void player::on_context_changed(const context &ctx)
+void player::on_context_changed(const context_t &ctx)
 {
     wstring source_label = L"";
     if (ctx.is_collection())
@@ -914,7 +914,7 @@ void player::on_context_changed(const context &ctx)
     set_control_text(controls::source_name, source_label);
 }
 
-void player::on_permissions_changed(const spotify::actions &actions)
+void player::on_permissions_changed(const spotify::actions_t &actions)
 {
     // TODO: finish the content
 }

@@ -22,7 +22,7 @@ public:
 protected:
     auto get_sort_modes() const -> const sort_modes_t&;
     auto get_default_settings() const -> config::settings::view_t;
-    auto select_item(const spotify::data_item *data) -> intptr_t;
+    auto select_item(const data_item_t *data) -> intptr_t;
     auto update_panel_info(OpenPanelInfo *info) -> void;
 private:
     api_abstract *api_proxy;

@@ -14,7 +14,7 @@ using namespace spotify;
 class panel: public ui_events_observer
 {
 public:
-    panel(spotify::api_abstract *api);
+    panel(api_abstract *api);
     virtual ~panel();
     // TODO: consider having here shutdown/close method to cleanup resources
 
