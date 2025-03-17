@@ -13,38 +13,39 @@ using namespace spotify;
 
 struct ui_events_observer: public BaseObserverProtocol
 {
-    virtual void show_player_dialog() {}
+    virtual void show_player() {}
     virtual void refresh_panels(const string &item_id) {}
     virtual void show_panel_view(std::shared_ptr<ui::view> view) {}
 };
 
 namespace events {
 
-    void show_root_view(api_abstract *api);
+    void show_root(api_abstract *api);
 
-    void show_collections_view(api_abstract *api);
+    void show_collections(api_abstract *api);
 
-    void show_artists_collection_view(api_abstract *api);
+    void show_artists_collection(api_abstract *api);
 
-    void show_albums_collection_view(api_abstract *api);
+    void show_albums_collection(api_abstract *api);
 
-    void show_tracks_collection_view(api_abstract *api);
+    void show_tracks_collection(api_abstract *api);
 
-    void show_playlists_view(api_abstract *api);
+    void show_playlists(api_abstract *api);
 
-    void show_recents_view(api_abstract *api);
+    void show_recents(api_abstract *api);
 
-    void show_browse_view(api_abstract *api);
+    void show_browse(api_abstract *api);
 
-    void show_playlist_view(api_abstract *api, const playlist_t &playlist);
+    void show_playlist(api_abstract *api, const playlist_t &playlist);
 
-    void show_artist_view(api_abstract *api, const artist_t &artist);
+    void show_artist(api_abstract *api, const artist_t &artist);
 
-    void show_album_tracks_view(api_abstract *api, const album_t &album);
+    void show_album_tracks(api_abstract *api, const album_t &album,
+        view::return_callback_t callback = {});
     
-    void show_player_dialog();
+    void show_player();
     
-    void show_config_dialog();
+    void show_config();
 
     void refresh_panels(const string &item_id = "");
 

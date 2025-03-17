@@ -304,16 +304,37 @@ namespace far3
         
         std::shared_ptr<PluginPanelItem> get_current_item(HANDLE panel)
         {
-            size_t size = control(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, 0);
+            size_t size = control(panel, FCTL_GETCURRENTPANELITEM, 0, 0);
             std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
             if (ppi)
             {
                 FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
-                control(PANEL_ACTIVE, FCTL_GETCURRENTPANELITEM, 0, &fgppi);
+                control(panel, FCTL_GETCURRENTPANELITEM, 0, &fgppi);
 
                 return ppi;
             }
             return nullptr;
+        }
+        
+        bool select_item(HANDLE panel, size_t item_idx)
+        {
+            if (control(panel, FCTL_SETSELECTION, item_idx, (void*)TRUE) == TRUE)
+            {
+                redraw(panel);
+                return true;
+            }
+            return false;
+        }
+        
+        void clear_selection(HANDLE panel)
+        {
+            auto panel_info = get_info(panel);
+            if (panel_info.SelectedItemsNumber > 0)
+            {
+                for (size_t i = 0; i < panel_info.SelectedItemsNumber; i++)
+                    control(panel, FCTL_CLEARSELECTION, i, NULL);
+                redraw(panel);
+            }
         }
         
         std::vector<std::shared_ptr<PluginPanelItem>> get_items(HANDLE panel, bool filter_selected)
@@ -339,11 +360,11 @@ namespace far3
                 {
                     FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
                     control(panel, cmd, i, &fgppi);
+                    ppi->FileAttributes |= FILE_ATTRIBUTE_ENCRYPTED;
 
                     result.push_back(ppi);
                 }
             }
-
             return result;
         }
         

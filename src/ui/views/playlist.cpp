@@ -7,7 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 playlist_view::playlist_view(api_abstract *api, const playlist_t &p):
-    view("playlist_view"),
+    view("playlist_view", std::bind(events::show_playlists, api)),
     playlist(p),
     api_proxy(api)
 {
@@ -94,12 +94,6 @@ const view::items_t* playlist_view::get_items()
 
 intptr_t playlist_view::select_item(const data_item_t* data)
 {
-    if (data == nullptr)
-    {
-        events::show_playlists_view(api_proxy);
-        return TRUE;
-    }
-
     const auto &track_id = data->id;
     
     // TODO: what to do here? start playing?

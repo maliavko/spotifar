@@ -55,11 +55,14 @@ void auth_cache::on_data_synced(const auth_t &data, const auth_t &prev_data)
 {
     log::api->info("A valid access token is found, expires in {}",
         std::format("{:%T}", get_expires_at() - clock_t::now()));
+    
+    // utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data);
+
+    // calling through synchro event postpones the event for a quite some time, hope this call in
+    // the sync-thread will not bring me troubles
+    ObserverManager::notify(&auth_observer::on_auth_status_changed, data);
 
     is_logged_in = true;
-    
-    // log::api->debug("Access token: {}", data.access_token);
-    utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data);
 }
 
 bool auth_cache::request_data(auth_t &data)

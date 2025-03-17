@@ -9,13 +9,13 @@ bool playback_cache::is_active() const
 {
     // the cache is actively synchronized only when the user is authenticated and there are
     // playback observers
-    return api_proxy->is_authenticated() && api_proxy->is_frequent_syncs();
+    return api_proxy->is_authenticated();
 }
 
 clock_t::duration playback_cache::get_sync_interval() const
 {
     // every second, minus some gap for smoother synching
-    return 950ms;
+    return api_proxy->is_frequent_syncs() ? 950ms : 5s;
 }
 
 void playback_cache::on_data_synced(const playback_state_t &data, const playback_state_t &prev_data)
@@ -55,17 +55,6 @@ bool playback_cache::request_data(playback_state_t &data)
         json::parse(res->body).get_to(data);
         return true;
     }
-    // else if (res->status == httplib::NoContent_204)
-    // {
-    //     // we make sure that the stored last played data has "is_playing = false",
-    //     // not to confuse anybody with the UI status
-    //     data = get();
-    //     if (!data.is_empty())
-    //     {
-    //         data.is_playing = false;
-    //     }
-    //     return true;
-    // }
 
     return false;
 }

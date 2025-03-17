@@ -188,9 +188,7 @@ const saved_tracks_t& api::get_playlist_tracks(const string &playlist_id)
 bool api::check_saved_track(const string &track_id)
 {
     auto flags = check_saved_tracks({ track_id });
-    if (flags.size() > 0)
-        return flags[0];
-    return false;
+    return flags.size() > 0 && flags[0];
 }
 
 std::vector<bool> api::check_saved_tracks(const std::vector<string> &ids)
@@ -249,12 +247,7 @@ void api::start_playback(const string &context_uri, const string &track_uri,
 void api::start_playback(const std::vector<string> &uris, const string &device_id)
 {
     assert(uris.size() > 0);
-
-    json body{
-        { "uris", uris }
-    };
-    
-    start_playback(body, device_id);
+    start_playback({{ "uris", uris }}, device_id);
 }
 
 void api::start_playback(const simplified_album_t &album, const simplified_track_t &track)

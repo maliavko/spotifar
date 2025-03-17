@@ -3,8 +3,11 @@
 
 namespace spotifar { namespace ui {
 
-view::view(const string &uid):
-    uid(uid)
+namespace panels = utils::far3::panels;
+
+view::view(const string &uid, return_callback_t callback):
+    uid(uid),
+    return_callback(callback)
 {
 }
 
@@ -29,10 +32,10 @@ void view::select_sort_mode(int idx)
         // the sorting direction
         settings->is_descending = !settings->is_descending;
     else
-        // otherwise just change the sort mode
+        // otherwise, just change the sort mode
         settings->sort_mode_idx = idx;
     
-    utils::far3::panels::set_sort_mode(PANEL_ACTIVE, sm.far_sort_mode, settings->is_descending);
+    panels::set_sort_mode(PANEL_ACTIVE, sm.far_sort_mode, settings->is_descending);
 }
 
 void view::on_items_updated()
@@ -45,7 +48,7 @@ void view::on_items_updated()
         sort_modes = get_sort_modes();
         
         if (sort_modes.size() > settings->sort_mode_idx)
-            utils::far3::panels::set_sort_mode(PANEL_ACTIVE,
+            panels::set_sort_mode(PANEL_ACTIVE,
                 sort_modes[settings->sort_mode_idx].far_sort_mode, settings->is_descending);
     }
 }
@@ -92,6 +95,13 @@ intptr_t view::process_input(const ProcessPanelInputInfo *info)
 
 intptr_t view::select_item(const SetDirectoryInfo *info)
 {
+    if (info->UserData.Data == nullptr)
+    {
+        if (return_callback)
+            return_callback();
+        return TRUE;
+    }
+
     return select_item(unpack_user_data(info->UserData));
 }
 
@@ -102,7 +112,7 @@ intptr_t view::request_extra_info(const PluginPanelItem *data)
 
 size_t view::get_item_idx(const string &item_id)
 {
-    const auto &items = utils::far3::panels::get_items(PANEL_ACTIVE);
+    const auto &items = panels::get_items(PANEL_ACTIVE);
     for (size_t idx = 1; idx <= items.size(); idx++)
     {
         auto user_data = unpack_user_data(items[idx]->UserData);

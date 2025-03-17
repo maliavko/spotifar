@@ -78,7 +78,7 @@ class tasks_queue
 public:
     typedef std::function<void(void)> task_t;
 
-    intptr_t push_task(task_t task);
+    auto push_task(task_t task) -> intptr_t;
     void process_one(intptr_t task_id);
     void process_all();
     void clear_tasks();
@@ -122,20 +122,20 @@ namespace keys
     }
 
     /// @brief Whether the given virtual key is pressed at the moment
-    bool is_pressed(int virtual_key);
+    auto is_pressed(int virtual_key) -> bool;
 
     /// @brief Converts the given input record to the combined int, including a pressed
     /// key + all the modifiers, so it can be used later as key_a + mods::ctrl + mods::shift e.g.
-    int make_combined(const KEY_EVENT_RECORD &kir);
+    auto make_combined(const KEY_EVENT_RECORD &kir) -> int;
 
     /// @brief Returns a beautiful user readable string of the key plus modifiers
-    wstring combined_to_string(int combined_key);
+    auto combined_to_string(int combined_key) -> wstring;
 
     /// @brief The function `GetKeyNameTextW` works no great, for some corner cases
     /// it returns empty or error translation. Plus the text will depend on the 
     /// locale language selected by user in OS. The function tries to be not
     /// dependent on these problems
-    wstring vk_to_string(WORD virtual_key_code);
+    auto vk_to_string(WORD virtual_key_code) -> wstring;
 }
 
 namespace far3
@@ -238,6 +238,8 @@ namespace far3
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
         auto get_info(HANDLE panel) -> PanelInfo;
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
+        auto select_item(HANDLE panel, size_t item_idx) -> bool;
+        auto clear_selection(HANDLE panel) -> void;
 
         /// @brief Returns the items, currently placed on the `panel`.
         /// @param filter_selected returns only selected items, in case there is no selected items - returns

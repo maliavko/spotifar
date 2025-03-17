@@ -7,7 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 playlists_view::playlists_view(api_abstract *api):
-    view("playlists_view"),
+    view("playlists_view", std::bind(events::show_collections, api)),
     api_proxy(api)
 {
 }
@@ -34,16 +34,10 @@ config::settings::view_t playlists_view::get_default_settings() const
 
 intptr_t playlists_view::select_item(const data_item_t* data)
 {
-    if (data == nullptr)
-    {
-        events::show_root_view(api_proxy);
-        return TRUE;
-    }
-
     const auto &playlist = api_proxy->get_playlist(data->id);
     if (playlist.is_valid())
     {
-        events::show_playlist_view(api_proxy, playlist);
+        events::show_playlist(api_proxy, playlist);
         return TRUE;
     }
 
