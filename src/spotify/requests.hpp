@@ -29,6 +29,16 @@ struct saved_albums_requester: public api_collection_requester<saved_albums_t>
         {}
 };
 
+/// @brief https://developer.spotify.com/documentation/web-api/reference/get-new-releases
+struct new_releases_requester: public api_collection_requester<simplified_albums_t>
+{
+    new_releases_requester(size_t limit = MAX_LIMIT):
+        api_collection_requester("/v1/browse/new-releases", {
+            { "limit", std::to_string(limit) }
+        }, "albums")
+        {}
+};
+
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
 struct saved_tracks_requester: public api_collection_requester<saved_tracks_t>
 {

@@ -44,6 +44,8 @@ namespace spotifar
         MPanelPlaylistsItemDescr,
 		MPanelRecentsItemLabel,
 		MPanelRecentsItemDescr,
+		MPanelNewReleasesItemLabel,
+		MPanelNewReleasesItemDescr,
 		MPanelBrowseItemLabel,
 		MPanelBrowseItemDescr,
 

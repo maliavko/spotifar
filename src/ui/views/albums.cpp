@@ -278,5 +278,49 @@ intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
     return albums_base_view::compare_items(sort_mode, data1, data2);
 }
 
+
+
+
+new_releases_view::new_releases_view(api_abstract *api):
+    albums_base_view(api, "new_releases_view")
+{
+}
+
+const wstring& new_releases_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelNewReleasesItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t new_releases_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+void new_releases_view::goto_root_folder()
+{
+    events::show_collections_view(api_proxy);
+}
+
+std::generator<const simplified_album_t&> new_releases_view::get_albums()
+{
+    for (const auto &a: api_proxy->get_new_releases())
+        co_yield a;
+}
+
+intptr_t new_releases_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const saved_album_t*>(data1),
+            &item2 = static_cast<const saved_album_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return albums_base_view::compare_items(sort_mode, data1, data2);
+}
+
 } // namespace ui
 } // namespace spotifar

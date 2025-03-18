@@ -19,7 +19,7 @@ struct ui_events_observer: public BaseObserverProtocol
 };
 
 namespace events {
-
+    
     void show_root_view(api_abstract *api);
 
     void show_collections_view(api_abstract *api);
@@ -33,6 +33,8 @@ namespace events {
     void show_playlists_view(api_abstract *api);
 
     void show_recents_view(api_abstract *api);
+
+    void show_new_releases(api_abstract *api);
 
     void show_browse_view(api_abstract *api);
 

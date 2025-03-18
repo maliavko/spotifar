@@ -39,6 +39,7 @@ public:
     auto get_artist(const string &artist_id) -> artist_t;
     auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&;
     auto get_saved_albums() -> const saved_albums_t&;
+    auto get_new_releases() -> const simplified_albums_t&;
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
     auto get_album(const string &album_id) -> album_t;
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;

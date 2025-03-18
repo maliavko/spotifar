@@ -155,6 +155,11 @@ const saved_albums_t& api::get_saved_albums()
     return get_items_collection<saved_albums_requester>(MAX_LIMIT);
 }
 
+const simplified_albums_t& api::get_new_releases()
+{
+    return get_items_collection<new_releases_requester>(MAX_LIMIT);
+}
+
 tracks_t api::get_artist_top_tracks(const string &artist_id)
 {
     return get_item<artist_top_tracks_requester>(artist_id);
@@ -585,6 +590,7 @@ void api::on_auth_status_changed(const auth_t &auth)
 {
     // set up current session's valid access token
     client.set_bearer_token_auth(auth.access_token);
+    spdlog::debug("aaaaa {}", auth.access_token);
 
     // pick up the some device for playback
     devices->pick_up_device();

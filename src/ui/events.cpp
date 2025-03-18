@@ -52,6 +52,12 @@ namespace events {
     void show_recents_view(api_abstract *api)
     {
         // TODO: unfinished
+        show_new_releases(api);
+    }
+    
+    void show_new_releases(api_abstract *api)
+    {
+        return show_panel_view<new_releases_view>(api);
     }
 
     void show_playlists_view(api_abstract *api)

@@ -68,6 +68,25 @@ protected:
         const data_item_t *data1, const data_item_t *data2) -> intptr_t;
 };
 
+
+/// @brief Showing the list of the newely released albums of the
+/// followed artists.
+/// TODO: not true, an API returns some trash of the all recently releases
+/// albums on the platform
+class new_releases_view: public albums_base_view
+{
+public:
+    new_releases_view(api_abstract *api);
+
+    auto get_default_settings() const -> config::settings::view_t;
+    auto get_dir_name() const -> const wstring&;
+protected:
+    auto goto_root_folder() -> void;
+    auto get_albums() -> std::generator<const simplified_album_t&>;
+    auto compare_items(const sort_mode_t &sort_mode,
+        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+};
+
 } // namespace ui
 } // namespace spotifar
 
