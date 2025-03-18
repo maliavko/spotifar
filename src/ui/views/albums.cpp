@@ -274,7 +274,7 @@ void albums_collection_view::show_tracks_view(const album_t &album) const
 }
 
 new_releases_view::new_releases_view(api_abstract *api):
-    albums_base_view(api, "new_releases_view")
+    albums_base_view(api, "new_releases_view", std::bind(events::show_root, api))
 {
 }
 
@@ -307,6 +307,16 @@ intptr_t new_releases_view::compare_items(const sort_mode_t &sort_mode,
         return item1->added_at.compare(item2->added_at);
     }
     return albums_base_view::compare_items(sort_mode, data1, data2);
+}
+
+void new_releases_view::show_tracks_view(const album_t &album) const
+{
+    if (album.artists.size() > 0)
+    {
+        const auto &artist = api_proxy->get_artist(album.artists[0].id);
+        events::show_album_tracks(api_proxy, album,
+            std::bind(events::show_artist, api_proxy, artist));
+    }
 }
 
 } // namespace ui

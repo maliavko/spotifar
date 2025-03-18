@@ -81,10 +81,11 @@ public:
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
-    auto goto_root_folder() -> void;
+auto compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+    
     auto get_albums() -> std::generator<const simplified_album_t&>;
-    auto compare_items(const sort_mode_t &sort_mode,
-        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+    auto show_tracks_view(const album_t &album) const -> void;
 };
 
 } // namespace ui
