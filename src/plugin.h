@@ -42,7 +42,7 @@ protected:
     void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys);
     void on_logging_verbocity_changed(bool is_verbose);
     void on_auth_status_changed(const spotify::auth_t &auth);
-    void show_player_dialog();
+    void show_player();
 
 private:
     std::mutex sync_worker_mutex;

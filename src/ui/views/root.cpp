@@ -23,7 +23,7 @@ static std::vector<root_data_t> menu_items{
 };
 
 root_view::root_view(api_abstract *api):
-    view("root_view"),
+    view("root_view", {}),
     api_proxy(api)
 {
 }
@@ -126,19 +126,19 @@ intptr_t root_view::select_item(const data_item_t *data)
 
     if (data->id == collection_id)
     {
-        ui::events::show_collections_view(api_proxy);
+        ui::events::show_collections(api_proxy);
         return TRUE;
     }
     
     if (data->id == browse_id)
     {
-        ui::events::show_browse_view(api_proxy);
+        ui::events::show_browse(api_proxy);
         return TRUE;
     }
     
     if (data->id == recents_id)
     {
-        ui::events::show_recents_view(api_proxy);
+        ui::events::show_recents(api_proxy);
         return TRUE;
     }
 

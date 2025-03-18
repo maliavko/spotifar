@@ -20,7 +20,7 @@ plugin::plugin():
 
     // TODO: what if not initialized?
     if (api.start())
-        ui::events::show_root_view(&api);
+        ui::events::show_root(&api);
 
     background_tasks.push_task([this] {
         on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
@@ -213,7 +213,7 @@ void plugin::on_auth_status_changed(const spotify::auth_t &auth)
     //     }
 }
 
-void plugin::show_player_dialog()
+void plugin::show_player()
 {
     player.show();
 }

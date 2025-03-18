@@ -84,7 +84,6 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
-    // TODO: convert to ref?
     auto items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
@@ -103,9 +102,14 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
         for (size_t i = 0; i < columns.size(); i++)
             column_data[i] = _wcsdup(columns[i].c_str());
+
+        auto attrs = item.file_attrs;
+        if (item.is_selected)
+            // the encrypted attribute is used to highlight currently playing items
+            attrs |= FILE_ATTRIBUTE_ENCRYPTED;
         
         memset(&panel_item[idx], 0, sizeof(PluginPanelItem));
-        panel_item[idx].FileAttributes = item.file_attrs;
+        panel_item[idx].FileAttributes = attrs;
         panel_item[idx].Flags = PPIF_PROCESSDESCR;
         panel_item[idx].FileName = _wcsdup(utils::strip_invalid_filename_chars(item.name).c_str());
         panel_item[idx].Description = _wcsdup(item.description.c_str());
@@ -168,6 +172,10 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 // blocking F3 panel processing in general, as we have a custom one
                 return TRUE;
             }
+            case VK_F2:
+            {
+                return TRUE;
+            }
             case VK_F12 + keys::mods::ctrl:
             {
                 auto sort_modex_idx = show_sort_dialog(*view);
@@ -205,7 +213,10 @@ void panel::refresh_panels(const string &item_id)
     if (!item_id.empty())
     {
         if (auto item_idx = view->get_item_idx(item_id))
+        {
             far3::panels::redraw(PANEL_ACTIVE, item_idx, -1);
+            return;
+        }
     }
 
     far3::panels::redraw(PANEL_ACTIVE);

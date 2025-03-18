@@ -30,15 +30,17 @@ public:
         uintptr_t file_attrs;
         std::vector<wstring> custom_column_data;
         data_item_t *user_data;
+        bool is_selected = false;
     };
 
     typedef std::vector<sort_mode_t> sort_modes_t;
     typedef std::vector<item_t> items_t;
     typedef std::unordered_map<FarKey, wstring> key_bar_info_t;
     typedef std::vector<InfoPanelLine> info_lines_t;
+    typedef std::function<void(void)> return_callback_t;
 
 public:
-    view(const string &uid);
+    view(const string &uid, return_callback_t callback);
     virtual ~view() {}
 
     // a panel's interface to the view data
@@ -72,7 +74,8 @@ protected:
     virtual auto compare_items(const sort_mode_t &modes, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t { return -2; }
 private:
-    bool is_first_init = true; // data is ready flag
+    return_callback_t return_callback;
+    bool is_first_init = true; // data-is-set flag
     sort_modes_t sort_modes;
     config::settings::view_t *settings;
     string uid;

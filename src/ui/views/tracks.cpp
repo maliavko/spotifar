@@ -4,8 +4,11 @@
 
 namespace spotifar { namespace ui {
 
-tracks_base_view::tracks_base_view(api_abstract *api, const string &view_uid):
-    view(view_uid),
+namespace panels = utils::far3::panels;
+
+tracks_base_view::tracks_base_view(api_abstract *api, const string &view_uid,
+                                   return_callback_t callback):
+    view(view_uid, callback),
     api_proxy(api)
 {
 }
@@ -50,6 +53,8 @@ const view::items_t* tracks_base_view::get_items()
         std::vector<wstring> artists_names;
         std::transform(track.artists.cbegin(), track.artists.cend(), back_inserter(artists_names),
             [](const auto &a) { return a.name; });
+        
+        const auto &pstate = api_proxy->get_playback_state();
 
         items.push_back({
             track.id,
@@ -57,7 +62,8 @@ const view::items_t* tracks_base_view::get_items()
             utils::string_join(artists_names, L", "),
             FILE_ATTRIBUTE_VIRTUAL,
             columns,
-            const_cast<simplified_track_t*>(&track)
+            const_cast<simplified_track_t*>(&track),
+            pstate.item.is_valid() && pstate.item.id == track.id
         });
     }
 
@@ -79,14 +85,6 @@ void tracks_base_view::update_panel_info(OpenPanelInfo *info)
 
     info->PanelModesArray = modes;
     info->PanelModesNumber = std::size(modes);
-}
-
-intptr_t tracks_base_view::select_item(const data_item_t* data)
-{
-    if (data == nullptr)
-        return goto_root_folder();
-    
-    return FALSE;
 }
 
 intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
@@ -118,7 +116,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     {
         case VK_RETURN + utils::keys::mods::shift:
         {
-            auto item = utils::far3::panels::get_current_item(PANEL_ACTIVE);
+            auto item = panels::get_current_item(PANEL_ACTIVE);
             if (item != nullptr)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
@@ -126,7 +124,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
                     utils::log::global->info("Starting playback from the tracks view, {}", user_data->id);
                     // if (start_playback(user_data->id))
                     // {
-                    //     events::show_player_dialog();
+                    //     events::show_player();
                     //     return TRUE;
                     // }
                     start_playback(user_data->id);
@@ -142,11 +140,17 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-
-album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album):
-    tracks_base_view(api, "album_tracks_view"),
+album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album,
+                                     return_callback_t callback):
+    tracks_base_view(api, "album_tracks_view", callback),
     album(album)
 {
+    ObserverManager::subscribe<playback_observer>(this);
+}
+
+album_tracks_view::~album_tracks_view()
+{
+    ObserverManager::unsubscribe<playback_observer>(this);
 }
 
 const wstring& album_tracks_view::get_dir_name() const
@@ -159,18 +163,6 @@ config::settings::view_t album_tracks_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-bool album_tracks_view::goto_root_folder()
-{
-    if (album.artists.size() > 0)
-    {
-        const auto &artist = api_proxy->get_artist(album.artists[0].id);
-        if (artist.is_valid())
-            events::show_artist_view(api_proxy, artist);
-        return true;
-    }
-    return false;
-}
-
 bool album_tracks_view::start_playback(const string &track_id)
 {
     api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
@@ -181,6 +173,21 @@ std::generator<const simplified_track_t&> album_tracks_view::get_tracks()
 {
     for (const auto &t: api_proxy->get_album_tracks(album.id))
         co_yield t;
+}
+
+void album_tracks_view::on_track_changed(const track_t &track)
+{
+    if (album.id == track.album.id) // the currently playing track is from this album
+    {
+        panels::update(PANEL_ACTIVE);
+        panels::redraw(PANEL_ACTIVE);
+
+        // experimental code to select the currently playing item on the panel
+        // panels::clear_selection(PANEL_ACTIVE);
+
+        // if (auto track_idx = get_item_idx(track.id))
+        //     panels::select_item(PANEL_ACTIVE, track_idx);
+    }
 }
 
 } // namespace ui

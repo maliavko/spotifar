@@ -13,9 +13,8 @@ using namespace spotify;
 class albums_base_view: public view
 {
 public:
-    albums_base_view(api_abstract *api, const string &view_uid):
-        view(view_uid), api_proxy(api)
-        {}
+    albums_base_view(api_abstract *api, const string &view_uid,
+        return_callback_t callback);
 
     auto get_items() -> const items_t*;
     auto get_sort_modes() const -> const sort_modes_t&;
@@ -28,13 +27,13 @@ protected:
         const data_item_t *data2) -> intptr_t;
     
     virtual auto get_albums() -> std::generator<const simplified_album_t&> = 0;
-    virtual auto goto_root_folder() -> void = 0;
+    virtual auto show_tracks_view(const album_t &album) const -> void = 0;
 protected:
     api_abstract *api_proxy;
 };
 
 
-/// @brief Showing the list of the given `artist` albums.
+/// @brief Showing the list of the given `artist` albums
 class artist_view: public albums_base_view
 {
 public:
@@ -43,8 +42,8 @@ public:
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
-    auto goto_root_folder() -> void;
     auto get_albums() -> std::generator<const simplified_album_t&>;
+    auto show_tracks_view(const album_t &album) const -> void;
 private:
     artist_t artist;
 };
@@ -62,10 +61,11 @@ public:
     auto get_dir_name() const -> const wstring&;
     auto get_sort_modes() const -> const sort_modes_t&;
 protected:
-    auto goto_root_folder() -> void;
-    auto get_albums() -> std::generator<const simplified_album_t&>;
     auto compare_items(const sort_mode_t &sort_mode,
         const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+    
+    auto get_albums() -> std::generator<const simplified_album_t&>;
+    auto show_tracks_view(const album_t &album) const -> void;
 };
 
 

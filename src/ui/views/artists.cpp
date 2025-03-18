@@ -7,7 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 artists_view::artists_view(api_abstract *api):
-    view("artists_view"),
+    view("artists_view", std::bind(events::show_collections, api)),
     api_proxy(api)
 {
 }
@@ -112,16 +112,10 @@ const view::items_t* artists_view::get_items()
 
 intptr_t artists_view::select_item(const data_item_t *data)
 {
-    if (data == nullptr)
-    {
-        events::show_collections_view(api_proxy);
-        return TRUE;
-    }
-    
     const auto *artist = static_cast<const artist_t*>(data);
     if (artist != nullptr)
     {
-        events::show_artist_view(api_proxy, *artist);
+        events::show_artist(api_proxy, *artist);
         return TRUE;
     }
     

@@ -6,6 +6,11 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
+albums_base_view::albums_base_view(api_abstract *api, const string &view_uid,
+                                   return_callback_t callback):
+    view(view_uid, callback), api_proxy(api)
+    {}
+
 const view::sort_modes_t& albums_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
@@ -19,19 +24,12 @@ const view::sort_modes_t& albums_base_view::get_sort_modes() const
 
 intptr_t albums_base_view::select_item(const data_item_t* data)
 {
-    if (data == nullptr)
-    {
-        goto_root_folder();
-        return TRUE;
-    }
-    
     const auto *album = static_cast<const album_t*>(data);
     if (album != nullptr)
-    { 
-        events::show_album_tracks_view(api_proxy, *album);
+    {
+        show_tracks_view(*album);
         return TRUE;
     }
-
     return FALSE;
 }
 
@@ -192,10 +190,8 @@ const view::items_t* albums_base_view::get_items()
     return &items;
 }
 
-
-
 artist_view::artist_view(api_abstract *api, const artist_t &artist):
-    albums_base_view(api, "artist_view"),
+    albums_base_view(api, "artist_view", std::bind(events::show_artists_collection, api)),
     artist(artist)
 {
 }
@@ -210,22 +206,20 @@ config::settings::view_t artist_view::get_default_settings() const
     return { 1, false, 3 };
 }
 
-void artist_view::goto_root_folder()
-{
-    events::show_artists_collection_view(api_proxy);
-}
-
 std::generator<const simplified_album_t&> artist_view::get_albums()
 {
     for (const auto &a: api_proxy->get_artist_albums(artist.id))
         co_yield a;
 }
 
-
-
+void artist_view::show_tracks_view(const album_t &album) const
+{
+    events::show_album_tracks(api_proxy, album,
+        std::bind(events::show_artist, api_proxy, artist));
+}
 
 albums_collection_view::albums_collection_view(api_abstract *api):
-    albums_base_view(api, "albums_collection_view")
+    albums_base_view(api, "albums_collection_view", std::bind(events::show_collections, api))
 {
 }
 
@@ -238,11 +232,6 @@ const wstring& albums_collection_view::get_dir_name() const
 config::settings::view_t albums_collection_view::get_default_settings() const
 {
     return { 1, false, 6 };
-}
-
-void albums_collection_view::goto_root_folder()
-{
-    events::show_collections_view(api_proxy);
 }
 
 std::generator<const simplified_album_t&> albums_collection_view::get_albums()
@@ -278,8 +267,11 @@ intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
     return albums_base_view::compare_items(sort_mode, data1, data2);
 }
 
-
-
+void albums_collection_view::show_tracks_view(const album_t &album) const
+{
+    events::show_album_tracks(api_proxy, album,
+        std::bind(events::show_albums_collection, api_proxy));
+}
 
 new_releases_view::new_releases_view(api_abstract *api):
     albums_base_view(api, "new_releases_view")
@@ -295,11 +287,6 @@ const wstring& new_releases_view::get_dir_name() const
 config::settings::view_t new_releases_view::get_default_settings() const
 {
     return { 1, false, 6 };
-}
-
-void new_releases_view::goto_root_folder()
-{
-    events::show_collections_view(api_proxy);
 }
 
 std::generator<const simplified_album_t&> new_releases_view::get_albums()

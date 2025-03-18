@@ -47,6 +47,14 @@ root menu
         - playlists
         - tracks
 
+
+test cases for error-proof app behaviour
+- invalid spotify api items (client id or port e.g.)
+- 429 too many requests emulation
+- sudden network outage
+
+
+
 //// sample how to show loading splash screen
 
     // TODO: unfinished, ugly

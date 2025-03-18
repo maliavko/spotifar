@@ -19,37 +19,37 @@ namespace events {
             &ui_events_observer::show_panel_view, std::make_shared<T>(args...));
     }
 
-    void show_root_view(api_abstract *api)
+    void show_root(api_abstract *api)
     {
         return show_panel_view<root_view>(api);
     }
 
-    void show_collections_view(api_abstract *api)
+    void show_collections(api_abstract *api)
     {
         return show_panel_view<collection_view>(api);
     }
 
-    void show_artists_collection_view(api_abstract *api)
+    void show_artists_collection(api_abstract *api)
     {
         return show_panel_view<artists_view>(api);
     }
 
-    void show_albums_collection_view(api_abstract *api)
+    void show_albums_collection(api_abstract *api)
     {
         return show_panel_view<albums_collection_view>(api);
     }
 
-    void show_tracks_collection_view(api_abstract *api)
+    void show_tracks_collection(api_abstract *api)
     {
         // TODO: unfinished
     }
 
-    void show_browse_view(api_abstract *api)
+    void show_browse(api_abstract *api)
     {
         // TODO: unfinished
     }
 
-    void show_recents_view(api_abstract *api)
+    void show_recents(api_abstract *api)
     {
         // TODO: unfinished
         show_new_releases(api);
@@ -60,32 +60,35 @@ namespace events {
         return show_panel_view<new_releases_view>(api);
     }
 
-    void show_playlists_view(api_abstract *api)
+    void show_playlists(api_abstract *api)
     {
         return show_panel_view<playlists_view>(api);
     }
 
-    void show_playlist_view(api_abstract *api, const playlist_t &playlist)
+    void show_playlist(api_abstract *api, const playlist_t &playlist)
     {
         return show_panel_view<playlist_view>(api, playlist);
     }
     
-    void show_artist_view(api_abstract *api, const artist_t &artist)
+    void show_artist(api_abstract *api, const artist_t &artist)
     {
         return show_panel_view<artist_view>(api, artist);
     }
     
-    void show_album_tracks_view(api_abstract *api, const album_t &album)
+    void show_album_tracks(api_abstract *api, const album_t &album,
+        view::return_callback_t callback)
     {
-        return show_panel_view<album_tracks_view>(api, album);
+        if (!callback)
+            callback = std::bind(show_root, api);
+        return show_panel_view<album_tracks_view>(api, album, callback);
     }
     
-    void show_player_dialog()
+    void show_player()
     {
-        return ObserverManager::notify(&ui_events_observer::show_player_dialog);
+        return ObserverManager::notify(&ui_events_observer::show_player);
     }
     
-    void show_config_dialog()
+    void show_config()
     {
         show_config_menu();
     }

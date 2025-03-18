@@ -55,7 +55,7 @@ size_t calculate_totals(api_abstract *api, const string &menu_id, bool only_from
 }
 
 collection_view::collection_view(api_abstract *api):
-    view("collection_view"),
+    view("collection_view", std::bind(events::show_root, api)),
     api_proxy(api)
 {
 }
@@ -139,33 +139,27 @@ const view::items_t* collection_view::get_items()
 
 intptr_t collection_view::select_item(const data_item_t* data)
 {
-    if (data == nullptr)
-    {
-        ui::events::show_root_view(api_proxy);
-        return TRUE;
-    }
-
     if (data->id == artists_id)
     {
-        ui::events::show_artists_collection_view(api_proxy);
+        ui::events::show_artists_collection(api_proxy);
         return TRUE;
     }
 
     if (data->id == albums_id)
     {
-        ui::events::show_albums_collection_view(api_proxy);
+        ui::events::show_albums_collection(api_proxy);
         return TRUE;
     }
 
     if (data->id == tracks_id)
     {
-        ui::events::show_tracks_collection_view(api_proxy);
+        ui::events::show_tracks_collection(api_proxy);
         return TRUE;
     }
     
     if (data->id == playlists_id)
     {
-        ui::events::show_playlists_view(api_proxy);
+        ui::events::show_playlists(api_proxy);
         return TRUE;
     }
 
