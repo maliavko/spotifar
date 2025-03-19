@@ -247,11 +247,9 @@ bool player::show()
         hdlg = config::ps_info.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, 0,
             &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
         are_dlg_events_suppressed = false;
-
-        api_proxy->set_frequent_syncs(true);
         
-        ObserverManager::subscribe<playback_observer>(this);
-        ObserverManager::subscribe<devices_observer>(this);
+        utils::events::start_listening<playback_observer>(this);
+        utils::events::start_listening<devices_observer>(this);
 
         if (hdlg != NULL)
         {
@@ -294,10 +292,8 @@ bool player::hide()
 
 void player::cleanup()
 {
-    api_proxy->set_frequent_syncs(false);
-
-    ObserverManager::unsubscribe<playback_observer>(this);
-    ObserverManager::unsubscribe<devices_observer>(this);
+    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<devices_observer>(this);
     
     hdlg = NULL;
     visible = false;

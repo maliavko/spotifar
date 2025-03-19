@@ -88,6 +88,11 @@ namespace keys
     }
 }
 
+namespace events
+{
+    std::map<std::type_index, size_t> observers_number{};
+}
+
 namespace far3
 {
     string get_plugin_version()
@@ -644,6 +649,8 @@ namespace http
             response_code == NotModified_304);
     }
 }
+
+
 
 } // namespace utils
 } // namespace spotifar

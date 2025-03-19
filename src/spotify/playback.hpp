@@ -3,8 +3,9 @@
 #pragma once
 
 #include "stdafx.h"
-#include "cache.hpp"
+#include "abstract.hpp"
 #include "items.hpp"
+#include "cache.hpp"
 
 namespace spotifar { namespace spotify {
 

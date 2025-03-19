@@ -13,7 +13,8 @@ string dump_headers(const Headers &headers) {
     string s;
     char buf[BUFSIZ];
 
-    for (auto it = headers.begin(); it != headers.end(); ++it) {
+    for (auto it = headers.begin(); it != headers.end(); ++it)
+    {
         const auto &x = *it;
         snprintf(buf, sizeof(buf), "%s: %s\n", x.first.c_str(), x.second.c_str());
         s += buf;
@@ -60,6 +61,7 @@ api::api():
     static const std::set<string> exclude{
         "/v1/me/player",
         "/v1/me/player/devices",
+        "/v1/me/player/recently-played",
     };
 
     client.set_logger(
@@ -85,11 +87,11 @@ api::api():
         this, config::get_client_id(), config::get_client_secret(),
         config::get_localhost_port());
     devices = std::make_unique<devices_cache>(this);
-    // history = std::make_unique<PlayedHistory>(this);
+    history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
 
     caches.assign({
-        auth.get(), playback.get(), devices.get(), //, history.get(),
+        auth.get(), playback.get(), devices.get(), history.get(),
     });
 }
 
@@ -100,7 +102,7 @@ api::~api()
 
 bool api::start()
 {
-    ObserverManager::subscribe<auth_observer>(this);
+    utils::events::start_listening<auth_observer>(this);
 
     auto ctx = config::lock_settings();
 
@@ -116,7 +118,7 @@ bool api::start()
 
 void api::shutdown()
 {
-    ObserverManager::unsubscribe<auth_observer>(this);
+    utils::events::stop_listening<auth_observer>(this);
 
     auto ctx = config::lock_settings();
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->write(*ctx); });
@@ -230,6 +232,11 @@ playing_queue_t api::get_playing_queue()
     if (http::is_success(r->status))
         return json::parse(r->body).get<playing_queue_t>();
     return {};
+}
+
+const history_items_t& api::get_recently_played(std::int64_t after)
+{
+    return get_items_collection<recently_played_requester>(after, MAX_LIMIT);
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
@@ -583,7 +590,6 @@ void api::on_auth_status_changed(const auth_t &auth)
 {
     // set up current session's valid access token
     client.set_bearer_token_auth(auth.access_token);
-    spdlog::debug("aaaaa {}", auth.access_token);
 
     // pick up the some device for playback
     devices->pick_up_device();

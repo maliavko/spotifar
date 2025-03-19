@@ -17,8 +17,8 @@ const view::sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Track Number",  SM_EXT,     VK_F4 + mods::ctrl },
         { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
+        { L"Track Number",  SM_EXT,     VK_F4 + mods::ctrl },
         { L"Duration",      SM_SIZE,    VK_F5 + mods::ctrl },
     };
     return modes;
@@ -101,11 +101,15 @@ intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
 
         case SM_EXT:
             if (item1->disc_number == item2->disc_number)
-                return item1->track_number - item2->track_number;
-            return item1->disc_number - item2->disc_number;
+                if (item1->track_number == item2->track_number)
+                    return 0;
+                return item1->track_number < item2->track_number ? -1 : 1;
+            return item1->disc_number < item2->disc_number ? -1 : 1;
 
         case SM_SIZE:
-            return item1->duration_ms - item2->duration_ms;
+            if (item1->duration_ms == item2->duration_ms)
+                return 0;
+            return item1->duration_ms < item2->duration_ms ? -1 : 1;
     }
     return -2;
 }
@@ -145,12 +149,12 @@ album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album,
     tracks_base_view(api, "album_tracks_view", callback),
     album(album)
 {
-    ObserverManager::subscribe<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this);
 }
 
 album_tracks_view::~album_tracks_view()
 {
-    ObserverManager::unsubscribe<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this);
 }
 
 const wstring& album_tracks_view::get_dir_name() const
@@ -188,6 +192,89 @@ void album_tracks_view::on_track_changed(const track_t &track)
         // if (auto track_idx = get_item_idx(track.id))
         //     panels::select_item(PANEL_ACTIVE, track_idx);
     }
+}
+
+recent_tracks_view::recent_tracks_view(api_abstract *api):
+    tracks_base_view(api, "recent_tracks_view", std::bind(events::show_recents, api))
+{
+    rebuild_items();
+
+    utils::events::start_listening<play_history_observer>(this);
+}
+
+recent_tracks_view::~recent_tracks_view()
+{
+    items.clear();
+
+    utils::events::stop_listening<play_history_observer>(this);
+}
+
+const wstring& recent_tracks_view::get_dir_name() const
+{
+    static wstring title(utils::far3::get_text(MPanelTracksItemLabel));
+    return title;
+}
+
+config::settings::view_t recent_tracks_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
+const view::sort_modes_t& recent_tracks_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = tracks_base_view::get_sort_modes();
+        modes.push_back({ L"Played", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+intptr_t recent_tracks_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const history_track_t*>(data1),
+            &item2 = static_cast<const history_track_t*>(data2);
+
+        return item1->played_at.compare(item2->played_at);
+    }
+    return tracks_base_view::compare_items(sort_mode, data1, data2);
+}
+
+void recent_tracks_view::rebuild_items()
+{
+    items.clear();
+
+    for (const auto &item: api_proxy->get_play_history())
+        items.push_back(
+            history_track_t(item.played_at, item.track)
+        );
+}
+
+bool recent_tracks_view::start_playback(const string &track_id)
+{
+    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
+    return true;
+}
+
+std::generator<const simplified_track_t&> recent_tracks_view::get_tracks()
+{
+    for (const auto &i: items)
+        co_yield i;
+}
+
+void recent_tracks_view::on_items_updated(const history_items_t &new_entries)
+{
+    rebuild_items();
+    
+    panels::update(PANEL_ACTIVE);
+    panels::redraw(PANEL_ACTIVE);
 }
 
 } // namespace ui

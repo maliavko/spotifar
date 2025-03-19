@@ -10,7 +10,7 @@ bool devices_cache::is_active() const
 {
     // the cache is actively synchronized only when the user is authenticated and there are
     // playback observers
-    return api_proxy->is_authenticated() && api_proxy->is_frequent_syncs();
+    return api_proxy->is_authenticated() && utils::events::has_observers<devices_observer>();
 }
 
 clock_t::duration devices_cache::get_sync_interval() const

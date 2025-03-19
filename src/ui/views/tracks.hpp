@@ -6,6 +6,7 @@
 #include "view.hpp"
 #include "spotify/abstract.hpp"
 #include "spotify/playback.hpp"
+#include "spotify/history.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -51,6 +52,40 @@ protected:
     auto on_track_changed(const track_t &track) -> void;
 private:
     album_t album;
+};
+
+
+class recent_tracks_view:
+    public tracks_base_view,
+    public play_history_observer
+{
+public:
+    struct history_track_t: public track_t
+    {
+        string played_at;
+
+        history_track_t(const string &played_at, const track_t &track):
+            track_t(track), played_at(played_at)
+            {}
+    };
+public:
+    recent_tracks_view(api_abstract *api);
+    ~recent_tracks_view();
+    
+    auto get_default_settings() const -> config::settings::view_t;
+    auto get_dir_name() const -> const wstring&;
+    auto get_sort_modes() const -> const view::sort_modes_t&;
+protected:
+    auto rebuild_items() -> void;
+
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t;
+    auto start_playback(const string &track_id) -> bool;
+    auto get_tracks() -> std::generator<const simplified_track_t&>;
+    
+    void on_items_updated(const history_items_t &new_entries);
+private:
+    std::vector<history_track_t> items;
 };
 
 } // namespace ui

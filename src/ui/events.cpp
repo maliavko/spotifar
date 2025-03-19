@@ -1,6 +1,7 @@
 #include "events.hpp"
 #include "dialogs/menus.hpp"
 #include "views/root.hpp"
+#include "views/recents.hpp"
 #include "views/collection.hpp"
 #include "views/artists.hpp"
 #include "views/playlists.hpp"
@@ -51,8 +52,12 @@ namespace events {
 
     void show_recents(api_abstract *api)
     {
-        // TODO: unfinished
-        show_new_releases(api);
+        return show_panel_view<recents_view>(api);
+    }
+
+    void show_recent_tracks(api_abstract *api)
+    {
+        return show_panel_view<recent_tracks_view>(api);
     }
     
     void show_new_releases(api_abstract *api)

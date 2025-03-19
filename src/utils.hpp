@@ -138,6 +138,31 @@ namespace keys
     auto vk_to_string(WORD virtual_key_code) -> wstring;
 }
 
+namespace events
+{
+    extern std::map<std::type_index, size_t> observers_number;
+
+    template<class P>
+    static bool has_observers()
+    {
+        return observers_number[typeid(P)] > 0;
+    }
+
+    template<class P, class T>
+    void start_listening(T *o)
+    {
+        ObserverManager::subscribe<P>(o);
+        observers_number[typeid(P)]++;
+    }
+
+    template<class P, class T>
+    void stop_listening(T *o)
+    {
+        ObserverManager::unsubscribe<P>(o);
+        observers_number[typeid(P)]--;
+    }
+}
+
 namespace far3
 {
     /// @brief Far3 16 palette colors

@@ -34,6 +34,8 @@ namespace events {
 
     void show_recents(api_abstract *api);
 
+    void show_recent_tracks(api_abstract *api);
+
     void show_new_releases(api_abstract *api);
 
     void show_browse(api_abstract *api);

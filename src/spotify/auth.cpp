@@ -5,7 +5,7 @@ namespace spotifar { namespace spotify {
 using namespace utils;
 
 static string
-    spotify_auth_url = "https://accounts.spotify.com",    
+    spotify_auth_url = "https://accounts.spotify.com",
     scope =
         "streaming "
         "playlist-read-private "

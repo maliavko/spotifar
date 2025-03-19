@@ -16,12 +16,10 @@ struct api_abstract
 
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
-
     virtual bool is_request_cached(const string &url) const = 0;
-    virtual void set_frequent_syncs(bool is_on) = 0;
-    virtual bool is_frequent_syncs() const = 0;
     
     // library & collections interface
+    virtual auto get_play_history() -> const history_items_t& = 0;
     virtual auto get_available_devices() -> const devices_t& = 0;
     virtual auto get_playback_state() -> const playback_state_t& = 0;
     virtual auto get_followed_artists() -> const artists_t& = 0;
@@ -40,6 +38,7 @@ struct api_abstract
     virtual auto save_tracks(const std::vector<string> &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const std::vector<string> &ids) -> bool = 0;
     virtual auto get_playing_queue() -> playing_queue_t = 0;
+    virtual auto get_recently_played(std::int64_t after) -> const history_items_t& = 0;
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
@@ -160,18 +159,6 @@ struct api_collection_requester: public api_requester<T>
         }
         while (this->has_more());
     }
-};
-
-/// @brief An interface to the class, which implements the functionality to cache the data
-/// and store it in the local storage
-struct cached_data_abstract: public config::persistent_data_abstract
-{
-    /// @brief An method to resync data from the server
-    /// @param force - if true, the data will be resynced regardless of the cache validity
-    virtual void resync(bool force = false) = 0;
-
-    /// @brief Return true if the cache should not be resynced
-    virtual bool is_active() const { return true; }
 };
 
 } // namespace spotify

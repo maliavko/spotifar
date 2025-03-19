@@ -2,6 +2,7 @@
 #define AUTH_HPP_EB78B9BD_C144_43F0_9A9F_EB678C5C23AA
 #pragma once
 
+#include "abstract.hpp"
 #include "cache.hpp"
 
 namespace spotifar { namespace spotify {
@@ -22,7 +23,8 @@ class auth_cache: public json_cache<auth_t>
 {
 public:
     auth_cache(api_abstract *api, const string &client_id, const string &client_secret, int port);
-    virtual ~auth_cache() { api_proxy = nullptr; }
+    ~auth_cache() { api_proxy = nullptr; }
+    
     bool is_authenticated() const { return is_logged_in; }
 protected:
     virtual bool request_data(auth_t &data);

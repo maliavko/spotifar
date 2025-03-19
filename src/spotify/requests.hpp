@@ -127,6 +127,17 @@ struct playlist_tracks_requester: public api_collection_requester<saved_tracks_t
         {}
 };
 
+/// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+struct recently_played_requester: public api_collection_requester<history_items_t>
+{
+    recently_played_requester(std::int64_t timestamp_after, size_t limit = MAX_LIMIT):
+        api_collection_requester("/v1/me/player/recently-played", {
+            { "limit", std::to_string(limit) },
+            { "after", std::to_string(timestamp_after) },
+        })
+        {}
+};
+
 } // namespace spotify
 } // namespace spotifar
 

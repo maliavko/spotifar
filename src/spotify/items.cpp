@@ -391,5 +391,23 @@ bool operator==(const device_t &lhs, const device_t &rhs)
     return lhs.id == rhs.id;
 }
 
+void from_json(const json &j, history_item_t &p)
+{
+    j.at("played_at").get_to(p.played_at);
+    j.at("track").get_to(p.track);
+    
+    if (j.contains("context") && !j.at("context").is_null())
+        j.at("context").get_to(p.context);
+}
+
+void to_json(json &j, const history_item_t &p)
+{
+    j = json{
+        {"played_at", p.played_at},
+        {"context", p.context},
+        {"track", p.track},
+    };
+}
+
 } // namespace spotify
 } // namespace spotifar

@@ -11,12 +11,12 @@ static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6,
 panel::panel(api_abstract *api):
     api_proxy(api)
 {
-    ObserverManager::subscribe<ui_events_observer>(this);
+    utils::events::start_listening<ui_events_observer>(this);
 }
 
 panel::~panel()
 {
-    ObserverManager::unsubscribe<ui_events_observer>(this);
+    utils::events::stop_listening<ui_events_observer>(this);
     view = nullptr;
 }
 

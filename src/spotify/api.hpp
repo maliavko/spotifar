@@ -33,6 +33,7 @@ public:
     bool is_frequent_syncs() const { return is_frequent_syncs_flag; }
     
     // library api interface
+    auto get_play_history() -> const history_items_t& { return history->get(); }
     auto get_available_devices() -> const devices_t& { return devices->get(); }
     auto get_playback_state() -> const playback_state_t& { return playback->get(); }
     auto get_followed_artists() -> const artists_t&;
@@ -51,10 +52,11 @@ public:
     auto save_tracks(const std::vector<string> &ids) -> bool;
     auto remove_saved_tracks(const std::vector<string> &ids) -> bool;
     auto get_playing_queue() -> playing_queue_t;
+    auto get_recently_played(std::int64_t after) -> const history_items_t&;
 
     // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",
-                        int position_ms = 0, const string &device_id = "");
+        int position_ms = 0, const string &device_id = "");
     void start_playback(const std::vector<string> &uris, const string &device_id = "");
     void start_playback(const simplified_album_t &album, const simplified_track_t &track);
     void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track);
@@ -86,7 +88,7 @@ protected:
     template<class R, typename... ArgumentsTypes>
     auto get_items_collection(ArgumentsTypes... args) -> const typename R::value_t&;
     
-    void on_auth_status_changed(const auth_t &auth);
+    void on_auth_status_changed(const auth_t &auth); // auth status listener
 
 private:
     BS::thread_pool pool;
@@ -98,7 +100,7 @@ private:
     std::unique_ptr<playback_cache> playback;
     std::unique_ptr<devices_cache> devices;
     std::unique_ptr<auth_cache> auth;
-    std::unique_ptr<PlayedHistory> history;
+    std::unique_ptr<play_history> history;
 
     std::vector<cached_data_abstract*> caches;
 };

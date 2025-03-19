@@ -28,6 +28,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/controls.cpp
 	ui/views/view.cpp
 	ui/views/root.cpp
+	ui/views/recents.cpp
 	ui/views/playlist.cpp
 	ui/views/collection.cpp
 	ui/views/albums.cpp

@@ -245,6 +245,16 @@ struct playback_state_t
     friend void to_json(json &j, const playback_state_t &p);
 };
 
+struct history_item_t
+{
+    track_t track;
+    context_t context;
+    string played_at;
+    
+    friend void from_json(const json &j, history_item_t &p);
+    friend void to_json(json &j, const history_item_t &p);
+};
+
 typedef std::vector<device_t> devices_t;
 typedef std::vector<artist_t> artists_t;
 typedef std::vector<simplified_album_t> simplified_albums_t;
@@ -254,6 +264,8 @@ typedef std::vector<track_t> tracks_t;
 typedef std::vector<saved_track_t> saved_tracks_t;
 typedef std::vector<simplified_playlist_t> simplified_playlists_t;
 typedef std::vector<playlist_t> playlists_t;
+typedef std::vector<history_item_t> history_items_t;
+typedef std::vector<std::pair<string, track_t>> recent_tracks_t;
 
 struct playing_queue_t
 {

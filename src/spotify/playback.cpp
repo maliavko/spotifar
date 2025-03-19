@@ -15,7 +15,7 @@ bool playback_cache::is_active() const
 clock_t::duration playback_cache::get_sync_interval() const
 {
     // every second, minus some gap for smoother synching
-    return api_proxy->is_frequent_syncs() ? 950ms : 5s;
+    return utils::events::has_observers<playback_observer>() ? 950ms : 5s;
 }
 
 void playback_cache::on_data_synced(const playback_state_t &data, const playback_state_t &prev_data)

@@ -14,9 +14,9 @@ plugin::plugin():
     panel(&api),
     player(&api)
 {
-    ObserverManager::subscribe<config::config_observer>(this);
-    ObserverManager::subscribe<spotify::auth_observer>(this);
-    ObserverManager::subscribe<ui::ui_events_observer>(this);
+    utils::events::start_listening<config::config_observer>(this);
+    utils::events::start_listening<spotify::auth_observer>(this);
+    utils::events::start_listening<ui::ui_events_observer>(this);
 
     // TODO: what if not initialized?
     if (api.start())
@@ -31,9 +31,9 @@ plugin::~plugin()
 {
     on_global_hotkeys_setting_changed(false);
 
-    ObserverManager::unsubscribe<spotify::auth_observer>(this);
-    ObserverManager::unsubscribe<config::config_observer>(this);
-    ObserverManager::unsubscribe<ui::ui_events_observer>(this);
+    utils::events::stop_listening<spotify::auth_observer>(this);
+    utils::events::stop_listening<config::config_observer>(this);
+    utils::events::stop_listening<ui::ui_events_observer>(this);
 }
 
 void plugin::start()
