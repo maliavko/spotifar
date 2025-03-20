@@ -81,11 +81,41 @@ public:
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
-auto compare_items(const sort_mode_t &sort_mode,
-    const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+    auto compare_items(const sort_mode_t &sort_mode,
+        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
     
     auto get_albums() -> std::generator<const simplified_album_t&>;
     auto show_tracks_view(const album_t &album) const -> void;
+};
+
+// TODO: add listener for history changes and refresh view
+class recent_albums_view: public albums_base_view
+{
+public:
+    struct history_album_t: public album_t
+    {
+        string played_at;
+
+        history_album_t(const string &played_at, const album_t &album):
+            album_t(album), played_at(played_at)
+            {}
+    };
+public:
+    recent_albums_view(api_abstract *api);
+    ~recent_albums_view();
+
+    auto get_default_settings() const -> config::settings::view_t;
+    auto get_dir_name() const -> const wstring&;
+    auto get_sort_modes() const -> const view::sort_modes_t&;
+protected:
+    auto rebuild_items() -> void;
+
+    auto compare_items(const sort_mode_t &sort_mode,
+        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+    auto get_albums() -> std::generator<const simplified_album_t&>;
+    auto show_tracks_view(const album_t &album) const -> void;
+private:
+    std::vector<history_album_t> items;
 };
 
 } // namespace ui

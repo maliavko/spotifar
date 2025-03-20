@@ -33,8 +33,8 @@ namespace events {
     void show_playlists(api_abstract *api);
 
     void show_recents(api_abstract *api);
-
     void show_recent_tracks(api_abstract *api);
+    void show_recent_albums(api_abstract *api);
 
     void show_new_releases(api_abstract *api);
 

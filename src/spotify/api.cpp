@@ -69,6 +69,7 @@ api::api():
         {
             if (http::is_success(res.status))
             {
+                // TODO: does not catch the paths, which start from the url base
                 if (!exclude.contains(req.path))
                 {
                     log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",

@@ -59,6 +59,11 @@ namespace events {
     {
         return show_panel_view<recent_tracks_view>(api);
     }
+
+    void show_recent_albums(api_abstract *api)
+    {
+        return show_panel_view<recent_albums_view>(api);
+    }
     
     void show_new_releases(api_abstract *api)
     {

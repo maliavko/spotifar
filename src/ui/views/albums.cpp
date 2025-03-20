@@ -319,5 +319,94 @@ void new_releases_view::show_tracks_view(const album_t &album) const
     }
 }
 
+recent_albums_view::recent_albums_view(api_abstract *api):
+    albums_base_view(api, "recent_albums_view", std::bind(events::show_recents, api))
+{
+    rebuild_items();
+}
+
+recent_albums_view::~recent_albums_view()
+{
+    items.clear();
+}
+
+const wstring& recent_albums_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t recent_albums_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+const view::sort_modes_t& recent_albums_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = albums_base_view::get_sort_modes();
+        modes.push_back({ L"Played at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+std::generator<const simplified_album_t&> recent_albums_view::get_albums()
+{
+    for (const auto &i: items)
+        co_yield i;
+}
+
+void recent_albums_view::rebuild_items()
+{
+    items.clear();
+
+    std::set<string> ids;
+
+    for (const auto &item: api_proxy->get_play_history())
+    {
+        auto item_id = item.context.get_item_id();
+        if (item.context.is_album() && !ids.contains(item_id))
+        {
+            ids.insert(item_id);
+            
+            // TODO: implement several albums requester and replace
+            const auto &album = api_proxy->get_album(item_id);
+            utils::log::global->debug("{} - {}", utils::to_string(album.artists[0].name), utils::to_string(album.name));
+            
+            items.push_back(
+                history_album_t(item.played_at, album)
+            );
+        }
+    }
+}
+
+intptr_t recent_albums_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const saved_album_t*>(data1),
+            &item2 = static_cast<const saved_album_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return albums_base_view::compare_items(sort_mode, data1, data2);
+}
+
+void recent_albums_view::show_tracks_view(const album_t &album) const
+{
+    if (album.artists.size() > 0)
+    {
+        const auto &artist = api_proxy->get_artist(album.artists[0].id);
+        events::show_album_tracks(api_proxy, album,
+            std::bind(events::show_artist, api_proxy, artist));
+    }
+}
+
 } // namespace ui
 } // namespace spotifar

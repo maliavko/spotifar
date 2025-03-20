@@ -106,11 +106,11 @@ intptr_t recents_view::select_item(const data_item_t *data)
         return TRUE;
     }
     
-    // if (data->id == browse_id)
-    // {
-    //     ui::events::show_browse(api_proxy);
-    //     return TRUE;
-    // }
+    if (data->id == albums_id)
+    {
+        ui::events::show_recent_albums(api_proxy);
+        return TRUE;
+    }
     
     // if (data->id == recents_id)
     // {
