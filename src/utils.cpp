@@ -542,7 +542,7 @@ string to_string(const wstring &ws)
 
 wstring strip_invalid_filename_chars(const wstring &filename)
 {
-    static auto r = std::wregex(L"[\?\\\\/:*<>|]");
+    static auto r = std::wregex(L"[\?\\\\/:*<>|\\.]");
     return std::regex_replace(filename, r, L"_");
 }
 
@@ -571,6 +571,16 @@ string get_last_system_error()
     std::shared_ptr<const TCHAR[]> msg((LPTSTR)lpMsgBuf, deleter());
     
     return utils::to_string((LPCTSTR)lpMsgBuf);
+}
+
+clock_t::duration get_timestamp(const string &time_str)
+{
+    std::istringstream ss(time_str);
+
+    clock_t::time_point time_point;
+    std::chrono::from_stream(ss, "%Y-%m-%dT%H:%M:%S%Z", time_point);
+
+    return time_point.time_since_epoch();
 }
 
 string trim(const string &s)

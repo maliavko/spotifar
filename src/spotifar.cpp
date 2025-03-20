@@ -132,6 +132,11 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
         return FALSE; // return TRUE if the panel should not close
     }
 
+    if (info->Event == FE_CHANGEVIEWMODE)
+    {
+        const wchar_t *clumns = static_cast<const wchar_t*>(info->Param);
+    }
+
     return FALSE;
 }
 

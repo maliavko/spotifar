@@ -269,7 +269,7 @@ std::generator<const simplified_track_t&> recent_tracks_view::get_tracks()
         co_yield i;
 }
 
-void recent_tracks_view::on_items_updated(const history_items_t &new_entries)
+void recent_tracks_view::on_items_changed()
 {
     rebuild_items();
     

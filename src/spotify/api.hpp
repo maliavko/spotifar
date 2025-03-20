@@ -43,6 +43,7 @@ public:
     auto get_new_releases() -> const simplified_albums_t&;
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
     auto get_album(const string &album_id) -> album_t;
+    auto get_albums(const std::vector<string> &ids) -> albums_t;
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
     auto get_playlist(const string &playlist_id) -> playlist_t;
     auto get_playlists() -> const simplified_playlists_t&;
@@ -126,7 +127,7 @@ auto api::get_items_collection(ArgumentsTypes... args) -> const typename R::valu
     for (const auto &entries: requester.fetch_by_pages(this))
     {
         result.insert(result.end(), entries.begin(), entries.end());
-        break; // TODO: remove! just for speeding up the testing
+        //break; // TODO: remove! just for speeding up the testing
     }
 
     return result;

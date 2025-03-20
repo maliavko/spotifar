@@ -14,6 +14,7 @@
 #include <list>
 #include <chrono>
 #include <typeindex>
+#include <algorithm>
 #define _WINSOCKAPI_
 #ifndef NOMINMAX
 # define NOMINMAX

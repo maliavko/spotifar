@@ -29,6 +29,7 @@ struct api_abstract
     virtual auto get_new_releases() -> const simplified_albums_t& = 0;
     virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
     virtual auto get_album(const string &album_id) -> album_t = 0;
+    virtual auto get_albums(const std::vector<string> &ids) -> albums_t = 0;
     virtual auto get_album_tracks(const string &album_id) -> const simplified_tracks_t& = 0;
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
     virtual auto get_playlists() -> const simplified_playlists_t& = 0;

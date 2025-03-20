@@ -5,6 +5,7 @@
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
+namespace panels = utils::far3::panels;
 
 albums_base_view::albums_base_view(api_abstract *api, const string &view_uid,
                                    return_callback_t callback):
@@ -322,11 +323,15 @@ void new_releases_view::show_tracks_view(const album_t &album) const
 recent_albums_view::recent_albums_view(api_abstract *api):
     albums_base_view(api, "recent_albums_view", std::bind(events::show_recents, api))
 {
+    utils::events::start_listening<play_history_observer>(this);
+
     rebuild_items();
 }
 
 recent_albums_view::~recent_albums_view()
 {
+    utils::events::stop_listening<play_history_observer>(this);
+
     items.clear();
 }
 
@@ -364,23 +369,35 @@ void recent_albums_view::rebuild_items()
 {
     items.clear();
 
-    std::set<string> ids;
-
+    std::unordered_map<string, history_item_t> recent_albums;
+    
+    // collecting all the tracks' albums listened to
     for (const auto &item: api_proxy->get_play_history())
+        recent_albums[item.track.album.id] = item;
+
+    if (recent_albums.size() > 0)
     {
-        auto item_id = item.context.get_item_id();
-        if (item.context.is_album() && !ids.contains(item_id))
+        const auto &keys = std::views::keys(recent_albums);
+
+        auto chunk_begin = keys.begin();
+        auto chunk_end = keys.begin();
+
+        // splitting into chunks as an PI allows only requesting by 20 albums at once
+        do
         {
-            ids.insert(item_id);
+            if (std::distance(chunk_end, keys.end()) <= 20)
+                chunk_end = keys.end(); // the end of the container
+            else
+                std::advance(chunk_end, 20); // ...or just advancing to 20 hops
             
-            // TODO: implement several albums requester and replace
-            const auto &album = api_proxy->get_album(item_id);
-            utils::log::global->debug("{} - {}", utils::to_string(album.artists[0].name), utils::to_string(album.name));
-            
-            items.push_back(
-                history_album_t(item.played_at, album)
-            );
+            for (const auto &album: api_proxy->get_albums(std::vector<string>(chunk_begin, chunk_end)))
+                items.push_back(
+                    history_album_t(recent_albums[album.id].played_at, album)
+                );
+
+            chunk_begin = chunk_end;
         }
+        while (std::distance(chunk_begin, keys.end()) > 0);
     }
 }
 
@@ -406,6 +423,14 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
         events::show_album_tracks(api_proxy, album,
             std::bind(events::show_artist, api_proxy, artist));
     }
+}
+
+void recent_albums_view::on_items_changed()
+{
+    rebuild_items();
+    
+    panels::update(PANEL_ACTIVE);
+    panels::redraw(PANEL_ACTIVE);
 }
 
 } // namespace ui

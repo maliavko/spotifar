@@ -17,13 +17,14 @@ protected:
     bool is_active() const;
     bool request_data(history_items_t &data);
     auto get_sync_interval() const -> clock_t::duration;
+    void on_data_synced(const history_items_t &data, const history_items_t &prev_data);
 private:
     api_abstract *api_proxy;
 };
 
 struct play_history_observer: public BaseObserverProtocol
 {
-    virtual void on_items_updated(const history_items_t &new_entries) {};
+    virtual void on_items_changed() {};
 };
 
 } // namespace spotify

@@ -83,7 +83,7 @@ protected:
     auto start_playback(const string &track_id) -> bool;
     auto get_tracks() -> std::generator<const simplified_track_t&>;
     
-    void on_items_updated(const history_items_t &new_entries);
+    void on_items_changed();
 private:
     std::vector<history_track_t> items;
 };

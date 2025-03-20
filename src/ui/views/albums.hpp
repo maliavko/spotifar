@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "view.hpp"
 #include "spotify/abstract.hpp"
+#include "spotify/history.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -88,8 +89,10 @@ protected:
     auto show_tracks_view(const album_t &album) const -> void;
 };
 
-// TODO: add listener for history changes and refresh view
-class recent_albums_view: public albums_base_view
+
+class recent_albums_view:
+    public albums_base_view,
+    public play_history_observer
 {
 public:
     struct history_album_t: public album_t
@@ -114,6 +117,8 @@ protected:
         const data_item_t *data1, const data_item_t *data2) -> intptr_t;
     auto get_albums() -> std::generator<const simplified_album_t&>;
     auto show_tracks_view(const album_t &album) const -> void;
+    
+    void on_items_changed();
 private:
     std::vector<history_album_t> items;
 };

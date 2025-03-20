@@ -50,6 +50,8 @@ void view::on_items_updated()
         if (sort_modes.size() > settings->sort_mode_idx)
             panels::set_sort_mode(PANEL_ACTIVE,
                 sort_modes[settings->sort_mode_idx].far_sort_mode, settings->is_descending);
+
+        panels::set_view_mode(PANEL_ACTIVE, settings->view_mode);
     }
 }
 

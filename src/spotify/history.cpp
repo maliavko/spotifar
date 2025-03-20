@@ -20,20 +20,26 @@ clock_t::duration play_history::get_sync_interval() const
     return utils::events::has_observers<play_history_observer>() ? 5s : 2min;
 }
 
+void play_history::on_data_synced(const history_items_t &data, const history_items_t &prev_data)
+{
+    if (data.size() != prev_data.size())
+        dispatch_event(&play_history_observer::on_items_changed);
+}
+
 bool play_history::request_data(history_items_t &data)
 {
-    // 10 seconds to cover some network gap
-    auto last_sync_time = duration_cast<std::chrono::milliseconds>(
-        get_last_sync_time().time_since_epoch()).count() - 10;
-
     data = get();
+
+    auto last_sync_time = 0LL;
+    if (data.size() > 0)
+        last_sync_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+            utils::get_timestamp(data[0].played_at)).count();
 
     // we request only the new items after the last request timestamp, then we take
     // the old items list and extend it from the front
     const auto &new_entries = api_proxy->get_recently_played(last_sync_time);
-    data.insert(data.begin(), new_entries.begin(), new_entries.end());
-
-    dispatch_event(&play_history_observer::on_items_updated, new_entries);
+    if (new_entries.size() > 0)
+        data.insert(data.begin(), new_entries.begin(), new_entries.end());
 
     return true;
 }

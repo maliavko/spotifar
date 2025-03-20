@@ -45,6 +45,9 @@ wstring strip_invalid_filename_chars(const wstring &filename);
 /// @brief Returns the message of GetLastError function
 string get_last_system_error();
 
+/// @brief Converts a time string of `2025-03-20T21:32:45.384Z` format to a timestamp
+clock_t::duration get_timestamp(const string &time_str);
+
 /// @brief Join a vector of string into one, using given `delimeter`
 /// @param parts string parts
 /// @param delim delimeter

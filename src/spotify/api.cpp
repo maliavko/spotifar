@@ -28,6 +28,7 @@ static string trim_webapi_url(const string &url)
 {
     if (url.starts_with(SPOTIFY_API_URL))
         return url.substr(SPOTIFY_API_URL.size(), url.size());
+    
     return url;
 }
 
@@ -69,8 +70,8 @@ api::api():
         {
             if (http::is_success(res.status))
             {
-                // TODO: does not catch the paths, which start from the url base
-                if (!exclude.contains(req.path))
+                auto url = req.path.substr(0, req.path.find("?")); // trim parameters
+                if (!exclude.contains(url))
                 {
                     log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
                                     res.status, req.method, trim_webapi_url(req.path));
@@ -166,6 +167,11 @@ const simplified_albums_t& api::get_new_releases()
 tracks_t api::get_artist_top_tracks(const string &artist_id)
 {
     return get_item<artist_top_tracks_requester>(artist_id);
+}
+
+albums_t api::get_albums(const std::vector<string> &ids)
+{
+    return get_item<albums_requester>(ids);
 }
     
 album_t api::get_album(const string &album_id)
