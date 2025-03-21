@@ -191,8 +191,9 @@ const view::items_t* albums_base_view::get_items()
     return &items;
 }
 
-artist_view::artist_view(api_abstract *api, const artist_t &artist):
-    albums_base_view(api, "artist_view", std::bind(events::show_artists_collection, api)),
+artist_view::artist_view(api_abstract *api, const artist_t &artist,
+                         return_callback_t callback):
+    albums_base_view(api, "artist_view", callback),
     artist(artist)
 {
 }
@@ -215,8 +216,10 @@ std::generator<const simplified_album_t&> artist_view::get_albums()
 
 void artist_view::show_tracks_view(const album_t &album) const
 {
+    // let's open a tracks list view for the selected album, which should return user to the same
+    // artist's albums view
     events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_artist, api_proxy, artist));
+        std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
 }
 
 albums_collection_view::albums_collection_view(api_abstract *api):
@@ -296,27 +299,13 @@ std::generator<const simplified_album_t&> new_releases_view::get_albums()
         co_yield a;
 }
 
-intptr_t new_releases_view::compare_items(const sort_mode_t &sort_mode,
-    const data_item_t *data1, const data_item_t *data2)
-{
-    if (sort_mode.far_sort_mode == SM_MTIME)
-    {
-        const auto
-            &item1 = static_cast<const saved_album_t*>(data1),
-            &item2 = static_cast<const saved_album_t*>(data2);
-
-        return item1->added_at.compare(item2->added_at);
-    }
-    return albums_base_view::compare_items(sort_mode, data1, data2);
-}
-
 void new_releases_view::show_tracks_view(const album_t &album) const
 {
     if (album.artists.size() > 0)
     {
         const auto &artist = api_proxy->get_artist(album.artists[0].id);
         events::show_album_tracks(api_proxy, album,
-            std::bind(events::show_artist, api_proxy, artist));
+            std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
     }
 }
 
@@ -391,10 +380,10 @@ intptr_t recent_albums_view::compare_items(const sort_mode_t &sort_mode,
     if (sort_mode.far_sort_mode == SM_MTIME)
     {
         const auto
-            &item1 = static_cast<const saved_album_t*>(data1),
-            &item2 = static_cast<const saved_album_t*>(data2);
+            &item1 = static_cast<const history_album_t*>(data1),
+            &item2 = static_cast<const history_album_t*>(data2);
 
-        return item1->added_at.compare(item2->added_at);
+        return item1->played_at.compare(item2->played_at);
     }
     return albums_base_view::compare_items(sort_mode, data1, data2);
 }
@@ -405,7 +394,7 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
     {
         const auto &artist = api_proxy->get_artist(album.artists[0].id);
         events::show_album_tracks(api_proxy, album,
-            std::bind(events::show_artist, api_proxy, artist));
+            std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
     }
 }
 

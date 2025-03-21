@@ -55,6 +55,7 @@ public:
     auto get_item_idx(const string &item_id) -> size_t;
     auto get_settings() const -> config::settings::view_t*;
     auto select_sort_mode(int sort_mode_idx) -> void;
+    auto get_return_callback() const -> const return_callback_t& { return return_callback; }
 
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
     virtual auto get_dir_name() const -> const wstring& = 0;

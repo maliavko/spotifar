@@ -23,11 +23,8 @@ namespace events {
     void show_root(api_abstract *api);
 
     void show_collections(api_abstract *api);
-
     void show_artists_collection(api_abstract *api);
-
     void show_albums_collection(api_abstract *api);
-
     void show_tracks_collection(api_abstract *api);
 
     void show_playlists(api_abstract *api);
@@ -35,6 +32,7 @@ namespace events {
     void show_recents(api_abstract *api);
     void show_recent_tracks(api_abstract *api);
     void show_recent_albums(api_abstract *api);
+    void show_recent_artists(api_abstract *api);
 
     void show_new_releases(api_abstract *api);
 
@@ -42,7 +40,8 @@ namespace events {
 
     void show_playlist(api_abstract *api, const playlist_t &playlist);
 
-    void show_artist(api_abstract *api, const artist_t &artist);
+    void show_artist_albums(api_abstract *api, const artist_t &artist,
+        view::return_callback_t callback = {});
 
     void show_album_tracks(api_abstract *api, const album_t &album,
         view::return_callback_t callback = {});

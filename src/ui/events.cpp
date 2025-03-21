@@ -32,7 +32,7 @@ namespace events {
 
     void show_artists_collection(api_abstract *api)
     {
-        return show_panel_view<artists_view>(api);
+        return show_panel_view<followed_artists_view>(api);
     }
 
     void show_albums_collection(api_abstract *api)
@@ -64,6 +64,11 @@ namespace events {
     {
         return show_panel_view<recent_albums_view>(api);
     }
+
+    void show_recent_artists(api_abstract *api)
+    {
+        return show_panel_view<recent_artists_view>(api);
+    }
     
     void show_new_releases(api_abstract *api)
     {
@@ -80,9 +85,13 @@ namespace events {
         return show_panel_view<playlist_view>(api, playlist);
     }
     
-    void show_artist(api_abstract *api, const artist_t &artist)
+    void show_artist_albums(api_abstract *api, const artist_t &artist,
+        view::return_callback_t callback)
     {
-        return show_panel_view<artist_view>(api, artist);
+        if (!callback)
+            callback = std::bind(show_root, api);
+        
+        return show_panel_view<artist_view>(api, artist, callback);
     }
     
     void show_album_tracks(api_abstract *api, const album_t &album,
@@ -90,6 +99,7 @@ namespace events {
     {
         if (!callback)
             callback = std::bind(show_root, api);
+        
         return show_panel_view<album_tracks_view>(api, album, callback);
     }
     

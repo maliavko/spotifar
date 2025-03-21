@@ -144,6 +144,11 @@ artist_t api::get_artist(const string &artist_id)
     return get_item<artist_requester>(artist_id);
 }
 
+const artists_t& api::get_artists(const std::vector<string> &ids)
+{
+    return get_several_items<artists_requester>(ids);
+}
+
 const artists_t& api::get_followed_artists()
 {
     return get_items_collection<followed_artists_requester>(MAX_LIMIT);

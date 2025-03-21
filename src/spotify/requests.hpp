@@ -57,6 +57,15 @@ struct artist_requester: public api_requester<artist_t>
         {}
 };
 
+
+/// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-artists
+struct artists_requester: public api_several_items_requester<artists_t>
+{
+    artists_requester(const std::vector<string> &ids):
+        api_several_items_requester("/v1/artists", ids, 50, "artists")
+        {}
+};
+
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
 struct artist_top_tracks_requester: public api_requester<tracks_t>
 {

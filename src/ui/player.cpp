@@ -504,7 +504,7 @@ bool player::on_artist_label_input_received(void *input_record)
     {
         hide();
 
-        ui::events::show_artist(api_proxy, artist);
+        ui::events::show_artist_albums(api_proxy, artist);
         ui::events::refresh_panels(playback.item.album.id);
     }
 

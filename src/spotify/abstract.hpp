@@ -24,6 +24,7 @@ struct api_abstract
     virtual auto get_playback_state() -> const playback_state_t& = 0;
     virtual auto get_followed_artists() -> const artists_t& = 0;
     virtual auto get_artist(const string &artist_id) -> artist_t  = 0;
+    virtual auto get_artists(const std::vector<string> &ids) -> const artists_t&  = 0;
     virtual auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&  = 0;
     virtual auto get_saved_albums() -> const saved_albums_t& = 0;
     virtual auto get_new_releases() -> const simplified_albums_t& = 0;

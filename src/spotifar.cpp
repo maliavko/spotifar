@@ -134,6 +134,7 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 
     if (info->Event == FE_CHANGEVIEWMODE)
     {
+        // TODO: to implement a persistent storing of the picked view mode for the views
         const wchar_t *clumns = static_cast<const wchar_t*>(info->Param);
     }
 

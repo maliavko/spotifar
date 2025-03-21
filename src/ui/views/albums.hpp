@@ -18,12 +18,12 @@ public:
         return_callback_t callback);
 
     auto get_items() -> const items_t*;
+protected:
     auto get_sort_modes() const -> const sort_modes_t&;
     auto select_item(const data_item_t* data) -> intptr_t;
     auto request_extra_info(const data_item_t* data) -> bool;
     auto update_panel_info(OpenPanelInfo *info) -> void;
     auto process_key_input(int combined_key) -> intptr_t;
-protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t;
     
@@ -38,7 +38,8 @@ protected:
 class artist_view: public albums_base_view
 {
 public:
-    artist_view(api_abstract *api, const artist_t &artist);
+    artist_view(api_abstract *api, const artist_t &artist,
+        return_callback_t callback);
     
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
@@ -82,9 +83,6 @@ public:
     auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
-    auto compare_items(const sort_mode_t &sort_mode,
-        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
-    
     auto get_albums() -> std::generator<const simplified_album_t&>;
     auto show_tracks_view(const album_t &album) const -> void;
 };
@@ -107,12 +105,12 @@ public:
     recent_albums_view(api_abstract *api);
     ~recent_albums_view();
 
-    auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
-    auto get_sort_modes() const -> const view::sort_modes_t&;
 protected:
     auto rebuild_items() -> void;
 
+    auto get_sort_modes() const -> const view::sort_modes_t&;
+    auto get_default_settings() const -> config::settings::view_t;
     auto compare_items(const sort_mode_t &sort_mode,
         const data_item_t *data1, const data_item_t *data2) -> intptr_t;
     auto get_albums() -> std::generator<const simplified_album_t&>;

@@ -5,20 +5,14 @@
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
+namespace panels = utils::far3::panels;
 
-artists_view::artists_view(api_abstract *api):
-    view("artists_view", std::bind(events::show_collections, api)),
-    api_proxy(api)
-{
-}
+artists_base_view::artists_base_view(api_abstract *api, const string &view_uid,
+    return_callback_t callback):
+    view(view_uid, callback), api_proxy(api)
+    {}
 
-const wstring& artists_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelArtistsItemLabel));
-    return dir_name;
-}
-
-void artists_view::update_panel_info(OpenPanelInfo *info)
+void artists_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
@@ -68,11 +62,11 @@ void artists_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view::items_t* artists_view::get_items()
+const view::items_t* artists_base_view::get_items()
 {
     static view::items_t items; items.clear();
 
-    for (const auto &a: api_proxy->get_followed_artists())
+    for (const auto &a: get_artists())
     {
         std::vector<wstring> column_data;
 
@@ -110,27 +104,25 @@ const view::items_t* artists_view::get_items()
     return &items;
 }
 
-intptr_t artists_view::select_item(const data_item_t *data)
+intptr_t artists_base_view::select_item(const data_item_t *data)
 {
     const auto *artist = static_cast<const artist_t*>(data);
     if (artist != nullptr)
     {
-        events::show_artist(api_proxy, *artist);
+        show_albums_view(*artist);
         return TRUE;
     }
-    
     return FALSE;
 }
 
-bool artists_view::request_extra_info(const data_item_t *data)
+bool artists_base_view::request_extra_info(const data_item_t *data)
 {
     if (data != nullptr)
         return artist_albums_requester(data->id)(api_proxy);
-
     return false;
 }
 
-const view::sort_modes_t& artists_view::get_sort_modes() const
+const view::sort_modes_t& artists_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
@@ -141,12 +133,7 @@ const view::sort_modes_t& artists_view::get_sort_modes() const
     return modes;
 }
 
-config::settings::view_t artists_view::get_default_settings() const
-{
-    return { 0, false, 3 };
-}
-
-intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
+intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
     const data_item_t *data1, const data_item_t *data2)
 {
     const auto
@@ -165,6 +152,130 @@ intptr_t artists_view::compare_items(const sort_mode_t &sort_mode,
             return item1->followers_total - item2->followers_total;
     }
     return -2;
+}
+
+
+followed_artists_view::followed_artists_view(api_abstract *api):
+    artists_base_view(api, "followed_artists_view", std::bind(events::show_collections, api))
+{
+}
+
+const wstring& followed_artists_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelArtistsItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t followed_artists_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
+std::generator<const artist_t&> followed_artists_view::get_artists()
+{
+    for (const auto &a: api_proxy->get_followed_artists())
+        co_yield a;
+}
+
+void followed_artists_view::show_albums_view(const artist_t &artist) const
+{
+    events::show_artist_albums(api_proxy, artist,
+        std::bind(events::show_artists_collection, api_proxy));
+}
+
+
+recent_artists_view::recent_artists_view(api_abstract *api):
+    artists_base_view(api, "recent_artists_view", std::bind(events::show_recents, api))
+{
+    utils::events::start_listening<play_history_observer>(this);
+
+    rebuild_items();
+}
+
+recent_artists_view::~recent_artists_view()
+{
+    utils::events::stop_listening<play_history_observer>(this);
+
+    items.clear();
+}
+
+const wstring& recent_artists_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t recent_artists_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+const view::sort_modes_t& recent_artists_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = artists_base_view::get_sort_modes();
+        modes.push_back({ L"Played at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+void recent_artists_view::rebuild_items()
+{
+    items.clear();
+
+    std::unordered_map<string, history_item_t> recent_artists;
+    
+    // collecting all the tracks' artists listened to
+    for (const auto &item: api_proxy->get_play_history())
+        if (item.track.artists.size() > 0)
+            recent_artists[item.track.artists[0].id] = item;
+
+    if (recent_artists.size() > 0)
+    {
+        const auto &keys = std::views::keys(recent_artists);
+        const auto &ids = std::vector<string>(keys.begin(), keys.end());
+
+        for (const auto &artist: api_proxy->get_artists(ids))
+            items.push_back(history_artist_t(recent_artists[artist.id].played_at, artist));
+    }
+}
+
+intptr_t recent_artists_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const history_artist_t*>(data1),
+            &item2 = static_cast<const history_artist_t*>(data2);
+
+        return item1->played_at.compare(item2->played_at);
+    }
+    return artists_base_view::compare_items(sort_mode, data1, data2);
+}
+
+std::generator<const artist_t&> recent_artists_view::get_artists()
+{
+    for (const auto &i: items)
+        co_yield i;
+}
+
+void recent_artists_view::show_albums_view(const artist_t &artist) const
+{
+    events::show_artist_albums(api_proxy, artist,
+        std::bind(events::show_recent_artists, api_proxy));
+}
+
+void recent_artists_view::on_items_changed()
+{
+    rebuild_items();
+    
+    panels::update(PANEL_ACTIVE);
+    panels::redraw(PANEL_ACTIVE);
 }
 
 } // namespace ui
