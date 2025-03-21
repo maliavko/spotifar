@@ -85,6 +85,10 @@ protected:
     template<class R, typename... ArgumentsTypes>
     auto get_item(ArgumentsTypes... args) -> typename R::value_t;
 
+    /// @brief a helpers function for getting one item from API
+    template<class R, typename... ArgumentsTypes>
+    auto get_several_items(ArgumentsTypes... args) -> const typename R::value_t&;
+
     /// @brief a helpers function for getting collection items from API
     template<class R, typename... ArgumentsTypes>
     auto get_items_collection(ArgumentsTypes... args) -> const typename R::value_t&;
@@ -113,6 +117,21 @@ auto api::get_item(ArgumentsTypes... args) -> typename R::value_t
     if (requester(this))
         return requester.get();
     return {};
+}
+
+template<class R, typename... ArgumentsTypes>
+auto api::get_several_items(ArgumentsTypes... args) -> const typename R::value_t&
+{
+    // keeping static container with data for being able to return a reference
+    static typename R::value_t result;
+    result.clear();
+
+    // accumulating chunked results into one container
+    auto requester = R(args...);
+    for (const auto &entries: requester.fetch_by_chunks(this))
+        result.insert(result.end(), entries.begin(), entries.end());
+
+    return result;
 }
 
 template<class R, typename... ArgumentsTypes>

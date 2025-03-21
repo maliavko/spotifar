@@ -77,15 +77,11 @@ struct artist_albums_requester: public api_collection_requester<simplified_album
 };
 
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
-struct albums_requester: public api_requester<albums_t>
+struct albums_requester: public api_several_items_requester<albums_t>
 {
     albums_requester(const std::vector<string> &ids):
-        api_requester("/v1/albums", {
-            { "ids", utils::string_join(ids, ",") },
-        }, "albums")
-        {
-            assert(ids.size() > 0 && ids.size() <= 20);
-        }
+        api_several_items_requester("/v1/albums", ids, 20, "albums")
+        {}
 };
 
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album

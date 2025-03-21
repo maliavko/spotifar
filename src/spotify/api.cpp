@@ -171,7 +171,7 @@ tracks_t api::get_artist_top_tracks(const string &artist_id)
 
 albums_t api::get_albums(const std::vector<string> &ids)
 {
-    return get_item<albums_requester>(ids);
+    return get_several_items<albums_requester>(ids);
 }
     
 album_t api::get_album(const string &album_id)

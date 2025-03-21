@@ -41,6 +41,8 @@ bool play_history::request_data(history_items_t &data)
     if (new_entries.size() > 0)
         data.insert(data.begin(), new_entries.begin(), new_entries.end());
 
+    data.resize(150); // keeping only 150 items of a history
+
     return true;
 }
 

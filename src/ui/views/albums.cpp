@@ -378,26 +378,10 @@ void recent_albums_view::rebuild_items()
     if (recent_albums.size() > 0)
     {
         const auto &keys = std::views::keys(recent_albums);
+        const auto &ids = std::vector<string>(keys.begin(), keys.end());
 
-        auto chunk_begin = keys.begin();
-        auto chunk_end = keys.begin();
-
-        // splitting into chunks as an PI allows only requesting by 20 albums at once
-        do
-        {
-            if (std::distance(chunk_end, keys.end()) <= 20)
-                chunk_end = keys.end(); // the end of the container
-            else
-                std::advance(chunk_end, 20); // ...or just advancing to 20 hops
-            
-            for (const auto &album: api_proxy->get_albums(std::vector<string>(chunk_begin, chunk_end)))
-                items.push_back(
-                    history_album_t(recent_albums[album.id].played_at, album)
-                );
-
-            chunk_begin = chunk_end;
-        }
-        while (std::distance(chunk_begin, keys.end()) > 0);
+        for (const auto &album: api_proxy->get_albums(ids))
+            items.push_back(history_album_t(recent_albums[album.id].played_at, album));
     }
 }
 

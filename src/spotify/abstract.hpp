@@ -162,6 +162,53 @@ struct api_collection_requester: public api_requester<T>
     }
 };
 
+/// @brief A class-helpers to request several items from Spotify. As their
+/// API allows requesting with a limited number of items, the requester implements
+/// an interface to get data by chunks.
+/// @tparam T the tyope of the data returned, iterable
+template<class T>
+struct api_several_items_requester
+{
+    typedef typename T value_t;
+    
+    /// @param chunk_size a max size of a data chunk to request
+    /// @param data_field some responses have nested data under `data_field` key name
+    api_several_items_requester(
+        const string &url, const std::vector<string> ids, size_t chunk_size,
+        const string &data_field = ""
+    ):
+        url(url), chunk_size(chunk_size), ids(ids), data_field(data_field)
+        {}
+
+    std::generator<T> fetch_by_chunks(api_abstract *api)
+    {
+        auto chunk_begin = ids.begin();
+        auto chunk_end = ids.begin();
+
+        do
+        {
+            if (std::distance(chunk_end, ids.end()) <= chunk_size)
+                chunk_end = ids.end(); // the number of ids is less than the max chunk size
+            else
+                std::advance(chunk_end, chunk_size); // ..or just advance iterator further
+
+            api_requester<T> requester(url, {
+                { "ids", utils::string_join(std::vector<string>(chunk_begin, chunk_end), ",") },
+            }, data_field);
+            
+            if (requester(api))
+                co_yield requester.get();
+
+            chunk_begin = chunk_end;
+        } while (std::distance(chunk_begin, ids.end()) > 0);
+    }
+private:
+    ptrdiff_t chunk_size;
+    std::vector<string> ids;
+    string data_field;
+    string url;
+};
+
 } // namespace spotify
 } // namespace spotifar
 
