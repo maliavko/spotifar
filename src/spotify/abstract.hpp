@@ -78,7 +78,6 @@ struct api_requester
     typedef typename T value_t;
     
     T result; // result holder
-    json data; // parsed result json data
     string url; // initial request url string
     string data_field; // some responses have nested data under `data_field` key name
     Result response; // request httplib::Response
@@ -108,13 +107,13 @@ struct api_requester
         response = api->get(url, utils::http::session);
         if (is_success())
         {
-            data = json::parse(response->body);
+            const auto &data = json::parse(response->body);
 
             // the needed data is nested, we rebind references deeper
             if (!data_field.empty())
-                data = data.at(data_field);
-            
-            on_success(data);
+                on_success(data.at(data_field));
+            else
+                on_success(data);
 
             return true;
         }
@@ -138,7 +137,7 @@ struct api_collection_requester: public api_requester<T>
 
     /// @brief Returns the total amount of entries in general
     /// @note The result is valid only after a successful response
-    size_t get_total() const { return this->data["total"].get<size_t>(); }
+    size_t get_total() const { return total; }
 
     /// @brief Can be further iterated or not 
     bool has_more() const { return !this->url.empty(); }
@@ -146,6 +145,7 @@ struct api_collection_requester: public api_requester<T>
     virtual void on_success(const json &data)
     {
         data["items"].get_to(this->result);
+        this->total = data.value("total", 0);
 
         auto next = data["next"];
         this->url = !next.is_null() ? next.get<string>() : "";
@@ -161,6 +161,9 @@ struct api_collection_requester: public api_requester<T>
         }
         while (this->has_more());
     }
+
+private:
+    size_t total = 0;
 };
 
 /// @brief A class-helpers to request several items from Spotify. As their

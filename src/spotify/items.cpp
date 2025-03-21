@@ -243,6 +243,35 @@ void from_json(const json &j, simplified_playlist_t &p)
     p.description = utils::utf8_decode(j.at("description").get<string>());
 }
 
+void to_json(json &j, const simplified_playlist_t &p)
+{
+    j = {
+        { "id", p.id },
+        { "snapshot_id", p.snapshot_id },
+        { "href", p.href },
+        { "collaborative", p.collaborative },
+        { "public", p.is_public },
+        { "tracks", {
+            { "total", p.tracks_total }
+        } },
+        { "name", utils::utf8_encode(p.name) },
+        { "description", utils::utf8_encode(p.description) },
+        { "owner", {
+            { "display_name", utils::utf8_encode(p.user_display_name)}
+        } },
+    };
+}
+
+void from_json(const json &j, playlist_t &p)
+{
+    from_json(j, dynamic_cast<simplified_playlist_t&>(p));
+}
+
+void to_json(json &j, const playlist_t &p)
+{
+    to_json(j, dynamic_cast<const simplified_playlist_t&>(p));
+}
+
 const string& simplified_playlist_t::get_fields_filter()
 {
     static string fields = std::format("id,href,name,collaborative,public,description,"

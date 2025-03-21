@@ -543,7 +543,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
         }
         else if (r->status == NotModified_304)
         {
-            auto cache = api_responses_cache.get(url);
+            const auto &cache = api_responses_cache.get(url);
 
             // replacing empty body with the cached one, so the client
             // does not see the difference

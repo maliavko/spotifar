@@ -156,12 +156,15 @@ struct simplified_playlist_t: public data_item_t
     inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     friend void from_json(const json &j, simplified_playlist_t &p);
+    friend void to_json(json &j, const simplified_playlist_t &p);
 };
 
 struct playlist_t: public simplified_playlist_t
 {
-    //std::vector<saved_track_t> tracks;
     static const string& get_fields_filter();
+    
+    friend void from_json(const json &j, playlist_t &p);
+    friend void to_json(json &j, const playlist_t &p);
 };
 
 struct actions_t

@@ -135,10 +135,17 @@ json_cache<T>::json_cache(const wstring &storage_key):
 template<typename T>
 void json_cache<T>::read(settings_ctx &ctx)
 {
-    if (is_persistent)
+    try
     {
-        data.read(ctx);
-        last_sync_time.read(ctx);
+        if (is_persistent)
+        {
+            data.read(ctx);
+            last_sync_time.read(ctx);
+        }
+    }
+    catch (const std::exception &ex)
+    {
+        utils::log::global->warn("A persistent cache is not read, {}", ex.what());
     }
 
     // if the data is still valid, we send notification as
