@@ -2,6 +2,7 @@
 find_package(httplib CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(mio REQUIRED)
 
 set(SPDLOG_WCHAR_FILENAMES ON)
 find_package(spdlog CONFIG REQUIRED)
@@ -65,7 +66,9 @@ target_link_libraries(${PROJECT_NAME}
 		nlohmann_json::nlohmann_json
 		OpenSSL::SSL
 		OpenSSL::Crypto
-		spdlog::spdlog_header_only)
+		spdlog::spdlog_header_only
+		mio::mio
+)
 
 # copy docs to the final package
 add_custom_command(

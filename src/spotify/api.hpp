@@ -28,9 +28,6 @@ public:
     bool is_request_cached(const string &url) const;
 
     bool is_authenticated() const { return auth->is_authenticated(); }
-
-    void set_frequent_syncs(bool is_on) { is_frequent_syncs_flag = is_on; };
-    bool is_frequent_syncs() const { return is_frequent_syncs_flag; }
     
     // library api interface
     auto get_play_history() -> const history_items_t& { return history->get(); }
@@ -99,7 +96,6 @@ protected:
 private:
     BS::thread_pool pool;
     httplib::Client client;
-    bool is_frequent_syncs_flag = false;
     http_cache api_responses_cache;
 
     // caches

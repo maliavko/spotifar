@@ -29,6 +29,7 @@
 #include "spdlog/spdlog.h"
 #include "BS_thread_pool.hpp"
 #include "ObserverManager.h"
+#include "mio/mmap.hpp"
 
 #include <plugin.hpp>
 #include <PluginSettings.hpp>

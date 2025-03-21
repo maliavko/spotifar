@@ -22,24 +22,39 @@ void to_json(json &j, const http_cache::cache_entry &e)
     };
 }
 
-void http_cache::start(config::settings_context &ctx)
+void http_cache::start()
 {
     try
     {
-        auto s = ctx.get_str(L"cached_http_responses", "");
-        if (!s.empty())
-            json::parse(s).get_to(cached_responses);
+        string filepath = get_cache_filename();
+        if (!std::filesystem::exists(filepath))
+        {
+            std::ofstream file(filepath);
+            file << "{}";
+        }
+
+        std::error_code error;
+        mio::mmap_source mmap = mio::make_mmap_source(filepath, error);
+        if (error)
+        {
+            log::global->error("An error occured while mapping cache file, a cache file "
+                "initialization is skipped, ({}) {}", error.value(), error.message());
+            return;
+        }
+
+        json::parse(mmap).get_to(cached_responses);
+        mmap.unmap();
     }
     catch (const json::parse_error &ex)
     {
-        log::api->error("There is an error while reading http responses "
+        log::global->error("There is an error while reading http responses "
             "cache, {}", ex.what());
     }
 
     is_initialized = true;
 }
 
-void http_cache::shutdown(config::settings_context &ctx)
+void http_cache::shutdown()
 {
     // session-only caches still can have a valid etag, so instead of removing
     // them we just invalidating `cache-until` attribute
@@ -49,11 +64,12 @@ void http_cache::shutdown(config::settings_context &ctx)
 
     try
     {
-        ctx.set_str(L"cached_http_responses", json(cached_responses).dump());
+        std::ofstream file(get_cache_filename());
+        file << json(cached_responses).dump();
     }
     catch (const json::parse_error &ex)
     {
-        log::api->error("There is an error while storing http responses "
+        log::global->error("There is an error while storing http responses "
             "cache, {}", ex.what());
     }
 }
@@ -93,6 +109,11 @@ void http_cache::invalidate(const string &url_part)
         else
             ++it;
     }
+}
+
+string http_cache::get_cache_filename()
+{
+    return std::format("{}\\responses.cache", utils::to_string(config::get_plugin_data_folder()));
 }
 
 } // namespace spotify

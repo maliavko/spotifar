@@ -30,7 +30,7 @@ root menu
         - artists +
             - top tracks
             - albums +
-            - related artists? no knows source so far
+            - related artists?
         - playlists +
         - albums +
         - tracks
@@ -41,11 +41,12 @@ root menu
         - categories
         - search
         - user's top items
+        - the artists, whose tracks you recently liked
     - recents +
-        - artists
-        - albums
+        - artists +
+        - albums +
         - playlists
-        - tracks
+        - tracks +
 
 
 test cases for error-proof app behaviour

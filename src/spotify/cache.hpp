@@ -220,7 +220,7 @@ void json_cache<T>::apply_patches(T &item)
     j.get_to(item);
 }
 
-/// @brief A class for caching http responses from spotify server. Holds
+/// @brief A class-helper for caching http responses from spotify server. Holds
 /// the information about ETags and validity time of the responses
 class http_cache
 {
@@ -243,8 +243,8 @@ public:
         friend void to_json(json &j, const cache_entry &p);
     };
 public:
-    void start(config::settings_context &ctx);
-    void shutdown(config::settings_context &ctx);
+    void start();
+    void shutdown();
 
     /// @brief Initialization can take some time, return readiness
     inline bool is_initilized() const { return is_initialized; }
@@ -268,6 +268,8 @@ public:
 
     /// @brief Invalidates all the cache
     void clear_all() { cached_responses.clear(); }
+protected:
+    static string get_cache_filename();
 private:
     std::atomic<bool> is_initialized = false;
     std::unordered_map<string, cache_entry> cached_responses;
