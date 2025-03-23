@@ -7,6 +7,7 @@ using namespace httplib;
 using namespace utils;
 
 const string SPOTIFY_API_URL = "https://api.spotify.com";
+static string token = "";
 
 // TODO: reconsider these functions
 string dump_headers(const Headers &headers) {
@@ -55,9 +56,7 @@ string dump_http_error(const Request &req, const Response &res)
     return ss.str();
 }
 
-api::api():
-    client(SPOTIFY_API_URL),
-    pool(8)
+void http_logger(const Request &req, const Response &res)
 {
     static const std::set<string> exclude{
         "/v1/me/player",
@@ -65,26 +64,25 @@ api::api():
         "/v1/me/player/recently-played",
     };
 
-    client.set_logger(
-        [this](const Request &req, const Response &res)
+    if (http::is_success(res.status))
+    {
+        auto url = req.path.substr(0, req.path.find("?")); // trim parameters
+        if (!exclude.contains(url))
         {
-            if (http::is_success(res.status))
-            {
-                auto url = req.path.substr(0, req.path.find("?")); // trim parameters
-                if (!exclude.contains(url))
-                {
-                    log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
-                                    res.status, req.method, trim_webapi_url(req.path));
-                }
-            }
-            else
-                log::api->error(dump_http_error(req, res));
-        });
-    
-    client.set_default_headers(Headers{
-        {"Content-Type", "application/json; charset=utf-8"},
-    });
+            log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
+                res.status, req.method, trim_webapi_url(req.path));
+        }
+    }
+    else
+    {
+        log::api->error(dump_http_error(req, res));
+    }
+}
 
+api::api():
+    client(SPOTIFY_API_URL),
+    pool(8)
+{
     auth = std::make_unique<auth_cache>(
         this, config::get_client_id(), config::get_client_secret(),
         config::get_localhost_port());
@@ -160,6 +158,24 @@ const simplified_albums_t& api::get_artist_albums(const string &artist_id)
 
 const saved_albums_t& api::get_saved_albums()
 {
+    // try
+    // {
+    //     auto items = async_collection<saved_track_t>("/v1/me/tracks");
+
+    //     auto s = items.peek_total(this);
+    //     auto s2 = items.get_total(this);
+    //     auto s3 = items.peek_total(this);
+        
+    //     if (items.fetch(this))
+    //     {
+    //         int i = 0;
+    //     }
+    // }
+    // catch (const std::exception &ex)
+    // {
+    //     utils::log::api->error(ex.what());
+    // }
+
     return get_items_collection<saved_albums_requester>(MAX_LIMIT);
 }
 
@@ -318,26 +334,26 @@ void api::pause_playback(const string &device_id)
 void api::skip_to_next(const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, dev_id = std::as_const(device_id)]
+        [this, dev_id = std::as_const(device_id)]
         {
             Params params = {};
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            return c.Post("/v1/me/player/next", params);
+            return post("/v1/me/player/next", params);
         });
 }
 
 void api::skip_to_previous(const string &device_id)
 {
     pool.detach_task(
-        [&c = this->client, dev_id = std::as_const(device_id)]
+        [this, dev_id = std::as_const(device_id)]
         {
             Params params = {};
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
             
-            return c.Post("/v1/me/player/previous", params);
+            return post("/v1/me/player/previous", params);
         });
 }
 
@@ -530,7 +546,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
         cached_etag = cache.etag;
     }
 
-    auto r = client.Get(request_url, {{ "If-None-Match", cached_etag }});
+    auto r = get_client()->Get(request_url, {{ "If-None-Match", cached_etag }});
     if (http::is_success(r->status))
     {
         if (r->status == OK_200)
@@ -569,11 +585,12 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 httplib::Result api::put(const string &request_url, const json &body)
 {
     httplib::Result res;
+    auto client = get_client();
 
     if (!body.empty())
-        res = client.Put(request_url, body.dump(), "application/json");
+        res = client->Put(request_url, body.dump(), "application/json");
     else
-        res = client.Put(request_url);
+        res = client->Put(request_url);
     
     if (http::is_success(res->status))
     {
@@ -586,7 +603,7 @@ httplib::Result api::put(const string &request_url, const json &body)
 
 httplib::Result api::del(const string &request_url, const json &body)
 {
-    auto res = client.Delete(request_url, body.dump(), "application/json");
+    auto res = get_client()->Delete(request_url, body.dump(), "application/json");
     
     if (http::is_success(res->status))
     {
@@ -597,10 +614,37 @@ httplib::Result api::del(const string &request_url, const json &body)
     return res;
 }
 
+httplib::Result api::post(const string &request_url, const json &body)
+{
+    auto res = get_client()->Post(request_url, body.dump(), "application/json");
+    
+    if (http::is_success(res->status))
+    {
+        // invalidate all the cached repsonses with the same base urls
+        api_responses_cache.invalidate(request_url);
+    }
+
+    return res;
+}
+
+std::shared_ptr<httplib::Client> api::get_client() const
+{
+    auto client = std::make_shared<httplib::Client>(SPOTIFY_API_URL);
+
+    client->set_logger(http_logger);    
+    client->set_bearer_token_auth(token);
+    client->set_default_headers({
+        {"Content-Type", "application/json; charset=utf-8"},
+    });
+
+    return client;
+}
+
 void api::on_auth_status_changed(const auth_t &auth)
 {
     // set up current session's valid access token
     client.set_bearer_token_auth(auth.access_token);
+    token = auth.access_token;
 
     // pick up the some device for playback
     devices->pick_up_device();

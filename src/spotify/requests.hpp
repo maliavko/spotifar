@@ -8,6 +8,173 @@ namespace spotifar { namespace spotify {
 
 static const size_t MAX_LIMIT = 50;
 
+/// @brief A class-helper for the API requests, incapsulates some simple logic for 
+/// common requests operations. Requests, validates response, parses result,
+/// returns mapped data.
+///
+/// @tparam T a resulting object type, json item
+template<class T>
+struct api_requester
+{
+    typedef typename T value_t;
+    
+    T result; // result holder
+    json body;
+    string url; // initial request url string
+    string data_field; // some responses have nested data under `data_field` key name
+    Result response; // request httplib::Response
+
+    /// @param request_url initial request url
+    /// @param params request params object
+    /// @param data_field some responses have nested data under `data_field` key name
+    api_requester(const string &request_url, httplib::Params params = {}, const string &data_field = ""):
+        data_field(data_field)
+    {
+        url = httplib::append_query_params(request_url, params);
+    }
+    
+    const string &get_url() const { return url; }
+    
+    /// @brief Returns a reference to the requested data.
+    /// @note The result is valid only after a successful response
+    const T& get() const { return result; }
+
+    const json& get_data() { return body; }
+
+    /// @brief Whether the performed response is succeeded
+    bool is_success() const { return utils::http::is_success(response->status); }
+
+    /// @brief Executing an API request
+    /// @return a flag, whether the request succeeded or not
+    bool operator()(api_abstract *api)
+    {
+        response = api->get(url, utils::http::session);
+        if (is_success())
+        {
+            body = json::parse(response->body);
+
+            // the needed data is nested, we rebind references deeper
+            if (!data_field.empty())
+                on_success(body.at(data_field));
+            else
+                on_success(body);
+
+            return true;
+        }
+        return false;
+    }
+
+    /// @brief The method is called right after the valid response is received and
+    /// data is parsed correctly. Base method also reads a resulting value in this method
+    virtual void on_success(const json &data)
+    {
+        data.get_to(result);
+    }
+};
+
+/// @brief A class-helpers to perform the API requests, for the paginated data.
+/// @tparam T a resulting data type
+template<class T>
+struct api_collection_requester: public api_requester<T>
+{
+    using api_requester<T>::api_requester; // base ctor
+
+    /// @brief Returns the total amount of entries in general
+    /// @note The result is valid only after a successful response
+    size_t get_total() const { return total; }
+
+    /// @brief Can be further iterated or not 
+    bool has_more() const { return !this->url.empty(); }
+    
+    virtual void on_success(const json &data)
+    {
+        data["items"].get_to(this->result);
+        this->total = data.value("total", 0);
+
+        auto next = data["next"];
+        this->url = !next.is_null() ? next.get<string>() : "";
+    }
+
+    /// @brief Iterating items page by page of a given `limit` size
+    std::generator<T> fetch_by_pages(api_abstract *api)
+    {
+        // auto ss = config::ps_info.SaveScreen(0,0,-1,-1);
+
+        // size_t entries_received = 0;
+        // wstring message = L"\nRequesting data...";
+
+        do
+        {
+            // config::ps_info.Message(&MainGuid,&FarMessageGuid,
+            //     FMSG_ALLINONE,
+            //     L"",
+            //     (const wchar_t * const *)message.c_str(),
+            //     0,0);
+
+            if ((*this)(api))
+                co_yield this->result;
+            
+            // entries_received += this->result.size();
+            // message = std::format(L"\nEntries received {} / {}",
+            //     entries_received, this->get_total());
+        }
+        while (this->has_more());
+        
+        // config::ps_info.RestoreScreen(ss);
+    }
+
+private:
+    size_t total = 0;
+};
+
+/// @brief A class-helpers to request several items from Spotify. As their
+/// API allows requesting with a limited number of items, the requester implements
+/// an interface to get data by chunks.
+/// @tparam T the tyope of the data returned, iterable
+template<class T>
+struct api_several_items_requester
+{
+    typedef typename T value_t;
+    
+    /// @param chunk_size a max size of a data chunk to request
+    /// @param data_field some responses have nested data under `data_field` key name
+    api_several_items_requester(
+        const string &url, const std::vector<string> ids, size_t chunk_size,
+        const string &data_field = ""
+    ):
+        url(url), chunk_size(chunk_size), ids(ids), data_field(data_field)
+        {}
+
+    std::generator<T> fetch_by_chunks(api_abstract *api)
+    {
+        auto chunk_begin = ids.begin();
+        auto chunk_end = ids.begin();
+
+        do
+        {
+            if (std::distance(chunk_end, ids.end()) <= chunk_size)
+                chunk_end = ids.end(); // the number of ids is less than the max chunk size
+            else
+                std::advance(chunk_end, chunk_size); // ..or just advance iterator further
+
+            api_requester<T> requester(url, {
+                { "ids", utils::string_join(std::vector<string>(chunk_begin, chunk_end), ",") },
+            }, data_field);
+            
+            if (requester(api))
+                co_yield requester.get();
+
+            chunk_begin = chunk_end;
+        }
+        while (std::distance(chunk_begin, ids.end()) > 0);
+    }
+private:
+    ptrdiff_t chunk_size;
+    std::vector<string> ids;
+    string data_field;
+    string url;
+};
+
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
 struct followed_artists_requester: public api_collection_requester<artists_t>
 {

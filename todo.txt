@@ -1,12 +1,15 @@
 project infrastructure
 - gcc support
 
+
 refactor
 - add possibility to register librespot as a win service to avoid interrupting music when far is closed
-- working with plpaylists through Use the snapshot_id to reduce amount of requests
+- working with playlists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
 - parallelize playlists and saved tracks request via pool, using offset and limit fields
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
+- chnge all the api_proxy to the std:weak_ptr instances
+
 
 application ideas
 - grab lyrics from here? https://lrclib.net/
@@ -14,15 +17,11 @@ application ideas
 - panels
     - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
     - managing playlists via standard Far functions: create folder, move/remove from panel
-    - F3 on folders -> start playback
     - comamnds for console input?
     - show track progress on the win tray icon with ACTL_SETPROGRESSSTATE
 - player UI
     - goto playlist
     - recreate a volume control into slider?
-
-bugs
-- big http cache causes plugin to freeze while closing
 
 
 root menu
@@ -53,43 +52,3 @@ test cases for error-proof app behaviour
 - invalid spotify api items (client id or port e.g.)
 - 429 too many requests emulation
 - sudden network outage
-
-
-
-//// sample how to show loading splash screen
-
-    // TODO: unfinished, ugly
-    json url(request_url);
-
-    size_t entries_received = 0;
-    auto ss = config::ps_info.SaveScreen(0, 0, -1, -1);
-    wstring message = L"Loading\nRequesting data...";
-
-    do
-    {
-        config::ps_info.Message(&MainGuid,&FarMessageGuid,
-            FMSG_ALLINONE,
-            L"",
-            (const wchar_t * const *)message.c_str(),
-            0,0);
-
-        auto r = api->get(url);
-        if (utils::http::is_success(r->status))
-        {
-            json data = json::parse(r->body);
-            if (!data_key.empty())
-                data = data.at(data_key);
-
-                url = data["next"];
-
-            const auto &entries = data["items"].get<T>();
-            result.insert(result.end(), entries.begin(), entries.end());
-            
-            entries_received += entries.size();
-            message = std::format(L"Loading\nEntries received {}/{}",
-                entries_received, data["total"].get<int>());
-        }
-    }
-    while (!url.is_null());
-
-    config::ps_info.RestoreScreen(ss);
