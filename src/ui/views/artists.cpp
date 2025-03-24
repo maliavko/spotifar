@@ -156,7 +156,8 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 
 
 followed_artists_view::followed_artists_view(api_abstract *api):
-    artists_base_view(api, "followed_artists_view", std::bind(events::show_collections, api))
+    artists_base_view(api, "followed_artists_view", std::bind(events::show_collections, api)),
+    collection(api_proxy->get_followed_artists())
 {
 }
 
@@ -173,8 +174,9 @@ config::settings::view_t followed_artists_view::get_default_settings() const
 
 std::generator<const artist_t&> followed_artists_view::get_artists()
 {
-    for (const auto &a: api_proxy->get_followed_artists())
-        co_yield a;
+    if (collection->fetch(api_proxy))
+        for (const auto &a: *collection)
+            co_yield a;
 }
 
 void followed_artists_view::show_albums_view(const artist_t &artist) const

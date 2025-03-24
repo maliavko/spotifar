@@ -262,7 +262,6 @@ typedef std::vector<device_t> devices_t;
 typedef std::vector<artist_t> artists_t;
 typedef std::vector<simplified_album_t> simplified_albums_t;
 typedef std::vector<album_t> albums_t;
-typedef std::vector<saved_album_t> saved_albums_t;
 typedef std::vector<simplified_track_t> simplified_tracks_t;
 typedef std::vector<track_t> tracks_t;
 typedef std::vector<saved_track_t> saved_tracks_t;

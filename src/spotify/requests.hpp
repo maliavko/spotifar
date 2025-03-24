@@ -175,27 +175,6 @@ private:
     string url;
 };
 
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
-struct followed_artists_requester: public api_collection_requester<artists_t>
-{
-    followed_artists_requester(size_t limit = MAX_LIMIT):
-        api_collection_requester("/v1/me/following", {
-            { "type", "artist" },
-            { "limit", std::to_string(limit) },
-        }, "artists")
-        {}
-};
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
-struct saved_albums_requester: public api_collection_requester<saved_albums_t>
-{
-    saved_albums_requester(size_t limit = MAX_LIMIT):
-        api_collection_requester("/v1/me/albums", {
-            { "limit", std::to_string(limit) }
-        })
-        {}
-};
-
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-new-releases
 struct new_releases_requester: public api_collection_requester<simplified_albums_t>
 {

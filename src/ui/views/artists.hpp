@@ -43,6 +43,8 @@ protected:
     auto get_default_settings() const -> config::settings::view_t;
     auto get_artists() -> std::generator<const artist_t&>;
     auto show_albums_view(const artist_t &artist) const -> void;
+private:
+    followed_artists_ptr collection;
 };
 
 

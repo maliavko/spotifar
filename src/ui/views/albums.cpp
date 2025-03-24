@@ -223,7 +223,8 @@ void artist_view::show_tracks_view(const album_t &album) const
 }
 
 albums_collection_view::albums_collection_view(api_abstract *api):
-    albums_base_view(api, "albums_collection_view", std::bind(events::show_collections, api))
+    albums_base_view(api, "albums_collection_view", std::bind(events::show_collections, api)),
+    collection(api_proxy->get_saved_albums())
 {
 }
 
@@ -240,8 +241,9 @@ config::settings::view_t albums_collection_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> albums_collection_view::get_albums()
 {
-    for (const auto &a: api_proxy->get_saved_albums())
-        co_yield a;
+    if (collection->fetch(api_proxy))
+        for (const auto &a: *collection)
+            co_yield a;
 }
 
 const view::sort_modes_t& albums_collection_view::get_sort_modes() const

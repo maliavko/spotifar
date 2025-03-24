@@ -40,10 +40,10 @@ size_t calculate_menu_total(api_abstract *api, bool only_from_cache)
 size_t calculate_totals(api_abstract *api, const string &menu_id, bool only_from_cache = false)
 {
     if (menu_id == artists_id)
-        return calculate_menu_total<followed_artists_requester>(api, only_from_cache);
+        return api->get_followed_artists()->peek_total(api);
 
     if (menu_id == albums_id)
-        return calculate_menu_total<saved_albums_requester>(api, only_from_cache);
+        return api->get_saved_albums()->peek_total(api);
 
     if (menu_id == tracks_id)
         return calculate_menu_total<saved_tracks_requester>(api, only_from_cache);
@@ -169,7 +169,21 @@ intptr_t collection_view::select_item(const data_item_t* data)
 
 bool collection_view::request_extra_info(const data_item_t* data)
 {
-    return calculate_totals(api_proxy, data->id) > 0;
+    size_t total = 0;
+
+    if (data->id == artists_id)
+        total = api_proxy->get_followed_artists()->get_total(api_proxy);
+
+    if (data->id == albums_id)
+        total = api_proxy->get_saved_albums()->get_total(api_proxy);
+
+    if (data->id == tracks_id)
+        total = calculate_menu_total<saved_tracks_requester>(api_proxy, false);
+
+    if (data->id == playlists_id)
+        total = calculate_menu_total<user_playlists_requester>(api_proxy, false);
+
+    return total > 0;
 }
 
 } // namespace ui

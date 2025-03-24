@@ -68,6 +68,8 @@ protected:
     
     auto get_albums() -> std::generator<const simplified_album_t&>;
     auto show_tracks_view(const album_t &album) const -> void;
+private:
+    saved_albums_ptr collection;
 };
 
 

@@ -7,7 +7,7 @@ using namespace httplib;
 using namespace utils;
 
 const string SPOTIFY_API_URL = "https://api.spotify.com";
-static string token = "";
+static string token = ""; // TODO: hack, remove
 
 // TODO: reconsider these functions
 string dump_headers(const Headers &headers) {
@@ -146,9 +146,14 @@ const artists_t& api::get_artists(const std::vector<string> &ids)
     return get_several_items<artists_requester>(ids);
 }
 
-const artists_t& api::get_followed_artists()
+followed_artists_ptr api::get_followed_artists()
 {
-    return get_items_collection<followed_artists_requester>(MAX_LIMIT);
+    return followed_artists_ptr(new followed_artists_t(
+        "/v1/me/following", {
+            { "type", "artist" }
+        },
+        "artists"
+    ));
 }
 
 const simplified_albums_t& api::get_artist_albums(const string &artist_id)
@@ -156,27 +161,9 @@ const simplified_albums_t& api::get_artist_albums(const string &artist_id)
     return get_items_collection<artist_albums_requester>(artist_id, MAX_LIMIT);
 }
 
-const saved_albums_t& api::get_saved_albums()
+saved_albums_ptr api::get_saved_albums()
 {
-    // try
-    // {
-    //     auto items = async_collection<saved_track_t>("/v1/me/tracks");
-
-    //     auto s = items.peek_total(this);
-    //     auto s2 = items.get_total(this);
-    //     auto s3 = items.peek_total(this);
-        
-    //     if (items.fetch(this))
-    //     {
-    //         int i = 0;
-    //     }
-    // }
-    // catch (const std::exception &ex)
-    // {
-    //     utils::log::api->error(ex.what());
-    // }
-
-    return get_items_collection<saved_albums_requester>(MAX_LIMIT);
+    return saved_albums_ptr(new saved_albums_t("/v1/me/albums"));
 }
 
 const simplified_albums_t& api::get_new_releases()
