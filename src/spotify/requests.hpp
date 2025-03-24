@@ -127,64 +127,6 @@ private:
     size_t total = 0;
 };
 
-/// @brief A class-helpers to request several items from Spotify. As their
-/// API allows requesting with a limited number of items, the requester implements
-/// an interface to get data by chunks.
-/// @tparam T the tyope of the data returned, iterable
-template<class T>
-struct api_several_items_requester
-{
-    typedef typename T value_t;
-    
-    /// @param chunk_size a max size of a data chunk to request
-    /// @param data_field some responses have nested data under `data_field` key name
-    api_several_items_requester(
-        const string &url, const std::vector<string> ids, size_t chunk_size,
-        const string &data_field = ""
-    ):
-        url(url), chunk_size(chunk_size), ids(ids), data_field(data_field)
-        {}
-
-    std::generator<T> fetch_by_chunks(api_abstract *api)
-    {
-        auto chunk_begin = ids.begin();
-        auto chunk_end = ids.begin();
-
-        do
-        {
-            if (std::distance(chunk_end, ids.end()) <= chunk_size)
-                chunk_end = ids.end(); // the number of ids is less than the max chunk size
-            else
-                std::advance(chunk_end, chunk_size); // ..or just advance iterator further
-
-            api_requester<T> requester(url, {
-                { "ids", utils::string_join(std::vector<string>(chunk_begin, chunk_end), ",") },
-            }, data_field);
-            
-            if (requester(api))
-                co_yield requester.get();
-
-            chunk_begin = chunk_end;
-        }
-        while (std::distance(chunk_begin, ids.end()) > 0);
-    }
-private:
-    ptrdiff_t chunk_size;
-    std::vector<string> ids;
-    string data_field;
-    string url;
-};
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-new-releases
-struct new_releases_requester: public api_collection_requester<simplified_albums_t>
-{
-    new_releases_requester(size_t limit = MAX_LIMIT):
-        api_collection_requester("/v1/browse/new-releases", {
-            { "limit", std::to_string(limit) }
-        }, "albums")
-        {}
-};
-
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
 struct saved_tracks_requester: public api_collection_requester<saved_tracks_t>
 {
@@ -195,55 +137,11 @@ struct saved_tracks_requester: public api_collection_requester<saved_tracks_t>
         {}
 };
 
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artist
-struct artist_requester: public api_requester<artist_t>
-{
-    artist_requester(const string &artist_id):
-        api_requester(std::format("/v1/artists/{}", artist_id))
-        {}
-};
-
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-artists
-struct artists_requester: public api_several_items_requester<artists_t>
-{
-    artists_requester(const std::vector<string> &ids):
-        api_several_items_requester("/v1/artists", ids, 50, "artists")
-        {}
-};
-
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
 struct artist_top_tracks_requester: public api_requester<tracks_t>
 {
     artist_top_tracks_requester(const string &artist_id):
         api_requester(std::format("/v1/artists/{}/top-tracks", artist_id))
-        {}
-};
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-albums
-struct artist_albums_requester: public api_collection_requester<simplified_albums_t>
-{
-    artist_albums_requester(const string &artist_id, size_t limit = MAX_LIMIT):
-        api_collection_requester(std::format("/v1/artists/{}/albums", artist_id), {
-            { "include_groups", "album" },
-            { "limit", std::to_string(limit) },
-        })
-        {}
-};
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
-struct albums_requester: public api_several_items_requester<albums_t>
-{
-    albums_requester(const std::vector<string> &ids):
-        api_several_items_requester("/v1/albums", ids, 20, "albums")
-        {}
-};
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
-struct album_requester: public api_requester<album_t>
-{
-    album_requester(const string &album_id):
-        api_requester(std::format("/v1/albums/{}", album_id))
         {}
 };
 

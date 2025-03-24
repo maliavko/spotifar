@@ -194,7 +194,8 @@ const view::items_t* albums_base_view::get_items()
 artist_view::artist_view(api_abstract *api, const artist_t &artist,
                          return_callback_t callback):
     albums_base_view(api, "artist_view", callback),
-    artist(artist)
+    artist(artist),
+    collection(api->get_artist_albums(artist.id))
 {
 }
 
@@ -210,8 +211,9 @@ config::settings::view_t artist_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> artist_view::get_albums()
 {
-    for (const auto &a: api_proxy->get_artist_albums(artist.id))
-        co_yield a;
+    if (collection->fetch())
+        for (const auto &a: *collection)
+            co_yield a;
 }
 
 void artist_view::show_tracks_view(const album_t &album) const
@@ -280,7 +282,8 @@ void albums_collection_view::show_tracks_view(const album_t &album) const
 }
 
 new_releases_view::new_releases_view(api_abstract *api):
-    albums_base_view(api, "new_releases_view", std::bind(events::show_root, api))
+    albums_base_view(api, "new_releases_view", std::bind(events::show_root, api)),
+    collection(api_proxy->get_new_releases())
 {
 }
 
@@ -297,8 +300,9 @@ config::settings::view_t new_releases_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> new_releases_view::get_albums()
 {
-    for (const auto &a: api_proxy->get_new_releases())
-        co_yield a;
+    if (collection->fetch())
+        for (const auto &a: *collection)
+            co_yield a;
 }
 
 void new_releases_view::show_tracks_view(const album_t &album) const
@@ -369,7 +373,7 @@ void recent_albums_view::rebuild_items()
     if (recent_albums.size() > 0)
     {
         const auto &keys = std::views::keys(recent_albums);
-        const auto &ids = std::vector<string>(keys.begin(), keys.end());
+        const auto &ids = item_ids_t(keys.begin(), keys.end());
 
         for (const auto &album: api_proxy->get_albums(ids))
             items.push_back(history_album_t(recent_albums[album.id].played_at, album));

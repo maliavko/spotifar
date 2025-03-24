@@ -8,7 +8,10 @@
 // which possibly is needed only for views
 namespace spotifar { namespace spotify {
 
-static const string invalid_id = "";
+typedef string item_id_t;
+typedef std::vector<item_id_t> item_ids_t;
+
+static const item_id_t invalid_id = "";
 
 /// @brief Returns spotify item's uri, like "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
 /// @param item_type_name e.g. "track", "album", "playlist"
@@ -17,7 +20,9 @@ string make_item_uri(const string &item_type_name, const string &id);
 
 struct data_item_t
 {
-    string id = invalid_id;
+    item_id_t id = invalid_id;
+    
+    inline bool is_valid() const { return id != invalid_id; }
 };
 
 struct image_t
@@ -32,9 +37,8 @@ struct simplified_artist_t: public data_item_t
     wstring name;
 
     inline auto get_uri() const -> string { return make_uri(id); }
-    inline auto is_valid() const -> bool { return id != invalid_id; }
     
-    static auto make_uri(const string &id) -> string { return make_item_uri("artist", id); }
+    static auto make_uri(const item_id_t &id) -> string { return make_item_uri("artist", id); }
 
     friend void from_json(const json &j, simplified_artist_t &a);
     friend void to_json(json &j, const simplified_artist_t &a);
@@ -68,9 +72,8 @@ struct simplified_album_t: public data_item_t
     std::vector<image_t> images;
     std::vector<simplified_artist_t> artists;
 
-    static string make_uri(const string &id) { return make_item_uri("album", id); }
+    static string make_uri(const item_id_t &id) { return make_item_uri("album", id); }
     
-    inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     inline bool is_single() const { return album_type == single; }
     string get_release_year() const;
@@ -104,10 +107,9 @@ struct simplified_track_t: public data_item_t
     bool is_explicit;
     std::vector<simplified_artist_t> artists;
 
-    static string make_uri(const string &id) { return make_item_uri("track", id); }
+    static string make_uri(const item_id_t &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();
 
-    inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     friend bool operator==(const simplified_track_t &lhs, const simplified_track_t &rhs);
     friend void from_json(const json &j, simplified_track_t &t);
@@ -150,10 +152,9 @@ struct simplified_playlist_t: public data_item_t
     wstring description;
     size_t tracks_total;
 
-    static string make_uri(const string &id) { return make_item_uri("playlist", id); }
+    static string make_uri(const item_id_t &id) { return make_item_uri("playlist", id); }
     static const string& get_fields_filter();
 
-    inline bool is_valid() const { return id != invalid_id; }
     inline string get_uri() const { return make_uri(id); }
     friend void from_json(const json &j, simplified_playlist_t &p);
     friend void to_json(json &j, const simplified_playlist_t &p);
@@ -259,9 +260,6 @@ struct history_item_t
 };
 
 typedef std::vector<device_t> devices_t;
-typedef std::vector<artist_t> artists_t;
-typedef std::vector<simplified_album_t> simplified_albums_t;
-typedef std::vector<album_t> albums_t;
 typedef std::vector<simplified_track_t> simplified_tracks_t;
 typedef std::vector<track_t> tracks_t;
 typedef std::vector<saved_track_t> saved_tracks_t;

@@ -48,6 +48,7 @@ protected:
     auto show_tracks_view(const album_t &album) const -> void;
 private:
     artist_t artist;
+    artist_albums_ptr collection;
 };
 
 
@@ -87,6 +88,8 @@ public:
 protected:
     auto get_albums() -> std::generator<const simplified_album_t&>;
     auto show_tracks_view(const album_t &album) const -> void;
+private:
+    new_releases_ptr collection;
 };
 
 

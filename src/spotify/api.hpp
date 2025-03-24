@@ -35,21 +35,21 @@ public:
     auto get_playback_state() -> const playback_state_t& { return playback->get(); }
     auto get_followed_artists() -> followed_artists_ptr;
     auto get_artist(const string &artist_id) -> artist_t;
-    auto get_artists(const std::vector<string> &ids) -> const artists_t&;
-    auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&;
+    auto get_artists(const item_ids_t &ids) -> std::vector<artist_t>;
+    auto get_artist_albums(const string &artist_id) -> artist_albums_ptr;
     auto get_saved_albums() -> saved_albums_ptr;
-    auto get_new_releases() -> const simplified_albums_t&;
+    auto get_new_releases() -> new_releases_ptr;
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
     auto get_album(const string &album_id) -> album_t;
-    auto get_albums(const std::vector<string> &ids) -> albums_t;
+    auto get_albums(const item_ids_t &ids) -> std::vector<album_t>;
     auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
     auto get_playlist(const string &playlist_id) -> playlist_t;
     auto get_playlists() -> const simplified_playlists_t&;
     auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t&;
     auto check_saved_track(const string &track_id) -> bool;
-    auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool>;
-    auto save_tracks(const std::vector<string> &ids) -> bool;
-    auto remove_saved_tracks(const std::vector<string> &ids) -> bool;
+    auto check_saved_tracks(const item_ids_t &ids) -> std::vector<bool>;
+    auto save_tracks(const item_ids_t &ids) -> bool;
+    auto remove_saved_tracks(const item_ids_t &ids) -> bool;
     auto get_playing_queue() -> playing_queue_t;
     auto get_recently_played(std::int64_t after) -> const history_items_t&;
 

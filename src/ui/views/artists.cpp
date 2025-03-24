@@ -85,10 +85,12 @@ const view::items_t* artists_base_view::get_items()
         column_data.push_back(a.genres.size() > 0 ? utils::to_wstring(a.genres[0]) : L"");
         
         // column C3 - total albums
+        auto albums = api_proxy->get_artist_albums(a.id);
+        auto total_albums = albums->peek_total();
+    
         wstring albums_count = L"";
-        auto requester = artist_albums_requester(a.id);
-        if (api_proxy->is_request_cached(requester.get_url()) && requester(api_proxy))
-            albums_count = std::format(L"{: >6}", (requester.get_total()));
+        if (total_albums > 0)
+            albums_count = std::format(L"{: >6}", total_albums);
         column_data.push_back(albums_count);
 
         items.push_back({
@@ -118,7 +120,10 @@ intptr_t artists_base_view::select_item(const data_item_t *data)
 bool artists_base_view::request_extra_info(const data_item_t *data)
 {
     if (data != nullptr)
-        return artist_albums_requester(data->id)(api_proxy);
+    {
+        api_proxy->get_artist_albums(data->id)->get_total();
+        return true;
+    }
     return false;
 }
 
@@ -203,7 +208,7 @@ recent_artists_view::~recent_artists_view()
 
 const wstring& recent_artists_view::get_dir_name() const
 {
-    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
+    static wstring dir_name(get_text(MPanelArtistsItemLabel));
     return dir_name;
 }
 
@@ -239,7 +244,7 @@ void recent_artists_view::rebuild_items()
     if (recent_artists.size() > 0)
     {
         const auto &keys = std::views::keys(recent_artists);
-        const auto &ids = std::vector<string>(keys.begin(), keys.end());
+        const auto &ids = item_ids_t(keys.begin(), keys.end());
 
         for (const auto &artist: api_proxy->get_artists(ids))
             items.push_back(history_artist_t(recent_artists[artist.id].played_at, artist));

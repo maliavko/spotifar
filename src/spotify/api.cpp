@@ -14,6 +14,15 @@ const size_t pool_size = 12;
 
 static string token = ""; // TODO: hack, remove
 
+
+template<class R>
+auto request_item(R &&requester, api_abstract *api) -> typename R::result_t
+{
+    if (requester.execute(api))
+        return requester.get();
+    return {};
+}
+
 // TODO: reconsider these functions
 string dump_headers(const Headers &headers) {
     string s;
@@ -143,12 +152,14 @@ void api::tick()
 
 artist_t api::get_artist(const string &artist_id)
 {
-    return get_item<artist_requester>(artist_id);
+    return request_item(item_requester<artist_t>(
+        std::format("/v1/artists/{}", artist_id)), this);
 }
 
-const artists_t& api::get_artists(const std::vector<string> &ids)
+std::vector<artist_t> api::get_artists(const item_ids_t &ids)
 {
-    return get_several_items<artists_requester>(ids);
+    return request_item(several_items_requester<artist_t>(
+        "/v1/artists", ids, 50, "artists"), this);
 }
 
 followed_artists_ptr api::get_followed_artists()
@@ -162,9 +173,14 @@ followed_artists_ptr api::get_followed_artists()
     ));
 }
 
-const simplified_albums_t& api::get_artist_albums(const string &artist_id)
+artist_albums_ptr api::get_artist_albums(const string &artist_id)
 {
-    return get_items_collection<artist_albums_requester>(artist_id, MAX_LIMIT);
+    return artist_albums_ptr(new artist_albums_t(
+        this,
+        std::format("/v1/artists/{}/albums", artist_id), {
+            { "include_groups", "album" }
+        }
+    ));
 }
 
 saved_albums_ptr api::get_saved_albums()
@@ -172,24 +188,27 @@ saved_albums_ptr api::get_saved_albums()
     return saved_albums_ptr(new saved_albums_t(this, "/v1/me/albums"));
 }
 
-const simplified_albums_t& api::get_new_releases()
+new_releases_ptr api::get_new_releases()
 {
-    return get_items_collection<new_releases_requester>(MAX_LIMIT);
+    return new_releases_ptr(new new_releases_t(
+        this, "/v1/browse/new-releases", {}, "albums"));
 }
 
 tracks_t api::get_artist_top_tracks(const string &artist_id)
 {
     return get_item<artist_top_tracks_requester>(artist_id);
 }
-
-albums_t api::get_albums(const std::vector<string> &ids)
-{
-    return get_several_items<albums_requester>(ids);
-}
     
 album_t api::get_album(const string &album_id)
 {
-    return get_item<album_requester>(album_id);
+    return request_item(item_requester<album_t>(
+        std::format("/v1/albums/{}", album_id)), this);
+}
+
+std::vector<album_t> api::get_albums(const item_ids_t &ids)
+{
+    return request_item(several_items_requester<album_t>(
+        "/v1/albums", ids, 20, "albums"), this);
 }
 
 const simplified_tracks_t& api::get_album_tracks(const string &album_id)
@@ -218,7 +237,7 @@ bool api::check_saved_track(const string &track_id)
     return flags.size() > 0 && flags[0];
 }
 
-std::vector<bool> api::check_saved_tracks(const std::vector<string> &ids)
+std::vector<bool> api::check_saved_tracks(const item_ids_t &ids)
 {
     auto request_url = httplib::append_query_params(
         "/v1/me/tracks/contains", {{ "ids", utils::string_join(ids, ",") }});
@@ -234,13 +253,13 @@ std::vector<bool> api::check_saved_tracks(const std::vector<string> &ids)
     return {};
 }
 
-bool api::save_tracks(const std::vector<string> &ids)
+bool api::save_tracks(const item_ids_t &ids)
 {
     auto r = put("/v1/me/tracks", json{{ "ids", ids }});
     return http::is_success(r->status);
 }
 
-bool api::remove_saved_tracks(const std::vector<string> &ids)
+bool api::remove_saved_tracks(const item_ids_t &ids)
 {
     auto r = del("/v1/me/tracks", json{{ "ids", ids }});
     return http::is_success(r->status);

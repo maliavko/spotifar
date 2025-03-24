@@ -15,8 +15,15 @@ template<class T> class async_collection;
 
 typedef async_collection<saved_album_t> saved_albums_t;
 typedef std::shared_ptr<saved_albums_t> saved_albums_ptr;
+
 typedef sync_collection<artist_t> followed_artists_t;
 typedef std::shared_ptr<followed_artists_t> followed_artists_ptr;
+
+typedef async_collection<simplified_album_t> artist_albums_t;
+typedef std::shared_ptr<artist_albums_t> artist_albums_ptr;
+
+typedef async_collection<simplified_album_t> new_releases_t;
+typedef std::shared_ptr<new_releases_t> new_releases_ptr;
 
 struct api_abstract
 {
@@ -35,24 +42,38 @@ struct api_abstract
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
     virtual auto get_followed_artists() -> followed_artists_ptr = 0;
-    virtual auto get_artist(const string &artist_id) -> artist_t  = 0;
-    virtual auto get_artists(const std::vector<string> &ids) -> const artists_t&  = 0;
-    virtual auto get_artist_albums(const string &artist_id) -> const simplified_albums_t&  = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artist
+    virtual auto get_artist(const string &artist_id) -> artist_t = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-artists
+    virtual auto get_artists(const item_ids_t &ids) -> std::vector<artist_t> = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-albums
+    virtual auto get_artist_albums(const string &artist_id) -> artist_albums_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
     virtual auto get_saved_albums() -> saved_albums_ptr = 0;
-    virtual auto get_new_releases() -> const simplified_albums_t& = 0;
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-new-releases
+    virtual auto get_new_releases() -> new_releases_ptr = 0;
+
     virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
     virtual auto get_album(const string &album_id) -> album_t = 0;
-    virtual auto get_albums(const std::vector<string> &ids) -> albums_t = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
+    virtual auto get_albums(const item_ids_t &ids) -> std::vector<album_t> = 0;
+
     virtual auto get_album_tracks(const string &album_id) -> const simplified_tracks_t& = 0;
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
     virtual auto get_playlists() -> const simplified_playlists_t& = 0;
     virtual auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t& = 0;
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
-    virtual auto check_saved_tracks(const std::vector<string> &ids) -> std::vector<bool> = 0;
-    virtual auto save_tracks(const std::vector<string> &ids) -> bool = 0;
-    virtual auto remove_saved_tracks(const std::vector<string> &ids) -> bool = 0;
+    virtual auto check_saved_tracks(const item_ids_t &ids) -> std::vector<bool> = 0;
+    virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
+    virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto get_playing_queue() -> playing_queue_t = 0;
     virtual auto get_recently_played(std::int64_t after) -> const history_items_t& = 0;
 
@@ -94,6 +115,8 @@ template<class T>
 class item_requester
 {
 public:
+    typedef T result_t;
+public:
     /// @param url a url to request
     /// @param params get-request parameters to infuse into given `url`
     /// @param fieldname in case the data has a nested level, this is the field name
@@ -105,7 +128,7 @@ public:
         {}
     
     /// @brief Returns a result. Valid only after a successful request
-    const T& get() const { return result; }
+    const result_t& get() const { return result; }
 
     const string& get_url() const { return url; }
 
@@ -144,7 +167,68 @@ protected:
 protected:
     string fieldname;
     string url;
-    T result;
+    result_t result;
+};
+
+
+/// @brief A class-helpers to request several items from Spotify. As their
+/// API allows requesting with a limited number of items, the requester implements
+/// an interface to get data by chunks.
+/// @tparam T the tyope of the data returned, iterable
+template<class T>
+class several_items_requester
+{
+public:
+    typedef std::vector<typename T> result_t;
+public:
+    /// @param chunk_size a max size of a data chunk to request
+    /// @param data_field some responses have nested data under `data_field` key name
+    several_items_requester(
+        const string &url, const item_ids_t ids, size_t chunk_size,
+        const string &data_field = ""
+    ):
+        url(url), chunk_size(chunk_size), ids(ids), data_field(data_field)
+        {}
+    
+    /// @brief Returns a result. Valid only after a successful request
+    const result_t& get() const { return result; }
+
+    bool execute(api_abstract *api)
+    {
+        result.clear();
+
+        auto chunk_begin = ids.begin();
+        auto chunk_end = ids.begin();
+
+        do
+        {
+            if (std::distance(chunk_end, ids.end()) <= chunk_size)
+                chunk_end = ids.end(); // the number of ids is less than the max chunk size
+            else
+                std::advance(chunk_end, chunk_size); // ..or just advance iterator further
+
+            item_requester<result_t> requester(url, {
+                { "ids", utils::string_join(item_ids_t(chunk_begin, chunk_end), ",") },
+            }, data_field);
+            
+            if (!requester.execute(api))
+                return false;
+            
+            const auto &items = requester.get();
+            result.insert(result.end(), items.begin(), items.end());
+        
+            chunk_begin = chunk_end;
+        }
+        while (std::distance(chunk_begin, ids.end()) > 0);
+
+        return true;
+    }
+private:
+    result_t result;
+    ptrdiff_t chunk_size;
+    item_ids_t ids;
+    string data_field;
+    string url;
 };
 
 /// @brief A requester specialization for getting collections page by page

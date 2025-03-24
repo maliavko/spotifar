@@ -24,6 +24,10 @@ application ideas
     - recreate a volume control into slider?
 
 
+bugs
+- if a current playback context is "artist", when hit artist name in the player ui, crush happens
+
+
 root menu
     - collection +
         - artists +
