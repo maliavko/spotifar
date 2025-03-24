@@ -192,23 +192,23 @@ public:
     /// @param params get-request parameters to infuse into given `url`
     /// @param fieldname in case the data has a nested level, this is the field name
     /// to use on the parsed body
-    collection_abstract(const string &request_url, httplib::Params params = {},
-                        const string &fieldname = ""):
-        url(request_url), params(params), fieldname(fieldname)
+    collection_abstract(api_abstract *api, const string &request_url,
+                        httplib::Params params = {}, const string &fieldname = ""):
+        api_proxy(api), url(request_url), params(params), fieldname(fieldname)
     {
         this->params.insert(std::pair{ "limit", std::to_string(max_limit) });
     }
 
     /// @brief Returns the total count of items in the collection, performs a single
     /// server request if needed silently
-    size_t get_total(api_abstract *api) const
+    size_t get_total() const
     {
         if (is_populated) // if the collection is populated, return its size
             return this->size();
 
         // or perform a first page request
         auto requester = get_begin_requester();
-        if (requester->execute(api))
+        if (requester->execute(api_proxy))
             return requester->get_total();
         
         return 0LL;
@@ -216,20 +216,20 @@ public:
 
     /// @brief Returns the total count of items in the collection if available or zero,
     /// works only with cache, does not perform any request
-    size_t peek_total(api_abstract *api) const
+    size_t peek_total() const
     {
         // returns a total number only if the request is cached
         auto requester = get_begin_requester();
-        if (api->is_request_cached(requester->get_url()))
-            if (requester->execute(api))
+        if (api_proxy->is_request_cached(requester->get_url()))
+            if (requester->execute(api_proxy))
                 return requester->get_total();
         
         return 0LL;
     }
 
-    bool fetch(api_abstract *api)
+    bool fetch()
     {
-        if (!fetch_all(api))
+        if (!fetch_all(api_proxy))
             return false;
 
         is_populated = true;
@@ -241,6 +241,7 @@ protected:
 
     virtual auto fetch_all(api_abstract *api) -> bool = 0;
 protected:
+    api_abstract *api_proxy;
     string url;
     string fieldname;
     httplib::Params params;

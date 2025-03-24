@@ -8,7 +8,7 @@ refactor
 - investigate "market" fields for some API requests, for now completly
 - parallelize playlists and saved tracks request via pool, using offset and limit fields
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
-- chnge all the api_proxy to the std:weak_ptr instances
+- chnge all the api_proxy to the std:weak_ptr instances; see an example https://stackoverflow.com/questions/27827923/c-object-pool-that-provides-items-as-smart-pointers-that-are-returned-to-pool
 
 
 application ideas

@@ -6,7 +6,12 @@ namespace spotifar { namespace spotify {
 using namespace httplib;
 using namespace utils;
 
-const string SPOTIFY_API_URL = "https://api.spotify.com";
+const string spotify_api_url = "https://api.spotify.com";
+
+// majority of time they are not needed, but in case of requesting
+// a collection with bunch of pages we perform them asynchronously
+const size_t pool_size = 12;
+
 static string token = ""; // TODO: hack, remove
 
 // TODO: reconsider these functions
@@ -27,8 +32,8 @@ string dump_headers(const Headers &headers) {
 /// @brief clearing domain from path
 static string trim_webapi_url(const string &url)
 {
-    if (url.starts_with(SPOTIFY_API_URL))
-        return url.substr(SPOTIFY_API_URL.size(), url.size());
+    if (url.starts_with(spotify_api_url))
+        return url.substr(spotify_api_url.size(), url.size());
     
     return url;
 }
@@ -80,8 +85,8 @@ void http_logger(const Request &req, const Response &res)
 }
 
 api::api():
-    client(SPOTIFY_API_URL),
-    pool(8)
+    client(spotify_api_url),
+    pool(pool_size)
 {
     auth = std::make_unique<auth_cache>(
         this, config::get_client_id(), config::get_client_secret(),
@@ -149,6 +154,7 @@ const artists_t& api::get_artists(const std::vector<string> &ids)
 followed_artists_ptr api::get_followed_artists()
 {
     return followed_artists_ptr(new followed_artists_t(
+        this,
         "/v1/me/following", {
             { "type", "artist" }
         },
@@ -163,7 +169,7 @@ const simplified_albums_t& api::get_artist_albums(const string &artist_id)
 
 saved_albums_ptr api::get_saved_albums()
 {
-    return saved_albums_ptr(new saved_albums_t("/v1/me/albums"));
+    return saved_albums_ptr(new saved_albums_t(this, "/v1/me/albums"));
 }
 
 const simplified_albums_t& api::get_new_releases()
@@ -616,7 +622,7 @@ httplib::Result api::post(const string &request_url, const json &body)
 
 std::shared_ptr<httplib::Client> api::get_client() const
 {
-    auto client = std::make_shared<httplib::Client>(SPOTIFY_API_URL);
+    auto client = std::make_shared<httplib::Client>(spotify_api_url);
 
     client->set_logger(http_logger);    
     client->set_bearer_token_auth(token);

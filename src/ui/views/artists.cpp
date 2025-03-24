@@ -174,7 +174,7 @@ config::settings::view_t followed_artists_view::get_default_settings() const
 
 std::generator<const artist_t&> followed_artists_view::get_artists()
 {
-    if (collection->fetch(api_proxy))
+    if (collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }

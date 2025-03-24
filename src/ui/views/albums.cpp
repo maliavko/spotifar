@@ -241,7 +241,7 @@ config::settings::view_t albums_collection_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> albums_collection_view::get_albums()
 {
-    if (collection->fetch(api_proxy))
+    if (collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }
