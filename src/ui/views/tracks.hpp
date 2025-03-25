@@ -52,6 +52,7 @@ protected:
     auto on_track_changed(const track_t &track) -> void;
 private:
     album_t album;
+    album_tracks_ptr collection;
 };
 
 

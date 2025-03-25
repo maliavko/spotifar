@@ -42,7 +42,7 @@ public:
     auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
     auto get_album(const string &album_id) -> album_t;
     auto get_albums(const item_ids_t &ids) -> std::vector<album_t>;
-    auto get_album_tracks(const string &album_id) -> const simplified_tracks_t&;
+    auto get_album_tracks(const string &album_id) -> album_tracks_ptr;
     auto get_playlist(const string &playlist_id) -> playlist_t;
     auto get_playlists() -> const simplified_playlists_t&;
     auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t&;

@@ -100,11 +100,11 @@ intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
             return item1->name.compare(item2->name);
 
         case SM_EXT:
-            if (item1->disc_number == item2->disc_number)
-                if (item1->track_number == item2->track_number)
+            if (item1->track_number == item2->track_number)
+                if (item1->disc_number == item2->disc_number)
                     return 0;
-                return item1->track_number < item2->track_number ? -1 : 1;
-            return item1->disc_number < item2->disc_number ? -1 : 1;
+                return item1->disc_number < item2->disc_number ? -1 : 1;
+            return item1->track_number < item2->track_number ? -1 : 1;
 
         case SM_SIZE:
             if (item1->duration_ms == item2->duration_ms)
@@ -147,7 +147,8 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album,
                                      return_callback_t callback):
     tracks_base_view(api, "album_tracks_view", callback),
-    album(album)
+    album(album),
+    collection(api_proxy->get_album_tracks(album.id))
 {
     utils::events::start_listening<playback_observer>(this);
 }
@@ -175,8 +176,9 @@ bool album_tracks_view::start_playback(const string &track_id)
 
 std::generator<const simplified_track_t&> album_tracks_view::get_tracks()
 {
-    for (const auto &t: api_proxy->get_album_tracks(album.id))
-        co_yield t;
+    if (collection->fetch())
+        for (const auto &t: *collection)
+            co_yield t;
 }
 
 void album_tracks_view::on_track_changed(const track_t &track)

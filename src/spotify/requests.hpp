@@ -145,16 +145,6 @@ struct artist_top_tracks_requester: public api_requester<tracks_t>
         {}
 };
 
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
-struct album_tracks_requester: public api_collection_requester<simplified_tracks_t>
-{
-    album_tracks_requester(const string &album_id, size_t limit = MAX_LIMIT):
-        api_collection_requester(std::format("/v1/albums/{}/tracks", album_id), {
-            { "limit", std::to_string(limit) },
-        })
-        {}
-};
-
 /// @brief https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
 struct user_playlists_requester: public api_collection_requester<simplified_playlists_t>
 {

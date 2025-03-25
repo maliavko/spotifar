@@ -25,6 +25,9 @@ typedef std::shared_ptr<artist_albums_t> artist_albums_ptr;
 typedef async_collection<simplified_album_t> new_releases_t;
 typedef std::shared_ptr<new_releases_t> new_releases_ptr;
 
+typedef async_collection<simplified_track_t> album_tracks_t;
+typedef std::shared_ptr<album_tracks_t> album_tracks_ptr;
+
 struct api_abstract
 {
     template<class T> friend class sync_collection;
@@ -39,6 +42,8 @@ struct api_abstract
     virtual auto get_play_history() -> const history_items_t& = 0;
     virtual auto get_available_devices() -> const devices_t& = 0;
     virtual auto get_playback_state() -> const playback_state_t& = 0;
+
+    virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
     virtual auto get_followed_artists() -> followed_artists_ptr = 0;
@@ -58,15 +63,15 @@ struct api_abstract
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-new-releases
     virtual auto get_new_releases() -> new_releases_ptr = 0;
 
-    virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
-
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
     virtual auto get_album(const string &album_id) -> album_t = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
     virtual auto get_albums(const item_ids_t &ids) -> std::vector<album_t> = 0;
 
-    virtual auto get_album_tracks(const string &album_id) -> const simplified_tracks_t& = 0;
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
+    virtual auto get_album_tracks(const string &album_id) -> album_tracks_ptr = 0;
+
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
     virtual auto get_playlists() -> const simplified_playlists_t& = 0;
     virtual auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t& = 0;
@@ -132,8 +137,16 @@ public:
 
     const string& get_url() const { return url; }
 
-    bool execute(api_abstract *api)
+    bool is_cached(api_abstract *api) const
     {
+        return api->is_request_cached(get_url());
+    }
+
+    bool execute(api_abstract *api, bool only_cached = false)
+    {
+        if (only_cached && !is_cached(api))
+            return false;
+        
         auto res = api->get(url, utils::http::session);
         if (utils::http::is_success(res->status))
         {
@@ -158,8 +171,8 @@ public:
     }
 protected:
     /// @brief Provides a way for derived classes to specify result parsing approach
-    /// @param body, parsed response body
-    /// @param result, a reference to the result to hold
+    /// @param body parsed response body
+    /// @param result a reference to the result to hold
     virtual void on_read_result(const json &body, T &result)
     {
         body.get_to(result);
@@ -169,7 +182,6 @@ protected:
     string url;
     result_t result;
 };
-
 
 /// @brief A class-helpers to request several items from Spotify. As their
 /// API allows requesting with a limited number of items, the requester implements
@@ -193,7 +205,7 @@ public:
     /// @brief Returns a result. Valid only after a successful request
     const result_t& get() const { return result; }
 
-    bool execute(api_abstract *api)
+    bool execute(api_abstract *api, bool only_cached = false)
     {
         result.clear();
 
@@ -211,7 +223,7 @@ public:
                 { "ids", utils::string_join(item_ids_t(chunk_begin, chunk_end), ",") },
             }, data_field);
             
-            if (!requester.execute(api))
+            if (!requester.execute(api, only_cached))
                 return false;
             
             const auto &items = requester.get();
@@ -304,16 +316,18 @@ public:
     {
         // returns a total number only if the request is cached
         auto requester = get_begin_requester();
-        if (api_proxy->is_request_cached(requester->get_url()))
+        if (requester->is_cached(api_proxy))
             if (requester->execute(api_proxy))
                 return requester->get_total();
         
         return 0LL;
     }
 
-    bool fetch()
+    bool fetch(bool only_cached = false)
     {
-        if (!fetch_all(api_proxy))
+        this->clear();
+
+        if (!fetch_all(api_proxy, only_cached))
             return false;
 
         is_populated = true;
@@ -323,7 +337,7 @@ public:
 protected:
     virtual auto get_begin_requester() const -> requester_ptr = 0;
 
-    virtual auto fetch_all(api_abstract *api) -> bool = 0;
+    virtual auto fetch_all(api_abstract *api, bool only_cached) -> bool = 0;
 protected:
     api_abstract *api_proxy;
     string url;
@@ -343,13 +357,13 @@ public:
     using collection_abstract<T>::requester_ptr;
     using collection_abstract<T>::collection_abstract;
 protected:
-    bool fetch_all(api_abstract *api) override
+    bool fetch_all(api_abstract *api, bool only_cached) override
     {
         auto requester = get_begin_requester();
 
         while (requester != nullptr)
         {
-            if (!requester->execute(api))
+            if (!requester->execute(api, only_cached))
                 return false;
 
             if (this->capacity() != requester->get_total())
@@ -384,13 +398,13 @@ public:
     using collection_abstract<T>::requester_ptr;
     using collection_abstract<T>::collection_abstract;
 protected:
-    bool fetch_all(api_abstract *api) override
+    bool fetch_all(api_abstract *api, bool only_cached) override
     {
         // performing the first request to obtain a total number fo items
         auto requester = make_requester(0);
 
         size_t total = 0;
-        if (requester->execute(api))
+        if (requester->execute(api, only_cached))
             total = requester->get_total();
 
         if (total == 0) return false;
@@ -404,13 +418,25 @@ protected:
         result[0] = requester->get();
 
         BS::multi_future<void> sequence_future = api->get_pool().submit_sequence(start, end,
-            [this, &result, api](const size_t idx)
+            [this, &result, api, only_cached](const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
-                if (requester->execute(api))
-                    result[idx] = requester->get();
+
+                if (!requester->execute(api, only_cached))
+                    throw std::runtime_error("Unsuccesful request");
+                
+                result[idx] = requester->get();
             });
-        sequence_future.wait();
+
+        try
+        {
+            sequence_future.wait();
+            sequence_future.get();
+        }
+        catch (const std::runtime_error&)
+        {
+            return false;
+        }
 
         // preallocating data container for holding the final result
         if (this->capacity() != total)

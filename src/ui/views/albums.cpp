@@ -103,7 +103,7 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
 bool albums_base_view::request_extra_info(const data_item_t* data)
 {
     if (data != nullptr)
-        return album_tracks_requester(data->id)(api_proxy);
+        return api_proxy->get_album_tracks(data->id)->fetch();
 
     return false;
 }
@@ -157,10 +157,10 @@ const view::items_t* albums_base_view::get_items()
 
         // column C5 - album length
         size_t total_length_ms = 0;
-        auto requester = album_tracks_requester(a.id);
-        if (api_proxy->is_request_cached(requester.url))
+        auto tracks = api_proxy->get_album_tracks(a.id);
+        if (tracks->fetch(true))
         {
-            for (const auto &t: api_proxy->get_album_tracks(a.id))
+            for (const auto &t: *tracks)
                 total_length_ms += t.duration_ms;
         }
 

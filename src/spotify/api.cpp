@@ -211,9 +211,10 @@ std::vector<album_t> api::get_albums(const item_ids_t &ids)
         "/v1/albums", ids, 20, "albums"), this);
 }
 
-const simplified_tracks_t& api::get_album_tracks(const string &album_id)
+album_tracks_ptr api::get_album_tracks(const string &album_id)
 {
-    return get_items_collection<album_tracks_requester>(album_id, MAX_LIMIT);
+    return album_tracks_ptr(new album_tracks_t(
+        this, std::format("/v1/albums/{}/tracks", album_id)));
 }
 
 const simplified_playlists_t& api::get_playlists()
@@ -417,9 +418,10 @@ void api::toggle_shuffle_plus(bool is_on)
         auto &state = get_playback_state();
         if (state.context.is_album())
         {
-            const auto &tracks = get_album_tracks(state.context.get_item_id());
-            std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
-                            [](const auto &t) { return t.get_uri(); });
+            auto tracks = get_album_tracks(state.context.get_item_id());
+            if (tracks->fetch())
+                std::transform(tracks->begin(), tracks->end(), std::back_inserter(uris),
+                                [](const auto &t) { return t.get_uri(); });
         }
         else if (state.context.is_playlist())
         {
