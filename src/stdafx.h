@@ -7,6 +7,7 @@
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #define BS_THREAD_POOL_ENABLE_PRIORITY
+#define RAPIDJSON_HAS_STDSTRING 1
 
 #include <string>
 #include <map>
@@ -30,6 +31,8 @@
 #include "BS_thread_pool.hpp"
 #include "ObserverManager.h"
 #include "mio/mmap.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/pointer.h"
 
 #include <plugin.hpp>
 #include <PluginSettings.hpp>

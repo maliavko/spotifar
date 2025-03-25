@@ -87,7 +87,20 @@ struct album_t: public simplified_album_t
 {
     friend void from_json(const json &j, album_t &t);
     friend void to_json(json &j, const album_t &p);
+
+    friend void from_rapidjson(const rapidjson::Value &value, album_t &t);
 };
+
+using namespace rapidjson;
+
+template<class T>
+void from_rapidjson(const Value &value, std::vector<T> &result)
+{
+    result.resize(value.Size());
+
+    for (SizeType i = 0; i < result.size(); i++)
+        from_rapidjson(value[i], result[i]);
+}
 
 struct saved_album_t: public album_t
 {

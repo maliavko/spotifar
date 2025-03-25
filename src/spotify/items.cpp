@@ -115,6 +115,24 @@ void to_json(json &j, const album_t &a)
     //j.update
 }
 
+void from_rapidjson(const Value &value, album_t &t)
+{
+    // j.at("id").get_to(a.id);
+    // j.at("total_tracks").get_to(a.total_tracks);
+    // j.at("album_type").get_to(a.album_type);
+    // j.at("release_date").get_to(a.release_date);
+    // j.at("release_date_precision").get_to(a.release_date_precision);
+    // j.at("href").get_to(a.href);
+    // j.at("images").get_to(a.images);
+    // j.at("artists").get_to(a.artists);
+
+    // a.name = utils::utf8_decode(j.at("name").get<string>());
+
+    t.id = value["id"].GetString();
+    t.name = utils::utf8_decode(value["name"].GetString());
+}
+
+
 void from_json(const json &j, saved_album_t &a)
 {
     from_json(j.at("album"), dynamic_cast<album_t&>(a));

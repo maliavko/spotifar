@@ -113,6 +113,12 @@ protected:
 /// @brief A maximum number of one-time requested collection items
 static const size_t max_limit = 50ULL;
 
+template<typename>
+struct is_std_vector : std::false_type {};
+
+template<typename T, typename A>
+struct is_std_vector<std::vector<T,A>> : std::true_type {};
+
 /// @brief A helper-class for requesting data from spotify api. Incapsulated
 /// a logic for performing a request, parsing and holding final result
 /// @tparam T a final result's type
@@ -153,6 +159,28 @@ public:
             try
             {
                 auto body = json::parse(res->body);
+
+                constexpr bool supports_vector_rapidjson = is_std_vector<T>::value && requires(const Value &v, typename T::value_type &item)
+                {
+                    from_rapidjson(v, item);
+                };
+                constexpr bool supports_rapidjson = !is_std_vector<T>::value && requires(const Value &v, T &item)
+                {
+                    from_rapidjson(v, item);
+                };
+
+                if constexpr (supports_vector_rapidjson || supports_rapidjson)
+                {
+                    Document document;
+                    document.Parse(res->body);
+                    auto f = document.HasParseError();
+
+                    if (document.HasMember("albums"))
+                    {
+                        T item;
+                        from_rapidjson(document["albums"], item);
+                    }
+                }
 
                 if (!fieldname.empty())
                     body = body.at(fieldname);

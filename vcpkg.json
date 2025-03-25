@@ -9,6 +9,7 @@
 		"nlohmann-json",
 		"spdlog",
 		"bshoshany-thread-pool",
-		"mio"
+		"mio",
+		"rapidjson"
   ]
 }
