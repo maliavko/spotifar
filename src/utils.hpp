@@ -4,20 +4,6 @@
 
 #include "stdafx.h"
 
-template<>
-struct std::hash<FarKey>
-{
-    std::size_t operator()(const FarKey &fkey) const
-    {
-        std::size_t res = 0;
-        nlohmann::detail::combine(res, fkey.VirtualKeyCode);
-        nlohmann::detail::combine(res, fkey.ControlKeyState);
-        return res;
-    }
-};
-
-bool operator==(const FarKey &lhs, const FarKey &rhs);
-
 namespace spotifar { namespace utils {
 
 using clock_t = std::chrono::system_clock;
@@ -325,12 +311,88 @@ namespace http
 
 namespace json2
 {
-    using namespace rapidjson;
+    //using namespace rapidjson;
+    using rapidjson::Document;
+    using rapidjson::Value;
+    using rapidjson::kObjectType;
+    using rapidjson::StringBuffer;
+    using rapidjson::Writer;
     
     typedef typename Document::AllocatorType Allocator;
+    
+    
+    void from_rapidjson(const Value &j, string &result);
+
+    void to_rapidjson(Value &j, const string &result, Allocator &allocator);
+
+    template<class T>
+    void from_rapidjson(const Value &j, std::vector<T> &result)
+    {
+        result.resize(j.Size());
+
+        for (rapidjson::SizeType i = 0; i < result.size(); i++)
+            from_rapidjson(j[i], result[i]);
+    }
+
+    template<class T>
+    void to_rapidjson(Value &result, const std::vector<T> &data, Allocator &allocator)
+    {
+        result = Value(rapidjson::kArrayType);
+
+        for (const auto &item: data)
+        {
+            Value value;
+            to_rapidjson(value, item, allocator);
+
+            result.PushBack(value, allocator);
+        }
+    }
+
+    template<class V>
+    void from_rapidjson(const Value &j, std::unordered_map<string, V> &result)
+    {
+        result.reserve(j.MemberCount());
+
+        for (Value::ConstMemberIterator itr = j.MemberBegin();
+            itr != j.MemberEnd(); ++itr)
+        {
+            auto &value = result[itr->name.GetString()] = {};
+            from_rapidjson(itr->value, value);
+        }
+    }
+
+    template<class V>
+    void to_rapidjson(Value &result, const std::unordered_map<string, V> &data,
+        Allocator &allocator)
+    {
+        result = Value(rapidjson::kObjectType);
+
+        for (const auto &[k, v]: data)
+        {
+            Value value;
+            to_rapidjson(value, v, allocator);
+
+            result.AddMember(Value(k, allocator), value, allocator);
+        }
+    }
 }
 
 } // namespace utils
 } // namespace spotifar
+
+
+template<>
+struct std::hash<FarKey>
+{
+    std::size_t operator()(const FarKey &fkey) const
+    {
+        std::size_t res = 0;
+        nlohmann::detail::combine(res, fkey.VirtualKeyCode);
+        nlohmann::detail::combine(res, fkey.ControlKeyState);
+        return res;
+    }
+};
+
+bool operator==(const FarKey &lhs, const FarKey &rhs);
 
 #endif // UTILS_HPP_64E82CD1_3EFD_41A4_BD43_6FC38FE138A8

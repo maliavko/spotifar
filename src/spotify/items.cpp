@@ -3,6 +3,8 @@
 
 namespace spotifar { namespace spotify {
 
+using namespace utils::json2;
+
 string make_item_uri(const string &item_type_name, const string &id)
 {
     return std::format("spotify:{}:{}", item_type_name, id);
@@ -12,17 +14,6 @@ bool operator==(const data_item_t &lhs, const data_item_t &rhs)
 {
     return lhs.id == rhs.id;
 }
-
-void from_rapidjson(const json2::Value &j, string &result)
-{
-    result = j.GetString();
-}
-
-void to_rapidjson(json2::Value &j, const string &result, json2::Allocator &allocator)
-{
-    j.SetString(result, allocator);
-}
-
 
 void to_rapidjson(json2::Value &result, const image_t &i, json2::Allocator &allocator)
 {

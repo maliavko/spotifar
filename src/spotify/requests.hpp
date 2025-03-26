@@ -19,7 +19,7 @@ struct api_requester
     typedef typename T value_t;
     
     T result; // result holder
-    json body;
+    nlohmann::json body;
     string url; // initial request url string
     string data_field; // some responses have nested data under `data_field` key name
     Result response; // request httplib::Response
@@ -39,7 +39,7 @@ struct api_requester
     /// @note The result is valid only after a successful response
     const T& get() const { return result; }
 
-    const json& get_data() { return body; }
+    const nlohmann::json& get_data() { return body; }
 
     /// @brief Whether the performed response is succeeded
     bool is_success() const { return utils::http::is_success(response->status); }
@@ -51,7 +51,7 @@ struct api_requester
         response = api->get(url, utils::http::session);
         if (is_success())
         {
-            body = json::parse(response->body);
+            body = nlohmann::json::parse(response->body);
 
             // the needed data is nested, we rebind references deeper
             if (!data_field.empty())
@@ -66,7 +66,7 @@ struct api_requester
 
     /// @brief The method is called right after the valid response is received and
     /// data is parsed correctly. Base method also reads a resulting value in this method
-    virtual void on_success(const json &data)
+    virtual void on_success(const nlohmann::json &data)
     {
         //data.get_to(result);
     }
@@ -86,7 +86,7 @@ struct api_collection_requester: public api_requester<T>
     /// @brief Can be further iterated or not 
     bool has_more() const { return !this->url.empty(); }
     
-    virtual void on_success(const json &data)
+    virtual void on_success(const nlohmann::json &data)
     {
         // TODO: finish up moving all the API requests to the requesters and remove this file
         // data["items"].get_to(this->result);

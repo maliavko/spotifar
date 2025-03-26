@@ -6,7 +6,6 @@ refactor
 - add possibility to register librespot as a win service to avoid interrupting music when far is closed
 - working with playlists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
-- parallelize playlists and saved tracks request via pool, using offset and limit fields
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - chnge all the api_proxy to the std:weak_ptr instances; see an example https://stackoverflow.com/questions/27827923/c-object-pool-that-provides-items-as-smart-pointers-that-are-returned-to-pool
 
@@ -26,6 +25,8 @@ application ideas
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
+- recent tracks do not show up
+- remove all nlohmann usages and remove dependency
 
 
 root menu

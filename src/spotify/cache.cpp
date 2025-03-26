@@ -5,7 +5,7 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
-void from_rapidjson(const rapidjson::Value &j, http_cache::cache_entry &e)
+void from_rapidjson(const json2::Value &j, http_cache::cache_entry &e)
 {
     e.etag = j["etag"].GetString();
     e.body = j["body"].GetString();
@@ -17,23 +17,14 @@ void from_rapidjson(const rapidjson::Value &j, http_cache::cache_entry &e)
     e.cached_until = clock_t::time_point{ clock_t::duration(cached_until) };
 }
 
-void to_rapidjson(rapidjson::Value &result, const http_cache::cache_entry &e, rapidjson::Document::AllocatorType allocator)
+void to_rapidjson(json2::Value &result, const http_cache::cache_entry &e, json2::Allocator allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = json2::Value(rapidjson::kObjectType);
 
-    result.AddMember("etag", Value(e.etag, allocator), allocator);
-    result.AddMember("body", Value(e.body, allocator), allocator);
+    result.AddMember("etag", json2::Value(e.etag, allocator), allocator);
+    result.AddMember("body", json2::Value(e.body, allocator), allocator);
     result.AddMember("cached-until",
-        Value(e.cached_until.time_since_epoch().count()), allocator);
-}
-
-void to_json(json &j, const http_cache::cache_entry &e)
-{
-    j = json{
-        { "etag", e.etag },
-        { "body", e.body },
-        { "cached-until", e.cached_until.time_since_epoch().count() }
-    };
+        json2::Value(e.cached_until.time_since_epoch().count()), allocator);
 }
 
 void http_cache::start()
@@ -59,7 +50,7 @@ void http_cache::start()
         rapidjson::Document document;
         document.Parse(mmap.data());
         
-        from_rapidjson(document, cached_responses);
+        utils::json2::from_rapidjson(document, cached_responses);
 
         mmap.unmap();
     }
@@ -83,7 +74,7 @@ void http_cache::shutdown()
     try
     {
         rapidjson::Document document;
-        to_rapidjson(document, cached_responses, document.GetAllocator());
+        utils::json2::to_rapidjson(document, cached_responses, document.GetAllocator());
 
         rapidjson::StringBuffer sb;
         rapidjson::Writer<rapidjson::StringBuffer> writer(sb);

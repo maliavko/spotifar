@@ -254,7 +254,7 @@ std::vector<bool> api::check_saved_tracks(const item_ids_t &ids)
     if (http::is_success(r->status))
     {
         std::vector<bool> result;
-        json::parse(r->body).get_to(result);
+        nlohmann::json::parse(r->body).get_to(result);
         
         return result;
         
@@ -264,13 +264,13 @@ std::vector<bool> api::check_saved_tracks(const item_ids_t &ids)
 
 bool api::save_tracks(const item_ids_t &ids)
 {
-    auto r = put("/v1/me/tracks", json{{ "ids", ids }});
+    auto r = put("/v1/me/tracks", nlohmann::json{{ "ids", ids }});
     return http::is_success(r->status);
 }
 
 bool api::remove_saved_tracks(const item_ids_t &ids)
 {
-    auto r = del("/v1/me/tracks", json{{ "ids", ids }});
+    auto r = del("/v1/me/tracks", nlohmann::json{{ "ids", ids }});
     return http::is_success(r->status);
 }
 
@@ -287,7 +287,7 @@ playing_queue_t api::get_playing_queue()
 void api::start_playback(const string &context_uri, const string &track_uri,
                          int position_ms, const string &device_id)
 {
-    json body{
+    nlohmann::json body{
         { "context_uri", context_uri },
     };
 
@@ -318,7 +318,7 @@ void api::start_playback(const simplified_playlist_t &playlist, const simplified
 
 void api::resume_playback(const string &device_id)
 {
-    return start_playback(json(), device_id);
+    return start_playback(nlohmann::json(), device_id);
 }
 
 void api::toggle_playback(const string &device_id)
@@ -326,7 +326,7 @@ void api::toggle_playback(const string &device_id)
     playback->resync(true);
     auto &state = playback->get();
     if (!state.is_playing)
-        return start_playback(json(), device_id);
+        return start_playback(nlohmann::json(), device_id);
     else
         return pause_playback(device_id);
 }
@@ -500,7 +500,7 @@ void api::transfer_playback(const string &device_id, bool start_playing)
     pool.detach_task(
         [this, start_playing, dev_id = std::as_const(device_id)]
         {
-            json body{
+            nlohmann::json body{
                 { "device_ids", { dev_id } },
                 { "play", start_playing },
             };
@@ -510,7 +510,7 @@ void api::transfer_playback(const string &device_id, bool start_playing)
         });
 }
 
-void api::start_playback(const json &body, const string &device_id)
+void api::start_playback(const nlohmann::json &body, const string &device_id)
 {
     Params params = {};
     if (!device_id.empty())
@@ -600,7 +600,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     return r;
 }
 
-httplib::Result api::put(const string &request_url, const json &body)
+httplib::Result api::put(const string &request_url, const nlohmann::json &body)
 {
     httplib::Result res;
     auto client = get_client();
@@ -619,7 +619,7 @@ httplib::Result api::put(const string &request_url, const json &body)
     return res;
 }
 
-httplib::Result api::del(const string &request_url, const json &body)
+httplib::Result api::del(const string &request_url, const nlohmann::json &body)
 {
     auto res = get_client()->Delete(request_url, body.dump(), "application/json");
     
@@ -632,7 +632,7 @@ httplib::Result api::del(const string &request_url, const json &body)
     return res;
 }
 
-httplib::Result api::post(const string &request_url, const json &body)
+httplib::Result api::post(const string &request_url, const nlohmann::json &body)
 {
     auto res = get_client()->Post(request_url, body.dump(), "application/json");
     

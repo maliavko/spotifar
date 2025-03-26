@@ -48,7 +48,6 @@ namespace spotifar
 {
     using std::string;
     using std::wstring;
-    using json = nlohmann::json;
     using namespace std::literals;
 }
 

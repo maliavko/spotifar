@@ -8,6 +8,7 @@
 namespace spotifar { namespace config {
 
 namespace log = utils::log;
+namespace json2 = utils::json2;
 
 extern PluginStartupInfo ps_info;
 extern FarStandardFunctions fsf;
@@ -36,8 +37,8 @@ struct settings
         bool is_descending;
         int view_mode;
         
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(view_t, sort_mode_idx,
-            is_descending, view_mode);
+        friend void from_rapidjson(const json2::Value &j, view_t &v);
+        friend void to_rapidjson(json2::Value &j, const view_t &v, json2::Allocator &allocator);
     };
 
     /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }

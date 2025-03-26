@@ -108,8 +108,8 @@ struct api_abstract
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the requested data for the given amount of time
     virtual Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
-    virtual Result put(const string &url, const json &body = {}) = 0;
-    virtual Result del(const string &url, const json &body = {}) = 0;
+    virtual Result put(const string &url, const nlohmann::json &body = {}) = 0;
+    virtual Result del(const string &url, const nlohmann::json &body = {}) = 0;
     virtual auto is_request_cached(const string &url) const -> bool = 0;
 protected:
     virtual auto get_pool() -> BS::thread_pool& = 0;
@@ -265,7 +265,7 @@ public:
 
     /// @brief Return a valid `url` to the next page in case it exists
     /// @note works only a successful request
-    const string get_next_url() const { return !next.is_null() ? next.get<string>() : ""; }
+    const string get_next_url() const { return next; }
 
     /// @brief Returns a total amount of items in collection
     /// @note works only a successful request
@@ -283,11 +283,11 @@ protected:
         if (body.HasMember("next") && !body["next"].IsNull())
             next = body["next"].GetString();
         else
-            next = nullptr;
+            next = "";
     }
 private:
     size_t total = 0;
-    json next = nullptr;
+    string next = "";
 };
 
 /// @brief An abstract class of an API collection object. Provides an interface

@@ -660,6 +660,18 @@ namespace http
     }
 }
 
+namespace json2
+{
+    void from_rapidjson(const Value &j, string &result)
+    {
+        result = j.GetString();
+    }
+
+    void to_rapidjson(Value &j, const string &result, Allocator &allocator)
+    {
+        j.SetString(result, allocator);
+    }
+}
 
 
 } // namespace utils

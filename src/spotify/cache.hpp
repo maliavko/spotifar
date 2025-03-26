@@ -103,7 +103,7 @@ public:
     /// @brief Spotify does not send back an immediate updated data after successfully
     /// performed command, so we need to apply patches to the data to keep it up-to-date
     /// for some time for the all upcoming resyncs
-    void patch(const json &patch);
+    void patch(const nlohmann::json &patch);
 
     auto get() const -> const T& { return data.get(); }
     auto get_last_sync_time() const -> const time_point& { return last_sync_time.get(); }
@@ -133,7 +133,7 @@ private:
     bool is_persistent;
 
     std::mutex patch_mutex;
-    std::vector<std::pair<time_point, json>> patches;
+    std::vector<std::pair<time_point, nlohmann::json>> patches;
 };
 
 template<typename T>
@@ -202,7 +202,7 @@ void json_cache<T>::resync(bool force)
 }
 
 template<typename T>
-void json_cache<T>::patch(const json &patch)
+void json_cache<T>::patch(const nlohmann::json &patch)
 {
     // patches are saved and applied next time data is resynced
     std::lock_guard lock(patch_mutex);
@@ -251,10 +251,8 @@ public:
         inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
 
         // json serialization interface
-        friend void to_json(json &j, const cache_entry &p);
-        
-        friend void from_rapidjson(const rapidjson::Value &j, cache_entry &e);
-        friend void to_rapidjson(rapidjson::Value &j, const cache_entry &e, rapidjson::Document::AllocatorType allocator);
+        friend void from_rapidjson(const utils::json2::Value &j, cache_entry &e);
+        friend void to_rapidjson(utils::json2::Value &j, const cache_entry &e, utils::json2::Allocator allocator);
     };
 public:
     void start();

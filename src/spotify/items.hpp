@@ -9,8 +9,10 @@
 // which possibly is needed only for views
 namespace spotifar { namespace spotify {
 
-using namespace utils::json2;
 namespace json2 = utils::json2;
+
+using json2::from_rapidjson;
+using json2::to_rapidjson;
 
 typedef string item_id_t;
 typedef std::vector<item_id_t> item_ids_t;
@@ -21,60 +23,6 @@ static const item_id_t invalid_id = "";
 /// @param item_type_name e.g. "track", "album", "playlist"
 /// @param id spotify item id
 string make_item_uri(const string &item_type_name, const string &id);
-
-void from_rapidjson(const Value &j, string &result);
-
-void to_rapidjson(json2::Value &j, const string &result, json2::Allocator &allocator);
-
-template<class T>
-void from_rapidjson(const json2::Value &j, std::vector<T> &result)
-{
-    result.resize(j.Size());
-
-    for (rapidjson::SizeType i = 0; i < result.size(); i++)
-        from_rapidjson(j[i], result[i]);
-}
-
-template<class T>
-void to_rapidjson(Value &result, const std::vector<T> &data, Allocator &allocator)
-{
-    result = Value(rapidjson::kArrayType);
-
-    for (const auto &item: data)
-    {
-        Value value;
-        to_rapidjson(value, item, allocator);
-
-        result.PushBack(value, allocator);
-    }
-}
-
-template<class V>
-void from_rapidjson(const Value &j, std::unordered_map<string, V> &result)
-{
-    result.reserve(j.MemberCount());
-
-    for (Value::ConstMemberIterator itr = j.MemberBegin();
-        itr != j.MemberEnd(); ++itr)
-    {
-        auto &value = result[itr->name.GetString()] = {};
-        from_rapidjson(itr->value, value);
-    }
-}
-
-template<class V>
-void to_rapidjson(Value &result, const std::unordered_map<string, V> &data, Allocator &allocator)
-{
-    result = Value(rapidjson::kObjectType);
-
-    for (const auto &[k, v]: data)
-    {
-        Value value;
-        to_rapidjson(value, v, allocator);
-
-        result.AddMember(Value(k, allocator), value, allocator);
-    }
-}
 
 struct data_item_t
 {
@@ -141,13 +89,13 @@ struct simplified_album_t: public data_item_t
     auto get_type_abbrev() const -> wstring;
     auto get_user_name() const -> wstring;
     
-    friend void from_rapidjson(const Value &j, simplified_album_t &a);
+    friend void from_rapidjson(const json2::Value &j, simplified_album_t &a);
     friend void to_rapidjson(json2::Value &j, const simplified_album_t &a, json2::Allocator &allocator);
 };
 
 struct album_t: public simplified_album_t
 {
-    friend void from_rapidjson(const Value &j, album_t &a);
+    friend void from_rapidjson(const json2::Value &j, album_t &a);
     friend void to_rapidjson(json2::Value &j, const album_t &a, json2::Allocator &allocator);
 };
 

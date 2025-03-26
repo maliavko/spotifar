@@ -72,13 +72,13 @@ public:
     void transfer_playback(const string &device_id, bool start_playing = false);
 
 protected:
-    void start_playback(const json &body, const string &device_id);
+    void start_playback(const nlohmann::json &body, const string &device_id);
     
     // the main interface for raw http requests
     Result get(const string &url, utils::clock_t::duration cache_for = {});
-    Result put(const string &url, const json &body = {});
-    Result del(const string &url, const json &body = {});
-    Result post(const string &url, const json &body = {});
+    Result put(const string &url, const nlohmann::json &body = {});
+    Result del(const string &url, const nlohmann::json &body = {});
+    Result post(const string &url, const nlohmann::json &body = {});
     
     BS::thread_pool& get_pool() override { return pool; };
 

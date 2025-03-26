@@ -187,12 +187,12 @@ void from_rapidjson(const rapidjson::Value &j, auth_t &a)
 
 void to_rapidjson(json2::Value &result, const auth_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = json2::Value(rapidjson::kObjectType);
 
-    result.AddMember("access_token", Value(a.access_token, allocator), allocator);
-    result.AddMember("scope", Value(a.scope, allocator), allocator);
-    result.AddMember("expires_in", Value(a.expires_in), allocator);
-    result.AddMember("refresh_token", Value(a.refresh_token, allocator), allocator);
+    result.AddMember("access_token", json2::Value(a.access_token, allocator), allocator);
+    result.AddMember("scope", json2::Value(a.scope, allocator), allocator);
+    result.AddMember("expires_in", json2::Value(a.expires_in), allocator);
+    result.AddMember("refresh_token", json2::Value(a.refresh_token, allocator), allocator);
 }
 
 } // namespace spotify
