@@ -18,11 +18,25 @@ static const item_id_t invalid_id = "";
 /// @param id spotify item id
 string make_item_uri(const string &item_type_name, const string &id);
 
+void from_rapidjson(const rapidjson::Value &j, string &result);
+
+template<class T>
+void from_rapidjson(const rapidjson::Value &j, std::vector<T> &result)
+{
+    result.resize(j.Size());
+
+    for (rapidjson::SizeType i = 0; i < result.size(); i++)
+        from_rapidjson(j[i], result[i]);
+}
+
+
 struct data_item_t
 {
     item_id_t id = invalid_id;
     
-    inline bool is_valid() const { return id != invalid_id; }
+    bool is_valid() const { return id != invalid_id; }
+
+    friend bool operator==(const data_item_t &lhs, const data_item_t &rhs);
 };
 
 struct image_t
@@ -30,18 +44,22 @@ struct image_t
     string url;
     size_t width, height;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(image_t, url, width, height);
+
+    friend void from_rapidjson(const rapidjson::Value &j, image_t &i);
 };
 
 struct simplified_artist_t: public data_item_t
 {
     wstring name;
 
-    inline auto get_uri() const -> string { return make_uri(id); }
+    auto get_uri() const -> string { return make_uri(id); }
     
     static auto make_uri(const item_id_t &id) -> string { return make_item_uri("artist", id); }
 
     friend void from_json(const json &j, simplified_artist_t &a);
     friend void to_json(json &j, const simplified_artist_t &a);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, simplified_artist_t &a);
 };
 
 struct artist_t: public simplified_artist_t
@@ -53,6 +71,8 @@ struct artist_t: public simplified_artist_t
 
     friend void from_json(const json &j, artist_t &a);
     friend void to_json(json &j, const artist_t &a);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, artist_t &a);
 };
 
 struct simplified_album_t: public data_item_t
@@ -67,18 +87,20 @@ struct simplified_album_t: public data_item_t
     size_t total_tracks;
     string album_type;
     string release_date;
-    string release_date_precision; // "year", "month", "day"
     string href;
     std::vector<image_t> images;
     std::vector<simplified_artist_t> artists;
 
     static string make_uri(const item_id_t &id) { return make_item_uri("album", id); }
     
-    inline string get_uri() const { return make_uri(id); }
-    inline bool is_single() const { return album_type == single; }
-    string get_release_year() const;
-    wstring get_type_abbrev() const;
-    wstring get_user_name() const;
+    auto get_uri() const -> string { return make_uri(id); }
+    auto is_single() const -> bool { return album_type == single; }
+    auto get_release_year() const -> string;
+    auto get_type_abbrev() const -> wstring;
+    auto get_user_name() const -> wstring;
+    
+    friend void from_rapidjson(const rapidjson::Value &j, simplified_album_t &a);
+
     friend void from_json(const json &j, simplified_album_t &a);
     friend void to_json(json &j, const simplified_album_t &p);
 };
@@ -88,19 +110,8 @@ struct album_t: public simplified_album_t
     friend void from_json(const json &j, album_t &t);
     friend void to_json(json &j, const album_t &p);
 
-    friend void from_rapidjson(const rapidjson::Value &value, album_t &t);
+    friend void from_rapidjson(const rapidjson::Value &j, album_t &a);
 };
-
-using namespace rapidjson;
-
-template<class T>
-void from_rapidjson(const Value &value, std::vector<T> &result)
-{
-    result.resize(value.Size());
-
-    for (SizeType i = 0; i < result.size(); i++)
-        from_rapidjson(value[i], result[i]);
-}
 
 struct saved_album_t: public album_t
 {
@@ -108,6 +119,8 @@ struct saved_album_t: public album_t
     
     friend void from_json(const json &j, saved_album_t &a);
     friend void to_json(json &j, const saved_album_t &a);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, saved_album_t &a);
 };
 
 struct simplified_track_t: public data_item_t
@@ -124,9 +137,11 @@ struct simplified_track_t: public data_item_t
     static const string& get_fields_filter();
 
     inline string get_uri() const { return make_uri(id); }
-    friend bool operator==(const simplified_track_t &lhs, const simplified_track_t &rhs);
+    
     friend void from_json(const json &j, simplified_track_t &t);
     friend void to_json(json &j, const simplified_track_t &t);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, simplified_track_t &t);
 };
 
 struct track_t: public simplified_track_t
@@ -142,6 +157,8 @@ struct track_t: public simplified_track_t
 
     friend void from_json(const json &j, track_t &t);
     friend void to_json(json &j, const track_t &p);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, track_t &t);
 };
 
 struct saved_track_t: public track_t
@@ -152,6 +169,8 @@ struct saved_track_t: public track_t
     
     friend void from_json(const json &j, saved_track_t &t);
     friend void to_json(json &j, const saved_track_t &t);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, saved_track_t &t);
 };
 
 struct simplified_playlist_t: public data_item_t
@@ -171,6 +190,8 @@ struct simplified_playlist_t: public data_item_t
     inline string get_uri() const { return make_uri(id); }
     friend void from_json(const json &j, simplified_playlist_t &p);
     friend void to_json(json &j, const simplified_playlist_t &p);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, simplified_playlist_t &p);
 };
 
 struct playlist_t: public simplified_playlist_t
@@ -179,6 +200,8 @@ struct playlist_t: public simplified_playlist_t
     
     friend void from_json(const json &j, playlist_t &p);
     friend void to_json(json &j, const playlist_t &p);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, playlist_t &p);
 };
 
 struct actions_t
@@ -197,6 +220,8 @@ struct actions_t
     friend bool operator==(const actions_t &lhs, const actions_t &rhs);
     friend void from_json(const json &j, actions_t &p);
     friend void to_json(json &j, const actions_t &p);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, actions_t &a);
 };
 
 struct context_t
@@ -220,11 +245,13 @@ struct context_t
     string get_item_id() const;
 
     friend bool operator==(const context_t &lhs, const context_t &rhs);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, context_t &c);
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(context_t, type, uri, href);
 };
 
-struct device_t
+struct device_t: public data_item_t
 {
     string id = "";
     bool is_active = false;
@@ -234,9 +261,11 @@ struct device_t
     bool supports_volume = false;
 
     string to_str() const;
-    friend bool operator==(const device_t &lhs, const device_t &rhs);
+
     friend void from_json(const json &j, device_t &d);
     friend void to_json(json &j, const device_t &d);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, device_t &d);
 };
 
 // https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
@@ -260,6 +289,8 @@ struct playback_state_t
     inline bool is_empty() const { return item.id == ""; }
     friend void from_json(const json &j, playback_state_t &p);
     friend void to_json(json &j, const playback_state_t &p);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, playback_state_t &p);
 };
 
 struct history_item_t
@@ -270,6 +301,8 @@ struct history_item_t
     
     friend void from_json(const json &j, history_item_t &p);
     friend void to_json(json &j, const history_item_t &p);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, history_item_t &p);
 };
 
 typedef std::vector<device_t> devices_t;

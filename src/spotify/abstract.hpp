@@ -127,6 +127,12 @@ class item_requester
 {
 public:
     typedef T result_t;
+
+    // either the result type has a rapidjson support or if it is a vector, so the value_type supports it
+    static constexpr bool supports_rapidjson =
+        is_std_vector<T>::value && requires(const rapidjson::Value &v, typename T::value_type &item) { from_rapidjson(v, item); } ||
+        !is_std_vector<T>::value && requires(const rapidjson::Value &v, T &item) { from_rapidjson(v, item); };
+
 public:
     /// @param url a url to request
     /// @param params get-request parameters to infuse into given `url`
@@ -158,34 +164,25 @@ public:
         {
             try
             {
-                auto body = json::parse(res->body);
-
-                constexpr bool supports_vector_rapidjson = is_std_vector<T>::value && requires(const Value &v, typename T::value_type &item)
+                if constexpr (supports_rapidjson)
                 {
-                    from_rapidjson(v, item);
-                };
-                constexpr bool supports_rapidjson = !is_std_vector<T>::value && requires(const Value &v, T &item)
-                {
-                    from_rapidjson(v, item);
-                };
+                    rapidjson::Document document;
+                    rapidjson::Value &body = document.Parse(res->body);
+                    
+                    if (!fieldname.empty())
+                        body = body[fieldname];
 
-                if constexpr (supports_vector_rapidjson || supports_rapidjson)
-                {
-                    Document document;
-                    document.Parse(res->body);
-                    auto f = document.HasParseError();
-
-                    if (document.HasMember("albums"))
-                    {
-                        T item;
-                        from_rapidjson(document["albums"], item);
-                    }
+                    on_read_rapid_result(body, result);
                 }
+                else
+                {
+                    auto body = json::parse(res->body);
 
-                if (!fieldname.empty())
-                    body = body.at(fieldname);
-
-                on_read_result(body, result);
+                    if (!fieldname.empty())
+                        body = body.at(fieldname);
+    
+                    on_read_result(body, result);
+                }
             }
             catch (const std::exception &ex)
             {
@@ -204,6 +201,13 @@ protected:
     virtual void on_read_result(const json &body, T &result)
     {
         body.get_to(result);
+    }
+    virtual void on_read_rapid_result(const rapidjson::Value &body, T &result)
+    {
+        if constexpr (supports_rapidjson)
+        {
+            from_rapidjson(body, result);
+        }
     }
 protected:
     string fieldname;
@@ -277,6 +281,10 @@ template<class T>
 class collection_requester: public item_requester<T>
 {
 public:
+    // either the result type has a rapidjson support or if it is a vector, so the value_type supports it
+    static constexpr bool supports_rapidjson =
+        is_std_vector<T>::value && requires(const rapidjson::Value &v, typename T::value_type &item) { from_rapidjson(v, item); };
+public:
     using item_requester<T>::item_requester;
 
     /// @brief Return a valid `url` to the next page in case it exists
@@ -295,6 +303,21 @@ protected:
 
         total = body.value("total", 0);
         next = body.at("next");
+    }
+    
+    void on_read_rapid_result(const rapidjson::Value &body, T &result) override
+    {
+        if constexpr (supports_rapidjson)
+        {
+            from_rapidjson(body["items"], result);
+
+            total = body["total"].GetUint64();
+
+            if (body.HasMember("next") && !body["next"].IsNull())
+                next = body["next"].GetString();
+            else
+                next = nullptr;
+        }
     }
 private:
     size_t total = 0;

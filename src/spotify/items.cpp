@@ -10,6 +10,23 @@ string make_item_uri(const string &item_type_name, const string &id)
     return std::format("spotify:{}:{}", item_type_name, id);
 }
 
+bool operator==(const data_item_t &lhs, const data_item_t &rhs)
+{
+    return lhs.id == rhs.id;
+}
+
+void from_rapidjson(const rapidjson::Value &j, string &result)
+{
+    result = j.GetString();
+}
+
+void from_rapidjson(const rapidjson::Value &j, image_t &i)
+{
+    i.url = j["url"].GetString();
+    i.width = j["width"].GetUint64();
+    i.height = j["height"].GetUint64();
+}
+
 void from_json(const json &j, simplified_artist_t &a)
 {
     j.at("id").get_to(a.id);
@@ -23,6 +40,12 @@ void to_json(json &j, const simplified_artist_t &a)
         { "id", a.id },
         { "name", utils::utf8_encode(a.name) },
     };
+}
+
+void from_rapidjson(const rapidjson::Value &j, simplified_artist_t &a)
+{
+    a.id = j["id"].GetString();
+    a.name = utils::utf8_decode(j["name"].GetString());
 }
 
 void from_json(const json &j, artist_t &a)
@@ -45,6 +68,17 @@ void to_json(json &j, const artist_t &a)
         { "images", a.images },
         { "followers", { "total", a.followers_total } },
     });
+}
+
+void from_rapidjson(const rapidjson::Value &j, artist_t &a)
+{
+    from_rapidjson(j, dynamic_cast<simplified_artist_t&>(a));
+
+    a.popularity = j["popularity"].GetUint64();
+    a.followers_total = j["followers"]["total"].GetUint64();
+    
+    from_rapidjson(j["images"], a.images);
+    from_rapidjson(j["genres"], a.genres);
 }
 
 string simplified_album_t::get_release_year() const
@@ -75,13 +109,25 @@ wstring simplified_album_t::get_user_name() const
     return user_name;
 }
 
+void from_rapidjson(const rapidjson::Value &j, simplified_album_t &a)
+{
+    a.id = j["id"].GetString();
+    a.name = utils::utf8_decode(j["name"].GetString());
+    a.total_tracks = j["total_tracks"].GetUint64();
+    a.album_type = j["album_type"].GetString();
+    a.release_date = j["release_date"].GetString();
+    a.href = j["href"].GetString();
+
+    from_rapidjson(j["images"], a.images);
+    from_rapidjson(j["artists"], a.artists);
+}
+
 void from_json(const json &j, simplified_album_t &a)
 {
     j.at("id").get_to(a.id);
     j.at("total_tracks").get_to(a.total_tracks);
     j.at("album_type").get_to(a.album_type);
     j.at("release_date").get_to(a.release_date);
-    j.at("release_date_precision").get_to(a.release_date_precision);
     j.at("href").get_to(a.href);
     j.at("images").get_to(a.images);
     j.at("artists").get_to(a.artists);
@@ -96,7 +142,6 @@ void to_json(json &j, const simplified_album_t &a)
         { "total_tracks", a.total_tracks },
         { "album_type", a.album_type },
         { "release_date", a.release_date },
-        { "release_date_precision", a.release_date_precision },
         { "href", a.href },
         { "images", a.images },
         { "artists", a.artists },
@@ -115,23 +160,10 @@ void to_json(json &j, const album_t &a)
     //j.update
 }
 
-void from_rapidjson(const Value &value, album_t &t)
+void from_rapidjson(const rapidjson::Value &j, album_t &a)
 {
-    // j.at("id").get_to(a.id);
-    // j.at("total_tracks").get_to(a.total_tracks);
-    // j.at("album_type").get_to(a.album_type);
-    // j.at("release_date").get_to(a.release_date);
-    // j.at("release_date_precision").get_to(a.release_date_precision);
-    // j.at("href").get_to(a.href);
-    // j.at("images").get_to(a.images);
-    // j.at("artists").get_to(a.artists);
-
-    // a.name = utils::utf8_decode(j.at("name").get<string>());
-
-    t.id = value["id"].GetString();
-    t.name = utils::utf8_decode(value["name"].GetString());
+    from_rapidjson(j, dynamic_cast<simplified_album_t&>(a));
 }
-
 
 void from_json(const json &j, saved_album_t &a)
 {
@@ -147,15 +179,16 @@ void to_json(json &j, const saved_album_t &a)
     };
 }
 
+void from_rapidjson(const rapidjson::Value &j, saved_album_t &a)
+{
+    from_rapidjson(j["album"], dynamic_cast<album_t&>(a));
+    a.added_at = j["added_at"].GetString();
+}
+
 const string& simplified_track_t::get_fields_filter()
 {
     static string fields = "id,name,duration_ms,disc_number,track_number,explicit,artists";
     return fields;
-}
-
-bool operator==(const simplified_track_t &lhs, const simplified_track_t &rhs)
-{
-    return lhs.id == rhs.id;
 }
 
 void from_json(const json &j, simplified_track_t &t)
@@ -182,6 +215,18 @@ void to_json(json &j, const simplified_track_t &t)
         { "artists", t.artists },
         { "name", utils::utf8_encode(t.name) },
     };
+}
+
+void from_rapidjson(const rapidjson::Value &j, simplified_track_t &t)
+{
+    t.id = j["id"].GetString();
+    t.track_number = j["track_number"].GetUint64();
+    t.disc_number = j["disc_number"].GetUint64();
+    t.duration_ms = j["duration_ms"].GetInt();
+    t.is_explicit = j["explicit"].GetBool();
+    
+    t.duration = t.duration_ms / 1000;
+    t.name = utils::utf8_decode(j["name"].GetString());
 }
 
 const string& track_t::get_fields_filter()
@@ -227,6 +272,14 @@ void to_json(json &j, const track_t &t)
     });
 }
 
+void from_rapidjson(const rapidjson::Value &j, track_t &t)
+{
+    from_rapidjson(j, dynamic_cast<simplified_track_t&>(t));
+
+    from_rapidjson(j["album"], t.album);
+    from_rapidjson(j["artists"], t.artists);
+}
+
 const string& saved_track_t::get_fields_filter()
 {
     static string fields = std::format("added_at,track({})", track_t::get_fields_filter());
@@ -245,6 +298,12 @@ void to_json(json &j, const saved_track_t &t)
         { "added_at", t.added_at },
         { "track", dynamic_cast<const track_t&>(t) },
     };
+}
+    
+void from_rapidjson(const rapidjson::Value &j, saved_track_t &t)
+{
+    from_rapidjson(j["track"], dynamic_cast<track_t&>(t));
+    t.added_at = j["added_at"].GetString();
 }
 
 void from_json(const json &j, simplified_playlist_t &p)
@@ -280,6 +339,20 @@ void to_json(json &j, const simplified_playlist_t &p)
     };
 }
 
+void from_rapidjson(const rapidjson::Value &j, simplified_playlist_t &p)
+{
+    p.id = j["id"].GetString();
+    p.snapshot_id = j["snapshot_id"].GetString();
+    p.href = j["href"].GetString();
+    p.collaborative = j["collaborative"].GetBool();
+    p.is_public = j["public"].GetBool();
+    p.tracks_total = j["tracks"]["total"].GetUint64();
+    
+    p.name = utils::utf8_decode(j["name"].GetString());
+    p.user_display_name = utils::utf8_decode(j["owner"]["display_name"].GetString());
+    p.description = utils::utf8_decode(j["description"].GetString());
+}
+
 void from_json(const json &j, playlist_t &p)
 {
     from_json(j, dynamic_cast<simplified_playlist_t&>(p));
@@ -288,6 +361,11 @@ void from_json(const json &j, playlist_t &p)
 void to_json(json &j, const playlist_t &p)
 {
     to_json(j, dynamic_cast<const simplified_playlist_t&>(p));
+}
+
+void from_rapidjson(const rapidjson::Value &j, playlist_t &p)
+{
+    from_rapidjson(j, dynamic_cast<simplified_playlist_t&>(p));
 }
 
 const string& simplified_playlist_t::get_fields_filter()
@@ -333,6 +411,25 @@ void to_json(json &j, const playback_state_t &p)
         { "item", p.item },
         { "context", p.context },
     };
+}
+
+void from_rapidjson(const rapidjson::Value &j, playback_state_t &p)
+{
+    from_rapidjson(j["device"], p.device);
+    from_rapidjson(j["actions"], p.actions);
+
+    if (j.HasMember("context") && !j["context"].IsNull())
+        from_rapidjson(j["context"], p.context);
+
+    if (j.HasMember("item") && !j["item"].IsNull())
+        from_rapidjson(j["item"], p.item);
+
+    p.progress_ms = j.HasMember("progress_ms") ? j["progress_ms"].GetInt() : 0;
+    p.progress = p.progress_ms / 1000;
+
+    p.repeat_state = j["repeat_state"].GetString();
+    p.shuffle_state = j["shuffle_state"].GetString();
+    p.is_playing = j["is_playing"].GetBool();
 }
 
 void from_json(const json &j, playing_queue_t &p)
@@ -384,6 +481,27 @@ void from_json(const json &j, actions_t &p)
     p.trasferring_playback = j.value("trasferring_playback", false);
 }
 
+void from_rapidjson(const rapidjson::Value &j, actions_t &a)
+{
+    a.interrupting_playback = j["interrupting_playback"].GetBool();
+    a.pausing = j["pausing"].GetBool();
+    a.resuming = j["resuming"].GetBool();
+    a.seeking = j["seeking"].GetBool();
+    a.skipping_next = j["skipping_next"].GetBool();
+    a.skipping_prev = j["skipping_prev"].GetBool();
+    a.toggling_repeat_context = j["toggling_repeat_context"].GetBool();
+    a.toggling_repeat_track = j["toggling_repeat_track"].GetBool();
+    a.toggling_shuffle = j["toggling_shuffle"].GetBool();
+    a.trasferring_playback = j["trasferring_playback"].GetBool();
+}
+
+void from_rapidjson(const rapidjson::Value &j, context_t &c)
+{
+    c.type = j["type"].GetString();
+    c.uri = j["uri"].GetString();
+    c.href = j["href"].GetString();
+}
+
 void to_json(json &j, const actions_t &p)
 {
     // TODO: unfinished
@@ -428,14 +546,20 @@ void to_json(json &j, const device_t &d)
     };
 }
 
+void from_rapidjson(const rapidjson::Value &j, device_t &d)
+{
+    d.id = j["id"].GetString();
+    d.is_active = j["is_active"].GetBool();
+    d.type = j["type"].GetString();
+    d.supports_volume = j["supports_volume"].GetBool();
+    d.name = utils::utf8_decode(j["name"].GetString());
+
+    d.volume_percent = j.HasMember("volume_percent") ? j["volume_percent"].GetInt() : 0;
+}
+
 string device_t::to_str() const
 {
     return std::format("device(name={}, id={})", utils::to_string(name), id);
-}
-
-bool operator==(const device_t &lhs, const device_t &rhs)
-{
-    return lhs.id == rhs.id;
 }
 
 void from_json(const json &j, history_item_t &p)
@@ -454,6 +578,14 @@ void to_json(json &j, const history_item_t &p)
         {"context", p.context},
         {"track", p.track},
     };
+}
+
+    
+void from_rapidjson(const rapidjson::Value &j, history_item_t &p)
+{
+    from_rapidjson(j["track"], p.track);
+    from_rapidjson(j["context"], p.context);
+    p.played_at = j["played_at"].GetString();
 }
 
 } // namespace spotify
