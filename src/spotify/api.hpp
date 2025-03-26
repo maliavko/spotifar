@@ -51,7 +51,7 @@ public:
     auto save_tracks(const item_ids_t &ids) -> bool;
     auto remove_saved_tracks(const item_ids_t &ids) -> bool;
     auto get_playing_queue() -> playing_queue_t;
-    auto get_recently_played(std::int64_t after) -> const history_items_t&;
+    auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr;
 
     // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",

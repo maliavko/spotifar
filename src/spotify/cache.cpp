@@ -1,16 +1,20 @@
 #include "cache.hpp"
+#include "items.hpp"
 
 namespace spotifar { namespace spotify {
 
 using namespace utils;
 
-void from_json(const json &j, http_cache::cache_entry &e)
+void from_rapidjson(const rapidjson::Value &j, http_cache::cache_entry &e)
 {
-    j.at("etag").get_to(e.etag);
-    j.at("body").get_to(e.body);
+    e.etag = j["etag"].GetString();
+    e.body = j["body"].GetString();
+
+    std::int64_t cached_until = 0LL;
+    if (j.HasMember("cached-until"))
+        cached_until = j["cached-until"].GetInt64();
     
-    e.cached_until = clock_t::time_point{ clock_t::duration(
-        (std::int64_t)j.value("cached-until", 0LL)) };
+    e.cached_until = clock_t::time_point{ clock_t::duration(cached_until) };
 }
 
 void to_json(json &j, const http_cache::cache_entry &e)
@@ -42,10 +46,14 @@ void http_cache::start()
             return;
         }
 
-        json::parse(mmap).get_to(cached_responses);
+        rapidjson::Document document;
+        rapidjson::Value &data = document.Parse(mmap.data());
+        
+        from_rapidjson(data, cached_responses);
+
         mmap.unmap();
     }
-    catch (const json::parse_error &ex)
+    catch (const std::exception &ex)
     {
         log::global->error("There is an error while reading http responses "
             "cache, {}", ex.what());
@@ -67,7 +75,7 @@ void http_cache::shutdown()
         std::ofstream file(get_cache_filename());
         file << json(cached_responses).dump();
     }
-    catch (const json::parse_error &ex)
+    catch (const std::exception &ex)
     {
         log::global->error("There is an error while storing http responses "
             "cache, {}", ex.what());

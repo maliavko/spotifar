@@ -15,8 +15,9 @@ struct auth_t
     string refresh_token;
     
     bool is_valid() const { return !access_token.empty(); }
-    friend void from_json(const json &j, auth_t &a);
     friend void to_json(json &j, const auth_t &a);
+    
+    friend void from_rapidjson(const rapidjson::Value &j, auth_t &a);
 };
 
 class auth_cache: public json_cache<auth_t>

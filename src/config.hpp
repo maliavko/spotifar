@@ -217,7 +217,7 @@ void persistent_data<T>::read(settings_context &ctx)
     {
         read_from_storage(ctx, storage_key, data);
     }
-    catch(const json::parse_error &e)
+    catch (const std::exception &e)
     {
         // in case of an error, just discard a stored data and drop an error message to log
         log::global->error("Cached value \"{}\" is broken, discarding. {}",

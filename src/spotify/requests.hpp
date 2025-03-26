@@ -68,7 +68,7 @@ struct api_requester
     /// data is parsed correctly. Base method also reads a resulting value in this method
     virtual void on_success(const json &data)
     {
-        data.get_to(result);
+        //data.get_to(result);
     }
 };
 
@@ -88,11 +88,12 @@ struct api_collection_requester: public api_requester<T>
     
     virtual void on_success(const json &data)
     {
-        data["items"].get_to(this->result);
-        this->total = data.value("total", 0);
+        // TODO: finish up moving all the API requests to the requesters and remove this file
+        // data["items"].get_to(this->result);
+        // this->total = data.value("total", 0);
 
-        auto next = data["next"];
-        this->url = !next.is_null() ? next.get<string>() : "";
+        // auto next = data["next"];
+        // this->url = !next.is_null() ? next.get<string>() : "";
     }
 
     /// @brief Iterating items page by page of a given `limit` size
@@ -174,17 +175,6 @@ struct playlist_tracks_requester: public api_collection_requester<saved_tracks_t
             { "additional_types", "track" },
             { "fields", std::format("items({}),next,total", saved_track_t::get_fields_filter()) },
             { "limit", std::to_string(limit) },
-        })
-        {}
-};
-
-/// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-struct recently_played_requester: public api_collection_requester<history_items_t>
-{
-    recently_played_requester(std::int64_t timestamp_after, size_t limit = MAX_LIMIT):
-        api_collection_requester("/v1/me/player/recently-played", {
-            { "limit", std::to_string(limit) },
-            { "after", std::to_string(timestamp_after) },
         })
         {}
 };

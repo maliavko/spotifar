@@ -217,6 +217,14 @@ album_tracks_ptr api::get_album_tracks(const string &album_id)
         this, std::format("/v1/albums/{}/tracks", album_id)));
 }
 
+recently_played_tracks_ptr api::get_recently_played(std::int64_t after)
+{
+    return recently_played_tracks_ptr(new recently_played_tracks_t(
+        this, "/v1/me/player/recently-played", {
+            { "after", std::to_string(after) }
+        }));
+}
+
 const simplified_playlists_t& api::get_playlists()
 {
     return get_items_collection<user_playlists_requester>(MAX_LIMIT);
@@ -268,15 +276,11 @@ bool api::remove_saved_tracks(const item_ids_t &ids)
 
 playing_queue_t api::get_playing_queue()
 {
-    auto r = get("/v1/me/player/queue");
-    if (http::is_success(r->status))
-        return json::parse(r->body).get<playing_queue_t>();
+    // TODO: move to the requesters
+    // auto r = get("/v1/me/player/queue");
+    // if (http::is_success(r->status))
+    //     return json::parse(r->body).get<playing_queue_t>();
     return {};
-}
-
-const history_items_t& api::get_recently_played(std::int64_t after)
-{
-    return get_items_collection<recently_played_requester>(after, MAX_LIMIT);
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback

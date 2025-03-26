@@ -29,6 +29,19 @@ void from_rapidjson(const rapidjson::Value &j, std::vector<T> &result)
         from_rapidjson(j[i], result[i]);
 }
 
+template<class V>
+void from_rapidjson(const rapidjson::Value &j, std::unordered_map<string, V> &result)
+{
+    result.reserve(j.MemberCount());
+
+    for (rapidjson::Value::ConstMemberIterator itr = j.MemberBegin();
+        itr != j.MemberEnd(); ++itr)
+    {
+        auto &value = result[itr->name.GetString()] = {};
+        from_rapidjson(itr->value, value);
+    }
+}
+
 
 struct data_item_t
 {
@@ -56,8 +69,7 @@ struct simplified_artist_t: public data_item_t
     
     static auto make_uri(const item_id_t &id) -> string { return make_item_uri("artist", id); }
 
-    friend void from_json(const json &j, simplified_artist_t &a);
-    friend void to_json(json &j, const simplified_artist_t &a);
+    //friend void to_json(json &j, const simplified_artist_t &a);
     
     friend void from_rapidjson(const rapidjson::Value &j, simplified_artist_t &a);
 };
@@ -69,8 +81,7 @@ struct artist_t: public simplified_artist_t
     std::vector<string> genres;
     std::vector<image_t> images;
 
-    friend void from_json(const json &j, artist_t &a);
-    friend void to_json(json &j, const artist_t &a);
+    // friend void to_json(json &j, const artist_t &a);
     
     friend void from_rapidjson(const rapidjson::Value &j, artist_t &a);
 };
@@ -101,14 +112,12 @@ struct simplified_album_t: public data_item_t
     
     friend void from_rapidjson(const rapidjson::Value &j, simplified_album_t &a);
 
-    friend void from_json(const json &j, simplified_album_t &a);
-    friend void to_json(json &j, const simplified_album_t &p);
+    // friend void to_json(json &j, const simplified_album_t &p);
 };
 
 struct album_t: public simplified_album_t
 {
-    friend void from_json(const json &j, album_t &t);
-    friend void to_json(json &j, const album_t &p);
+    // friend void to_json(json &j, const album_t &p);
 
     friend void from_rapidjson(const rapidjson::Value &j, album_t &a);
 };
@@ -117,8 +126,7 @@ struct saved_album_t: public album_t
 {
     string added_at;
     
-    friend void from_json(const json &j, saved_album_t &a);
-    friend void to_json(json &j, const saved_album_t &a);
+    // friend void to_json(json &j, const saved_album_t &a);
     
     friend void from_rapidjson(const rapidjson::Value &j, saved_album_t &a);
 };
@@ -138,8 +146,7 @@ struct simplified_track_t: public data_item_t
 
     inline string get_uri() const { return make_uri(id); }
     
-    friend void from_json(const json &j, simplified_track_t &t);
-    friend void to_json(json &j, const simplified_track_t &t);
+    // friend void to_json(json &j, const simplified_track_t &t);
     
     friend void from_rapidjson(const rapidjson::Value &j, simplified_track_t &t);
 };
@@ -155,8 +162,7 @@ struct track_t: public simplified_track_t
     wstring get_artists_full_name() const;
     wstring get_long_name() const;
 
-    friend void from_json(const json &j, track_t &t);
-    friend void to_json(json &j, const track_t &p);
+    // friend void to_json(json &j, const track_t &p);
     
     friend void from_rapidjson(const rapidjson::Value &j, track_t &t);
 };
@@ -167,8 +173,7 @@ struct saved_track_t: public track_t
     
     static const string& get_fields_filter();
     
-    friend void from_json(const json &j, saved_track_t &t);
-    friend void to_json(json &j, const saved_track_t &t);
+    // friend void to_json(json &j, const saved_track_t &t);
     
     friend void from_rapidjson(const rapidjson::Value &j, saved_track_t &t);
 };
@@ -188,7 +193,6 @@ struct simplified_playlist_t: public data_item_t
     static const string& get_fields_filter();
 
     inline string get_uri() const { return make_uri(id); }
-    friend void from_json(const json &j, simplified_playlist_t &p);
     friend void to_json(json &j, const simplified_playlist_t &p);
     
     friend void from_rapidjson(const rapidjson::Value &j, simplified_playlist_t &p);
@@ -198,8 +202,7 @@ struct playlist_t: public simplified_playlist_t
 {
     static const string& get_fields_filter();
     
-    friend void from_json(const json &j, playlist_t &p);
-    friend void to_json(json &j, const playlist_t &p);
+    // friend void to_json(json &j, const playlist_t &p);
     
     friend void from_rapidjson(const rapidjson::Value &j, playlist_t &p);
 };
@@ -218,8 +221,7 @@ struct actions_t
     bool trasferring_playback = false;
 
     friend bool operator==(const actions_t &lhs, const actions_t &rhs);
-    friend void from_json(const json &j, actions_t &p);
-    friend void to_json(json &j, const actions_t &p);
+    // friend void to_json(json &j, const actions_t &p);
     
     friend void from_rapidjson(const rapidjson::Value &j, actions_t &a);
 };
@@ -261,8 +263,8 @@ struct device_t: public data_item_t
     bool supports_volume = false;
 
     string to_str() const;
-
-    friend void from_json(const json &j, device_t &d);
+    
+    // TODO: rapidjson, stop storing device in config, remove method
     friend void to_json(json &j, const device_t &d);
     
     friend void from_rapidjson(const rapidjson::Value &j, device_t &d);
@@ -287,7 +289,7 @@ struct playback_state_t
     context_t context;
 
     inline bool is_empty() const { return item.id == ""; }
-    friend void from_json(const json &j, playback_state_t &p);
+    // TODO: rapidjson, stop storing device in config, remove method
     friend void to_json(json &j, const playback_state_t &p);
     
     friend void from_rapidjson(const rapidjson::Value &j, playback_state_t &p);
@@ -299,7 +301,7 @@ struct history_item_t
     context_t context;
     string played_at;
     
-    friend void from_json(const json &j, history_item_t &p);
+    // TODO: rapidjson, convert
     friend void to_json(json &j, const history_item_t &p);
     
     friend void from_rapidjson(const rapidjson::Value &j, history_item_t &p);
@@ -319,8 +321,7 @@ struct playing_queue_t
     track_t currently_playing;
     tracks_t queue;
     
-    friend void from_json(const json &j, playing_queue_t &p);
-    friend void to_json(json &j, const playing_queue_t &p);
+    // friend void to_json(json &j, const playing_queue_t &p);
 };
 
 } // namespace spotify

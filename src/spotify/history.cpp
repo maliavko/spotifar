@@ -37,9 +37,9 @@ bool play_history::request_data(history_items_t &data)
 
     // we request only the new items after the last request timestamp, then we take
     // the old items list and extend it from the front
-    const auto &new_entries = api_proxy->get_recently_played(last_sync_time);
-    if (new_entries.size() > 0)
-        data.insert(data.begin(), new_entries.begin(), new_entries.end());
+    auto new_items = api_proxy->get_recently_played(last_sync_time);
+    if (new_items->fetch() && new_items->size() > 0)
+        data.insert(data.begin(), new_items->begin(), new_items->end());
 
     data.resize(150); // keeping only 150 items of a history
 

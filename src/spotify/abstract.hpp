@@ -28,6 +28,9 @@ typedef std::shared_ptr<new_releases_t> new_releases_ptr;
 typedef async_collection<simplified_track_t> album_tracks_t;
 typedef std::shared_ptr<album_tracks_t> album_tracks_ptr;
 
+typedef sync_collection<history_item_t> recently_played_tracks_t;
+typedef std::shared_ptr<recently_played_tracks_t> recently_played_tracks_ptr;
+
 struct api_abstract
 {
     template<class T> friend class sync_collection;
@@ -72,6 +75,9 @@ struct api_abstract
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
     virtual auto get_album_tracks(const string &album_id) -> album_tracks_ptr = 0;
 
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+    virtual auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr = 0;
+
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
     virtual auto get_playlists() -> const simplified_playlists_t& = 0;
     virtual auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t& = 0;
@@ -80,7 +86,6 @@ struct api_abstract
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto get_playing_queue() -> playing_queue_t = 0;
-    virtual auto get_recently_played(std::int64_t after) -> const history_items_t& = 0;
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
@@ -127,12 +132,6 @@ class item_requester
 {
 public:
     typedef T result_t;
-
-    // either the result type has a rapidjson support or if it is a vector, so the value_type supports it
-    static constexpr bool supports_rapidjson =
-        is_std_vector<T>::value && requires(const rapidjson::Value &v, typename T::value_type &item) { from_rapidjson(v, item); } ||
-        !is_std_vector<T>::value && requires(const rapidjson::Value &v, T &item) { from_rapidjson(v, item); };
-
 public:
     /// @param url a url to request
     /// @param params get-request parameters to infuse into given `url`
@@ -164,25 +163,13 @@ public:
         {
             try
             {
-                if constexpr (supports_rapidjson)
-                {
-                    rapidjson::Document document;
-                    rapidjson::Value &body = document.Parse(res->body);
-                    
-                    if (!fieldname.empty())
-                        body = body[fieldname];
+                rapidjson::Document document;
+                rapidjson::Value &body = document.Parse(res->body);
+                
+                if (!fieldname.empty())
+                    body = body[fieldname];
 
-                    on_read_rapid_result(body, result);
-                }
-                else
-                {
-                    auto body = json::parse(res->body);
-
-                    if (!fieldname.empty())
-                        body = body.at(fieldname);
-    
-                    on_read_result(body, result);
-                }
+                on_read_result(body, result);
             }
             catch (const std::exception &ex)
             {
@@ -198,16 +185,9 @@ protected:
     /// @brief Provides a way for derived classes to specify result parsing approach
     /// @param body parsed response body
     /// @param result a reference to the result to hold
-    virtual void on_read_result(const json &body, T &result)
+    virtual void on_read_result(const rapidjson::Value &body, T &result)
     {
-        body.get_to(result);
-    }
-    virtual void on_read_rapid_result(const rapidjson::Value &body, T &result)
-    {
-        if constexpr (supports_rapidjson)
-        {
-            from_rapidjson(body, result);
-        }
+        from_rapidjson(body, result);
     }
 protected:
     string fieldname;
@@ -281,10 +261,6 @@ template<class T>
 class collection_requester: public item_requester<T>
 {
 public:
-    // either the result type has a rapidjson support or if it is a vector, so the value_type supports it
-    static constexpr bool supports_rapidjson =
-        is_std_vector<T>::value && requires(const rapidjson::Value &v, typename T::value_type &item) { from_rapidjson(v, item); };
-public:
     using item_requester<T>::item_requester;
 
     /// @brief Return a valid `url` to the next page in case it exists
@@ -297,27 +273,17 @@ public:
 protected:
     /// @brief A response body parser specialization to get all the necessary fields,
     /// to process further with collection requesting
-    void on_read_result(const json &body, T &result) override
+    void on_read_result(const rapidjson::Value &body, T &result) override
     {
-        item_requester<T>::on_read_result(body.at("items"), result);
+        from_rapidjson(body["items"], result);
 
-        total = body.value("total", 0);
-        next = body.at("next");
-    }
-    
-    void on_read_rapid_result(const rapidjson::Value &body, T &result) override
-    {
-        if constexpr (supports_rapidjson)
-        {
-            from_rapidjson(body["items"], result);
-
+        if (body.HasMember("total") && !body["total"].IsNull())
             total = body["total"].GetUint64();
 
-            if (body.HasMember("next") && !body["next"].IsNull())
-                next = body["next"].GetString();
-            else
-                next = nullptr;
-        }
+        if (body.HasMember("next") && !body["next"].IsNull())
+            next = body["next"].GetString();
+        else
+            next = nullptr;
     }
 private:
     size_t total = 0;

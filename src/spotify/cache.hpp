@@ -36,7 +36,11 @@ protected:
     {
         auto storage_value = ctx.get_str(key, "");
         if (!storage_value.empty())
-            json::parse(storage_value).get_to(data);
+        {
+            rapidjson::Document document;
+            document.Parse(storage_value);
+            from_rapidjson(document, data);
+        }
     }
 
     virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const T &data)
@@ -224,7 +228,7 @@ void json_cache<T>::apply_patches(T &item)
         j.merge_patch(p);
     
     // unpacking the item back to the data
-    j.get_to(item);
+    //j.get_to(item); // TODO: stopped working after move to RapidJson
 }
 
 /// @brief A class-helper for caching http responses from spotify server. Holds
@@ -246,8 +250,9 @@ public:
         inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
 
         // json serialization interface
-        friend void from_json(const json &j, cache_entry &t);
         friend void to_json(json &j, const cache_entry &p);
+        
+        friend void from_rapidjson(const rapidjson::Value &j, cache_entry &e);
     };
 public:
     void start();

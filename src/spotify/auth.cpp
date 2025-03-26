@@ -118,7 +118,13 @@ auth_t auth_cache::authenticate(const httplib::Params &params)
         "application/x-www-form-urlencoded");
 
     // TODO: error handling
-    return json::parse(res->body).get<auth_t>();
+    rapidjson::Document document;
+    rapidjson::Value &body = document.Parse(res->body);
+
+    auth_t result;
+    from_rapidjson(document, result);
+
+    return result;
 }
 
 string auth_cache::request_auth_code()
@@ -167,13 +173,16 @@ string auth_cache::get_auth_callback_url() const
     return std::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
-void from_json(const json &j, auth_t &a)
+void from_rapidjson(const rapidjson::Value &j, auth_t &a)
 {
-    j.at("access_token").get_to(a.access_token);
-    j.at("scope").get_to(a.scope);
-    j.at("expires_in").get_to(a.expires_in);
-
-    a.refresh_token = j.value("refresh_token", "");
+    a.access_token = j["access_token"].GetString();
+    a.scope = j["scope"].GetString();
+    a.expires_in = j["expires_in"].GetInt();
+    
+    if (j.HasMember("refresh_token") && !j["refresh_token"].IsNull())
+        a.refresh_token = j["refresh_token"].GetString();
+    else
+        a.refresh_token = "";
 }
 
 void to_json(json &j, const auth_t &a)
