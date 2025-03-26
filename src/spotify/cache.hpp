@@ -45,7 +45,15 @@ protected:
 
     virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const T &data)
     {
-        ctx.set_str(key, json(data).dump());
+        rapidjson::Document document;
+        to_rapidjson(document, data, document.GetAllocator());
+
+        rapidjson::StringBuffer sb;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+
+        document.Accept(writer);
+
+        ctx.set_str(key, sb.GetString());
     }
 };
 
@@ -139,17 +147,10 @@ json_cache<T>::json_cache(const wstring &storage_key):
 template<typename T>
 void json_cache<T>::read(settings_ctx &ctx)
 {
-    try
+    if (is_persistent)
     {
-        if (is_persistent)
-        {
-            data.read(ctx);
-            last_sync_time.read(ctx);
-        }
-    }
-    catch (const std::exception &ex)
-    {
-        utils::log::global->warn("A persistent cache is not read, {}", ex.what());
+        data.read(ctx);
+        last_sync_time.read(ctx);
     }
 
     // if the data is still valid, we send notification as
@@ -217,15 +218,15 @@ void json_cache<T>::apply_patches(T &item)
 {
     // unpacking and packing the item here, definitely not the best solution,
     // did not come up with the better one still
-    json j = item; 
-    auto now = clock_t::now();
+    // json j = item; 
+    // auto now = clock_t::now();
 
-    // removing outdated patches first
-    std::erase_if(patches, [&now](auto &v) { return v.first + 1500ms < now; });
+    // // removing outdated patches first
+    // std::erase_if(patches, [&now](auto &v) { return v.first + 1500ms < now; });
     
-    // applying the valid patches next
-    for (const auto& [t, p]: patches)
-        j.merge_patch(p);
+    // // applying the valid patches next
+    // for (const auto& [t, p]: patches)
+    //     j.merge_patch(p);
     
     // unpacking the item back to the data
     //j.get_to(item); // TODO: stopped working after move to RapidJson
@@ -253,6 +254,7 @@ public:
         friend void to_json(json &j, const cache_entry &p);
         
         friend void from_rapidjson(const rapidjson::Value &j, cache_entry &e);
+        friend void to_rapidjson(rapidjson::Value &j, const cache_entry &e, rapidjson::Document::AllocatorType allocator);
     };
 public:
     void start();

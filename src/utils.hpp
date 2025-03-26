@@ -323,6 +323,13 @@ namespace http
     static const auto session = clock_t::duration(-1);
 }
 
+namespace json2
+{
+    using namespace rapidjson;
+    
+    typedef typename Document::AllocatorType Allocator;
+}
+
 } // namespace utils
 } // namespace spotifar
 

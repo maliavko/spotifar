@@ -31,8 +31,10 @@
 #include "BS_thread_pool.hpp"
 #include "ObserverManager.h"
 #include "mio/mmap.hpp"
+#include "rapidjson/rapidjson.h"
 #include "rapidjson/document.h"
 #include "rapidjson/pointer.h"
+#include "rapidjson/writer.h"
 
 #include <plugin.hpp>
 #include <PluginSettings.hpp>

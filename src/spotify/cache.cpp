@@ -17,6 +17,16 @@ void from_rapidjson(const rapidjson::Value &j, http_cache::cache_entry &e)
     e.cached_until = clock_t::time_point{ clock_t::duration(cached_until) };
 }
 
+void to_rapidjson(rapidjson::Value &result, const http_cache::cache_entry &e, rapidjson::Document::AllocatorType allocator)
+{
+    result = Value(rapidjson::kObjectType);
+
+    result.AddMember("etag", Value(e.etag, allocator), allocator);
+    result.AddMember("body", Value(e.body, allocator), allocator);
+    result.AddMember("cached-until",
+        Value(e.cached_until.time_since_epoch().count()), allocator);
+}
+
 void to_json(json &j, const http_cache::cache_entry &e)
 {
     j = json{
@@ -47,9 +57,9 @@ void http_cache::start()
         }
 
         rapidjson::Document document;
-        rapidjson::Value &data = document.Parse(mmap.data());
+        document.Parse(mmap.data());
         
-        from_rapidjson(data, cached_responses);
+        from_rapidjson(document, cached_responses);
 
         mmap.unmap();
     }
@@ -72,8 +82,15 @@ void http_cache::shutdown()
 
     try
     {
-        std::ofstream file(get_cache_filename());
-        file << json(cached_responses).dump();
+        rapidjson::Document document;
+        to_rapidjson(document, cached_responses, document.GetAllocator());
+
+        rapidjson::StringBuffer sb;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+        document.Accept(writer);
+        
+        std::ofstream file(get_cache_filename(), std::ios_base::trunc);
+        file << sb.GetString();
     }
     catch (const std::exception &ex)
     {
