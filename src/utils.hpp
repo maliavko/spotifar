@@ -60,6 +60,13 @@ string trim(const string &s);
 /// @brief Returns a copy of a given string without trailing whitespaces
 wstring trim(const wstring &s);
 
+/// @brief boost::hash_combine
+inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
+{
+    seed ^= h + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
+    return seed;
+}
+
 
 // TODO: making it thread safe
 class tasks_queue
@@ -381,14 +388,15 @@ namespace json2
 } // namespace spotifar
 
 
+// global overload for possibility using FarKey in hash-maps
 template<>
 struct std::hash<FarKey>
 {
     std::size_t operator()(const FarKey &fkey) const
     {
         std::size_t res = 0;
-        nlohmann::detail::combine(res, fkey.VirtualKeyCode);
-        nlohmann::detail::combine(res, fkey.ControlKeyState);
+        spotifar::utils::combine(res, fkey.VirtualKeyCode);
+        spotifar::utils::combine(res, fkey.ControlKeyState);
         return res;
     }
 };
