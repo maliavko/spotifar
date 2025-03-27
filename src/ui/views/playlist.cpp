@@ -1,6 +1,5 @@
 #include "playlist.hpp"
 #include "ui/events.hpp"
-#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -9,7 +8,8 @@ using utils::far3::get_text;
 playlist_view::playlist_view(api_abstract *api, const playlist_t &p):
     view("playlist_view", std::bind(events::show_playlists, api)),
     playlist(p),
-    api_proxy(api)
+    api_proxy(api),
+    collection(api_proxy->get_playlist_tracks(p.id))
 {
 }
 
@@ -51,7 +51,10 @@ const view::items_t* playlist_view::get_items()
 {
     static view::items_t items; items.clear();
 
-    for (const auto &t: api_proxy->get_playlist_tracks(playlist.id))
+    if (!collection->fetch())
+        return &items;
+    
+    for (const auto &t: *collection)
     {
         std::vector<wstring> columns;
 

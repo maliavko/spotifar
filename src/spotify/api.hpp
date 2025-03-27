@@ -39,19 +39,20 @@ public:
     auto get_artist_albums(const string &artist_id) -> artist_albums_ptr;
     auto get_saved_albums() -> saved_albums_ptr;
     auto get_new_releases() -> new_releases_ptr;
-    auto get_artist_top_tracks(const string &artist_id) -> tracks_t;
+    auto get_artist_top_tracks(const string &artist_id) -> std::vector<track_t>;
     auto get_album(const string &album_id) -> album_t;
     auto get_albums(const item_ids_t &ids) -> std::vector<album_t>;
     auto get_album_tracks(const string &album_id) -> album_tracks_ptr;
     auto get_playlist(const string &playlist_id) -> playlist_t;
-    auto get_playlists() -> const simplified_playlists_t&;
-    auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t&;
+    auto get_saved_playlists() -> saved_playlists_ptr;
+    auto get_playlist_tracks(const string &playlist_id) -> saved_tracks_ptr;
     auto check_saved_track(const string &track_id) -> bool;
     auto check_saved_tracks(const item_ids_t &ids) -> std::vector<bool>;
     auto save_tracks(const item_ids_t &ids) -> bool;
     auto remove_saved_tracks(const item_ids_t &ids) -> bool;
     auto get_playing_queue() -> playing_queue_t;
     auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr;
+    auto get_saved_tracks() -> saved_tracks_ptr;
 
     // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",

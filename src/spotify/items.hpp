@@ -274,9 +274,7 @@ struct history_item_t
 };
 
 typedef std::vector<device_t> devices_t;
-typedef std::vector<simplified_track_t> simplified_tracks_t;
 typedef std::vector<track_t> tracks_t;
-typedef std::vector<saved_track_t> saved_tracks_t;
 typedef std::vector<simplified_playlist_t> simplified_playlists_t;
 typedef std::vector<playlist_t> playlists_t;
 typedef std::vector<history_item_t> history_items_t;

@@ -25,6 +25,7 @@ protected:
     auto request_extra_info(const data_item_t* data) -> bool;
 private:
     api_abstract *api_proxy;
+    saved_playlists_ptr collection;
 };
 
 } // namespace ui

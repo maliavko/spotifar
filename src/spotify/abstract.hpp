@@ -13,11 +13,17 @@ using httplib::Result;
 template<class T> class sync_collection;
 template<class T> class async_collection;
 
+typedef sync_collection<artist_t> followed_artists_t;
+typedef std::shared_ptr<followed_artists_t> followed_artists_ptr;
+
 typedef async_collection<saved_album_t> saved_albums_t;
 typedef std::shared_ptr<saved_albums_t> saved_albums_ptr;
 
-typedef sync_collection<artist_t> followed_artists_t;
-typedef std::shared_ptr<followed_artists_t> followed_artists_ptr;
+typedef async_collection<saved_track_t> saved_tracks_t;
+typedef std::shared_ptr<saved_tracks_t> saved_tracks_ptr;
+
+typedef async_collection<simplified_playlist_t> saved_playlists_t;
+typedef std::shared_ptr<saved_playlists_t> saved_playlists_ptr;
 
 typedef async_collection<simplified_album_t> artist_albums_t;
 typedef std::shared_ptr<artist_albums_t> artist_albums_ptr;
@@ -42,11 +48,16 @@ struct api_abstract
     virtual bool is_authenticated() const = 0;
     
     // library & collections interface
-    virtual auto get_play_history() -> const history_items_t& = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+    virtual auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr = 0;
+    virtual auto get_play_history() -> const history_items_t& = 0; // TODO: why I have two of them?
+
     virtual auto get_available_devices() -> const devices_t& = 0;
     virtual auto get_playback_state() -> const playback_state_t& = 0;
 
-    virtual auto get_artist_top_tracks(const string &artist_id) -> tracks_t = 0;
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
+    virtual auto get_artist_top_tracks(const string &artist_id) -> std::vector<track_t> = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
     virtual auto get_followed_artists() -> followed_artists_ptr = 0;
@@ -75,12 +86,16 @@ struct api_abstract
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
     virtual auto get_album_tracks(const string &album_id) -> album_tracks_ptr = 0;
 
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-    virtual auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr = 0;
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
+    virtual auto get_saved_tracks() -> saved_tracks_ptr = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
+    virtual auto get_playlist_tracks(const string &playlist_id) -> saved_tracks_ptr = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
+    virtual auto get_saved_playlists() -> saved_playlists_ptr = 0;
 
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
-    virtual auto get_playlists() -> const simplified_playlists_t& = 0;
-    virtual auto get_playlist_tracks(const string &playlist_id) -> const saved_tracks_t& = 0;
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const item_ids_t &ids) -> std::vector<bool> = 0;
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;

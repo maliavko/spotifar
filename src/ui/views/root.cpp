@@ -1,6 +1,5 @@
 #include "root.hpp"
 #include "ui/events.hpp"
-#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 

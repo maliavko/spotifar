@@ -1,6 +1,5 @@
 #include "playlists.hpp"
 #include "ui/events.hpp"
-#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -8,7 +7,8 @@ using utils::far3::get_text;
 
 playlists_view::playlists_view(api_abstract *api):
     view("playlists_view", std::bind(events::show_collections, api)),
-    api_proxy(api)
+    api_proxy(api),
+    collection(api_proxy->get_saved_playlists())
 {
 }
 
@@ -63,20 +63,26 @@ const view::items_t* playlists_view::get_items()
 {
     static view::items_t items; items.clear();
 
-    for (const auto &p: api_proxy->get_playlists())
+    if (!collection->fetch())
+        return &items;
+
+    for (const auto &p: *collection)
     {
+        std::vector<wstring> columns;
+
         // column C0 - total playlist's tracks count
-        wstring tracks_count = L"";
-        auto requester = playlist_tracks_requester(p.id);
-        if (api_proxy->is_request_cached(requester.get_url()) && requester(api_proxy))
-            tracks_count = std::format(L"{: >6}", (requester.get_total()));
-        
+        auto tracks = api_proxy->get_playlist_tracks(p.id);
+        auto tracks_total = tracks->peek_total();
+
+        wstring tracks_label = L"";
+        if (tracks_total > 0)
+            tracks_label = std::format(L"{: >6}", tracks_total);
+        columns.push_back(tracks_label);
+
         items.push_back({
             p.id, p.name, L"",
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            {
-                tracks_count
-            },
+            columns,
             const_cast<simplified_playlist_t*>(&p)
         });
     }
@@ -87,7 +93,7 @@ const view::items_t* playlists_view::get_items()
 bool playlists_view::request_extra_info(const data_item_t* data)
 {
     if (data != nullptr)
-        return playlist_tracks_requester(data->id)(api_proxy);
+        api_proxy->get_playlist_tracks(data->id)->get_total();
 
     return false;
 }

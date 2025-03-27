@@ -27,6 +27,7 @@ protected:
 private:
     api_abstract *api_proxy;
     playlist_t playlist;
+    saved_tracks_ptr collection;
 };
 
 } // naemspace ui

@@ -1,5 +1,4 @@
 #include "api.hpp"
-#include "requests.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -150,7 +149,7 @@ void api::tick()
     pool.wait();
 }
 
-artist_t api::get_artist(const string &artist_id)
+artist_t api::get_artist(const item_id_t &artist_id)
 {
     return request_item(item_requester<artist_t>(
         std::format("/v1/artists/{}", artist_id)), this);
@@ -173,7 +172,7 @@ followed_artists_ptr api::get_followed_artists()
     ));
 }
 
-artist_albums_ptr api::get_artist_albums(const string &artist_id)
+artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
 {
     return artist_albums_ptr(new artist_albums_t(
         this,
@@ -194,12 +193,13 @@ new_releases_ptr api::get_new_releases()
         this, "/v1/browse/new-releases", {}, "albums"));
 }
 
-tracks_t api::get_artist_top_tracks(const string &artist_id)
+std::vector<track_t> api::get_artist_top_tracks(const item_id_t &artist_id)
 {
-    return get_item<artist_top_tracks_requester>(artist_id);
+    return request_item(item_requester<std::vector<track_t>>(
+        std::format("/v1/artists/{}/top-tracks", artist_id), {}, "tracks"), this);
 }
     
-album_t api::get_album(const string &album_id)
+album_t api::get_album(const item_id_t &album_id)
 {
     return request_item(item_requester<album_t>(
         std::format("/v1/albums/{}", album_id)), this);
@@ -225,19 +225,33 @@ recently_played_tracks_ptr api::get_recently_played(std::int64_t after)
         }));
 }
 
-const simplified_playlists_t& api::get_playlists()
+saved_tracks_ptr api::get_saved_tracks()
 {
-    return get_items_collection<user_playlists_requester>(MAX_LIMIT);
+    return saved_tracks_ptr(new saved_tracks_t(this, "/v1/me/tracks"));
+}
+
+saved_playlists_ptr api::get_saved_playlists()
+{
+    return saved_playlists_ptr(new saved_playlists_t(this, "/v1/me/playlists"));
 }
 
 playlist_t api::get_playlist(const string &playlist_id)
 {
-    return get_item<playlist_requester>(playlist_id);
+    return request_item(item_requester<playlist_t>(
+        std::format("/v1/playlists/{}", playlist_id), {
+            { "additional_types", "track" },
+            { "fields", playlist_t::get_fields_filter() },
+        }), this);
 }
 
-const saved_tracks_t& api::get_playlist_tracks(const string &playlist_id)
+saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 {
-    return get_items_collection<playlist_tracks_requester>(playlist_id, MAX_LIMIT);
+    return saved_tracks_ptr(new saved_tracks_t(
+        this,
+        std::format("/v1/playlists/{}/tracks", playlist_id), {
+            { "additional_types", "track" },
+            { "fields", std::format("items({}),next,total", saved_track_t::get_fields_filter()) },
+        }));
 }
 
 bool api::check_saved_track(const string &track_id)
@@ -429,9 +443,10 @@ void api::toggle_shuffle_plus(bool is_on)
         }
         else if (state.context.is_playlist())
         {
-            const auto &tracks = get_playlist_tracks(state.context.get_item_id());
-            std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
-                            [](const auto &t) { return t.get_uri(); });
+            auto tracks = get_playlist_tracks(state.context.get_item_id());
+            if (tracks->fetch())
+                std::transform(tracks->begin(), tracks->end(), std::back_inserter(uris),
+                               [](const auto &t) { return t.get_uri(); });
         }
         else if (state.context.is_artist())
         {

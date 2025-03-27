@@ -1,6 +1,5 @@
 #include "collection.hpp"
 #include "ui/events.hpp"
-#include "spotify/requests.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -46,10 +45,10 @@ size_t calculate_totals(api_abstract *api, const string &menu_id, bool only_from
         return api->get_saved_albums()->peek_total();
 
     if (menu_id == tracks_id)
-        return calculate_menu_total<saved_tracks_requester>(api, only_from_cache);
+        return api->get_saved_tracks()->peek_total();
 
     if (menu_id == playlists_id)
-        return calculate_menu_total<user_playlists_requester>(api, only_from_cache);
+        return api->get_saved_playlists()->peek_total();
     
     return 0;
 }
@@ -159,8 +158,7 @@ intptr_t collection_view::select_item(const data_item_t* data)
     
     if (data->id == playlists_id)
     {
-        //ui::events::show_playlists(api_proxy);
-        api_proxy->get_saved_albums();
+        ui::events::show_playlists(api_proxy);
         return FALSE;
     }
 
@@ -178,10 +176,10 @@ bool collection_view::request_extra_info(const data_item_t* data)
         total = api_proxy->get_saved_albums()->get_total();
 
     if (data->id == tracks_id)
-        total = calculate_menu_total<saved_tracks_requester>(api_proxy, false);
+        total = api_proxy->get_saved_tracks()->get_total();
 
     if (data->id == playlists_id)
-        total = calculate_menu_total<user_playlists_requester>(api_proxy, false);
+        total = api_proxy->get_saved_playlists()->get_total();
 
     return total > 0;
 }
