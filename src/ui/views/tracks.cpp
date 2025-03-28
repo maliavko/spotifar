@@ -99,11 +99,13 @@ intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
             return item1->name.compare(item2->name);
 
         case SM_EXT:
-            if (item1->track_number == item2->track_number)
-                if (item1->disc_number == item2->disc_number)
+            if (item1->disc_number == item2->disc_number)
+            {
+                if (item1->track_number == item2->track_number)
                     return 0;
-                return item1->disc_number < item2->disc_number ? -1 : 1;
-            return item1->track_number < item2->track_number ? -1 : 1;
+                return item1->track_number < item2->track_number ? -1 : 1;
+            }
+            return item1->disc_number < item2->disc_number ? -1 : 1;
 
         case SM_SIZE:
             if (item1->duration_ms == item2->duration_ms)
