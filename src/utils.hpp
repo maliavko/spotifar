@@ -341,7 +341,7 @@ namespace json
     {
         result.resize(j.Size());
 
-        for (SizeType i = 0; i < result.size(); i++)
+        for (SizeType i = 0; i < j.Size(); i++)
             from_json(j[i], result[i]);
     }
 

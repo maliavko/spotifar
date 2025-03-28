@@ -199,6 +199,8 @@ void from_json(const Value &j, simplified_track_t &t)
     
     t.duration = t.duration_ms / 1000;
     t.name = utils::utf8_decode(j["name"].GetString());
+    
+    from_json(j["artists"], t.artists);
 }
 
 const string& track_t::get_fields_filter()
@@ -236,19 +238,13 @@ void to_json(json::Value &result, const track_t &t, json::Allocator &allocator)
     Value album;
     to_json(album, t.album, allocator);
 
-    Value artists;
-    to_json(artists, t.artists, allocator);
-
     result.AddMember("album", album, allocator);
-    result.AddMember("artists", artists, allocator);
 }
 
 void from_json(const Value &j, track_t &t)
 {
     from_json(j, dynamic_cast<simplified_track_t&>(t));
-
     from_json(j["album"], t.album);
-    from_json(j["artists"], t.artists);
 }
 
 const string& saved_track_t::get_fields_filter()

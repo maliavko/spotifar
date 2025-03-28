@@ -28,7 +28,6 @@ application ideas
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
-- recent tracks do not show up
 
 
 root menu

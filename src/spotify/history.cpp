@@ -8,7 +8,8 @@ using utils::far3::synchro_tasks::dispatch_event;
 play_history::play_history(api_abstract *api):
     json_cache<history_items_t>(L"play_history"),
     api_proxy(api)
-    {};
+{
+};
 
 bool play_history::is_active() const
 {
@@ -41,7 +42,12 @@ bool play_history::request_data(history_items_t &data)
     if (new_items->fetch() && new_items->size() > 0)
         data.insert(data.begin(), new_items->begin(), new_items->end());
 
-    data.resize(150); // keeping only 150 items of a history
+    // keeping only 150 items of a history
+    if (data.size() > 150)
+    {
+        data.resize(150);
+        data.shrink_to_fit();
+    }
 
     return true;
 }

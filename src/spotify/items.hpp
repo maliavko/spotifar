@@ -129,7 +129,6 @@ struct simplified_track_t: public data_item_t
 struct track_t: public simplified_track_t
 {
     album_t album;
-    std::vector<simplified_artist_t> artists;
 
     static const string& get_fields_filter();
 
@@ -275,10 +274,7 @@ struct history_item_t
 
 typedef std::vector<device_t> devices_t;
 typedef std::vector<track_t> tracks_t;
-typedef std::vector<simplified_playlist_t> simplified_playlists_t;
-typedef std::vector<playlist_t> playlists_t;
 typedef std::vector<history_item_t> history_items_t;
-typedef std::vector<std::pair<string, track_t>> recent_tracks_t;
 
 struct playing_queue_t
 {
