@@ -18,8 +18,8 @@ struct auth_t
     
     bool is_valid() const { return !access_token.empty(); }
     
-    friend void from_rapidjson(const json2::Value &j, auth_t &a);
-    friend void to_rapidjson(json2::Value &j, const auth_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, auth_t &a);
+    friend void to_json(json2::Value &j, const auth_t &a, json2::Allocator &allocator);
 };
 
 class auth_cache: public json_cache<auth_t>

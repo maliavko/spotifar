@@ -11,8 +11,8 @@ namespace spotifar { namespace spotify {
 
 namespace json2 = utils::json2;
 
-using json2::from_rapidjson;
-using json2::to_rapidjson;
+using json2::from_json;
+using json2::to_json;
 
 typedef string item_id_t;
 typedef std::vector<item_id_t> item_ids_t;
@@ -38,8 +38,8 @@ struct image_t
     string url;
     size_t width, height;
 
-    friend void from_rapidjson(const json2::Value &j, image_t &i);
-    friend void to_rapidjson(json2::Value &j, const image_t &i, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, image_t &i);
+    friend void to_json(json2::Value &j, const image_t &i, json2::Allocator &allocator);
 };
 
 struct simplified_artist_t: public data_item_t
@@ -50,8 +50,8 @@ struct simplified_artist_t: public data_item_t
     
     static auto make_uri(const item_id_t &id) -> string { return make_item_uri("artist", id); }
     
-    friend void from_rapidjson(const json2::Value &j, simplified_artist_t &a);
-    friend void to_rapidjson(json2::Value &j, const simplified_artist_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, simplified_artist_t &a);
+    friend void to_json(json2::Value &j, const simplified_artist_t &a, json2::Allocator &allocator);
 };
 
 struct artist_t: public simplified_artist_t
@@ -61,8 +61,8 @@ struct artist_t: public simplified_artist_t
     std::vector<string> genres;
     std::vector<image_t> images;
 
-    friend void from_rapidjson(const json2::Value &j, artist_t &a);
-    friend void to_rapidjson(json2::Value &j, const artist_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, artist_t &a);
+    friend void to_json(json2::Value &j, const artist_t &a, json2::Allocator &allocator);
 };
 
 struct simplified_album_t: public data_item_t
@@ -89,22 +89,22 @@ struct simplified_album_t: public data_item_t
     auto get_type_abbrev() const -> wstring;
     auto get_user_name() const -> wstring;
     
-    friend void from_rapidjson(const json2::Value &j, simplified_album_t &a);
-    friend void to_rapidjson(json2::Value &j, const simplified_album_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, simplified_album_t &a);
+    friend void to_json(json2::Value &j, const simplified_album_t &a, json2::Allocator &allocator);
 };
 
 struct album_t: public simplified_album_t
 {
-    friend void from_rapidjson(const json2::Value &j, album_t &a);
-    friend void to_rapidjson(json2::Value &j, const album_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, album_t &a);
+    friend void to_json(json2::Value &j, const album_t &a, json2::Allocator &allocator);
 };
 
 struct saved_album_t: public album_t
 {
     string added_at;
     
-    friend void from_rapidjson(const json2::Value &j, saved_album_t &a);
-    friend void to_rapidjson(json2::Value &j, saved_album_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, saved_album_t &a);
+    friend void to_json(json2::Value &j, saved_album_t &a, json2::Allocator &allocator);
 };
 
 struct simplified_track_t: public data_item_t
@@ -122,8 +122,8 @@ struct simplified_track_t: public data_item_t
 
     inline string get_uri() const { return make_uri(id); }
     
-    friend void from_rapidjson(const json2::Value &j, simplified_track_t &t);
-    friend void to_rapidjson(json2::Value &j, const simplified_track_t &t, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, simplified_track_t &t);
+    friend void to_json(json2::Value &j, const simplified_track_t &t, json2::Allocator &allocator);
 };
 
 struct track_t: public simplified_track_t
@@ -137,8 +137,8 @@ struct track_t: public simplified_track_t
     wstring get_artists_full_name() const;
     wstring get_long_name() const;
 
-    friend void from_rapidjson(const json2::Value &j, track_t &t);
-    friend void to_rapidjson(json2::Value &j, const track_t &t, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, track_t &t);
+    friend void to_json(json2::Value &j, const track_t &t, json2::Allocator &allocator);
 };
 
 struct saved_track_t: public track_t
@@ -147,8 +147,8 @@ struct saved_track_t: public track_t
     
     static const string& get_fields_filter();
     
-    friend void from_rapidjson(const json2::Value &j, saved_track_t &t);
-    friend void to_rapidjson(json2::Value &result, const saved_track_t &t, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, saved_track_t &t);
+    friend void to_json(json2::Value &result, const saved_track_t &t, json2::Allocator &allocator);
 };
 
 struct simplified_playlist_t: public data_item_t
@@ -167,16 +167,16 @@ struct simplified_playlist_t: public data_item_t
 
     inline string get_uri() const { return make_uri(id); }
     
-    friend void from_rapidjson(const json2::Value &j, simplified_playlist_t &p);
-    friend void to_rapidjson(json2::Value &j, const simplified_playlist_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, simplified_playlist_t &p);
+    friend void to_json(json2::Value &j, const simplified_playlist_t &a, json2::Allocator &allocator);
 };
 
 struct playlist_t: public simplified_playlist_t
 {
     static const string& get_fields_filter();
     
-    friend void from_rapidjson(const json2::Value &j, playlist_t &p);
-    friend void to_rapidjson(json2::Value &j, const playlist_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, playlist_t &p);
+    friend void to_json(json2::Value &j, const playlist_t &a, json2::Allocator &allocator);
 };
 
 struct actions_t
@@ -194,8 +194,8 @@ struct actions_t
 
     friend bool operator==(const actions_t &lhs, const actions_t &rhs);
     
-    friend void from_rapidjson(const json2::Value &j, actions_t &a);
-    friend void to_rapidjson(json2::Value &j, const actions_t &a, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, actions_t &a);
+    friend void to_json(json2::Value &j, const actions_t &a, json2::Allocator &allocator);
 };
 
 struct context_t
@@ -220,8 +220,8 @@ struct context_t
 
     friend bool operator==(const context_t &lhs, const context_t &rhs);
     
-    friend void from_rapidjson(const json2::Value &j, context_t &c);
-    friend void to_rapidjson(json2::Value &j, const context_t &c, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, context_t &c);
+    friend void to_json(json2::Value &j, const context_t &c, json2::Allocator &allocator);
 };
 
 struct device_t: public data_item_t
@@ -235,8 +235,8 @@ struct device_t: public data_item_t
 
     string to_str() const;
     
-    friend void from_rapidjson(const json2::Value &j, device_t &d);
-    friend void to_rapidjson(json2::Value &j, const device_t &d, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, device_t &d);
+    friend void to_json(json2::Value &j, const device_t &d, json2::Allocator &allocator);
 };
 
 // https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
@@ -259,8 +259,8 @@ struct playback_state_t
 
     inline bool is_empty() const { return item.id == ""; }
     
-    friend void from_rapidjson(const json2::Value &j, playback_state_t &p);
-    friend void to_rapidjson(json2::Value &j, const playback_state_t &p, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, playback_state_t &p);
+    friend void to_json(json2::Value &j, const playback_state_t &p, json2::Allocator &allocator);
 };
 
 struct history_item_t
@@ -269,8 +269,8 @@ struct history_item_t
     context_t context;
     string played_at;
     
-    friend void from_rapidjson(const json2::Value &j, history_item_t &i);
-    friend void to_rapidjson(json2::Value &j, const history_item_t &i, json2::Allocator &allocator);
+    friend void from_json(const json2::Value &j, history_item_t &i);
+    friend void to_json(json2::Value &j, const history_item_t &i, json2::Allocator &allocator);
 };
 
 typedef std::vector<device_t> devices_t;

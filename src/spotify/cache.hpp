@@ -38,19 +38,19 @@ protected:
         auto storage_value = ctx.get_str(key, "");
         if (!storage_value.empty())
         {
-            rapidjson::Document document;
+            json2::Document document;
             document.Parse(storage_value);
-            from_rapidjson(document, data);
+            from_json(document, data);
         }
     }
 
     virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const T &data)
     {
-        rapidjson::Document document;
-        to_rapidjson(document, data, document.GetAllocator());
+        json2::Document document;
+        to_json(document, data, document.GetAllocator());
 
-        rapidjson::StringBuffer sb;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+        json2::StringBuffer sb;
+        json2::Writer<json2::StringBuffer> writer(sb);
 
         document.Accept(writer);
 
@@ -227,7 +227,7 @@ void json_cache<T>::apply_patches(T &item)
     auto now = clock_t::now();
 
     json2::Document doc;
-    to_rapidjson(doc, item, doc.GetAllocator());
+    to_json(doc, item, doc.GetAllocator());
 
     // removing outdated patches first
     std::erase_if(patches, [&now](auto &v) { return v.first + 1500ms < now; });
@@ -237,7 +237,7 @@ void json_cache<T>::apply_patches(T &item)
         p(doc);
     
     // unpacking the item back to the data
-    from_rapidjson(doc, item);
+    from_json(doc, item);
 }
 
 /// @brief A class-helper for caching http responses from spotify server. Holds
@@ -259,8 +259,8 @@ public:
         inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
 
         // json serialization interface
-        friend void from_rapidjson(const json2::Value &j, cache_entry &e);
-        friend void to_rapidjson(json2::Value &j, const cache_entry &e, json2::Allocator allocator);
+        friend void from_json(const json2::Value &j, cache_entry &e);
+        friend void to_json(json2::Value &j, const cache_entry &e, json2::Allocator allocator);
     };
 public:
     void start();

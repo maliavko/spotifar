@@ -696,34 +696,34 @@ namespace http
 namespace json2
 {
     // string
-    void from_rapidjson(const Value &j, string &result)
+    void from_json(const Value &j, string &result)
     {
         result = j.GetString();
     }
 
-    void to_rapidjson(Value &j, const string &result, Allocator &allocator)
+    void to_json(Value &j, const string &result, Allocator &allocator)
     {
         j.SetString(result, allocator);
     }
 
     // int
-    void from_rapidjson(const Value &j, int &result)
+    void from_json(const Value &j, int &result)
     {
         result = j.GetInt();
     }
 
-    void to_rapidjson(Value &j, const int &result, Allocator &allocator)
+    void to_json(Value &j, const int &result, Allocator &allocator)
     {
         j.SetInt(result);
     }
 
     // bool
-    void from_rapidjson(const Value &j, bool &result)
+    void from_json(const Value &j, bool &result)
     {
         result = j.GetBool();
     }
 
-    void to_rapidjson(Value &j, const bool &result, Allocator &allocator)
+    void to_json(Value &j, const bool &result, Allocator &allocator)
     {
         j.SetBool(result);
     }
@@ -731,7 +731,7 @@ namespace json2
     void pretty_print(Value &v)
     {
         StringBuffer sb;
-        rapidjson::PrettyWriter<StringBuffer> writer(sb);
+        PrettyWriter<StringBuffer> writer(sb);
 
         v.Accept(writer);
         log::global->debug(sb.GetString());

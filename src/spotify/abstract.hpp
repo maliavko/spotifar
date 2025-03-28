@@ -170,8 +170,8 @@ public:
         {
             try
             {
-                rapidjson::Document document;
-                rapidjson::Value &body = document.Parse(res->body);
+                json2::Document document;
+                json2::Value &body = document.Parse(res->body);
                 
                 if (!fieldname.empty())
                     body = body[fieldname];
@@ -192,9 +192,9 @@ protected:
     /// @brief Provides a way for derived classes to specify result parsing approach
     /// @param body parsed response body
     /// @param result a reference to the result to hold
-    virtual void on_read_result(const rapidjson::Value &body, T &result)
+    virtual void on_read_result(const json2::Value &body, T &result)
     {
-        from_rapidjson(body, result);
+        from_json(body, result);
     }
 protected:
     string fieldname;
@@ -280,9 +280,9 @@ public:
 protected:
     /// @brief A response body parser specialization to get all the necessary fields,
     /// to process further with collection requesting
-    void on_read_result(const rapidjson::Value &body, T &result) override
+    void on_read_result(const json2::Value &body, T &result) override
     {
-        from_rapidjson(body["items"], result);
+        from_json(body["items"], result);
 
         if (body.HasMember("total") && !body["total"].IsNull())
             total = body["total"].GetUint64();

@@ -118,11 +118,11 @@ auth_t auth_cache::authenticate(const httplib::Params &params)
         "application/x-www-form-urlencoded");
 
     // TODO: error handling
-    rapidjson::Document document;
-    rapidjson::Value &body = document.Parse(res->body);
+    json2::Document document;
+    json2::Value &body = document.Parse(res->body);
 
     auth_t result;
-    from_rapidjson(document, result);
+    from_json(document, result);
 
     return result;
 }
@@ -173,7 +173,7 @@ string auth_cache::get_auth_callback_url() const
     return std::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
-void from_rapidjson(const rapidjson::Value &j, auth_t &a)
+void from_json(const json2::Value &j, auth_t &a)
 {
     a.access_token = j["access_token"].GetString();
     a.scope = j["scope"].GetString();
@@ -185,9 +185,9 @@ void from_rapidjson(const rapidjson::Value &j, auth_t &a)
         a.refresh_token = "";
 }
 
-void to_rapidjson(json2::Value &result, const auth_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const auth_t &a, json2::Allocator &allocator)
 {
-    result = json2::Value(rapidjson::kObjectType);
+    result = json2::Value(json2::kObjectType);
 
     result.AddMember("access_token", json2::Value(a.access_token, allocator), allocator);
     result.AddMember("scope", json2::Value(a.scope, allocator), allocator);

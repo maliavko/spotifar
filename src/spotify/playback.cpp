@@ -52,10 +52,10 @@ bool playback_cache::request_data(playback_state_t &data)
     auto res = api_proxy->get("/v1/me/player");
     if (res->status == httplib::OK_200)
     {
-        rapidjson::Document document;
-        rapidjson::Value &body = document.Parse(res->body);
+        json2::Document document;
+        json2::Value &body = document.Parse(res->body);
         
-        from_rapidjson(body, data);
+        from_json(body, data);
         return true;
     }
 

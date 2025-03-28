@@ -15,49 +15,49 @@ bool operator==(const data_item_t &lhs, const data_item_t &rhs)
     return lhs.id == rhs.id;
 }
 
-void to_rapidjson(json2::Value &result, const image_t &i, json2::Allocator &allocator)
+void to_json(json2::Value &result, const image_t &i, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     result.AddMember("url", Value(i.url, allocator), allocator);
     result.AddMember("width", Value(i.width), allocator);
     result.AddMember("height", Value(i.height), allocator);
 }
 
-void from_rapidjson(const json2::Value &j, image_t &i)
+void from_json(const json2::Value &j, image_t &i)
 {
     i.url = j["url"].GetString();
     i.width = j["width"].GetUint64();
     i.height = j["height"].GetUint64();
 }
 
-void to_rapidjson(json2::Value &result, const simplified_artist_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const simplified_artist_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     result.AddMember("id", Value(a.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(a.name), allocator), allocator);
 }
 
-void from_rapidjson(const Value &j, simplified_artist_t &a)
+void from_json(const Value &j, simplified_artist_t &a)
 {
     a.id = j["id"].GetString();
     a.name = utils::utf8_decode(j["name"].GetString());
 }
 
-void to_rapidjson(json2::Value &result, const artist_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const artist_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
-    to_rapidjson(result, dynamic_cast<const simplified_artist_t&>(a), allocator);
+    to_json(result, dynamic_cast<const simplified_artist_t&>(a), allocator);
 
     Value genres;
-    to_rapidjson(genres, a.genres, allocator);
+    to_json(genres, a.genres, allocator);
 
     Value images;
-    to_rapidjson(images, a.images, allocator);
+    to_json(images, a.images, allocator);
     
-    auto followers = Value(rapidjson::kObjectType);
+    auto followers = Value(json2::kObjectType);
     followers.AddMember("total", Value(a.followers_total), allocator);
 
     result.AddMember("id", Value(a.id, allocator), allocator);
@@ -67,15 +67,15 @@ void to_rapidjson(json2::Value &result, const artist_t &a, json2::Allocator &all
     result.AddMember("genres", genres, allocator);
 }
 
-void from_rapidjson(const Value &j, artist_t &a)
+void from_json(const Value &j, artist_t &a)
 {
-    from_rapidjson(j, dynamic_cast<simplified_artist_t&>(a));
+    from_json(j, dynamic_cast<simplified_artist_t&>(a));
 
     a.popularity = j["popularity"].GetUint64();
     a.followers_total = j["followers"]["total"].GetUint64();
     
-    from_rapidjson(j["images"], a.images);
-    from_rapidjson(j["genres"], a.genres);
+    from_json(j["images"], a.images);
+    from_json(j["genres"], a.genres);
 }
 
 string simplified_album_t::get_release_year() const
@@ -106,7 +106,7 @@ wstring simplified_album_t::get_user_name() const
     return user_name;
 }
 
-void from_rapidjson(const json2::Value &j, simplified_album_t &a)
+void from_json(const json2::Value &j, simplified_album_t &a)
 {
     a.id = j["id"].GetString();
     a.name = utils::utf8_decode(j["name"].GetString());
@@ -115,19 +115,19 @@ void from_rapidjson(const json2::Value &j, simplified_album_t &a)
     a.release_date = j["release_date"].GetString();
     a.href = j["href"].GetString();
 
-    from_rapidjson(j["images"], a.images);
-    from_rapidjson(j["artists"], a.artists);
+    from_json(j["images"], a.images);
+    from_json(j["artists"], a.artists);
 }
 
-void to_rapidjson(json2::Value &result, const simplified_album_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const simplified_album_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value images;
-    to_rapidjson(images, a.images, allocator);
+    to_json(images, a.images, allocator);
 
     Value artists;
-    to_rapidjson(artists, a.artists, allocator);
+    to_json(artists, a.artists, allocator);
 
     result.AddMember("id", Value(a.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(a.name), allocator), allocator);
@@ -139,31 +139,31 @@ void to_rapidjson(json2::Value &result, const simplified_album_t &a, json2::Allo
     result.AddMember("artists", artists, allocator);
 }
 
-void to_rapidjson(json2::Value &result, const album_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const album_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
-    to_rapidjson(result, dynamic_cast<const simplified_album_t&>(a), allocator);
+    result = Value(json2::kObjectType);
+    to_json(result, dynamic_cast<const simplified_album_t&>(a), allocator);
 }
 
-void from_rapidjson(const Value &j, album_t &a)
+void from_json(const Value &j, album_t &a)
 {
-    from_rapidjson(j, dynamic_cast<simplified_album_t&>(a));
+    from_json(j, dynamic_cast<simplified_album_t&>(a));
 }
 
-void to_rapidjson(json2::Value &result, saved_album_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, saved_album_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value album;
-    to_rapidjson(album, dynamic_cast<const album_t&>(a), allocator);
+    to_json(album, dynamic_cast<const album_t&>(a), allocator);
 
     result.AddMember("added_at", Value(a.added_at, allocator), allocator);
     result.AddMember("album", album, allocator);
 }
 
-void from_rapidjson(const Value &j, saved_album_t &a)
+void from_json(const Value &j, saved_album_t &a)
 {
-    from_rapidjson(j["album"], dynamic_cast<album_t&>(a));
+    from_json(j["album"], dynamic_cast<album_t&>(a));
     a.added_at = j["added_at"].GetString();
 }
 
@@ -173,12 +173,12 @@ const string& simplified_track_t::get_fields_filter()
     return fields;
 }
 
-void to_rapidjson(json2::Value &result, const simplified_track_t &t, json2::Allocator &allocator)
+void to_json(json2::Value &result, const simplified_track_t &t, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value artists;
-    to_rapidjson(artists, t.artists, allocator);
+    to_json(artists, t.artists, allocator);
 
     result.AddMember("id", Value(t.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(t.name), allocator), allocator);
@@ -189,7 +189,7 @@ void to_rapidjson(json2::Value &result, const simplified_track_t &t, json2::Allo
     result.AddMember("artists", artists, allocator);
 }
 
-void from_rapidjson(const Value &j, simplified_track_t &t)
+void from_json(const Value &j, simplified_track_t &t)
 {
     t.id = j["id"].GetString();
     t.track_number = j["track_number"].GetUint64();
@@ -227,28 +227,28 @@ wstring track_t::get_long_name() const
     return std::format(L"{} - {}", get_artist_name(), name);
 }
 
-void to_rapidjson(json2::Value &result, const track_t &t, json2::Allocator &allocator)
+void to_json(json2::Value &result, const track_t &t, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
-    to_rapidjson(result, dynamic_cast<const simplified_track_t&>(t), allocator);
+    to_json(result, dynamic_cast<const simplified_track_t&>(t), allocator);
 
     Value album;
-    to_rapidjson(album, t.album, allocator);
+    to_json(album, t.album, allocator);
 
     Value artists;
-    to_rapidjson(artists, t.artists, allocator);
+    to_json(artists, t.artists, allocator);
 
     result.AddMember("album", album, allocator);
     result.AddMember("artists", artists, allocator);
 }
 
-void from_rapidjson(const Value &j, track_t &t)
+void from_json(const Value &j, track_t &t)
 {
-    from_rapidjson(j, dynamic_cast<simplified_track_t&>(t));
+    from_json(j, dynamic_cast<simplified_track_t&>(t));
 
-    from_rapidjson(j["album"], t.album);
-    from_rapidjson(j["artists"], t.artists);
+    from_json(j["album"], t.album);
+    from_json(j["artists"], t.artists);
 }
 
 const string& saved_track_t::get_fields_filter()
@@ -257,26 +257,26 @@ const string& saved_track_t::get_fields_filter()
     return fields;
 }
 
-void to_rapidjson(json2::Value &result, const saved_track_t &t, json2::Allocator &allocator)
+void to_json(json2::Value &result, const saved_track_t &t, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value track;
-    to_rapidjson(track, dynamic_cast<const track_t&>(t), allocator);
+    to_json(track, dynamic_cast<const track_t&>(t), allocator);
 
     result.AddMember("added_at", Value(t.added_at, allocator), allocator);
     result.AddMember("track", track, allocator);
 }
     
-void from_rapidjson(const Value &j, saved_track_t &t)
+void from_json(const Value &j, saved_track_t &t)
 {
-    from_rapidjson(j["track"], dynamic_cast<track_t&>(t));
+    from_json(j["track"], dynamic_cast<track_t&>(t));
     t.added_at = j["added_at"].GetString();
 }
 
-void to_rapidjson(json2::Value &result, const simplified_playlist_t &p, json2::Allocator &allocator)
+void to_json(json2::Value &result, const simplified_playlist_t &p, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value tracks;
     tracks.AddMember("total", Value(p.tracks_total), allocator);
@@ -295,7 +295,7 @@ void to_rapidjson(json2::Value &result, const simplified_playlist_t &p, json2::A
     result.AddMember("actions", owner, allocator);
 }
 
-void from_rapidjson(const Value &j, simplified_playlist_t &p)
+void from_json(const Value &j, simplified_playlist_t &p)
 {
     p.id = j["id"].GetString();
     p.snapshot_id = j["snapshot_id"].GetString();
@@ -309,14 +309,14 @@ void from_rapidjson(const Value &j, simplified_playlist_t &p)
     p.description = utils::utf8_decode(j["description"].GetString());
 }
 
-void to_rapidjson(json2::Value &result, const playlist_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const playlist_t &a, json2::Allocator &allocator)
 {
-    to_rapidjson(result, dynamic_cast<const simplified_playlist_t&>(a), allocator);
+    to_json(result, dynamic_cast<const simplified_playlist_t&>(a), allocator);
 }
 
-void from_rapidjson(const Value &j, playlist_t &p)
+void from_json(const Value &j, playlist_t &p)
 {
-    from_rapidjson(j, dynamic_cast<simplified_playlist_t&>(p));
+    from_json(j, dynamic_cast<simplified_playlist_t&>(p));
 }
 
 const string& simplified_playlist_t::get_fields_filter()
@@ -332,21 +332,21 @@ const string& playlist_t::get_fields_filter()
     return fields;
 }
 
-void to_rapidjson(json2::Value &result, const playback_state_t &p, json2::Allocator &allocator)
+void to_json(json2::Value &result, const playback_state_t &p, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value device;
-    to_rapidjson(device, p.device, allocator);
+    to_json(device, p.device, allocator);
 
     Value actions;
-    to_rapidjson(actions, p.actions, allocator);
+    to_json(actions, p.actions, allocator);
 
     Value item;
-    to_rapidjson(item, p.item, allocator);
+    to_json(item, p.item, allocator);
 
     Value context;
-    to_rapidjson(context, p.context, allocator);
+    to_json(context, p.context, allocator);
 
     result.AddMember("repeat_state", Value(p.repeat_state, allocator), allocator);
     result.AddMember("shuffle_state", Value(p.shuffle_state), allocator);
@@ -358,16 +358,16 @@ void to_rapidjson(json2::Value &result, const playback_state_t &p, json2::Alloca
     result.AddMember("context", context, allocator);
 }
 
-void from_rapidjson(const json2::Value &j, playback_state_t &p)
+void from_json(const json2::Value &j, playback_state_t &p)
 {
-    from_rapidjson(j["device"], p.device);
-    from_rapidjson(j["actions"], p.actions);
+    from_json(j["device"], p.device);
+    from_json(j["actions"], p.actions);
 
     if (j.HasMember("context") && !j["context"].IsNull())
-        from_rapidjson(j["context"], p.context);
+        from_json(j["context"], p.context);
 
     if (j.HasMember("item") && !j["item"].IsNull())
-        from_rapidjson(j["item"], p.item);
+        from_json(j["item"], p.item);
 
     p.progress_ms = j.HasMember("progress_ms") ? j["progress_ms"].GetInt() : 0;
     p.progress = p.progress_ms / 1000;
@@ -393,13 +393,13 @@ bool operator==(const actions_t &lhs, const actions_t &rhs)
     );
 }
 
-void to_rapidjson(json2::Value &result, const actions_t &a, json2::Allocator &allocator)
+void to_json(json2::Value &result, const actions_t &a, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
     // TODO: unfinished
 }
 
-void from_rapidjson(const Value &j, actions_t &a)
+void from_json(const Value &j, actions_t &a)
 {
     auto get_bool = [&](const string &fieldname) -> bool
     {
@@ -418,16 +418,16 @@ void from_rapidjson(const Value &j, actions_t &a)
     a.trasferring_playback = get_bool("trasferring_playback");
 }
 
-void from_rapidjson(const json2::Value &j, context_t &c)
+void from_json(const json2::Value &j, context_t &c)
 {
     c.type = j["type"].GetString();
     c.uri = j["uri"].GetString();
     c.href = j["href"].GetString();
 }
 
-void to_rapidjson(json2::Value &result, const context_t &c, json2::Allocator &allocator)
+void to_json(json2::Value &result, const context_t &c, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     result.AddMember("type", Value(c.type, allocator), allocator);
     result.AddMember("uri", Value(c.uri, allocator), allocator);
@@ -448,7 +448,7 @@ bool operator==(const context_t &lhs, const context_t &rhs)
     return lhs.href == rhs.href;
 }
 
-void from_rapidjson(const Value &j, device_t &d)
+void from_json(const Value &j, device_t &d)
 {
     d.id = j["id"].GetString();
     d.is_active = j["is_active"].GetBool();
@@ -459,9 +459,9 @@ void from_rapidjson(const Value &j, device_t &d)
     d.volume_percent = j.HasMember("volume_percent") ? j["volume_percent"].GetInt() : 0;
 }
 
-void to_rapidjson(json2::Value &result, const device_t &d, json2::Allocator &allocator)
+void to_json(json2::Value &result, const device_t &d, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     result.AddMember("id", Value(d.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(d.name), allocator), allocator);
@@ -476,29 +476,29 @@ string device_t::to_str() const
     return std::format("device(name={}, id={})", utils::to_string(name), id);
 }
 
-void to_rapidjson(json2::Value &result, const history_item_t &i, json2::Allocator &allocator)
+void to_json(json2::Value &result, const history_item_t &i, json2::Allocator &allocator)
 {
-    result = Value(rapidjson::kObjectType);
+    result = Value(json2::kObjectType);
 
     Value track;
-    to_rapidjson(track, i.track, allocator);
+    to_json(track, i.track, allocator);
 
     Value context;
-    to_rapidjson(context, i.context, allocator);
+    to_json(context, i.context, allocator);
 
     result.AddMember("played_at", Value(i.played_at, allocator), allocator);
     result.AddMember("track", track, allocator);
     result.AddMember("context", context, allocator);
 }
     
-void from_rapidjson(const json2::Value &j, history_item_t &p)
+void from_json(const json2::Value &j, history_item_t &p)
 {
     p.played_at = j["played_at"].GetString();
 
-    from_rapidjson(j["track"], p.track);
+    from_json(j["track"], p.track);
 
     if (!j["context"].IsNull())
-        from_rapidjson(j["context"], p.context);
+        from_json(j["context"], p.context);
 }
 
 } // namespace spotify

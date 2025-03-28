@@ -35,14 +35,14 @@ static wstring get_user_app_data_folder()
     return config::get_plugin_launch_folder();
 }
 
-void from_rapidjson(const json2::Value &j, settings::view_t &v)
+void from_json(const json2::Value &j, settings::view_t &v)
 {
     v.sort_mode_idx = j["sort_mode_idx"].GetInt();
     v.is_descending = j["is_descending"].GetBool();
     v.view_mode = j["view_mode"].GetInt();
 }
 
-void to_rapidjson(json2::Value &result, const settings::view_t &v, json2::Allocator &allocator)
+void to_json(json2::Value &result, const settings::view_t &v, json2::Allocator &allocator)
 {
     result = json2::Value(json2::kObjectType);
 
@@ -212,7 +212,7 @@ void read(const PluginStartupInfo *info)
         json2::Document document;
         document.Parse(views_settings_json);
         
-        json2::from_rapidjson(document, _settings.views);
+        json2::from_json(document, _settings.views);
     }
 
     _settings.plugin_startup_folder = get_plugin_launch_folder(info);
@@ -238,7 +238,7 @@ void write()
     ctx->set_int(localhost_service_port_opt, _settings.localhost_service_port);
     
     json2::Document document;
-    json2::to_rapidjson(document, _settings.views, document.GetAllocator());
+    json2::to_json(document, _settings.views, document.GetAllocator());
 
     json2::StringBuffer sb;
     json2::Writer<json2::StringBuffer> writer(sb);

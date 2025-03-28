@@ -316,43 +316,44 @@ namespace json2
     using rapidjson::Writer;
     using rapidjson::SizeType;
     using rapidjson::Pointer;
+    using rapidjson::PrettyWriter;
     using rapidjson::kObjectType;
     using rapidjson::kArrayType;
     
     typedef typename Document::AllocatorType Allocator;
     
     /// @brief string support for rapidjson parse/pack
-    void from_rapidjson(const Value &j, string &result);
-    void to_rapidjson(Value &j, const string &result, Allocator &allocator);
+    void from_json(const Value &j, string &result);
+    void to_json(Value &j, const string &result, Allocator &allocator);
     
     /// @brief integer support for rapidjson parse/pack
-    void from_rapidjson(const Value &j, int &result);
-    void to_rapidjson(Value &j, const int &result, Allocator &allocator);
+    void from_json(const Value &j, int &result);
+    void to_json(Value &j, const int &result, Allocator &allocator);
     
-    /// @brief bool support for rapidjson parse/pack
-    void from_rapidjson(const Value &j, bool &result);
-    void to_rapidjson(Value &j, const bool &result, Allocator &allocator);
+    /// @brief bool support for json2 parse/pack
+    void from_json(const Value &j, bool &result);
+    void to_json(Value &j, const bool &result, Allocator &allocator);
 
     /// @brief vector support for rapidjson parse/pack
     /// @note the vector's type T should support packing as well
     template<class T>
-    void from_rapidjson(const Value &j, std::vector<T> &result)
+    void from_json(const Value &j, std::vector<T> &result)
     {
         result.resize(j.Size());
 
         for (SizeType i = 0; i < result.size(); i++)
-            from_rapidjson(j[i], result[i]);
+            from_json(j[i], result[i]);
     }
 
     template<class T>
-    void to_rapidjson(Value &result, const std::vector<T> &data, Allocator &allocator)
+    void to_json(Value &result, const std::vector<T> &data, Allocator &allocator)
     {
         result = Value(kArrayType);
 
         for (const auto &item: data)
         {
             Value value;
-            to_rapidjson(value, item, allocator);
+            to_json(value, item, allocator);
 
             result.PushBack(value, allocator);
         }
@@ -361,23 +362,23 @@ namespace json2
     /// @brief deque support for rapidjson parse/pack
     /// @note the vector's type T should support packing as well
     template<class T>
-    void from_rapidjson(const Value &j, std::deque<T> &result)
+    void from_json(const Value &j, std::deque<T> &result)
     {
         result.resize(j.Size());
 
         for (SizeType i = 0; i < result.size(); i++)
-            from_rapidjson(j[i], result[i]);
+            from_json(j[i], result[i]);
     }
 
     template<class T>
-    void to_rapidjson(Value &result, const std::deque<T> &data, Allocator &allocator)
+    void to_json(Value &result, const std::deque<T> &data, Allocator &allocator)
     {
         result = Value(kArrayType);
 
         for (const auto &item: data)
         {
             Value value;
-            to_rapidjson(value, item, allocator);
+            to_json(value, item, allocator);
 
             result.PushBack(value, allocator);
         }
@@ -386,7 +387,7 @@ namespace json2
     /// @brief unordered_map support for rapidjson parse/pack
     /// @note the vector's type T should support packing as well
     template<class V>
-    void from_rapidjson(const Value &j, std::unordered_map<string, V> &result)
+    void from_json(const Value &j, std::unordered_map<string, V> &result)
     {
         result.reserve(j.MemberCount());
 
@@ -394,12 +395,12 @@ namespace json2
             itr != j.MemberEnd(); ++itr)
         {
             auto &value = result[itr->name.GetString()] = {};
-            from_rapidjson(itr->value, value);
+            from_json(itr->value, value);
         }
     }
 
     template<class V>
-    void to_rapidjson(Value &result, const std::unordered_map<string, V> &data,
+    void to_json(Value &result, const std::unordered_map<string, V> &data,
         Allocator &allocator)
     {
         result = Value(kObjectType);
@@ -407,7 +408,7 @@ namespace json2
         for (const auto &[k, v]: data)
         {
             Value value;
-            to_rapidjson(value, v, allocator);
+            to_json(value, v, allocator);
 
             result.AddMember(Value(k, allocator), value, allocator);
         }

@@ -5,7 +5,7 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
-void from_rapidjson(const json2::Value &j, http_cache::cache_entry &e)
+void from_json(const json2::Value &j, http_cache::cache_entry &e)
 {
     e.etag = j["etag"].GetString();
     e.body = j["body"].GetString();
@@ -17,9 +17,9 @@ void from_rapidjson(const json2::Value &j, http_cache::cache_entry &e)
     e.cached_until = clock_t::time_point{ clock_t::duration(cached_until) };
 }
 
-void to_rapidjson(json2::Value &result, const http_cache::cache_entry &e, json2::Allocator allocator)
+void to_json(json2::Value &result, const http_cache::cache_entry &e, json2::Allocator allocator)
 {
-    result = json2::Value(rapidjson::kObjectType);
+    result = json2::Value(json2::kObjectType);
 
     result.AddMember("etag", json2::Value(e.etag, allocator), allocator);
     result.AddMember("body", json2::Value(e.body, allocator), allocator);
@@ -47,10 +47,10 @@ void http_cache::start()
             return;
         }
 
-        rapidjson::Document document;
+        json2::Document document;
         document.Parse(mmap.data());
         
-        utils::json2::from_rapidjson(document, cached_responses);
+        utils::json2::from_json(document, cached_responses);
 
         mmap.unmap();
     }
@@ -73,11 +73,11 @@ void http_cache::shutdown()
 
     try
     {
-        rapidjson::Document document;
-        utils::json2::to_rapidjson(document, cached_responses, document.GetAllocator());
+        json2::Document document;
+        utils::json2::to_json(document, cached_responses, document.GetAllocator());
 
-        rapidjson::StringBuffer sb;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+        json2::StringBuffer sb;
+        json2::Writer<json2::StringBuffer> writer(sb);
         document.Accept(writer);
         
         std::ofstream file(get_cache_filename(), std::ios_base::trunc);

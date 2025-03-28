@@ -72,10 +72,10 @@ bool devices_cache::request_data(devices_t &data)
     auto res = api_proxy->get("/v1/me/player/devices");
     if (res->status == httplib::OK_200)
     {
-        rapidjson::Document document;
-        rapidjson::Value &body = document.Parse(res->body);
+        json2::Document document;
+        json2::Value &body = document.Parse(res->body);
         
-        from_rapidjson(body["devices"], data);
+        from_json(body["devices"], data);
     }
 
     return true;
