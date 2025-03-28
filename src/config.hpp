@@ -8,7 +8,7 @@
 namespace spotifar { namespace config {
 
 namespace log = utils::log;
-namespace json2 = utils::json2;
+namespace json = utils::json;
 
 extern PluginStartupInfo ps_info;
 extern FarStandardFunctions fsf;
@@ -37,8 +37,8 @@ struct settings
         bool is_descending;
         int view_mode;
         
-        friend void from_json(const json2::Value &j, view_t &v);
-        friend void to_json(json2::Value &j, const view_t &v, json2::Allocator &allocator);
+        friend void from_json(const json::Value &j, view_t &v);
+        friend void to_json(json::Value &j, const view_t &v, json::Allocator &allocator);
     };
 
     /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }

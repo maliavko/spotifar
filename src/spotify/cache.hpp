@@ -8,7 +8,7 @@
 
 namespace spotifar { namespace spotify {
 
-namespace json2 = utils::json2;
+namespace json = utils::json;
 using config::persistent_data;
 using settings_ctx = config::settings_context;
 
@@ -38,7 +38,7 @@ protected:
         auto storage_value = ctx.get_str(key, "");
         if (!storage_value.empty())
         {
-            json2::Document document;
+            json::Document document;
             document.Parse(storage_value);
             from_json(document, data);
         }
@@ -46,11 +46,11 @@ protected:
 
     virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const T &data)
     {
-        json2::Document document;
+        json::Document document;
         to_json(document, data, document.GetAllocator());
 
-        json2::StringBuffer sb;
-        json2::Writer<json2::StringBuffer> writer(sb);
+        json::StringBuffer sb;
+        json::Writer<json::StringBuffer> writer(sb);
 
         document.Accept(writer);
 
@@ -89,7 +89,7 @@ template<class T>
 class json_cache: public cached_data_abstract
 {
 public:
-    typedef std::function<void(json2::Document &)> patch_handler_t;
+    typedef std::function<void(json::Document &)> patch_handler_t;
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
     /// the cache is not getting saved to disk, kept for sessino only
@@ -226,7 +226,7 @@ void json_cache<T>::apply_patches(T &item)
     // json j = item; 
     auto now = clock_t::now();
 
-    json2::Document doc;
+    json::Document doc;
     to_json(doc, item, doc.GetAllocator());
 
     // removing outdated patches first
@@ -259,8 +259,8 @@ public:
         inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
 
         // json serialization interface
-        friend void from_json(const json2::Value &j, cache_entry &e);
-        friend void to_json(json2::Value &j, const cache_entry &e, json2::Allocator allocator);
+        friend void from_json(const json::Value &j, cache_entry &e);
+        friend void to_json(json::Value &j, const cache_entry &e, json::Allocator allocator);
     };
 public:
     void start();

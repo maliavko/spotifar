@@ -5,7 +5,7 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
-void from_json(const json2::Value &j, http_cache::cache_entry &e)
+void from_json(const json::Value &j, http_cache::cache_entry &e)
 {
     e.etag = j["etag"].GetString();
     e.body = j["body"].GetString();
@@ -17,14 +17,14 @@ void from_json(const json2::Value &j, http_cache::cache_entry &e)
     e.cached_until = clock_t::time_point{ clock_t::duration(cached_until) };
 }
 
-void to_json(json2::Value &result, const http_cache::cache_entry &e, json2::Allocator allocator)
+void to_json(json::Value &result, const http_cache::cache_entry &e, json::Allocator allocator)
 {
-    result = json2::Value(json2::kObjectType);
+    result = json::Value(json::kObjectType);
 
-    result.AddMember("etag", json2::Value(e.etag, allocator), allocator);
-    result.AddMember("body", json2::Value(e.body, allocator), allocator);
+    result.AddMember("etag", json::Value(e.etag, allocator), allocator);
+    result.AddMember("body", json::Value(e.body, allocator), allocator);
     result.AddMember("cached-until",
-        json2::Value(e.cached_until.time_since_epoch().count()), allocator);
+        json::Value(e.cached_until.time_since_epoch().count()), allocator);
 }
 
 void http_cache::start()
@@ -47,10 +47,10 @@ void http_cache::start()
             return;
         }
 
-        json2::Document document;
+        json::Document document;
         document.Parse(mmap.data());
         
-        utils::json2::from_json(document, cached_responses);
+        utils::json::from_json(document, cached_responses);
 
         mmap.unmap();
     }
@@ -73,11 +73,11 @@ void http_cache::shutdown()
 
     try
     {
-        json2::Document document;
-        utils::json2::to_json(document, cached_responses, document.GetAllocator());
+        json::Document document;
+        utils::json::to_json(document, cached_responses, document.GetAllocator());
 
-        json2::StringBuffer sb;
-        json2::Writer<json2::StringBuffer> writer(sb);
+        json::StringBuffer sb;
+        json::Writer<json::StringBuffer> writer(sb);
         document.Accept(writer);
         
         std::ofstream file(get_cache_filename(), std::ios_base::trunc);

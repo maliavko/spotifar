@@ -118,8 +118,8 @@ auth_t auth_cache::authenticate(const httplib::Params &params)
         "application/x-www-form-urlencoded");
 
     // TODO: error handling
-    json2::Document document;
-    json2::Value &body = document.Parse(res->body);
+    json::Document document;
+    json::Value &body = document.Parse(res->body);
 
     auth_t result;
     from_json(document, result);
@@ -173,7 +173,7 @@ string auth_cache::get_auth_callback_url() const
     return std::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
-void from_json(const json2::Value &j, auth_t &a)
+void from_json(const json::Value &j, auth_t &a)
 {
     a.access_token = j["access_token"].GetString();
     a.scope = j["scope"].GetString();
@@ -185,14 +185,14 @@ void from_json(const json2::Value &j, auth_t &a)
         a.refresh_token = "";
 }
 
-void to_json(json2::Value &result, const auth_t &a, json2::Allocator &allocator)
+void to_json(json::Value &result, const auth_t &a, json::Allocator &allocator)
 {
-    result = json2::Value(json2::kObjectType);
+    result = json::Value(json::kObjectType);
 
-    result.AddMember("access_token", json2::Value(a.access_token, allocator), allocator);
-    result.AddMember("scope", json2::Value(a.scope, allocator), allocator);
-    result.AddMember("expires_in", json2::Value(a.expires_in), allocator);
-    result.AddMember("refresh_token", json2::Value(a.refresh_token, allocator), allocator);
+    result.AddMember("access_token", json::Value(a.access_token, allocator), allocator);
+    result.AddMember("scope", json::Value(a.scope, allocator), allocator);
+    result.AddMember("expires_in", json::Value(a.expires_in), allocator);
+    result.AddMember("refresh_token", json::Value(a.refresh_token, allocator), allocator);
 }
 
 } // namespace spotify

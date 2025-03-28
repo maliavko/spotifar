@@ -52,8 +52,8 @@ bool playback_cache::request_data(playback_state_t &data)
     auto res = api_proxy->get("/v1/me/player");
     if (res->status == httplib::OK_200)
     {
-        json2::Document document;
-        json2::Value &body = document.Parse(res->body);
+        json::Document document;
+        json::Value &body = document.Parse(res->body);
         
         from_json(body, data);
         return true;

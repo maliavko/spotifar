@@ -308,7 +308,7 @@ namespace far3
     intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message = "");
 }
 
-namespace json2
+namespace json
 {
     using rapidjson::Document;
     using rapidjson::Value;
@@ -330,7 +330,7 @@ namespace json2
     void from_json(const Value &j, int &result);
     void to_json(Value &j, const int &result, Allocator &allocator);
     
-    /// @brief bool support for json2 parse/pack
+    /// @brief bool support for json parse/pack
     void from_json(const Value &j, bool &result);
     void to_json(Value &j, const bool &result, Allocator &allocator);
 
@@ -419,7 +419,7 @@ namespace json2
 
 namespace http
 {
-    using namespace json2;
+    using namespace json;
 
     bool is_success(int response_code);
     

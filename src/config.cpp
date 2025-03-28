@@ -35,20 +35,20 @@ static wstring get_user_app_data_folder()
     return config::get_plugin_launch_folder();
 }
 
-void from_json(const json2::Value &j, settings::view_t &v)
+void from_json(const json::Value &j, settings::view_t &v)
 {
     v.sort_mode_idx = j["sort_mode_idx"].GetInt();
     v.is_descending = j["is_descending"].GetBool();
     v.view_mode = j["view_mode"].GetInt();
 }
 
-void to_json(json2::Value &result, const settings::view_t &v, json2::Allocator &allocator)
+void to_json(json::Value &result, const settings::view_t &v, json::Allocator &allocator)
 {
-    result = json2::Value(json2::kObjectType);
+    result = json::Value(json::kObjectType);
 
-    result.AddMember("sort_mode_idx", json2::Value(v.sort_mode_idx), allocator);
-    result.AddMember("is_descending", json2::Value(v.is_descending), allocator);
-    result.AddMember("view_mode", json2::Value(v.view_mode), allocator);
+    result.AddMember("sort_mode_idx", json::Value(v.sort_mode_idx), allocator);
+    result.AddMember("is_descending", json::Value(v.is_descending), allocator);
+    result.AddMember("view_mode", json::Value(v.view_mode), allocator);
 }
 
 settings_context::settings_context(const wstring &subkey):
@@ -209,10 +209,10 @@ void read(const PluginStartupInfo *info)
     auto views_settings_json = ctx->get_str(views_settings_opt, "");
     if (!views_settings_json.empty())
     {
-        json2::Document document;
+        json::Document document;
         document.Parse(views_settings_json);
         
-        json2::from_json(document, _settings.views);
+        json::from_json(document, _settings.views);
     }
 
     _settings.plugin_startup_folder = get_plugin_launch_folder(info);
@@ -237,11 +237,11 @@ void write()
     ctx->set_wstr(spotify_client_secret_opt, _settings.spotify_client_secret);
     ctx->set_int(localhost_service_port_opt, _settings.localhost_service_port);
     
-    json2::Document document;
-    json2::to_json(document, _settings.views, document.GetAllocator());
+    json::Document document;
+    json::to_json(document, _settings.views, document.GetAllocator());
 
-    json2::StringBuffer sb;
-    json2::Writer<json2::StringBuffer> writer(sb);
+    json::StringBuffer sb;
+    json::Writer<json::StringBuffer> writer(sb);
     document.Accept(writer);
     
     ctx->set_str(views_settings_opt, sb.GetString());

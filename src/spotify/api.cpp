@@ -374,7 +374,7 @@ void api::pause_playback(const string &device_id)
             auto res = put(append_query_params("/v1/me/player/pause", params));
             if (http::is_success(res))
                 cache.patch([](auto &v) {
-                    json2::Pointer("/is_playing").Set(v, false);
+                    json::Pointer("/is_playing").Set(v, false);
                 });
         });
 }
@@ -428,7 +428,7 @@ void api::seek_to_position(int position_ms, const string &device_id)
             auto res = put(append_query_params("/v1/me/player/seek", params));
             if (http::is_success(res->status))
                 cache.patch([position_ms](auto &v) {
-                    json2::Pointer("/progress_ms").Set(v, position_ms);
+                    json::Pointer("/progress_ms").Set(v, position_ms);
                 });
         });
 }
@@ -448,7 +448,7 @@ void api::toggle_shuffle(bool is_on, const string &device_id)
             auto res = put(append_query_params("/v1/me/player/shuffle", params));
             if (http::is_success(res->status))
                 cache.patch([is_on](auto &v) {
-                    json2::Pointer("/shuffle_state").Set(v, is_on);
+                    json::Pointer("/shuffle_state").Set(v, is_on);
                 });
         });
 }
@@ -498,7 +498,7 @@ void api::set_repeat_state(const string &mode, const string &device_id)
             auto res = put(append_query_params("/v1/me/player/repeat", params));
             if (http::is_success(res->status))
                 cache.patch([mode](auto &d) {
-                    json2::Pointer("/repeat_state").Set(d, mode);
+                    json::Pointer("/repeat_state").Set(d, mode);
                 });
         });
 }
@@ -518,7 +518,7 @@ void api::set_playback_volume(int volume_percent, const string &device_id)
             auto res = put(append_query_params("/v1/me/player/volume", params));
             if (http::is_success(res->status))
                 cache.patch([volume_percent](auto &d) {
-                    json2::Pointer("/device/volume_percent").Set(d, volume_percent);
+                    json::Pointer("/device/volume_percent").Set(d, volume_percent);
                 });
         });
 }
@@ -566,7 +566,7 @@ void api::start_playback_raw(const string &body, const string &device_id)
             auto res = put(request_url, body);
             if (http::is_success(res))
                 cache.patch([](auto &d) {
-                    json2::Pointer("/is_playing").Set(d, true);
+                    json::Pointer("/is_playing").Set(d, true);
                 });
         });
 }

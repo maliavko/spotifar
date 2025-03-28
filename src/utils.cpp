@@ -693,7 +693,7 @@ namespace http
     }
 }
 
-namespace json2
+namespace json
 {
     // string
     void from_json(const Value &j, string &result)
