@@ -3,6 +3,7 @@
 
 namespace spotifar { namespace ui {
 
+using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 tracks_base_view::tracks_base_view(api_abstract *api, const string &view_uid,
@@ -256,8 +257,7 @@ void recent_tracks_view::rebuild_items()
 
     for (const auto &item: api_proxy->get_play_history())
         items.push_back(
-            history_track_t(item.played_at, item.track)
-        );
+            history_track_t(item.played_at, item.track));
 }
 
 bool recent_tracks_view::start_playback(const string &track_id)
@@ -278,6 +278,47 @@ void recent_tracks_view::on_items_changed()
     
     panels::update(PANEL_ACTIVE);
     panels::redraw(PANEL_ACTIVE);
+}
+
+
+saved_tracks_view::saved_tracks_view(api_abstract *api):
+    tracks_base_view(api, "saved_tracks_view", std::bind(events::show_collections, api)),
+    collection(api_proxy->get_saved_tracks())
+{
+    utils::events::start_listening<playback_observer>(this);
+}
+
+saved_tracks_view::~saved_tracks_view()
+{
+    utils::events::stop_listening<playback_observer>(this);
+}
+
+const wstring& saved_tracks_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelTracksItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t saved_tracks_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
+bool saved_tracks_view::start_playback(const string &track_id)
+{
+    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
+    return true;
+}
+
+std::generator<const simplified_track_t&> saved_tracks_view::get_tracks()
+{
+    if (collection->fetch())
+        for (const auto &t: *collection)
+            co_yield t;
+}
+
+void saved_tracks_view::on_track_changed(const track_t &track)
+{
 }
 
 } // namespace ui

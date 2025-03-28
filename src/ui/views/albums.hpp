@@ -41,9 +41,9 @@ public:
     artist_view(api_abstract *api, const artist_t &artist,
         return_callback_t callback);
     
-    auto get_default_settings() const -> config::settings::view_t;
     auto get_dir_name() const -> const wstring&;
 protected:
+    auto get_default_settings() const -> config::settings::view_t;
     auto get_albums() -> std::generator<const simplified_album_t&>;
     auto show_tracks_view(const album_t &album) const -> void;
 private:

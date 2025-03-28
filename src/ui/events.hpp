@@ -22,21 +22,23 @@ namespace events {
 
     void show_root(api_abstract *api);
 
+    // collection menu events
     void show_collections(api_abstract *api);
     void show_artists_collection(api_abstract *api);
     void show_albums_collection(api_abstract *api);
     void show_tracks_collection(api_abstract *api);
+    void show_playlists_collection(api_abstract *api);
 
-    void show_playlists(api_abstract *api);
-
+    // recent menu events
     void show_recents(api_abstract *api);
     void show_recent_tracks(api_abstract *api);
     void show_recent_albums(api_abstract *api);
     void show_recent_artists(api_abstract *api);
+    void show_recent_playlists(api_abstract *api);
 
-    void show_new_releases(api_abstract *api);
-
+    // browse menu events
     void show_browse(api_abstract *api);
+    void show_new_releases(api_abstract *api);
 
     void show_playlist(api_abstract *api, const playlist_t &playlist);
 

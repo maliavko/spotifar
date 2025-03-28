@@ -158,8 +158,8 @@ intptr_t collection_view::select_item(const data_item_t* data)
     
     if (data->id == playlists_id)
     {
-        ui::events::show_playlists(api_proxy);
-        return FALSE;
+        ui::events::show_playlists_collection(api_proxy);
+        return TRUE;
     }
 
     return FALSE;

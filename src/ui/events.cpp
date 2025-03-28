@@ -42,7 +42,7 @@ namespace events {
 
     void show_tracks_collection(api_abstract *api)
     {
-        // TODO: unfinished
+        return show_panel_view<saved_tracks_view>(api);
     }
 
     void show_browse(api_abstract *api)
@@ -69,13 +69,18 @@ namespace events {
     {
         return show_panel_view<recent_artists_view>(api);
     }
+
+    void show_recent_playlists(api_abstract *api)
+    {
+        return show_panel_view<recent_playlists_view>(api);
+    }
     
     void show_new_releases(api_abstract *api)
     {
         return show_panel_view<new_releases_view>(api);
     }
 
-    void show_playlists(api_abstract *api)
+    void show_playlists_collection(api_abstract *api)
     {
         return show_panel_view<playlists_view>(api);
     }

@@ -117,6 +117,12 @@ intptr_t recents_view::select_item(const data_item_t *data)
         ui::events::show_recent_artists(api_proxy);
         return TRUE;
     }
+    
+    if (data->id == playlists_id)
+    {
+        ui::events::show_recent_playlists(api_proxy);
+        return TRUE;
+    }
 
     return FALSE;
 }

@@ -55,7 +55,7 @@ private:
     album_tracks_ptr collection;
 };
 
-
+/// @brief 
 class recent_tracks_view:
     public tracks_base_view,
     public play_history_observer
@@ -87,6 +87,26 @@ protected:
     void on_items_changed();
 private:
     std::vector<history_track_t> items;
+};
+
+/// @brief
+class saved_tracks_view:
+    public tracks_base_view,
+    public playback_observer
+{
+public:
+    saved_tracks_view(api_abstract *api);
+    ~saved_tracks_view();
+    
+    auto get_default_settings() const -> config::settings::view_t;
+    auto get_dir_name() const -> const wstring&;
+protected:
+    auto start_playback(const string &track_id) -> bool;
+    auto get_tracks() -> std::generator<const simplified_track_t&>;
+
+    auto on_track_changed(const track_t &track) -> void;
+private:
+    saved_tracks_ptr collection;
 };
 
 } // namespace ui

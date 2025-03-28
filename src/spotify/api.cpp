@@ -313,11 +313,13 @@ void api::start_playback(const string &context_uri, const string &track_uri,
     {
         body.insert("context_uri", context_uri);
         if (!track_uri.empty())
+        {
             body.insert("position_ms", position_ms);
             body.object("offset", [&]
             {
                 body.insert("uri", track_uri);
             });
+        }
     });
     
     start_playback_raw(body.str(), device_id);
