@@ -6,7 +6,6 @@
 			"features": ["openssl"]
 		},
 		"openssl",
-		"nlohmann-json",
 		"spdlog",
 		"bshoshany-thread-pool",
 		"mio",

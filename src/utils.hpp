@@ -308,43 +308,46 @@ namespace far3
     intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message = "");
 }
 
-namespace http
-{
-    bool is_success(int response_code);
-    
-    /// @brief A static constant, representing the flag of a session-wide caching
-    static const auto session = clock_t::duration(-1);
-}
-
 namespace json2
 {
-    //using namespace rapidjson;
     using rapidjson::Document;
     using rapidjson::Value;
-    using rapidjson::kObjectType;
     using rapidjson::StringBuffer;
     using rapidjson::Writer;
+    using rapidjson::SizeType;
+    using rapidjson::Pointer;
+    using rapidjson::kObjectType;
+    using rapidjson::kArrayType;
     
     typedef typename Document::AllocatorType Allocator;
     
-    
+    /// @brief string support for rapidjson parse/pack
     void from_rapidjson(const Value &j, string &result);
-
     void to_rapidjson(Value &j, const string &result, Allocator &allocator);
+    
+    /// @brief integer support for rapidjson parse/pack
+    void from_rapidjson(const Value &j, int &result);
+    void to_rapidjson(Value &j, const int &result, Allocator &allocator);
+    
+    /// @brief bool support for rapidjson parse/pack
+    void from_rapidjson(const Value &j, bool &result);
+    void to_rapidjson(Value &j, const bool &result, Allocator &allocator);
 
+    /// @brief vector support for rapidjson parse/pack
+    /// @note the vector's type T should support packing as well
     template<class T>
     void from_rapidjson(const Value &j, std::vector<T> &result)
     {
         result.resize(j.Size());
 
-        for (rapidjson::SizeType i = 0; i < result.size(); i++)
+        for (SizeType i = 0; i < result.size(); i++)
             from_rapidjson(j[i], result[i]);
     }
 
     template<class T>
     void to_rapidjson(Value &result, const std::vector<T> &data, Allocator &allocator)
     {
-        result = Value(rapidjson::kArrayType);
+        result = Value(kArrayType);
 
         for (const auto &item: data)
         {
@@ -355,6 +358,33 @@ namespace json2
         }
     }
 
+    /// @brief deque support for rapidjson parse/pack
+    /// @note the vector's type T should support packing as well
+    template<class T>
+    void from_rapidjson(const Value &j, std::deque<T> &result)
+    {
+        result.resize(j.Size());
+
+        for (SizeType i = 0; i < result.size(); i++)
+            from_rapidjson(j[i], result[i]);
+    }
+
+    template<class T>
+    void to_rapidjson(Value &result, const std::deque<T> &data, Allocator &allocator)
+    {
+        result = Value(kArrayType);
+
+        for (const auto &item: data)
+        {
+            Value value;
+            to_rapidjson(value, item, allocator);
+
+            result.PushBack(value, allocator);
+        }
+    }
+
+    /// @brief unordered_map support for rapidjson parse/pack
+    /// @note the vector's type T should support packing as well
     template<class V>
     void from_rapidjson(const Value &j, std::unordered_map<string, V> &result)
     {
@@ -372,7 +402,7 @@ namespace json2
     void to_rapidjson(Value &result, const std::unordered_map<string, V> &data,
         Allocator &allocator)
     {
-        result = Value(rapidjson::kObjectType);
+        result = Value(kObjectType);
 
         for (const auto &[k, v]: data)
         {
@@ -382,6 +412,60 @@ namespace json2
             result.AddMember(Value(k, allocator), value, allocator);
         }
     }
+
+    void pretty_print(Value &doc);
+}
+
+namespace http
+{
+    using namespace json2;
+
+    bool is_success(int response_code);
+    
+    /// @brief A static constant, representing the flag of a session-wide caching
+    static const auto session = clock_t::duration(-1);
+    
+    class json_body_builder: public Writer<StringBuffer>
+    {
+    public:
+        typedef std::function<void(void)> scope_handler_t;
+    public:
+        json_body_builder(): Writer<StringBuffer>(sb) {}
+
+        inline const char* str() const { return sb.GetString(); }
+        
+        void object(scope_handler_t scope);
+        void object(const string &key, scope_handler_t scope);
+
+        template<class T>
+        void insert(T value);
+
+        template<class T>
+        void insert(const string &key, T value)
+        {
+            Key(key);
+            insert(value);
+        }
+
+        template<class T>
+        void insert(const string &key, std::initializer_list<T> value)
+        {
+            insert(key, std::vector(value.begin(), value.end()));
+        }
+
+        template<class T>
+        void insert(const string &key, std::vector<T> value)
+        {
+            Key(key);
+            StartArray();
+            for (const auto &v: value)
+                insert(v);
+            EndArray();
+        }
+
+    private:
+        StringBuffer sb;
+    };
 }
 
 } // namespace utils

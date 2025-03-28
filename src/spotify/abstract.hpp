@@ -97,7 +97,7 @@ struct api_abstract
 
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
-    virtual auto check_saved_tracks(const item_ids_t &ids) -> std::vector<bool> = 0;
+    virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto get_playing_queue() -> playing_queue_t = 0;
@@ -123,21 +123,13 @@ struct api_abstract
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the requested data for the given amount of time
     virtual Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
-    virtual Result put(const string &url, const nlohmann::json &body = {}) = 0;
-    virtual Result del(const string &url, const nlohmann::json &body = {}) = 0;
+    virtual Result put(const string &url, const string &body = {}) = 0;
+    virtual Result del(const string &url, const string &body = {}) = 0;
     virtual auto is_request_cached(const string &url) const -> bool = 0;
 protected:
     virtual auto get_pool() -> BS::thread_pool& = 0;
 };
 
-/// @brief A maximum number of one-time requested collection items
-static const size_t max_limit = 50ULL;
-
-template<typename>
-struct is_std_vector : std::false_type {};
-
-template<typename T, typename A>
-struct is_std_vector<std::vector<T,A>> : std::true_type {};
 
 /// @brief A helper-class for requesting data from spotify api. Incapsulated
 /// a logic for performing a request, parsing and holding final result
@@ -214,11 +206,11 @@ protected:
 /// API allows requesting with a limited number of items, the requester implements
 /// an interface to get data by chunks.
 /// @tparam T the tyope of the data returned, iterable
-template<class T>
+template<class T, class ContainerT = std::vector<typename T>>
 class several_items_requester
 {
 public:
-    typedef std::vector<typename T> result_t;
+    typedef ContainerT result_t;
 public:
     /// @param chunk_size a max size of a data chunk to request
     /// @param data_field some responses have nested data under `data_field` key name
@@ -304,6 +296,9 @@ private:
     size_t total = 0;
     string next = "";
 };
+
+/// @brief A maximum number of one-time requested collection items
+static const size_t max_limit = 50ULL;
 
 /// @brief An abstract class of an API collection object. Provides an interface
 /// to fetch collection from server, to get total count of items in collection

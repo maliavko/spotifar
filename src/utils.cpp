@@ -658,10 +658,44 @@ namespace http
         return (response_code == OK_200 || response_code == NoContent_204 ||
             response_code == NotModified_304);
     }
+
+    void json_body_builder::object(scope_handler_t scope)
+    {
+        return object("", scope);
+    }
+
+    void json_body_builder::object(const string &key, scope_handler_t scope)
+    {
+        if (!key.empty())
+            Key(key);
+        
+        StartObject();
+        scope();
+        EndObject();
+    }
+    
+    template<>
+    void json_body_builder::insert(string value)
+    {
+        String(value);
+    }
+
+    template<>
+    void json_body_builder::insert(int value)
+    {
+        Int(value);
+    }
+
+    template<>
+    void json_body_builder::insert(bool value)
+    {
+        Bool(value);
+    }
 }
 
 namespace json2
 {
+    // string
     void from_rapidjson(const Value &j, string &result)
     {
         result = j.GetString();
@@ -671,8 +705,38 @@ namespace json2
     {
         j.SetString(result, allocator);
     }
-}
 
+    // int
+    void from_rapidjson(const Value &j, int &result)
+    {
+        result = j.GetInt();
+    }
+
+    void to_rapidjson(Value &j, const int &result, Allocator &allocator)
+    {
+        j.SetInt(result);
+    }
+
+    // bool
+    void from_rapidjson(const Value &j, bool &result)
+    {
+        result = j.GetBool();
+    }
+
+    void to_rapidjson(Value &j, const bool &result, Allocator &allocator)
+    {
+        j.SetBool(result);
+    }
+
+    void pretty_print(Value &v)
+    {
+        StringBuffer sb;
+        rapidjson::PrettyWriter<StringBuffer> writer(sb);
+
+        v.Accept(writer);
+        log::global->debug(sb.GetString());
+    }
+}
 
 } // namespace utils
 } // namespace spotifar

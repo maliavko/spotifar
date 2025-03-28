@@ -8,6 +8,7 @@
 
 namespace spotifar { namespace spotify {
 
+namespace json2 = utils::json2;
 using config::persistent_data;
 using settings_ctx = config::settings_context;
 
@@ -88,6 +89,8 @@ template<class T>
 class json_cache: public cached_data_abstract
 {
 public:
+    typedef std::function<void(json2::Document &)> patch_handler_t;
+public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
     /// the cache is not getting saved to disk, kept for sessino only
     json_cache(const wstring &storage_key = L"");
@@ -103,7 +106,7 @@ public:
     /// @brief Spotify does not send back an immediate updated data after successfully
     /// performed command, so we need to apply patches to the data to keep it up-to-date
     /// for some time for the all upcoming resyncs
-    void patch(const nlohmann::json &patch);
+    void patch(patch_handler_t handler);
 
     auto get() const -> const T& { return data.get(); }
     auto get_last_sync_time() const -> const time_point& { return last_sync_time.get(); }
@@ -133,7 +136,7 @@ private:
     bool is_persistent;
 
     std::mutex patch_mutex;
-    std::vector<std::pair<time_point, nlohmann::json>> patches;
+    std::vector<std::pair<time_point, patch_handler_t>> patches;
 };
 
 template<typename T>
@@ -202,11 +205,11 @@ void json_cache<T>::resync(bool force)
 }
 
 template<typename T>
-void json_cache<T>::patch(const nlohmann::json &patch)
+void json_cache<T>::patch(json_cache<T>::patch_handler_t handler)
 {
     // patches are saved and applied next time data is resynced
     std::lock_guard lock(patch_mutex);
-    patches.push_back(std::make_pair(clock_t::now(), patch));
+    patches.push_back(std::make_pair(clock_t::now(), handler));
 
     // instead of calling "resync", we invalidate the cache, so it is updated in
     // a correct order from the right thread
@@ -216,20 +219,25 @@ void json_cache<T>::patch(const nlohmann::json &patch)
 template<typename T>
 void json_cache<T>::apply_patches(T &item)
 {
+    if (patches.empty()) return;
+
     // unpacking and packing the item here, definitely not the best solution,
     // did not come up with the better one still
     // json j = item; 
-    // auto now = clock_t::now();
+    auto now = clock_t::now();
 
-    // // removing outdated patches first
-    // std::erase_if(patches, [&now](auto &v) { return v.first + 1500ms < now; });
+    json2::Document doc;
+    to_rapidjson(doc, item, doc.GetAllocator());
+
+    // removing outdated patches first
+    std::erase_if(patches, [&now](auto &v) { return v.first + 1500ms < now; });
     
-    // // applying the valid patches next
-    // for (const auto& [t, p]: patches)
-    //     j.merge_patch(p);
+    // applying the valid patches next
+    for (const auto& [t, p]: patches)
+        p(doc);
     
     // unpacking the item back to the data
-    //j.get_to(item); // TODO: stopped working after move to RapidJson
+    from_rapidjson(doc, item);
 }
 
 /// @brief A class-helper for caching http responses from spotify server. Holds
@@ -251,8 +259,8 @@ public:
         inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
 
         // json serialization interface
-        friend void from_rapidjson(const utils::json2::Value &j, cache_entry &e);
-        friend void to_rapidjson(utils::json2::Value &j, const cache_entry &e, utils::json2::Allocator allocator);
+        friend void from_rapidjson(const json2::Value &j, cache_entry &e);
+        friend void to_rapidjson(json2::Value &j, const cache_entry &e, json2::Allocator allocator);
     };
 public:
     void start();

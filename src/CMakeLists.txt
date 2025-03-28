@@ -1,6 +1,5 @@
 
 find_package(httplib CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(mio REQUIRED)
 find_package(RapidJSON CONFIG REQUIRED)
@@ -64,7 +63,6 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE
 		httplib::httplib
-		nlohmann_json::nlohmann_json
 		OpenSSL::SSL
 		OpenSSL::Crypto
 		spdlog::spdlog_header_only

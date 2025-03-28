@@ -16,6 +16,8 @@
 #include <chrono>
 #include <typeindex>
 #include <algorithm>
+#include <variant>
+#include <filesystem>
 #define _WINSOCKAPI_
 #ifndef NOMINMAX
 # define NOMINMAX
@@ -26,7 +28,6 @@
 #include <shlobj_core.h>  // for SHGetKnownFolderPath
 
 #include "httplib.h"
-#include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 #include "BS_thread_pool.hpp"
 #include "ObserverManager.h"
@@ -35,6 +36,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
 
 #include <plugin.hpp>
 #include <PluginSettings.hpp>

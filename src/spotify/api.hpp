@@ -47,7 +47,7 @@ public:
     auto get_saved_playlists() -> saved_playlists_ptr;
     auto get_playlist_tracks(const string &playlist_id) -> saved_tracks_ptr;
     auto check_saved_track(const string &track_id) -> bool;
-    auto check_saved_tracks(const item_ids_t &ids) -> std::vector<bool>;
+    auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool>;
     auto save_tracks(const item_ids_t &ids) -> bool;
     auto remove_saved_tracks(const item_ids_t &ids) -> bool;
     auto get_playing_queue() -> playing_queue_t;
@@ -73,13 +73,13 @@ public:
     void transfer_playback(const string &device_id, bool start_playing = false);
 
 protected:
-    void start_playback(const nlohmann::json &body, const string &device_id);
+    void start_playback_raw(const string &body, const string &device_id);
     
     // the main interface for raw http requests
     Result get(const string &url, utils::clock_t::duration cache_for = {});
-    Result put(const string &url, const nlohmann::json &body = {});
-    Result del(const string &url, const nlohmann::json &body = {});
-    Result post(const string &url, const nlohmann::json &body = {});
+    Result put(const string &url, const string &body = {});
+    Result del(const string &url, const string &body = {});
+    Result post(const string &url, const string &body = {});
     
     BS::thread_pool& get_pool() override { return pool; };
 

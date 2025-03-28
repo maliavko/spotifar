@@ -256,35 +256,41 @@ saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 
 bool api::check_saved_track(const string &track_id)
 {
-    auto flags = check_saved_tracks({ track_id });
+    const auto &flags = check_saved_tracks({ track_id });
     return flags.size() > 0 && flags[0];
 }
 
-std::vector<bool> api::check_saved_tracks(const item_ids_t &ids)
+std::deque<bool> api::check_saved_tracks(const item_ids_t &ids)
 {
-    auto request_url = httplib::append_query_params(
-        "/v1/me/tracks/contains", {{ "ids", utils::string_join(ids, ",") }});
-    auto r = get(request_url, utils::http::session);
-    if (http::is_success(r->status))
-    {
-        std::vector<bool> result;
-        nlohmann::json::parse(r->body).get_to(result);
-        
-        return result;
-        
-    }
-    return {};
+    // bloody hell, damn vector specialization with bools is not a real vector,
+    // it cannot return ref to bools
+    return request_item(several_items_requester<bool, std::deque<bool>>(
+        "/v1/me/tracks/contains", ids, 50), this);
 }
 
 bool api::save_tracks(const item_ids_t &ids)
 {
-    auto r = put("/v1/me/tracks", nlohmann::json{{ "ids", ids }});
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    auto r = put("/v1/me/tracks", body.str());
     return http::is_success(r->status);
 }
 
 bool api::remove_saved_tracks(const item_ids_t &ids)
 {
-    auto r = del("/v1/me/tracks", nlohmann::json{{ "ids", ids }});
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    auto r = del("/v1/me/tracks", body.str());
     return http::is_success(r->status);
 }
 
@@ -301,23 +307,34 @@ playing_queue_t api::get_playing_queue()
 void api::start_playback(const string &context_uri, const string &track_uri,
                          int position_ms, const string &device_id)
 {
-    nlohmann::json body{
-        { "context_uri", context_uri },
-    };
+    http::json_body_builder body;
 
-    if (!track_uri.empty())
-        body.update({
-            { "offset", {{ "uri", track_uri }} },
-            { "position_ms", position_ms },
-        });
+    body.object([&]
+    {
+        body.insert("context_uri", context_uri);
+        if (!track_uri.empty())
+            body.insert("position_ms", position_ms);
+            body.object("offset", [&]
+            {
+                body.insert("uri", track_uri);
+            });
+    });
     
-    start_playback(body, device_id);
+    start_playback_raw(body.str(), device_id);
 }
 
 void api::start_playback(const std::vector<string> &uris, const string &device_id)
 {
     assert(uris.size() > 0);
-    start_playback({{ "uris", uris }}, device_id);
+
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("uris", uris);
+    });
+
+    start_playback_raw(body.str(), device_id);
 }
 
 void api::start_playback(const simplified_album_t &album, const simplified_track_t &track)
@@ -332,7 +349,7 @@ void api::start_playback(const simplified_playlist_t &playlist, const simplified
 
 void api::resume_playback(const string &device_id)
 {
-    return start_playback(nlohmann::json(), device_id);
+    return start_playback_raw("", device_id);
 }
 
 void api::toggle_playback(const string &device_id)
@@ -340,7 +357,7 @@ void api::toggle_playback(const string &device_id)
     playback->resync(true);
     auto &state = playback->get();
     if (!state.is_playing)
-        return start_playback(nlohmann::json(), device_id);
+        return start_playback_raw("", device_id);
     else
         return pause_playback(device_id);
 }
@@ -356,8 +373,8 @@ void api::pause_playback(const string &device_id)
 
             auto res = put(append_query_params("/v1/me/player/pause", params));
             if (http::is_success(res))
-                cache.patch({
-                    { "is_playing", false }
+                cache.patch([](auto &v) {
+                    json2::Pointer("/is_playing").Set(v, false);
                 });
         });
 }
@@ -367,11 +384,15 @@ void api::skip_to_next(const string &device_id)
     pool.detach_task(
         [this, dev_id = std::as_const(device_id)]
         {
-            Params params = {};
-            if (!dev_id.empty())
-                params.insert({ "device_id", dev_id });
+            http::json_body_builder body;
 
-            return post("/v1/me/player/next", params);
+            body.object([&]
+            {
+                if (!dev_id.empty())
+                    body.insert("device_id", dev_id);
+            });
+
+            return post("/v1/me/player/next", body.str());
         });
 }
 
@@ -380,11 +401,15 @@ void api::skip_to_previous(const string &device_id)
     pool.detach_task(
         [this, dev_id = std::as_const(device_id)]
         {
-            Params params = {};
-            if (!dev_id.empty())
-                params.insert({ "device_id", dev_id });
+            http::json_body_builder body;
+
+            body.object([&]
+            {
+                if (!dev_id.empty())
+                    body.insert("device_id", dev_id);
+            });
             
-            return post("/v1/me/player/previous", params);
+            return post("/v1/me/player/previous", body.str());
         });
 }
 
@@ -402,8 +427,8 @@ void api::seek_to_position(int position_ms, const string &device_id)
 
             auto res = put(append_query_params("/v1/me/player/seek", params));
             if (http::is_success(res->status))
-                cache.patch({
-                    { "progress_ms", position_ms }
+                cache.patch([position_ms](auto &v) {
+                    json2::Pointer("/progress_ms").Set(v, position_ms);
                 });
         });
 }
@@ -422,8 +447,8 @@ void api::toggle_shuffle(bool is_on, const string &device_id)
             
             auto res = put(append_query_params("/v1/me/player/shuffle", params));
             if (http::is_success(res->status))
-                cache.patch({
-                    { "shuffle_state", is_on }
+                cache.patch([is_on](auto &v) {
+                    json2::Pointer("/shuffle_state").Set(v, is_on);
                 });
         });
 }
@@ -472,8 +497,8 @@ void api::set_repeat_state(const string &mode, const string &device_id)
 
             auto res = put(append_query_params("/v1/me/player/repeat", params));
             if (http::is_success(res->status))
-                cache.patch({
-                    { "repeat_state", mode }
+                cache.patch([mode](auto &d) {
+                    json2::Pointer("/repeat_state").Set(d, mode);
                 });
         });
 }
@@ -492,10 +517,8 @@ void api::set_playback_volume(int volume_percent, const string &device_id)
 
             auto res = put(append_query_params("/v1/me/player/volume", params));
             if (http::is_success(res->status))
-                cache.patch({
-                    { "device", {
-                        { "volume_percent", volume_percent }
-                    } }
+                cache.patch([volume_percent](auto &d) {
+                    json2::Pointer("/device/volume_percent").Set(d, volume_percent);
                 });
         });
 }
@@ -515,17 +538,20 @@ void api::transfer_playback(const string &device_id, bool start_playing)
     pool.detach_task(
         [this, start_playing, dev_id = std::as_const(device_id)]
         {
-            nlohmann::json body{
-                { "device_ids", { dev_id } },
-                { "play", start_playing },
-            };
+            http::json_body_builder body;
 
-            auto res = put("/v1/me/player", body);
+            body.object([&]
+            {
+                body.insert("device_ids", { dev_id });
+                body.insert("play", start_playing);
+            });
+
+            auto res = put("/v1/me/player", body.str());
             // TODO: handle errors
         });
 }
 
-void api::start_playback(const nlohmann::json &body, const string &device_id)
+void api::start_playback_raw(const string &body, const string &device_id)
 {
     Params params = {};
     if (!device_id.empty())
@@ -539,8 +565,8 @@ void api::start_playback(const nlohmann::json &body, const string &device_id)
         {
             auto res = put(request_url, body);
             if (http::is_success(res))
-                cache.patch({
-                    { "is_playing", true }
+                cache.patch([](auto &d) {
+                    json2::Pointer("/is_playing").Set(d, true);
                 });
         });
 }
@@ -615,13 +641,13 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     return r;
 }
 
-httplib::Result api::put(const string &request_url, const nlohmann::json &body)
+httplib::Result api::put(const string &request_url, const string &body)
 {
     httplib::Result res;
     auto client = get_client();
 
     if (!body.empty())
-        res = client->Put(request_url, body.dump(), "application/json");
+        res = client->Put(request_url, body, "application/json");
     else
         res = client->Put(request_url);
     
@@ -634,9 +660,9 @@ httplib::Result api::put(const string &request_url, const nlohmann::json &body)
     return res;
 }
 
-httplib::Result api::del(const string &request_url, const nlohmann::json &body)
+httplib::Result api::del(const string &request_url, const string &body)
 {
-    auto res = get_client()->Delete(request_url, body.dump(), "application/json");
+    auto res = get_client()->Delete(request_url, body, "application/json");
     
     if (http::is_success(res->status))
     {
@@ -647,9 +673,9 @@ httplib::Result api::del(const string &request_url, const nlohmann::json &body)
     return res;
 }
 
-httplib::Result api::post(const string &request_url, const nlohmann::json &body)
+httplib::Result api::post(const string &request_url, const string &body)
 {
-    auto res = get_client()->Post(request_url, body.dump(), "application/json");
+    auto res = get_client()->Post(request_url, body, "application/json");
     
     if (http::is_success(res->status))
     {
