@@ -1,8 +1,6 @@
 #include "events.hpp"
 #include "dialogs/menus.hpp"
 #include "views/root.hpp"
-#include "views/recents.hpp"
-#include "views/collection.hpp"
 #include "views/artists.hpp"
 #include "views/playlists.hpp"
 #include "views/playlist.hpp"

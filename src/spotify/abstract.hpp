@@ -140,7 +140,6 @@ protected:
     virtual auto is_request_cached(const string &url) const -> bool = 0;
 };
 
-
 /// @brief A helper-class for requesting data from spotify api. Incapsulated
 /// a logic for performing a request, parsing and holding final result
 /// @tparam T a final result's type
@@ -315,6 +314,27 @@ private:
     string next = "";
 };
 
+struct collection_interface
+{
+    /// @brief Returns the total count of items in the collection, performs a single
+    /// server request if needed silently
+    virtual auto get_total() const -> size_t = 0;
+
+    /// @brief Returns the total count of items in the collection if available or zero,
+    /// works only with cache, does not perform any request
+    virtual auto peek_total() const -> size_t = 0;
+
+    /// @brief A public interface method to populate the collection fully
+    /// @param only_cached flag, telling the logic, that the method wa called
+    /// from some heavy environment and should not perform many http calls
+    virtual auto fetch(bool only_cached = false) -> bool = 0;
+
+    /// @brief Returns whether the container is populated from server or not
+    virtual bool is_populated() const = 0;
+};
+
+typedef std::shared_ptr<collection_interface> collection_ptr;
+
 /// @brief A maximum number of one-time requested collection items
 static const size_t max_limit = 50ULL;
 
@@ -322,7 +342,9 @@ static const size_t max_limit = 50ULL;
 /// to fetch collection from server, to get total count of items in collection
 /// without fetching all the data.
 template<class T>
-class collection_abstract: public std::vector<T>
+class collection_abstract:
+    public std::vector<T>,
+    public collection_interface
 {
 public:
     typedef std::vector<T> container_t;
@@ -340,11 +362,9 @@ public:
         this->params.insert(std::pair{ "limit", std::to_string(max_limit) });
     }
 
-    /// @brief Returns the total count of items in the collection, performs a single
-    /// server request if needed silently
-    size_t get_total() const
+    size_t get_total() const override
     {
-        if (is_populated) // if the collection is populated, return its size
+        if (populated) // if the collection is populated, return its size
             return this->size();
 
         // or perform a first page request
@@ -355,9 +375,7 @@ public:
         return 0LL;
     }
 
-    /// @brief Returns the total count of items in the collection if available or zero,
-    /// works only with cache, does not perform any request
-    size_t peek_total() const
+    size_t peek_total() const override
     {
         // returns a total number only if the request is cached
         auto requester = get_begin_requester();
@@ -368,27 +386,35 @@ public:
         return 0LL;
     }
 
+    bool is_populated() const override { return populated; }
+
     bool fetch(bool only_cached = false)
     {
         this->clear();
+        populated = false;
 
         if (!fetch_all(api_proxy, only_cached))
             return false;
 
-        is_populated = true;
+        populated = true;
 
         return true;
     }
 protected:
+    /// @brief Returns a first requester to start requesting a collection. Used in some
+    /// cases for getting auxilliary info of the collection
     virtual auto get_begin_requester() const -> requester_ptr = 0;
 
+    /// @brief A main requesting logic is implemented here
+    /// @param only_cached flag, telling the logic, that the method wa called
+    /// from some heavy environment and should not perform many http calls
     virtual auto fetch_all(api_abstract *api, bool only_cached) -> bool = 0;
 protected:
     api_abstract *api_proxy;
     string url;
     string fieldname;
     httplib::Params params;
-    bool is_populated = false;
+    bool populated = false;
 };
 
 /// @brief Performs populating the collection page by page, each page
@@ -408,19 +434,22 @@ protected:
 
         while (requester != nullptr)
         {
+            // if some of the pages were not requested well, all the operation
+            // is aborted
             if (!requester->execute(api, only_cached))
                 return false;
 
+            // reserving all the container length space at once
             if (this->capacity() != requester->get_total())
                 this->reserve(requester->get_total());
-                
-            auto &entries = requester->get();
-            this->insert(this->end(), entries.begin(), entries.end());
+            
+            auto &items = requester->get();
+            this->insert(this->end(), items.begin(), items.end());
     
             const auto &next_url = requester->get_next_url();
             if (!next_url.empty())
                 requester = requester_ptr(new requester_t(next_url, {}, this->fieldname));
-            else 
+            else
                 requester = nullptr;
         }
 
@@ -454,7 +483,7 @@ protected:
 
         if (total == 0) return false;
 
-        // calculating an amount of pages
+        // calculating the amount of pages
         size_t start = 1ULL, end = total / max_limit;
         if (total - end * max_limit > 0)
             end += 1;
