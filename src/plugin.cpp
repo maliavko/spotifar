@@ -22,9 +22,7 @@ plugin::plugin():
     if (api.start())
         ui::events::show_root(&api);
 
-    background_tasks.push_task([this] {
-        on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
-    });
+    on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
 }
 
 plugin::~plugin()

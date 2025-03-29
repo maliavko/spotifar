@@ -21,7 +21,7 @@ protected:
     bool is_active() const override;
     void on_data_synced(const playback_state_t &data, const playback_state_t &prev_data) override;
     bool request_data(playback_state_t &data) override;
-    clock_t::duration get_sync_interval() const override;
+    auto get_sync_interval() const -> clock_t::duration override;
 
 private:
     api_abstract *api_proxy;

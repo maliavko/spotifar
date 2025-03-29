@@ -52,19 +52,19 @@ struct api_abstract
     // library & collections interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
-    virtual auto get_artist_top_tracks(const string &artist_id) -> std::vector<track_t> = 0;
+    virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
     virtual auto get_followed_artists() -> followed_artists_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artist
-    virtual auto get_artist(const string &artist_id) -> artist_t = 0;
+    virtual auto get_artist(const item_id_t &artist_id) -> artist_t = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-artists
     virtual auto get_artists(const item_ids_t &ids) -> std::vector<artist_t> = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-albums
-    virtual auto get_artist_albums(const string &artist_id) -> artist_albums_ptr = 0;
+    virtual auto get_artist_albums(const item_id_t &artist_id) -> artist_albums_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
     virtual auto get_saved_albums() -> saved_albums_ptr = 0;
@@ -73,51 +73,51 @@ struct api_abstract
     virtual auto get_new_releases() -> new_releases_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
-    virtual auto get_album(const string &album_id) -> album_t = 0;
+    virtual auto get_album(const item_id_t &album_id) -> album_t = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
     virtual auto get_albums(const item_ids_t &ids) -> std::vector<album_t> = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
-    virtual auto get_album_tracks(const string &album_id) -> album_tracks_ptr = 0;
+    virtual auto get_album_tracks(const item_id_t &album_id) -> album_tracks_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
     virtual auto get_saved_tracks() -> saved_tracks_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
-    virtual auto get_playlist_tracks(const string &playlist_id) -> saved_tracks_ptr = 0;
+    virtual auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
     virtual auto get_saved_playlists() -> saved_playlists_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlist
-    virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
+    virtual auto get_playlist(const item_id_t &playlist_id) -> playlist_t = 0;
     
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-queue
     virtual auto get_playing_queue() -> playing_queue_t = 0;
 
-    virtual auto check_saved_track(const string &track_id) -> bool = 0;
+    virtual auto check_saved_track(const item_id_t &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
-        int position_ms = 0, const string &device_id = "") = 0;
-    virtual void start_playback(const std::vector<string> &uris, const string &device_id = "") = 0;
+        int position_ms = 0, const item_id_t &device_id = "") = 0;
+    virtual void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") = 0;
     virtual void start_playback(const simplified_album_t &album, const simplified_track_t &track) = 0;
     virtual void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) = 0;
-    virtual void resume_playback(const string &device_id = "") = 0;
-    virtual void toggle_playback(const string &device_id = "") = 0;
-    virtual void pause_playback(const string &device_id = "") = 0;
-    virtual void skip_to_next(const string &device_id = "") = 0;
-    virtual void skip_to_previous(const string &device_id = "") = 0;
-    virtual void seek_to_position(int position_ms, const string &device_id = "") = 0;
-    virtual void toggle_shuffle(bool is_on, const string &device_id = "") = 0;
+    virtual void resume_playback(const item_id_t &device_id = "") = 0;
+    virtual void toggle_playback(const item_id_t &device_id = "") = 0;
+    virtual void pause_playback(const item_id_t &device_id = "") = 0;
+    virtual void skip_to_next(const item_id_t &device_id = "") = 0;
+    virtual void skip_to_previous(const item_id_t &device_id = "") = 0;
+    virtual void seek_to_position(int position_ms, const item_id_t &device_id = "") = 0;
+    virtual void toggle_shuffle(bool is_on, const item_id_t &device_id = "") = 0;
     virtual void toggle_shuffle_plus(bool is_on) = 0;
-    virtual void set_repeat_state(const string &mode, const string &device_id = "") = 0;
-    virtual void set_playback_volume(int volume_percent, const string &device_id = "") = 0;
-    virtual void transfer_playback(const string &device_id, bool start_playing = false) = 0;
+    virtual void set_repeat_state(const string &mode, const item_id_t &device_id = "") = 0;
+    virtual void set_playback_volume(int volume_percent, const item_id_t &device_id = "") = 0;
+    virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
 protected:
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the response for the given amount of time

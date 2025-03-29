@@ -32,19 +32,19 @@ public:
     
     // library api interface
     auto get_followed_artists() -> followed_artists_ptr;
-    auto get_artist(const string &artist_id) -> artist_t;
+    auto get_artist(const item_id_t &artist_id) -> artist_t;
     auto get_artists(const item_ids_t &ids) -> std::vector<artist_t>;
-    auto get_artist_albums(const string &artist_id) -> artist_albums_ptr;
+    auto get_artist_albums(const item_id_t &artist_id) -> artist_albums_ptr;
     auto get_saved_albums() -> saved_albums_ptr;
     auto get_new_releases() -> new_releases_ptr;
-    auto get_artist_top_tracks(const string &artist_id) -> std::vector<track_t>;
-    auto get_album(const string &album_id) -> album_t;
+    auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t>;
+    auto get_album(const item_id_t &album_id) -> album_t;
     auto get_albums(const item_ids_t &ids) -> std::vector<album_t>;
-    auto get_album_tracks(const string &album_id) -> album_tracks_ptr;
-    auto get_playlist(const string &playlist_id) -> playlist_t;
+    auto get_album_tracks(const item_id_t &album_id) -> album_tracks_ptr;
+    auto get_playlist(const item_id_t &playlist_id) -> playlist_t;
     auto get_saved_playlists() -> saved_playlists_ptr;
-    auto get_playlist_tracks(const string &playlist_id) -> saved_tracks_ptr;
-    auto check_saved_track(const string &track_id) -> bool;
+    auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr;
+    auto check_saved_track(const item_id_t &track_id) -> bool;
     auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool>;
     auto save_tracks(const item_ids_t &ids) -> bool;
     auto remove_saved_tracks(const item_ids_t &ids) -> bool;
@@ -53,21 +53,21 @@ public:
 
     // playback api interface
     void start_playback(const string &context_uri, const string &track_uri = "",
-        int position_ms = 0, const string &device_id = "");
-    void start_playback(const std::vector<string> &uris, const string &device_id = "");
+        int position_ms = 0, const item_id_t &device_id = "");
+    void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "");
     void start_playback(const simplified_album_t &album, const simplified_track_t &track);
     void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track);
-    void resume_playback(const string &device_id = "");
-    void toggle_playback(const string &device_id = "");
-    void pause_playback(const string &device_id = "");
-    void skip_to_next(const string &device_id = "");
-    void skip_to_previous(const string &device_id = "");
-    void seek_to_position(int position_ms, const string &device_id = "");
-    void toggle_shuffle(bool is_on, const string &device_id = "");
+    void resume_playback(const item_id_t &device_id = "");
+    void toggle_playback(const item_id_t &device_id = "");
+    void pause_playback(const item_id_t &device_id = "");
+    void skip_to_next(const item_id_t &device_id = "");
+    void skip_to_previous(const item_id_t &device_id = "");
+    void seek_to_position(int position_ms, const item_id_t &device_id = "");
+    void toggle_shuffle(bool is_on, const item_id_t &device_id = "");
     void toggle_shuffle_plus(bool is_on);
-    void set_repeat_state(const string &mode, const string &device_id = "");
-    void set_playback_volume(int volume_percent, const string &device_id = "");
-    void transfer_playback(const string &device_id, bool start_playing = false);
+    void set_repeat_state(const string &mode, const item_id_t &device_id = "");
+    void set_playback_volume(int volume_percent, const item_id_t &device_id = "");
+    void transfer_playback(const item_id_t &device_id, bool start_playing = false);
 protected:
     /// @brief Creates a new http-client instance, fills up all
     /// default attributes and token, and returns it 

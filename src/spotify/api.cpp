@@ -19,21 +19,6 @@ auto request_item(R &&requester, api_abstract *api) -> typename R::result_t
     return {};
 }
 
-// TODO: reconsider these functions
-string dump_headers(const Headers &headers) {
-    string s;
-    char buf[BUFSIZ];
-
-    for (auto it = headers.begin(); it != headers.end(); ++it)
-    {
-        const auto &x = *it;
-        snprintf(buf, sizeof(buf), "%s: %s\n", x.first.c_str(), x.second.c_str());
-        s += buf;
-    }
-
-    return s;
-}
-
 /// @brief clearing domain from path
 static string trim_webapi_url(const string &url)
 {
@@ -43,30 +28,7 @@ static string trim_webapi_url(const string &url)
     return url;
 }
 
-string dump_http_error(const Request &req, const Response &res)
-{
-    std::stringstream ss, query;
-    
-    for (auto it = req.params.begin(); it != req.params.end(); ++it)
-        query << std::format("{}{}={}", (it == req.params.begin()) ? '?' : '&', it->first, it->second);
-
-    ss  << "An error occured while making an http request: "
-        << std::format("{} {} {}", req.method, req.version, req.path) << query.str() << std::endl;
-
-    //ss << dump_headers(req.headers);
-
-    ss << std::endl << "A response received: " << std::endl;
-    ss << std::format("{} {}", res.status, res.version) << std::endl;
-
-    //ss << dump_headers(res.headers) << std::endl;
-
-    if (!res.body.empty())
-        ss << res.body << std::endl;
-
-    return ss.str();
-}
-
-void http_logger(const Request &req, const Response &res)
+static void http_logger(const Request &req, const Response &res)
 {
     static const std::set<string> exclude{
         "/v1/me/player",
@@ -85,7 +47,7 @@ void http_logger(const Request &req, const Response &res)
     }
     else
     {
-        log::api->error(dump_http_error(req, res));
+        log::api->error(http::dump_error(req, res));
     }
 }
 

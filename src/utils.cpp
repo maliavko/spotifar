@@ -607,12 +607,19 @@ wstring trim(const wstring &s)
 intptr_t tasks_queue::push_task(task_t task)
 {
     static intptr_t task_id = 0;
-    tasks[++task_id] = task;
+
+    {
+        std::lock_guard lock(guard);
+        tasks[++task_id] = task;
+    }
+
     return task_id;
 }
 
 void tasks_queue::process_one(intptr_t task_id)
 {
+    std::lock_guard lock(guard);
+
     auto it = tasks.find(task_id);
     if (it == tasks.end())
         return log::global->error("There is no task registered with the given id, {}", task_id);
@@ -623,16 +630,19 @@ void tasks_queue::process_one(intptr_t task_id)
 
 void tasks_queue::process_all()
 {
-    for (auto& [task_id, task]: tasks)
+    std::lock_guard lock(guard);
+
+    for (auto &[task_id, task]: tasks)
         execute_task(task);
     tasks.clear();
 }
 
 void tasks_queue::clear_tasks()
 {
+    std::lock_guard lock(guard);
+
     if (tasks.size() > 0)
-        log::global->error("Unexpected tasks are stuck in the queue, {}",
-                            tasks.size());
+        log::global->error("Unexpected tasks are stuck in the queue, {}", tasks.size());
     tasks.clear();
 }
 
@@ -644,15 +654,12 @@ void tasks_queue::execute_task(task_t &task)
     }
     catch (const std::exception &ex)
     {
-        log::global->error("There is an error while processing task: {}",
-                            ex.what());
+        log::global->error("There is an error while processing a task: {}", ex.what());
     }
 }
 
 namespace http
 {
-    using namespace httplib;
-    
     bool is_success(int response_code)
     {
         return (response_code == OK_200 || response_code == NoContent_204 ||
@@ -690,6 +697,44 @@ namespace http
     void json_body_builder::insert(bool value)
     {
         Bool(value);
+    }
+    
+    string dump_headers(const Headers &headers)
+    {
+        string s;
+        char buf[BUFSIZ];
+
+        for (auto it = headers.begin(); it != headers.end(); ++it)
+        {
+            const auto &x = *it;
+            snprintf(buf, sizeof(buf), "%s: %s\n", x.first.c_str(), x.second.c_str());
+            s += buf;
+        }
+
+        return s;
+    }
+
+    string dump_error(const Request &req, const Response &res)
+    {
+        std::stringstream ss, query;
+        
+        for (auto it = req.params.begin(); it != req.params.end(); ++it)
+            query << std::format("{}{}={}", (it == req.params.begin()) ? '?' : '&', it->first, it->second);
+
+        ss  << "An error occured while making an http request: "
+            << std::format("{} {} {}", req.method, req.version, req.path) << query.str() << std::endl;
+
+        //ss << dump_headers(req.headers);
+
+        ss << std::endl << "A response received: " << std::endl;
+        ss << std::format("{} {}", res.status, res.version) << std::endl;
+
+        //ss << dump_headers(res.headers) << std::endl;
+
+        if (!res.body.empty())
+            ss << res.body << std::endl;
+
+        return ss.str();
     }
 }
 

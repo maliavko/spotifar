@@ -269,14 +269,15 @@ public:
     bool is_cached(const string &url) const;
 
     /// @brief Get the cached data for a given `url`
-    const cache_entry& get(const string &url) const;
+    auto get(const string &url) const -> const cache_entry&;
 
     /// @brief Invalidates stored data for the `url` or range of urls, matching given `url part`
     void invalidate(const string &url_part);
 
     /// @brief Invalidates all the cache
-    void clear_all() { cached_responses.clear(); }
+    void clear_all();
 private:
+    mutable std::mutex guard;
     std::atomic<bool> is_initialized = false;
     std::unordered_map<string, cache_entry> cached_responses;
 };

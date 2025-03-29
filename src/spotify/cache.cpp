@@ -129,16 +129,20 @@ void http_cache::shutdown()
 
 bool http_cache::is_cached(const string &url) const
 {
+    std::lock_guard lock(guard);
     return cached_responses.contains(url);
 }
 
 const http_cache::cache_entry& http_cache::get(const string &url) const
 {
+    std::lock_guard lock(guard);
     return cached_responses.at(url);
 }
 
 void http_cache::store(const string &url, string body, const string &etag, clock_t::duration cache_for)
 {
+    std::lock_guard lock(guard);
+
     clock_t::time_point cached_until = clock_t::now() + cache_for;
 
     if (cache_for == http::session)
@@ -149,11 +153,13 @@ void http_cache::store(const string &url, string body, const string &etag, clock
 
 void http_cache::store(const string &url, const cache_entry &entry)
 {
+    std::lock_guard lock(guard);
     cached_responses[url] = entry;
 }
 
 void http_cache::invalidate(const string &url_part)
 {
+    std::lock_guard lock(guard);
     for (auto it = cached_responses.begin(); it != cached_responses.end();)
     {
         auto pos = it->first.find(url_part);
@@ -162,6 +168,12 @@ void http_cache::invalidate(const string &url_part)
         else
             ++it;
     }
+}
+
+void http_cache::clear_all()
+{
+    std::lock_guard lock(guard);
+    cached_responses.clear();
 }
 
 } // namespace spotify

@@ -67,8 +67,6 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
-
-// TODO: making it thread safe
 class tasks_queue
 {
 public:
@@ -82,6 +80,7 @@ protected:
     void execute_task(task_t &task);
 private:
     std::unordered_map<intptr_t, task_t> tasks{};
+    std::mutex guard;
 };
 
 namespace log
@@ -445,12 +444,15 @@ namespace json
 namespace http
 {
     using namespace json;
+    using namespace httplib;
 
     bool is_success(int response_code);
     
     /// @brief A static constant, representing the flag of a session-wide caching
     static const auto session = clock_t::duration(-1);
     
+    /// @brief A class-helper for packing up json body for the
+    /// http requests. A wrapper around rapidjson::Writer class
     class json_body_builder: public Writer<StringBuffer>
     {
     public:
@@ -492,6 +494,10 @@ namespace http
     private:
         StringBuffer sb;
     };
+
+    string dump_headers(const Headers &headers);
+
+    string dump_error(const Request &req, const Response &res);
 }
 
 } // namespace utils

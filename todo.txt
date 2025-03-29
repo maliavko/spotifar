@@ -37,15 +37,15 @@ root menu
             - related artists?
         - playlists +
         - albums +
-        - tracks
+        - tracks +
         - [episodes]
         - [shows]
     - browse +
-        - new releases
-        - categories
         - search
         - user's top items
-        - the artists, whose tracks you recently liked
+        - new releases for you
+        - albums featuring songs you liked
+        - artists featuring songs you liked
     - recents +
         - artists +
         - albums +
