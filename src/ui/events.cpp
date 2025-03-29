@@ -47,7 +47,8 @@ namespace events {
 
     void show_browse(api_abstract *api)
     {
-        // TODO: unfinished
+        // TODO: tmp
+        return show_panel_view<playing_queue_view>(api);
     }
 
     void show_recents(api_abstract *api)

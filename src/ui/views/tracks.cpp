@@ -321,5 +321,58 @@ void saved_tracks_view::on_track_changed(const track_t &track)
 {
 }
 
+
+playing_queue_view::playing_queue_view(api_abstract *api):
+    tracks_base_view(api, "playing_queue_view", std::bind(events::show_collections, api))
+{
+    utils::events::start_listening<playback_observer>(this);
+}
+
+playing_queue_view::~playing_queue_view()
+{
+    utils::events::stop_listening<playback_observer>(this);
+}
+
+const wstring& playing_queue_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelTracksItemLabel));
+    return dir_name;
+}
+
+config::settings::view_t playing_queue_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
+bool playing_queue_view::start_playback(const string &track_id)
+{
+    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
+    return true;
+}
+
+std::generator<const simplified_track_t&> playing_queue_view::get_tracks()
+{
+    static playing_queue_t playing_queue;
+    playing_queue = api_proxy->get_playing_queue();
+
+    for (const auto &t: playing_queue.queue)
+        co_yield t;
+}
+
+const view::sort_modes_t& playing_queue_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+    static sort_modes_t modes = {
+        { L"Unsorted", SM_UNSORTED, VK_F7 + mods::ctrl },
+    };
+    return modes;
+}
+
+void playing_queue_view::on_track_changed(const track_t &track)
+{
+    panels::update(PANEL_ACTIVE);
+    panels::redraw(PANEL_ACTIVE);
+}
+
 } // namespace ui
 } // namespace spotifar

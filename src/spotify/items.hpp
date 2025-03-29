@@ -272,15 +272,17 @@ struct history_item_t
     friend void to_json(json::Value &j, const history_item_t &i, json::Allocator &allocator);
 };
 
-typedef std::vector<device_t> devices_t;
-typedef std::vector<track_t> tracks_t;
-typedef std::vector<history_item_t> history_items_t;
-
 struct playing_queue_t
 {
     track_t currently_playing;
-    tracks_t queue;
+    std::vector<track_t> queue;
+    
+    friend void from_json(const json::Value &j, playing_queue_t &i);
+    friend void to_json(json::Value &j, const playing_queue_t &i, json::Allocator &allocator);
 };
+
+typedef std::vector<device_t> devices_t;
+typedef std::vector<history_item_t> history_items_t;
 
 } // namespace spotify
 } // namespace spotifar

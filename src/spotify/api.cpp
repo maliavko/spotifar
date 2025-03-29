@@ -241,6 +241,11 @@ saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
         }));
 }
 
+playing_queue_t api::get_playing_queue()
+{
+    return request_item(item_requester<playing_queue_t>("/v1/me/player/queue"), this);
+}
+
 bool api::check_saved_track(const string &track_id)
 {
     const auto &flags = check_saved_tracks({ track_id });
@@ -279,15 +284,6 @@ bool api::remove_saved_tracks(const item_ids_t &ids)
 
     auto r = del("/v1/me/tracks", body.str());
     return http::is_success(r->status);
-}
-
-playing_queue_t api::get_playing_queue()
-{
-    // TODO: move to the requesters
-    // auto r = get("/v1/me/player/queue");
-    // if (http::is_success(r->status))
-    //     return json::parse(r->body).get<playing_queue_t>();
-    return {};
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback

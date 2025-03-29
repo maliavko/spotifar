@@ -497,5 +497,27 @@ void from_json(const json::Value &j, history_item_t &p)
         from_json(j["context"], p.context);
 }
 
+void to_json(json::Value &result, const playing_queue_t &p, json::Allocator &allocator)
+{
+    result = Value(json::kObjectType);
+
+    Value currently_playing;
+    to_json(currently_playing, p.currently_playing, allocator);
+
+    Value queue;
+    to_json(queue, p.queue, allocator);
+
+    result.AddMember("currently_playing", currently_playing, allocator);
+    result.AddMember("queue", queue, allocator);
+}
+
+void from_json(const json::Value &j, playing_queue_t &p)
+{
+    if (!j["currently_playing"].IsNull())
+        from_json(j["currently_playing"], p.currently_playing);
+
+    from_json(j["queue"], p.queue);
+}
+
 } // namespace spotify
 } // namespace spotifar

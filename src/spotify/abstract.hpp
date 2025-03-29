@@ -92,12 +92,14 @@ struct api_abstract
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlist
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-queue
+    virtual auto get_playing_queue() -> playing_queue_t = 0;
 
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
-    virtual auto get_playing_queue() -> playing_queue_t = 0;
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
