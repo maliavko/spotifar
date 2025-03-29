@@ -60,7 +60,7 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
         config::read(info);
         
         // initialize logging system
-        utils::log::init();
+        log::init();
     }
     catch (const std::exception &ex)
     {
@@ -154,7 +154,7 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
     std::unique_ptr<plugin>(static_cast<plugin*>(info->hPanel));
 
     config::write();
-    utils::log::fini();
+    log::fini();
     far3::synchro_tasks::clear();
 }
 

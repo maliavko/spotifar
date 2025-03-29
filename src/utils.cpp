@@ -785,7 +785,7 @@ namespace json
         StringBuffer sb;
         Writer<StringBuffer> writer(sb);
         v.Accept(writer);
-        utils::log::global->debug(sb.GetString());
+        log::global->debug(sb.GetString());
     }
 }
 

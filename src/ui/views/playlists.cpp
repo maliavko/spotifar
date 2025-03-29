@@ -6,14 +6,15 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
+//-----------------------------------------------------------------------------------------------------------
 playlists_base_view::playlists_base_view(api_abstract *api, const string &view_uid,
-    return_callback_t callback):
-    view(view_uid, callback),
+                                         const wstring &title, return_callback_t callback):
+    view_abstract(view_uid, title, callback),
     api_proxy(api)
 {
 }
 
-const view::sort_modes_t& playlists_base_view::get_sort_modes() const
+const view_abstract::sort_modes_t& playlists_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
@@ -22,10 +23,9 @@ const view::sort_modes_t& playlists_base_view::get_sort_modes() const
     return modes;
 }
 
-
-const view::items_t* playlists_base_view::get_items()
+const view_abstract::items_t* playlists_base_view::get_items()
 {
-    static view::items_t items; items.clear();
+    static view_abstract::items_t items; items.clear();
 
     for (const auto &p: get_playlists())
     {
@@ -130,7 +130,7 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
                 }
             }
             else
-                utils::log::global->error("There is an error occured while getting a current panel item");
+                log::global->error("There is an error occured while getting a current panel item");
 
             return TRUE;
         }
@@ -146,25 +146,20 @@ bool playlists_base_view::request_extra_info(const data_item_t* data)
     return false;
 }
 
-playlists_view::playlists_view(api_abstract *api):
-    playlists_base_view(api, "playlists_view", std::bind(events::show_collections, api)),
+//-----------------------------------------------------------------------------------------------------------
+saved_playlists_view::saved_playlists_view(api_abstract *api):
+    playlists_base_view(api, "saved_playlists_view", get_text(MPanelPlaylistsItemLabel),
+                        std::bind(events::show_collections, api)),
     api_proxy(api),
     collection(api_proxy->get_saved_playlists())
-{
-}
+    {}
 
-const wstring& playlists_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelPlaylistsItemLabel));
-    return dir_name;
-}
-
-config::settings::view_t playlists_view::get_default_settings() const
+config::settings::view_t saved_playlists_view::get_default_settings() const
 {
     return { 0, false, 3 };
 }
 
-std::generator<const simplified_playlist_t&> playlists_view::get_playlists()
+std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists()
 {
     if (collection->fetch())
         for (const auto &p: *collection)
@@ -173,7 +168,8 @@ std::generator<const simplified_playlist_t&> playlists_view::get_playlists()
 
 
 recent_playlists_view::recent_playlists_view(api_abstract *api):
-    playlists_base_view(api, "recent_playlists_view", std::bind(events::show_recents, api))
+    playlists_base_view(api, "recent_playlists_view", get_text(MPanelPlaylistsItemLabel),
+                        std::bind(events::show_recents, api))
 {
     rebuild_items();
 
@@ -187,18 +183,12 @@ recent_playlists_view::~recent_playlists_view()
     utils::events::stop_listening<play_history_observer>(this);
 }
 
-const wstring& recent_playlists_view::get_dir_name() const
-{
-    static wstring title(utils::far3::get_text(MPanelPlaylistsItemLabel));
-    return title;
-}
-
 config::settings::view_t recent_playlists_view::get_default_settings() const
 {
     return { 0, false, 3 };
 }
 
-const view::sort_modes_t& recent_playlists_view::get_sort_modes() const
+const view_abstract::sort_modes_t& recent_playlists_view::get_sort_modes() const
 {
     using namespace utils::keys;
 
@@ -245,7 +235,7 @@ void recent_playlists_view::rebuild_items()
             playlist.name = std::format(L"Forbidden_{}", utils::to_wstring(item_id));
         }
 
-        items.push_back(history_playlist_t(item.played_at, playlist));
+        items.push_back(history_playlist_t{ {playlist}, item.played_at });
     }
 }
 

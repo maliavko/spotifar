@@ -54,7 +54,7 @@ void http_cache::start()
         const char *buffer = (const char*)MapViewOfFile(fmap, FILE_MAP_READ, 0, 0, 0);
         if (buffer == nullptr)
         {
-            utils::log::global->warn("There is an unexpected empty cache file. "
+            log::global->warn("There is an unexpected empty cache file. "
                 "Skipping cache initialization");
             return;
         }

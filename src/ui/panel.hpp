@@ -26,10 +26,10 @@ public:
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
-    void show_panel_view(std::shared_ptr<ui::view> view);
+    void show_panel_view(std::shared_ptr<ui::view_abstract> view);
     void refresh_panels(const string &item_id = "");
 private:
-    std::shared_ptr<ui::view> view = nullptr;
+    std::shared_ptr<ui::view_abstract> view = nullptr;
     api_abstract *api_proxy = nullptr;
 };
 

@@ -5,22 +5,23 @@ namespace spotifar { namespace ui {
 
 namespace panels = utils::far3::panels;
 
-view::view(const string &uid, return_callback_t callback):
+view_abstract::view_abstract(const string &uid, const wstring &title, return_callback_t callback):
     uid(uid),
+    title(title),
     return_callback(callback)
 {
 }
 
-config::settings::view_t* view::get_settings() const
+config::settings::view_t* view_abstract::get_settings() const
 {
     return config::get_panel_settings(uid, get_default_settings());
 }
 
-void view::select_sort_mode(int idx)
+void view_abstract::select_sort_mode(int idx)
 {
     if (idx > sort_modes.size())
     {
-        utils::log::global->error("Given sort mode index is out of range, index {}, "
+        log::global->error("Given sort mode index is out of range, index {}, "
             "view uid {}, modes count {}", idx, uid, sort_modes.size());
         return;
     }
@@ -38,7 +39,7 @@ void view::select_sort_mode(int idx)
     panels::set_sort_mode(PANEL_ACTIVE, sm.far_sort_mode, settings->is_descending);
 }
 
-void view::on_items_updated()
+void view_abstract::on_items_updated()
 {
     if (is_first_init)
     {
@@ -55,14 +56,14 @@ void view::on_items_updated()
     }
 }
 
-const data_item_t* view::unpack_user_data(const UserDataItem &user_data)
+const data_item_t* view_abstract::unpack_user_data(const UserDataItem &user_data)
 {
     if (user_data.Data != nullptr)
         return reinterpret_cast<const data_item_t*>(user_data.Data);
     return nullptr;
 }
 
-intptr_t view::compare_items(const CompareInfo *info)
+intptr_t view_abstract::compare_items(const CompareInfo *info)
 {
     if (sort_modes.size() > settings->sort_mode_idx)
         return compare_items(
@@ -73,7 +74,7 @@ intptr_t view::compare_items(const CompareInfo *info)
     return -2;
 }
 
-intptr_t view::process_input(const ProcessPanelInputInfo *info)
+intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
 {
     auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
@@ -95,7 +96,7 @@ intptr_t view::process_input(const ProcessPanelInputInfo *info)
     return FALSE;
 }
 
-intptr_t view::select_item(const SetDirectoryInfo *info)
+intptr_t view_abstract::select_item(const SetDirectoryInfo *info)
 {
     if (info->UserData.Data == nullptr)
     {
@@ -107,12 +108,12 @@ intptr_t view::select_item(const SetDirectoryInfo *info)
     return select_item(unpack_user_data(info->UserData));
 }
 
-intptr_t view::request_extra_info(const PluginPanelItem *data)
+intptr_t view_abstract::request_extra_info(const PluginPanelItem *data)
 {
     return request_extra_info(unpack_user_data(data->UserData));
 }
 
-size_t view::get_item_idx(const string &item_id)
+size_t view_abstract::get_item_idx(const string &item_id)
 {
     const auto &items = panels::get_items(PANEL_ACTIVE);
     for (size_t idx = 1; idx <= items.size(); idx++)

@@ -10,12 +10,12 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class playlist_view: public view
+// TODO: move to tracks and derive from tracks_base_view?
+class playlist_view: public view_abstract
 {
 public:
     playlist_view(api_abstract *api, const playlist_t &p);
 
-    auto get_dir_name() const -> const wstring&;
     auto get_items() -> const items_t*;
 protected:
     auto get_sort_modes() const -> const sort_modes_t&;

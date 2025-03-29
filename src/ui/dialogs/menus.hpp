@@ -12,7 +12,7 @@ intptr_t show_config_menu();
 /// @brief Opens a sort dialog with the all available sort modes
 /// for the given `view`. If a new mode is picked, its index will
 /// be returned; if the dialog is closed via Esc - "-1"
-int show_sort_dialog(const view &v);
+int show_sort_dialog(const view_abstract &v);
 
 } // namespace ui
 } // namespace spotifar

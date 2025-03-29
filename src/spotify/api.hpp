@@ -76,10 +76,10 @@ protected:
     void start_playback_raw(const string &body, const string &device_id);
     
     // the main interface for raw http requests
-    Result get(const string &url, utils::clock_t::duration cache_for = {}) override;
-    Result put(const string &url, const string &body = "") override;
-    Result del(const string &url, const string &body = "") override;
-    Result post(const string &url, const string &body = "") override;
+    auto get(const string &url, utils::clock_t::duration cache_for = {}) -> Result override;
+    auto put(const string &url, const string &body = "") -> Result override;
+    auto del(const string &url, const string &body = "") -> Result override;
+    auto post(const string &url, const string &body = "") -> Result override;
     
     auto get_pool() -> BS::thread_pool& override { return pool; };
     auto is_request_cached(const string &url) const -> bool override;

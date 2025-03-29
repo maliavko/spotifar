@@ -89,14 +89,14 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
     if (panel_item == nullptr)
     {
-        utils::log::global->error("Could not allocate memory for panel items");
+        log::global->error("Could not allocate memory for panel items");
         return FALSE;
     }
 
     for (size_t idx = 0; idx < items->size(); idx++)
     {
         const auto &item = (*items)[idx];
-        const auto &columns = item.custom_column_data;
+        const auto &columns = item.columns_data;
 
         // TODO: what if no memory allocated?
         auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
@@ -114,7 +114,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].FileName = _wcsdup(utils::strip_invalid_filename_chars(item.name).c_str());
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;
-        panel_item[idx].CustomColumnNumber = item.custom_column_data.size();
+        panel_item[idx].CustomColumnNumber = item.columns_data.size();
         
         if (item.user_data != nullptr)
             panel_item[idx].UserData.Data = item.user_data;
@@ -201,7 +201,7 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
-void panel::show_panel_view(std::shared_ptr<ui::view> v)
+void panel::show_panel_view(view_ptr v)
 {
     view = v;
 }

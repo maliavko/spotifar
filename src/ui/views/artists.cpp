@@ -6,9 +6,10 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
+//-----------------------------------------------------------------------------------------------------------
 artists_base_view::artists_base_view(api_abstract *api, const string &view_uid,
-    return_callback_t callback):
-    view(view_uid, callback), api_proxy(api)
+                                     const wstring &title, return_callback_t callback):
+    view_abstract(view_uid, title, callback), api_proxy(api)
     {}
 
 void artists_base_view::update_panel_info(OpenPanelInfo *info)
@@ -61,9 +62,9 @@ void artists_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view::items_t* artists_base_view::get_items()
+const view_abstract::items_t* artists_base_view::get_items()
 {
-    static view::items_t items; items.clear();
+    static view_abstract::items_t items; items.clear();
 
     for (const auto &a: get_artists())
     {
@@ -126,7 +127,7 @@ bool artists_base_view::request_extra_info(const data_item_t *data)
     return false;
 }
 
-const view::sort_modes_t& artists_base_view::get_sort_modes() const
+const view_abstract::sort_modes_t& artists_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
@@ -158,17 +159,12 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
     return -2;
 }
 
-
+//-----------------------------------------------------------------------------------------------------------
 followed_artists_view::followed_artists_view(api_abstract *api):
-    artists_base_view(api, "followed_artists_view", std::bind(events::show_collections, api)),
+    artists_base_view(api, "followed_artists_view", get_text(MPanelArtistsItemLabel),
+                      std::bind(events::show_collections, api)),
     collection(api_proxy->get_followed_artists())
 {
-}
-
-const wstring& followed_artists_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelArtistsItemLabel));
-    return dir_name;
 }
 
 config::settings::view_t followed_artists_view::get_default_settings() const
@@ -189,9 +185,10 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
         std::bind(events::show_artists_collection, api_proxy));
 }
 
-
+//-----------------------------------------------------------------------------------------------------------
 recent_artists_view::recent_artists_view(api_abstract *api):
-    artists_base_view(api, "recent_artists_view", std::bind(events::show_recents, api))
+    artists_base_view(api, "recent_artists_view", get_text(MPanelArtistsItemLabel),
+                      std::bind(events::show_recents, api))
 {
     utils::events::start_listening<play_history_observer>(this);
 
@@ -205,18 +202,12 @@ recent_artists_view::~recent_artists_view()
     items.clear();
 }
 
-const wstring& recent_artists_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelArtistsItemLabel));
-    return dir_name;
-}
-
 config::settings::view_t recent_artists_view::get_default_settings() const
 {
     return { 1, false, 6 };
 }
 
-const view::sort_modes_t& recent_artists_view::get_sort_modes() const
+const view_abstract::sort_modes_t& recent_artists_view::get_sort_modes() const
 {
     using namespace utils::keys;
 
@@ -246,7 +237,7 @@ void recent_artists_view::rebuild_items()
         const auto &ids = item_ids_t(keys.begin(), keys.end());
 
         for (const auto &artist: api_proxy->get_artists(ids))
-            items.push_back(history_artist_t(recent_artists[artist.id].played_at, artist));
+            items.push_back(history_artist_t{ {artist}, recent_artists[artist.id].played_at });
     }
 }
 

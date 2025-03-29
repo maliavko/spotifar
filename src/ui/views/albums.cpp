@@ -6,12 +6,13 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
+//-----------------------------------------------------------------------------------------------------------
 albums_base_view::albums_base_view(api_abstract *api, const string &view_uid,
-                                   return_callback_t callback):
-    view(view_uid, callback), api_proxy(api)
+                                   const wstring &title, return_callback_t callback):
+    view_abstract(view_uid, title, callback), api_proxy(api)
     {}
 
-const view::sort_modes_t& albums_base_view::get_sort_modes() const
+const view_abstract::sort_modes_t& albums_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
@@ -117,11 +118,11 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             if (item != nullptr)
             {
                 auto *user_data = unpack_user_data(item->UserData);
-                utils::log::global->info("Starting playback from the panel, {}", user_data->id);
+                log::global->info("Starting playback from the panel, {}", user_data->id);
                 api_proxy->start_playback(album_t::make_uri(user_data->id));
             }
             else
-                utils::log::global->error("There is an error occured while getting a current panel item");
+                log::global->error("There is an error occured while getting a current panel item");
 
             return TRUE;
         }
@@ -129,7 +130,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-const view::items_t* albums_base_view::get_items()
+const view_abstract::items_t* albums_base_view::get_items()
 {
     static items_t items; items.clear();
 
@@ -190,17 +191,12 @@ const view::items_t* albums_base_view::get_items()
     return &items;
 }
 
-artist_view::artist_view(api_abstract *api, const artist_t &artist,
-                         return_callback_t callback):
-    albums_base_view(api, "artist_view", callback),
-    artist(artist),
-    collection(api->get_artist_albums(artist.id))
+//-----------------------------------------------------------------------------------------------------------
+artist_view::artist_view(api_abstract *api, const artist_t &a, return_callback_t callback):
+    albums_base_view(api, "artist_view", a.name, callback),
+    artist(a),
+    collection(api->get_artist_albums(a.id))
 {
-}
-
-const wstring& artist_view::get_dir_name() const
-{
-    return artist.name;
 }
 
 config::settings::view_t artist_view::get_default_settings() const
@@ -223,17 +219,12 @@ void artist_view::show_tracks_view(const album_t &album) const
         std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
 }
 
+//-----------------------------------------------------------------------------------------------------------
 albums_collection_view::albums_collection_view(api_abstract *api):
-    albums_base_view(api, "albums_collection_view", std::bind(events::show_collections, api)),
+    albums_base_view(api, "albums_collection_view", get_text(MPanelAlbumsItemLabel),
+        std::bind(events::show_collections, api)),
     collection(api_proxy->get_saved_albums())
-{
-}
-
-const wstring& albums_collection_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
-    return dir_name;
-}
+    {}
 
 config::settings::view_t albums_collection_view::get_default_settings() const
 {
@@ -247,7 +238,7 @@ std::generator<const simplified_album_t&> albums_collection_view::get_albums()
             co_yield a;
 }
 
-const view::sort_modes_t& albums_collection_view::get_sort_modes() const
+const view_abstract::sort_modes_t& albums_collection_view::get_sort_modes() const
 {
     using namespace utils::keys;
 
@@ -280,17 +271,12 @@ void albums_collection_view::show_tracks_view(const album_t &album) const
         std::bind(events::show_albums_collection, api_proxy));
 }
 
+//-----------------------------------------------------------------------------------------------------------
 new_releases_view::new_releases_view(api_abstract *api):
-    albums_base_view(api, "new_releases_view", std::bind(events::show_root, api)),
+    albums_base_view(api, "new_releases_view", get_text(MPanelNewReleasesItemLabel),
+        std::bind(events::show_browse, api)),
     collection(api_proxy->get_new_releases())
-{
-}
-
-const wstring& new_releases_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelNewReleasesItemLabel));
-    return dir_name;
-}
+    {}
 
 config::settings::view_t new_releases_view::get_default_settings() const
 {
@@ -314,8 +300,10 @@ void new_releases_view::show_tracks_view(const album_t &album) const
     }
 }
 
+//-----------------------------------------------------------------------------------------------------------
 recent_albums_view::recent_albums_view(api_abstract *api):
-    albums_base_view(api, "recent_albums_view", std::bind(events::show_recents, api))
+    albums_base_view(api, "recent_albums_view", get_text(MPanelAlbumsItemLabel),
+        std::bind(events::show_recents, api))
 {
     utils::events::start_listening<play_history_observer>(this);
 
@@ -329,18 +317,12 @@ recent_albums_view::~recent_albums_view()
     items.clear();
 }
 
-const wstring& recent_albums_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelAlbumsItemLabel));
-    return dir_name;
-}
-
 config::settings::view_t recent_albums_view::get_default_settings() const
 {
     return { 1, false, 6 };
 }
 
-const view::sort_modes_t& recent_albums_view::get_sort_modes() const
+const view_abstract::sort_modes_t& recent_albums_view::get_sort_modes() const
 {
     using namespace utils::keys;
 
@@ -375,7 +357,7 @@ void recent_albums_view::rebuild_items()
         const auto &ids = item_ids_t(keys.begin(), keys.end());
 
         for (const auto &album: api_proxy->get_albums(ids))
-            items.push_back(history_album_t(recent_albums[album.id].played_at, album));
+            items.push_back(history_album_t{ {album}, recent_albums[album.id].played_at });
     }
 }
 
@@ -410,6 +392,36 @@ void recent_albums_view::on_items_changed()
     panels::update(PANEL_ACTIVE);
     panels::redraw(PANEL_ACTIVE);
 }
+
+//-----------------------------------------------------------------------------------------------------------
+featuring_albums_view::featuring_albums_view(api_abstract *api):
+    albums_base_view(api, "featuring_albums_view", get_text(MPanelFeaturingAlbumsItemLabel),
+        std::bind(events::show_browse, api))
+    {}
+
+config::settings::view_t featuring_albums_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+std::generator<const simplified_album_t&> featuring_albums_view::get_albums()
+{
+    // if (collection->fetch())
+    //     for (const auto &a: *collection)
+    //         co_yield a;
+    co_return;
+}
+
+void featuring_albums_view::show_tracks_view(const album_t &album) const
+{
+    if (album.artists.size() > 0)
+    {
+        const auto &artist = api_proxy->get_artist(album.artists[0].id);
+        events::show_album_tracks(api_proxy, album,
+            std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
+    }
+}
+
 
 } // namespace ui
 } // namespace spotifar

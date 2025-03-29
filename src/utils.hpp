@@ -498,9 +498,13 @@ namespace http
     string dump_headers(const Headers &headers);
 
     string dump_error(const Request &req, const Response &res);
-}
+} // namespace http
 
 } // namespace utils
+
+// exposing `log` namespace to the 
+namespace log = utils::log;
+
 } // namespace spotifar
 
 

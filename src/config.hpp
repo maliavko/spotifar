@@ -7,7 +7,6 @@
 
 namespace spotifar { namespace config {
 
-namespace log = utils::log;
 namespace json = utils::json;
 
 extern PluginStartupInfo ps_info;

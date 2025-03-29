@@ -6,14 +6,15 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
+//-----------------------------------------------------------------------------------------------------------
 tracks_base_view::tracks_base_view(api_abstract *api, const string &view_uid,
-                                   return_callback_t callback):
-    view(view_uid, callback),
+                                   const wstring &title, return_callback_t callback):
+    view_abstract(view_uid, title, callback),
     api_proxy(api)
 {
 }
 
-const view::sort_modes_t& tracks_base_view::get_sort_modes() const
+const view_abstract::sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
@@ -24,9 +25,9 @@ const view::sort_modes_t& tracks_base_view::get_sort_modes() const
     return modes;
 }
 
-const view::items_t* tracks_base_view::get_items()
+const view_abstract::items_t* tracks_base_view::get_items()
 {
-    static view::items_t items; items.clear();
+    static view_abstract::items_t items; items.clear();
 
     for (const auto &track: get_tracks())
     {
@@ -127,7 +128,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
                 {
-                    utils::log::global->info("Starting playback from the tracks view, {}", user_data->id);
+                    log::global->info("Starting playback from the tracks view, {}", user_data->id);
                     // if (start_playback(user_data->id))
                     // {
                     //     events::show_player();
@@ -138,7 +139,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
                 }
             }
             else
-                utils::log::global->error("There is an error occured while getting a current panel item");
+                log::global->error("There is an error occured while getting a current panel item");
 
             return TRUE;
         }
@@ -146,9 +147,10 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
+//-----------------------------------------------------------------------------------------------------------
 album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album,
                                      return_callback_t callback):
-    tracks_base_view(api, "album_tracks_view", callback),
+    tracks_base_view(api, "album_tracks_view", album.name, callback),
     album(album),
     collection(api_proxy->get_album_tracks(album.id))
 {
@@ -158,11 +160,6 @@ album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album,
 album_tracks_view::~album_tracks_view()
 {
     utils::events::stop_listening<playback_observer>(this);
-}
-
-const wstring& album_tracks_view::get_dir_name() const
-{
-    return album.name;
 }
 
 config::settings::view_t album_tracks_view::get_default_settings() const
@@ -198,8 +195,10 @@ void album_tracks_view::on_track_changed(const track_t &track)
     }
 }
 
+//-----------------------------------------------------------------------------------------------------------
 recent_tracks_view::recent_tracks_view(api_abstract *api):
-    tracks_base_view(api, "recent_tracks_view", std::bind(events::show_recents, api))
+    tracks_base_view(api, "recent_tracks_view", get_text(MPanelTracksItemLabel),
+                     std::bind(events::show_recents, api))
 {
     rebuild_items();
 
@@ -213,18 +212,12 @@ recent_tracks_view::~recent_tracks_view()
     utils::events::stop_listening<play_history_observer>(this);
 }
 
-const wstring& recent_tracks_view::get_dir_name() const
-{
-    static wstring title(utils::far3::get_text(MPanelTracksItemLabel));
-    return title;
-}
-
 config::settings::view_t recent_tracks_view::get_default_settings() const
 {
     return { 0, false, 3 };
 }
 
-const view::sort_modes_t& recent_tracks_view::get_sort_modes() const
+const view_abstract::sort_modes_t& recent_tracks_view::get_sort_modes() const
 {
     using namespace utils::keys;
 
@@ -256,8 +249,7 @@ void recent_tracks_view::rebuild_items()
     items.clear();
 
     for (const auto &item: api_proxy->get_play_history())
-        items.push_back(
-            history_track_t(item.played_at, item.track));
+        items.push_back(history_track_t{ {item.track}, item.played_at });
 }
 
 bool recent_tracks_view::start_playback(const string &track_id)
@@ -280,9 +272,10 @@ void recent_tracks_view::on_items_changed()
     panels::redraw(PANEL_ACTIVE);
 }
 
-
+//-----------------------------------------------------------------------------------------------------------
 saved_tracks_view::saved_tracks_view(api_abstract *api):
-    tracks_base_view(api, "saved_tracks_view", std::bind(events::show_collections, api)),
+    tracks_base_view(api, "saved_tracks_view", get_text(MPanelTracksItemLabel),
+                     std::bind(events::show_collections, api)),
     collection(api_proxy->get_saved_tracks())
 {
     utils::events::start_listening<playback_observer>(this);
@@ -291,12 +284,6 @@ saved_tracks_view::saved_tracks_view(api_abstract *api):
 saved_tracks_view::~saved_tracks_view()
 {
     utils::events::stop_listening<playback_observer>(this);
-}
-
-const wstring& saved_tracks_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelTracksItemLabel));
-    return dir_name;
 }
 
 config::settings::view_t saved_tracks_view::get_default_settings() const
@@ -321,9 +308,10 @@ void saved_tracks_view::on_track_changed(const track_t &track)
 {
 }
 
-
+//-----------------------------------------------------------------------------------------------------------
 playing_queue_view::playing_queue_view(api_abstract *api):
-    tracks_base_view(api, "playing_queue_view", std::bind(events::show_collections, api))
+    tracks_base_view(api, "playing_queue_view", get_text(MPanelTracksItemLabel),
+                     std::bind(events::show_collections, api))
 {
     utils::events::start_listening<playback_observer>(this);
 }
@@ -331,12 +319,6 @@ playing_queue_view::playing_queue_view(api_abstract *api):
 playing_queue_view::~playing_queue_view()
 {
     utils::events::stop_listening<playback_observer>(this);
-}
-
-const wstring& playing_queue_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelTracksItemLabel));
-    return dir_name;
 }
 
 config::settings::view_t playing_queue_view::get_default_settings() const
@@ -359,7 +341,7 @@ std::generator<const simplified_track_t&> playing_queue_view::get_tracks()
         co_yield t;
 }
 
-const view::sort_modes_t& playing_queue_view::get_sort_modes() const
+const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {

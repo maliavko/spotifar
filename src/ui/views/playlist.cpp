@@ -6,16 +6,11 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 playlist_view::playlist_view(api_abstract *api, const playlist_t &p):
-    view("playlist_view", std::bind(events::show_playlists_collection, api)),
+    view_abstract("playlist_view", p.name, std::bind(events::show_saved_playlists, api)),
     playlist(p),
     api_proxy(api),
     collection(api_proxy->get_playlist_tracks(p.id))
 {
-}
-
-const wstring& playlist_view::get_dir_name() const
-{
-    return playlist.name;
 }
 
 void playlist_view::update_panel_info(OpenPanelInfo *info)
@@ -47,9 +42,9 @@ void playlist_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view::items_t* playlist_view::get_items()
+const view_abstract::items_t* playlist_view::get_items()
 {
-    static view::items_t items; items.clear();
+    static view_abstract::items_t items; items.clear();
 
     if (!collection->fetch())
         return &items;
@@ -105,7 +100,7 @@ intptr_t playlist_view::select_item(const data_item_t* data)
     return FALSE;
 }
 
-const view::sort_modes_t& playlist_view::get_sort_modes() const
+const view_abstract::sort_modes_t& playlist_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {

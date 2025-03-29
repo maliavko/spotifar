@@ -2,7 +2,6 @@
 
 namespace spotifar { namespace spotify {
 
-namespace log = utils::log;
 using utils::far3::synchro_tasks::dispatch_event;
 
 play_history::play_history(api_abstract *api):

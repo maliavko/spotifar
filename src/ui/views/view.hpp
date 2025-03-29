@@ -11,7 +11,12 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class view
+/// @brief An abstract class for holding a currently viewable panel's data and
+/// business logic. By design, a user can travers through diffrent kind of 
+/// Spotify collections, each of them has a different key-features inside.
+/// To separate all of them from each other at any moment the panel creates and holds
+/// one view and change it by request of the user
+class view_abstract
 {
 public:
     struct sort_mode_t
@@ -28,7 +33,7 @@ public:
         wstring name;
         wstring description;
         uintptr_t file_attrs;
-        std::vector<wstring> custom_column_data;
+        std::vector<wstring> columns_data;
         data_item_t *user_data;
         bool is_selected = false;
     };
@@ -40,12 +45,12 @@ public:
     typedef std::function<void(void)> return_callback_t;
 
 public:
-    view(const string &uid, return_callback_t callback);
-    virtual ~view() {}
+    view_abstract(const string &uid, const wstring &title, return_callback_t callback);
+    virtual ~view_abstract() {}
 
-    // a panel's interface to the view data
+    // a public interface for a panel operations on the view
 
-    /// a helper event from outside, its called right after the items
+    /// @brief a helper event from outside, its called right after the items
     /// are populated on the panel
     auto on_items_updated() -> void;
     auto compare_items(const CompareInfo *info) -> intptr_t;
@@ -57,8 +62,8 @@ public:
     auto select_sort_mode(int sort_mode_idx) -> void;
     auto get_return_callback() const -> const return_callback_t& { return return_callback; }
 
+    virtual auto get_dir_name() const -> const wstring& { return title; }
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
-    virtual auto get_dir_name() const -> const wstring& = 0;
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
@@ -80,7 +85,10 @@ private:
     sort_modes_t sort_modes;
     config::settings::view_t *settings;
     string uid;
+    wstring title;
 };
+
+typedef std::shared_ptr<view_abstract> view_ptr;
 
 } // namespace ui
 } // namespace spotifar
