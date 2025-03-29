@@ -182,7 +182,7 @@ std::generator<const artist_t&> followed_artists_view::get_artists()
 void followed_artists_view::show_albums_view(const artist_t &artist) const
 {
     events::show_artist_albums(api_proxy, artist,
-        std::bind(events::show_artists_collection, api_proxy));
+        std::bind(events::show_followed_artists, api_proxy));
 }
 
 //-----------------------------------------------------------------------------------------------------------

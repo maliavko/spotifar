@@ -19,9 +19,9 @@ namespace events {
 
     // collection menu events
     void show_collections(api_abstract *api);
-    void show_artists_collection(api_abstract *api);
-    void show_albums_collection(api_abstract *api);
-    void show_tracks_collection(api_abstract *api);
+    void show_followed_artists(api_abstract *api);
+    void show_saved_albums(api_abstract *api);
+    void show_saved_tracks(api_abstract *api);
     void show_saved_playlists(api_abstract *api);
 
     // recent menu events

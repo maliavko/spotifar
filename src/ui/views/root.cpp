@@ -182,17 +182,17 @@ collection_view::collection_view(api_abstract *api):
         {
             { artists_id },
             MPanelArtistsItemLabel, MPanelArtistsItemDescr,
-            std::bind(show_artists_collection, api)
+            std::bind(show_followed_artists, api)
         },
         {
             { albums_id },
             MPanelAlbumsItemLabel, MPanelAlbumsItemDescr,
-            std::bind(show_albums_collection, api)
+            std::bind(show_saved_albums, api)
         },
         {
             { tracks_id },
             MPanelTracksItemLabel, MPanelTracksItemDescr,
-            std::bind(show_tracks_collection, api)
+            std::bind(show_saved_tracks, api)
         },
         {
             { playlists_id },

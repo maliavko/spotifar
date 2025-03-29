@@ -268,7 +268,7 @@ intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
 void albums_collection_view::show_tracks_view(const album_t &album) const
 {
     events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_albums_collection, api_proxy));
+        std::bind(events::show_saved_albums, api_proxy));
 }
 
 //-----------------------------------------------------------------------------------------------------------

@@ -28,17 +28,17 @@ namespace events {
         return show_panel_view<collection_view>(api);
     }
 
-    void show_artists_collection(api_abstract *api)
+    void show_followed_artists(api_abstract *api)
     {
         return show_panel_view<followed_artists_view>(api);
     }
 
-    void show_albums_collection(api_abstract *api)
+    void show_saved_albums(api_abstract *api)
     {
         return show_panel_view<albums_collection_view>(api);
     }
 
-    void show_tracks_collection(api_abstract *api)
+    void show_saved_tracks(api_abstract *api)
     {
         return show_panel_view<saved_tracks_view>(api);
     }
