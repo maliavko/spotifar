@@ -8,7 +8,6 @@
 		"openssl",
 		"spdlog",
 		"bshoshany-thread-pool",
-		"mio",
 		"rapidjson"
   ]
 }
