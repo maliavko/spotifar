@@ -37,24 +37,12 @@ protected:
     {
         auto storage_value = ctx.get_str(key, "");
         if (!storage_value.empty())
-        {
-            json::Document document;
-            document.Parse(storage_value);
-            from_json(document, data);
-        }
+            json::parse_to(storage_value, data);
     }
 
     virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const T &data)
     {
-        json::Document document;
-        to_json(document, data, document.GetAllocator());
-
-        json::StringBuffer sb;
-        json::Writer<json::StringBuffer> writer(sb);
-
-        document.Accept(writer);
-
-        ctx.set_str(key, sb.GetString());
+        ctx.set_str(key, json::dump(data)->GetString());
     }
 };
 
@@ -288,8 +276,6 @@ public:
 
     /// @brief Invalidates all the cache
     void clear_all() { cached_responses.clear(); }
-protected:
-    static string get_cache_filename();
 private:
     std::atomic<bool> is_initialized = false;
     std::unordered_map<string, cache_entry> cached_responses;

@@ -29,6 +29,7 @@ public:
     ~auth_cache() { api_proxy = nullptr; }
     
     bool is_authenticated() const { return is_logged_in; }
+    auto get_access_token() const { return get().access_token; }
 protected:
     virtual bool request_data(auth_t &data);
     virtual clock_t::duration get_sync_interval() const;

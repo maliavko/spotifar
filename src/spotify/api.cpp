@@ -11,9 +11,6 @@ const string spotify_api_url = "https://api.spotify.com";
 // a collection with bunch of pages we perform them asynchronously
 const size_t pool_size = 12;
 
-static string token = ""; // TODO: hack, remove
-
-
 template<class R>
 auto request_item(R &&requester, api_abstract *api) -> typename R::result_t
 {
@@ -92,9 +89,7 @@ void http_logger(const Request &req, const Response &res)
     }
 }
 
-api::api():
-    client(spotify_api_url),
-    pool(pool_size)
+api::api(): pool(pool_size)
 {
     auth = std::make_unique<auth_cache>(
         this, config::get_client_id(), config::get_client_secret(),
@@ -215,14 +210,6 @@ album_tracks_ptr api::get_album_tracks(const string &album_id)
 {
     return album_tracks_ptr(new album_tracks_t(
         this, std::format("/v1/albums/{}/tracks", album_id)));
-}
-
-recently_played_tracks_ptr api::get_recently_played(std::int64_t after)
-{
-    return recently_played_tracks_ptr(new recently_played_tracks_t(
-        this, "/v1/me/player/recently-played", {
-            { "after", std::to_string(after) }
-        }));
 }
 
 saved_tracks_ptr api::get_saved_tracks()
@@ -573,12 +560,6 @@ void api::start_playback_raw(const string &body, const string &device_id)
         });
 }
 
-void api::clear_http_cache()
-{
-    api_responses_cache.clear_all();
-    log::api->debug("Clearning http caches");
-}
-
 bool api::is_request_cached(const string &url) const
 {
     string u = trim_webapi_url(url);
@@ -587,6 +568,8 @@ bool api::is_request_cached(const string &url) const
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 {
+    // TODO: the method is called in separate threads while populating async collections,
+    // sometimes it races for `api_responses_cache`. It needs to introduce some mutex here
     using namespace httplib;
 
     string cached_etag = "";
@@ -693,7 +676,7 @@ std::shared_ptr<httplib::Client> api::get_client() const
     auto client = std::make_shared<httplib::Client>(spotify_api_url);
 
     client->set_logger(http_logger);    
-    client->set_bearer_token_auth(token);
+    client->set_bearer_token_auth(auth->get_access_token());
     client->set_default_headers({
         {"Content-Type", "application/json; charset=utf-8"},
     });
@@ -703,10 +686,6 @@ std::shared_ptr<httplib::Client> api::get_client() const
 
 void api::on_auth_status_changed(const auth_t &auth)
 {
-    // set up current session's valid access token
-    client.set_bearer_token_auth(auth.access_token);
-    token = auth.access_token;
-
     // pick up the some device for playback
     devices->pick_up_device();
 }

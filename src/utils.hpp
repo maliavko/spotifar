@@ -414,6 +414,31 @@ namespace json
         }
     }
 
+    template<class T>
+    auto dump(const T &value) -> std::shared_ptr<StringBuffer>
+    {
+        Document doc;
+        to_json(doc, value, doc.GetAllocator());
+
+        auto sb = std::make_shared<StringBuffer>();
+        Writer<StringBuffer> writer(*sb);
+
+        doc.Accept(writer);
+
+        return sb;
+    }
+
+    auto parse(const string &json) -> std::shared_ptr<Document>;
+    
+    template<class T>
+    void parse_to(const string &json, T &value)
+    {
+        Document doc;
+        doc.Parse(json);
+
+        from_json(doc, value);
+    }
+
     void pretty_print(Value &doc);
 }
 

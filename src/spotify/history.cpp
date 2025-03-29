@@ -11,6 +11,14 @@ play_history::play_history(api_abstract *api):
 {
 };
 
+recently_played_tracks_ptr play_history::get_recently_played(std::int64_t after)
+{
+    return recently_played_tracks_ptr(new recently_played_tracks_t(
+        api_proxy, "/v1/me/player/recently-played", {
+            { "after", std::to_string(after) }
+        }));
+}
+
 bool play_history::is_active() const
 {
     return api_proxy->is_authenticated();
@@ -38,7 +46,7 @@ bool play_history::request_data(history_items_t &data)
 
     // we request only the new items after the last request timestamp, then we take
     // the old items list and extend it from the front
-    auto new_items = api_proxy->get_recently_played(last_sync_time);
+    auto new_items = get_recently_played(last_sync_time);
     if (new_items->fetch() && new_items->size() > 0)
         data.insert(data.begin(), new_items->begin(), new_items->end());
 

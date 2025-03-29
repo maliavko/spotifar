@@ -14,12 +14,13 @@ public:
     devices_cache(api_abstract *api): json_cache(), api_proxy(api) {}
     ~devices_cache() { api_proxy = nullptr; }
 
-    bool is_active() const;
     bool pick_up_device(const string &device_id = "");
 protected:
-    bool request_data(devices_t &data);
-    void on_data_synced(const devices_t &data, const devices_t &prev_data);
-    auto get_sync_interval() const -> clock_t::duration;
+    // `json_cache` class overloads
+    bool is_active() const override;
+    bool request_data(devices_t &data) override;
+    void on_data_synced(const devices_t &data, const devices_t &prev_data) override;
+    auto get_sync_interval() const -> clock_t::duration override;
 
 private:
     api_abstract *api_proxy;

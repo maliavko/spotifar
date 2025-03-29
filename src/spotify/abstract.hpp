@@ -34,11 +34,9 @@ typedef std::shared_ptr<new_releases_t> new_releases_ptr;
 typedef async_collection<simplified_track_t> album_tracks_t;
 typedef std::shared_ptr<album_tracks_t> album_tracks_ptr;
 
-typedef sync_collection<history_item_t> recently_played_tracks_t;
-typedef std::shared_ptr<recently_played_tracks_t> recently_played_tracks_ptr;
-
 struct api_abstract
 {
+    template<class T> friend class item_requester;
     template<class T> friend class sync_collection;
     template<class T> friend class async_collection;
 
@@ -46,15 +44,12 @@ struct api_abstract
 
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
-    
-    // library & collections interface
 
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-    virtual auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr = 0;
-    virtual auto get_play_history() -> const history_items_t& = 0; // TODO: why I have two of them?
-
+    virtual auto get_play_history() -> const history_items_t& = 0;
     virtual auto get_available_devices() -> const devices_t& = 0;
     virtual auto get_playback_state() -> const playback_state_t& = 0;
+    
+    // library & collections interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const string &artist_id) -> std::vector<track_t> = 0;
@@ -95,7 +90,9 @@ struct api_abstract
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
     virtual auto get_saved_playlists() -> saved_playlists_ptr = 0;
 
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlist
     virtual auto get_playlist(const string &playlist_id) -> playlist_t = 0;
+
     virtual auto check_saved_track(const string &track_id) -> bool = 0;
     virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
@@ -104,7 +101,7 @@ struct api_abstract
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
-                                int position_ms = 0, const string &device_id = "") = 0;
+        int position_ms = 0, const string &device_id = "") = 0;
     virtual void start_playback(const std::vector<string> &uris, const string &device_id = "") = 0;
     virtual void start_playback(const simplified_album_t &album, const simplified_track_t &track) = 0;
     virtual void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) = 0;
@@ -119,15 +116,26 @@ struct api_abstract
     virtual void set_repeat_state(const string &mode, const string &device_id = "") = 0;
     virtual void set_playback_volume(int volume_percent, const string &device_id = "") = 0;
     virtual void transfer_playback(const string &device_id, bool start_playing = false) = 0;
-    //TODO: return here protected specifier
-    /// @brief Performs an HTTP GET request
-    /// @param cache_for caches the requested data for the given amount of time
-    virtual Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
-    virtual Result put(const string &url, const string &body = {}) = 0;
-    virtual Result del(const string &url, const string &body = {}) = 0;
-    virtual auto is_request_cached(const string &url) const -> bool = 0;
 protected:
+    /// @brief Performs an HTTP GET request
+    /// @param cache_for caches the response for the given amount of time
+    virtual Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
+
+    /// @brief Performs an HTTP PUT request
+    virtual Result put(const string &url, const string &body = {}) = 0;
+
+    /// @brief Performs an HTTP DEL request
+    virtual Result del(const string &url, const string &body = {}) = 0;
+
+    /// @brief Performs an HTTP POST request
+    virtual Result post(const string &url, const string &body = {}) = 0;
+
+    /// @brief Returns a reference to the internally allocated thread-pool. Used by
+    /// requesters to perform async request
     virtual auto get_pool() -> BS::thread_pool& = 0;
+
+    /// @brief Whether the given url is cached
+    virtual auto is_request_cached(const string &url) const -> bool = 0;
 };
 
 
@@ -151,9 +159,11 @@ public:
         {}
     
     /// @brief Returns a result. Valid only after a successful request
-    const result_t& get() const { return result; }
+    auto get() const -> const result_t& { return result; }
 
-    const string& get_url() const { return url; }
+    auto get_url() const -> const string& { return url; }
+
+    auto get_response() const -> const httplib::Result& { return response; }
 
     bool is_cached(api_abstract *api) const
     {
@@ -165,14 +175,17 @@ public:
         if (only_cached && !is_cached(api))
             return false;
         
-        auto res = api->get(url, utils::http::session);
-        if (utils::http::is_success(res->status))
+        response = api->get(url, utils::http::session);
+        if (is_success(response))
         {
             try
             {
-                json::Document document;
-                json::Value &body = document.Parse(res->body);
+                if (response->status == httplib::NoContent_204)
+                    return true;
                 
+                auto doc = json::parse(response->body);
+                
+                json::Value &body = *doc;
                 if (!fieldname.empty())
                     body = body[fieldname];
 
@@ -189,6 +202,8 @@ public:
         return false;
     }
 protected:
+    virtual bool is_success(httplib::Result &r) const { return utils::http::is_success(r->status); }
+
     /// @brief Provides a way for derived classes to specify result parsing approach
     /// @param body parsed response body
     /// @param result a reference to the result to hold
@@ -200,6 +215,7 @@ protected:
     string fieldname;
     string url;
     result_t result;
+    httplib::Result response;
 };
 
 /// @brief A class-helpers to request several items from Spotify. As their
@@ -222,7 +238,7 @@ public:
         {}
     
     /// @brief Returns a result. Valid only after a successful request
-    const result_t& get() const { return result; }
+    auto get() const -> const result_t& { return result; }
 
     bool execute(api_abstract *api, bool only_cached = false)
     {
@@ -272,7 +288,7 @@ public:
 
     /// @brief Return a valid `url` to the next page in case it exists
     /// @note works only a successful request
-    const string get_next_url() const { return next; }
+    auto get_next_url() const -> const string { return next; }
 
     /// @brief Returns a total amount of items in collection
     /// @note works only a successful request

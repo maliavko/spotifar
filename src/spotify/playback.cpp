@@ -49,16 +49,12 @@ void playback_cache::on_data_synced(const playback_state_t &data, const playback
 
 bool playback_cache::request_data(playback_state_t &data)
 {
-    auto res = api_proxy->get("/v1/me/player");
-    if (res->status == httplib::OK_200)
+    auto req = item_requester<playback_state_t>("/v1/me/player");
+    if (req.execute(api_proxy))
     {
-        json::Document document;
-        json::Value &body = document.Parse(res->body);
-        
-        from_json(body, data);
+        data = req.get();
         return true;
     }
-
     return false;
 }
 

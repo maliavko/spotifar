@@ -728,13 +728,19 @@ namespace json
         j.SetBool(result);
     }
 
+    std::shared_ptr<Document> parse(const string &json)
+    {
+        auto document = std::make_shared<Document>();
+        document->Parse(json);
+        return document;
+    }
+
     void pretty_print(Value &v)
     {
         StringBuffer sb;
-        PrettyWriter<StringBuffer> writer(sb);
-
+        Writer<StringBuffer> writer(sb);
         v.Accept(writer);
-        log::global->debug(sb.GetString());
+        utils::log::global->debug(sb.GetString());
     }
 }
 

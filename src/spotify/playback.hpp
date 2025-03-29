@@ -12,17 +12,16 @@ namespace spotifar { namespace spotify {
 class playback_cache: public json_cache<playback_state_t>
 {
 public:
-    //playback_cache(api_abstract *api): json_cache(L"PlaybackState"), api_proxy(api) {}
-    playback_cache(api_abstract *api): json_cache(L""), api_proxy(api) {}
-    virtual ~playback_cache() { api_proxy = nullptr; }
-    virtual bool is_active() const;
+    playback_cache(api_abstract *api): json_cache(), api_proxy(api) {}
+    ~playback_cache() { api_proxy = nullptr; }
 
     /// @param tracks_uris list of spotify tracks' URIs
     void activate_super_shuffle(const std::vector<string> &tracks_uris);
 protected:
-    virtual void on_data_synced(const playback_state_t &data, const playback_state_t &prev_data);
-    virtual bool request_data(playback_state_t &data);
-    virtual clock_t::duration get_sync_interval() const;
+    bool is_active() const override;
+    void on_data_synced(const playback_state_t &data, const playback_state_t &prev_data) override;
+    bool request_data(playback_state_t &data) override;
+    clock_t::duration get_sync_interval() const override;
 
 private:
     api_abstract *api_proxy;

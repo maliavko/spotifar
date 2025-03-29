@@ -5,6 +5,11 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
+string get_cache_filename()
+{
+    return std::format("{}\\responses.cache", utils::to_string(config::get_plugin_data_folder()));
+}
+
 void from_json(const json::Value &j, http_cache::cache_entry &e)
 {
     e.etag = j["etag"].GetString();
@@ -32,27 +37,35 @@ void http_cache::start()
     try
     {
         string filepath = get_cache_filename();
-        if (!std::filesystem::exists(filepath))
-        {
-            std::ofstream file(filepath);
-            file << "{}";
-        }
 
-        std::error_code error;
-        mio::mmap_source mmap = mio::make_mmap_source(filepath, error);
-        if (error)
+        HANDLE file = CreateFileA(filepath.c_str(), GENERIC_READ, FILE_SHARE_READ, 0,
+            OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
+        
+        // there is no cache for reading
+        if (file == INVALID_HANDLE_VALUE)
+            return;
+
+        // create a reading "file mapping" for the intire file
+        HANDLE fmap = CreateFileMapping(file, 0, PAGE_READONLY, 0, 0, 0);
+        if (fmap == INVALID_HANDLE_VALUE)
+            return;
+
+        // map the file into memory
+        const char *buffer = (const char*)MapViewOfFile(fmap, FILE_MAP_READ, 0, 0, 0);
+        if (buffer == nullptr)
         {
-            log::global->error("An error occured while mapping cache file, a cache file "
-                "initialization is skipped, ({}) {}", error.value(), error.message());
+            utils::log::global->warn("There is an unexpected empty cache file. "
+                "Skipping cache initialization");
             return;
         }
 
-        json::Document document;
-        document.Parse(mmap.data());
-        
-        utils::json::from_json(document, cached_responses);
+        // parsing json cache
+        json::parse_to(buffer, cached_responses);
 
-        mmap.unmap();
+        // close all handles
+        UnmapViewOfFile(buffer);
+        CloseHandle(fmap);
+        CloseHandle(file);
     }
     catch (const std::exception &ex)
     {
@@ -73,15 +86,39 @@ void http_cache::shutdown()
 
     try
     {
-        json::Document document;
-        utils::json::to_json(document, cached_responses, document.GetAllocator());
+        string filepath = get_cache_filename();
 
-        json::StringBuffer sb;
-        json::Writer<json::StringBuffer> writer(sb);
-        document.Accept(writer);
-        
-        std::ofstream file(get_cache_filename(), std::ios_base::trunc);
-        file << sb.GetString();
+        auto sbuffer = json::dump(cached_responses);
+        DWORD totalSize = (DWORD)sbuffer->GetLength();
+
+        HANDLE file = CreateFileA(filepath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, 0,
+            CREATE_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, 0);
+            
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            log::global->error("An error occured while opening a file for dumping an "
+                "http cache, {}", get_last_system_error());
+            return;
+        }
+
+        // create a "file mapping" for the file. Grows it to toalSize
+        HANDLE fmap = CreateFileMapping(file, 0, PAGE_READWRITE, 0, totalSize, 0);
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            log::global->error("An error occured while creating a mapped cache file, {}",
+                get_last_system_error());
+            return;
+        }
+
+        // map the file into memory
+        void *buffer = MapViewOfFile(fmap, FILE_MAP_WRITE, 0, 0, totalSize);
+
+        std::memcpy(buffer, sbuffer->GetString(), totalSize);
+
+        // close all handles etc.
+        UnmapViewOfFile(buffer);
+        CloseHandle(fmap);
+        CloseHandle(file);
     }
     catch (const std::exception &ex)
     {
@@ -125,11 +162,6 @@ void http_cache::invalidate(const string &url_part)
         else
             ++it;
     }
-}
-
-string http_cache::get_cache_filename()
-{
-    return std::format("{}\\responses.cache", utils::to_string(config::get_plugin_data_folder()));
 }
 
 } // namespace spotify

@@ -90,12 +90,6 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
     {
         switch (keys::make_combined(key_event))
         {
-            case VK_F8:
-            {
-                log::global->debug("Clearing http cache");
-                api.clear_http_cache();
-                return TRUE;
-            }
             case keys::q + keys::mods::alt:
             {
                 if (!player.is_visible())

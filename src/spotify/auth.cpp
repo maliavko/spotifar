@@ -118,11 +118,8 @@ auth_t auth_cache::authenticate(const httplib::Params &params)
         "application/x-www-form-urlencoded");
 
     // TODO: error handling
-    json::Document document;
-    json::Value &body = document.Parse(res->body);
-
     auth_t result;
-    from_json(document, result);
+    json::parse_to(res->body, result);
 
     return result;
 }
