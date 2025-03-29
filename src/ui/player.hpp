@@ -12,11 +12,11 @@ namespace spotifar { namespace ui {
 using namespace spotify;
 
 class player:
-    public playback_observer,
-    public devices_observer
+    public playback_observer, // represent timely playback changes in UI
+    public devices_observer // to keep up to date the list of available devices
 {
 public:
-    player(api_abstract *api);
+    player(api_proxy_ptr api);
     virtual ~player();
 
     bool show();
@@ -78,17 +78,21 @@ protected:
     intptr_t set_control_enabled(int control_id, bool is_enabled);
 
 private:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
     HANDLE hdlg;
-    bool visible = false;
+    std::atomic<bool> visible = false;
     bool are_dlg_events_suppressed = true;
 
+    // some cutom logic, incapsulated into virtual ui controls
     slider_control volume, track_progress;
     cycled_bool_control shuffle_state;
     cycled_string_control repeat_state;
     
-    friend struct dlg_events_supressor;
+    friend struct dlg_events_supressor; // a helper to supress processing of the events
+                                        // by dialog for some cases
 };
+
+typedef std::shared_ptr<player> player_ptr;
     
 } // namespace ui
 } // namespace spotifar

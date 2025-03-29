@@ -4,34 +4,35 @@
 
 #include "stdafx.h"
 #include "spotify/abstract.hpp"
-#include "ui/views/view.hpp"
+#include "ui/views/view.hpp" // view_abstract
 #include "ui/events.hpp" // ui_events_observer
 
 namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class panel: public ui_events_observer
+class panel: public ui_events_observer // global view commands listener
 {
 public:
-    panel(api_abstract *api);
+    panel(api_proxy_ptr api);
     virtual ~panel();
-    // TODO: consider having here shutdown/close method to cleanup resources
 
-    // far global events' handlers
-    auto update_panel_info(OpenPanelInfo *info) -> void;
+    // FAR API interface
+    void update_panel_info(OpenPanelInfo *info);
     auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
-    auto free_panel_items(const FreeFindDataInfo *info) -> void;
+    void free_panel_items(const FreeFindDataInfo *info);
     auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
-    void show_panel_view(std::shared_ptr<ui::view_abstract> view);
-    void refresh_panels(const string &item_id = "");
+    void show_panel_view(view_ptr view);
+    void refresh_panels(const item_id_t &item_id = "");
 private:
-    std::shared_ptr<ui::view_abstract> view = nullptr;
-    api_abstract *api_proxy = nullptr;
+    view_ptr view;
+    api_proxy_ptr api_proxy;
 };
+
+typedef std::shared_ptr<panel> panel_ptr;
 
 } // namespace ui
 } // namespace spotifar

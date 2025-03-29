@@ -98,6 +98,8 @@ private:
     std::vector<cached_data_abstract*> caches;
 };
 
+typedef std::shared_ptr<api> api_ptr;
+
 } // namespace spotify
 } // namespace spotifar
 

@@ -7,7 +7,6 @@ refactor
 - working with playlists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
-- chnge all the api_proxy to the std:weak_ptr instances; see an example https://stackoverflow.com/questions/27827923/c-object-pool-that-provides-items-as-smart-pointers-that-are-returned-to-pool
 - rename api_abstract to api_interface, clean it, add comments
 - finilize the rest requests and convert into sync/async requesters
 

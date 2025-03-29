@@ -8,7 +8,7 @@ namespace far3 = utils::far3;
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
-panel::panel(api_abstract *api):
+panel::panel(api_proxy_ptr api):
     api_proxy(api)
 {
     utils::events::start_listening<ui_events_observer>(this);
@@ -17,7 +17,9 @@ panel::panel(api_abstract *api):
 panel::~panel()
 {
     utils::events::stop_listening<ui_events_observer>(this);
-    view = nullptr;
+
+    view.reset();
+    api_proxy.reset();
 }
 
 void panel::update_panel_info(OpenPanelInfo *info)

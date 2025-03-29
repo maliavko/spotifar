@@ -10,17 +10,17 @@ namespace hotkeys = config::hotkeys;
 namespace far3 = utils::far3;
 
 plugin::plugin():
-    api(),
-    panel(&api),
-    player(&api)
+    api(new spotify::api()),
+    panel(new ui::panel(api)),
+    player(new ui::player(api))
 {
     utils::events::start_listening<config::config_observer>(this);
     utils::events::start_listening<spotify::auth_observer>(this);
     utils::events::start_listening<ui::ui_events_observer>(this);
 
     // TODO: what if not initialized?
-    if (api.start())
-        ui::events::show_root(&api);
+    if (api->start())
+        ui::events::show_root(api.get());
 
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
 }
@@ -32,6 +32,10 @@ plugin::~plugin()
     utils::events::stop_listening<spotify::auth_observer>(this);
     utils::events::stop_listening<config::config_observer>(this);
     utils::events::stop_listening<ui::ui_events_observer>(this);
+
+    panel.reset();
+    player.reset();
+    api.reset();
 }
 
 void plugin::start()
@@ -45,15 +49,15 @@ void plugin::shutdown()
 {
     shutdown_sync_worker();
 
-    player.hide();
-    api.shutdown();
+    player->hide();
+    api->shutdown();
 
     librespot.shutdown();
 }
 
 void plugin::update_panel_info(OpenPanelInfo *info)
 {
-    panel.update_panel_info(info);
+    panel->update_panel_info(info);
 }
 
 intptr_t plugin::update_panel_items(GetFindDataInfo *info)
@@ -62,12 +66,12 @@ intptr_t plugin::update_panel_items(GetFindDataInfo *info)
     if (info->OpMode & OPM_FIND)
         return FALSE;
         
-    return panel.update_panel_items(info);
+    return panel->update_panel_items(info);
 }
 
 void plugin::free_panel_items(const FreeFindDataInfo *info)
 {
-    panel.free_panel_items(info);
+    panel->free_panel_items(info);
 }
 
 intptr_t plugin::set_directory(const SetDirectoryInfo *info)
@@ -76,7 +80,7 @@ intptr_t plugin::set_directory(const SetDirectoryInfo *info)
     if (info->OpMode & OPM_FIND)
         return FALSE;
     
-    return panel.select_directory(info);
+    return panel->select_directory(info);
 }
 
 intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
@@ -90,18 +94,18 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
         {
             case keys::q + keys::mods::alt:
             {
-                if (!player.is_visible())
-                    player.show();
+                if (!player->is_visible())
+                    player->show();
                 return TRUE;
             }
         }
     }
-    return panel.process_input(info);
+    return panel->process_input(info);
 }
 
 intptr_t plugin::compare_items(const CompareInfo *info)
 {
-    return panel.compare_items(info);
+    return panel->compare_items(info);
 }
 
 void plugin::launch_sync_worker()
@@ -109,14 +113,14 @@ void plugin::launch_sync_worker()
     std::packaged_task<void()> task([this]
     {
         string exit_msg = "";
-        const std::lock_guard worker_lock(sync_worker_mutex);
+        std::lock_guard worker_lock(sync_worker_mutex);
 
         try
         {
             while (is_worker_listening)
             {
-                api.tick();
-                player.tick();
+                api->tick();
+                player->tick();
                 librespot.tick();
 
                 background_tasks.process_all(); // ticking background tasks if any
@@ -148,7 +152,7 @@ void plugin::shutdown_sync_worker()
     
     // trying to acquare a sync worker mutex, giving worker time to clean up
     // all the resources
-    const std::lock_guard worker_lock(sync_worker_mutex);
+    std::lock_guard worker_lock(sync_worker_mutex);
     log::api->info("Plugin's background thread has been stopped");
 }
 
@@ -207,7 +211,7 @@ void plugin::on_auth_status_changed(const spotify::auth_t &auth)
 
 void plugin::show_player()
 {
-    player.show();
+    player->show();
 }
 
 void plugin::check_global_hotkeys()
@@ -222,9 +226,9 @@ void plugin::check_global_hotkeys()
     {
         switch (LOWORD(msg.wParam))
         {
-            case hotkeys::play: return api.toggle_playback();
-            case hotkeys::skip_next: return api.skip_to_next();
-            case hotkeys::skip_previous: return api.skip_to_previous();
+            case hotkeys::play: return api->toggle_playback();
+            case hotkeys::skip_next: return api->skip_to_next();
+            case hotkeys::skip_previous: return api->skip_to_previous();
             // TODO: finish up the commands
         }
     }

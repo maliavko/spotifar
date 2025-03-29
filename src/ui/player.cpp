@@ -180,21 +180,19 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
 };
 
-player::player(api_abstract *api):
+player::player(api_proxy_ptr api):
     api_proxy(api),
     volume(0, 100, 1),
     track_progress(0, 0, 5),
     shuffle_state({ true, false }),
-    repeat_state({
-        playback_state_t::repeat_off,
-        playback_state_t::repeat_track,
-        playback_state_t::repeat_context })
-{
-}
+    repeat_state({ playback_state_t::repeat_off, playback_state_t::repeat_track, playback_state_t::repeat_context })
+    {}
 
 player::~player()
 {
     hide();
+
+    api_proxy.reset();
 }
 
 bool player::handle_dlg_proc_event(intptr_t msg_id, intptr_t control_id, void *param)
@@ -253,26 +251,29 @@ bool player::show()
 
         if (hdlg != NULL)
         {
-            visible = true;
-
             expand(false);
             
             static wstring title(std::format(L" {} ", far3::get_text(MPluginUserName)));
             set_control_text(controls::title, title);
 
-            auto &state = api_proxy->get_playback_state();
-            on_track_changed(state.item);
-            on_track_progress_changed(state.item.duration, state.progress);
-            on_volume_changed(state.device.volume_percent);
-            on_state_changed(state.is_playing);
-            on_context_changed(state.context);
-            on_shuffle_state_changed(state.shuffle_state);
-            on_repeat_state_changed(state.repeat_state);
-            
-            auto &devices = api_proxy->get_available_devices();
-            on_devices_changed(api_proxy->get_available_devices());
+            if (auto api = api_proxy.lock())
+            {
+                auto &state = api->get_playback_state();
+                on_track_changed(state.item);
+                on_track_progress_changed(state.item.duration, state.progress);
+                on_volume_changed(state.device.volume_percent);
+                on_state_changed(state.is_playing);
+                on_context_changed(state.context);
+                on_shuffle_state_changed(state.shuffle_state);
+                on_repeat_state_changed(state.repeat_state);
+                
+                auto &devices = api->get_available_devices();
+                on_devices_changed(api->get_available_devices());
 
-            return true;
+                visible = true;
+                
+                return true;
+            }
         }
     }
     return false;
@@ -309,22 +310,22 @@ void player::tick()
     // thread to avoid threads clashes
 
     track_progress.check([this](int p) {
-        synchro_tasks::push([api = this->api_proxy, p] {
+        synchro_tasks::push([api = api_proxy.lock(), p] {
             auto &state = api->get_playback_state();
             api->seek_to_position(p * 1000, state.device.id);
         });
     });
 
     volume.check([this](int v) {
-        synchro_tasks::push([api = this->api_proxy, v] { api->set_playback_volume(v); });
+        synchro_tasks::push([api = api_proxy.lock(), v] { api->set_playback_volume(v); });
     });
 
     shuffle_state.check([this](bool v) {
-        synchro_tasks::push([api = this->api_proxy, v] { api->toggle_shuffle(v); });
+        synchro_tasks::push([api = api_proxy.lock(), v] { api->toggle_shuffle(v); });
     });
 
     repeat_state.check([this](const string &s) {
-        synchro_tasks::push([api = this->api_proxy, s] { api->set_repeat_state(s); });
+        synchro_tasks::push([api = api_proxy.lock(), s] { api->set_repeat_state(s); });
     });
 }
 
@@ -364,17 +365,23 @@ bool player::on_devices_item_selected(void *dialog_item)
     auto device_id = far3::dialogs::get_list_current_item_data<string>(
         hdlg, controls::devices_combo);
 
-    if (!device_id.empty())
+    if (device_id.empty())
+        return false;
+
+    if (auto api = api_proxy.lock())
     {
-        auto &state = api_proxy->get_playback_state();
-        api_proxy->transfer_playback(device_id, state.is_playing);
+        auto &state = api->get_playback_state();
+        api->transfer_playback(device_id, state.is_playing);
     }
     return true;
 }
 
 bool player::on_input_received(void *input_record)
 {
-    auto state = api_proxy->get_playback_state();
+    if (api_proxy.expired()) return false;
+
+    auto api = api_proxy.lock();
+    auto state = api->get_playback_state();
     INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     switch (ir->EventType)
     {
@@ -421,7 +428,7 @@ bool player::on_input_received(void *input_record)
                     }
                     case keys::s + keys::mods::shift:
                     {
-                        api_proxy->toggle_shuffle_plus(true);
+                        api->toggle_shuffle_plus(true);
                         return true;
                     }
                     case keys::d + keys::mods::alt:
@@ -472,10 +479,14 @@ bool player::on_artist_label_input_received(void *input_record)
     auto label_length = label_layout.X2 - label_layout.X1;
     auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + label_layout.X1);
     
+    if (api_proxy.expired()) return false;
+
+    auto api = api_proxy.lock();
+
     // we are iterating through all the names separated by comma in the full string,
     // and check whether the clicking position happened within range of symbols
     // of this particular name
-    auto &playback = api_proxy->get_playback_state();
+    auto &playback = api->get_playback_state();
     wstring ws = playback.item.get_artists_full_name();
     static std::wregex pattern(L"[^,]+");
 
@@ -499,12 +510,12 @@ bool player::on_artist_label_input_received(void *input_record)
         if (a.name == utils::trim(result))
             simplified_artist = a;
 
-    const auto &artist = api_proxy->get_artist(simplified_artist.id);
+    const auto &artist = api->get_artist(simplified_artist.id);
     if (artist.is_valid())
     {
         hide();
 
-        ui::events::show_artist_albums(api_proxy, artist);
+        ui::events::show_artist_albums(api.get(), artist);
         ui::events::refresh_panels(playback.item.album.id);
     }
 
@@ -517,14 +528,17 @@ bool player::on_track_label_input_received(void *input_record)
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    auto &playback = api_proxy->get_playback_state();
+    if (api_proxy.expired()) return false;
 
-    const auto &artist = api_proxy->get_artist(playback.item.artists[0].id);
+    auto api = api_proxy.lock();
+    auto &playback = api->get_playback_state();
+
+    const auto &artist = api->get_artist(playback.item.artists[0].id);
     if (artist.is_valid())
     {
         hide();
 
-        ui::events::show_album_tracks(api_proxy, playback.item.album);
+        ui::events::show_album_tracks(api.get(), playback.item.album);
         ui::events::refresh_panels(playback.item.id);
     }
 
@@ -561,7 +575,10 @@ bool player::on_source_label_input_received(void *input_record)
 
 bool player::on_track_bar_input_received(void *input_record)
 {
-    auto &playback = api_proxy->get_playback_state();
+    if (api_proxy.expired()) return false;
+
+    auto api = api_proxy.lock();
+    auto &playback = api->get_playback_state();
     if (playback.is_empty())
         return false;
 
@@ -576,7 +593,7 @@ bool player::on_track_bar_input_received(void *input_record)
     auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + track_bar_layout.X1);
     auto progress_percent = (float)click_pos / track_bar_length;
 
-    api_proxy->seek_to_position((int)(playback.item.duration_ms * progress_percent));
+    api->seek_to_position((int)(playback.item.duration_ms * progress_percent));
     return true;
 }
 
@@ -594,15 +611,18 @@ bool player::on_like_btn_input_received(void *input_record)
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    auto &playback = api_proxy->get_playback_state();
+    if (api_proxy.expired()) return false;
+
+    auto api = api_proxy.lock();
+    auto &playback = api->get_playback_state();
     if (playback.is_empty())
         return true;
     
-    bool is_saved = api_proxy->check_saved_track(playback.item.id);
+    bool is_saved = api->check_saved_track(playback.item.id);
     if (is_saved)
-        api_proxy->remove_saved_tracks({ playback.item.id });
+        api->remove_saved_tracks({ playback.item.id });
     else
-        api_proxy->save_tracks({ playback.item.id });
+        api->save_tracks({ playback.item.id });
     
     update_like_btn(is_saved);
 
@@ -611,9 +631,12 @@ bool player::on_like_btn_input_received(void *input_record)
 
 bool player::on_like_btn_style_applied(void *dialog_item_colors)
 {
-    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
-    auto &playback = api_proxy->get_playback_state();
-    if (!playback.is_empty() && api_proxy->check_saved_track(playback.item.id))
+    if (api_proxy.expired()) return false;
+
+    auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto api = api_proxy.lock();
+    auto &playback = api->get_playback_state();
+    if (!playback.is_empty() && api->check_saved_track(playback.item.id))
     {
         dic->Colors->ForegroundColor = colors::black;
     }
@@ -657,14 +680,22 @@ bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
 
 bool player::on_skip_to_next_btn_click(void *empty)
 {
-    api_proxy->skip_to_next();
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        api->skip_to_next();
+        return true;
+    }
+    return false;
 }
 
 bool player::on_skip_to_previous_btn_click(void *empty)
 {
-    api_proxy->skip_to_previous();
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        api->skip_to_previous();
+        return true;
+    }
+    return false;
 }
 
 bool player::on_shuffle_btn_click(void *empty)
@@ -681,27 +712,15 @@ bool player::on_repeat_btn_click(void *empty)
 
 bool player::on_play_btn_click(void *empty)
 {
-    // // TODO: handle errors
-    // auto &playback = api_proxy->get_playback_state();
-    // if (playback.is_playing)
-    // {
-    //     api_proxy->pause_playback();
-    //     return true;
-    // }
-    // else if (!playback.is_empty())
-    // {
-    //     if (!playback.context.uri.empty())
-    //         api_proxy->start_playback(playback.context.uri, playback.item.get_uri(),
-    //             playback.progress_ms, playback.device.id);
-    //     else
-    //         api_proxy->resume_playback(playback.device.id);
-    //     return true;
-    // }
-    auto device_id = far3::dialogs::get_list_current_item_data<string>(
-        hdlg, controls::devices_combo);
-
-    api_proxy->toggle_playback(device_id);
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        auto device_id = far3::dialogs::get_list_current_item_data<string>(
+            hdlg, controls::devices_combo);
+    
+        api->toggle_playback(device_id);
+        return true;
+    }
+    return false;
 }
 
 void player::on_playback_sync_finished(const string &exit_msg)
@@ -740,8 +759,11 @@ void player::on_track_changed(const track_t &track)
     set_control_text(controls::artist_name, track.get_artists_full_name());
     set_control_text(controls::track_total_time, track_total_time_str);
 
-    auto &state = api_proxy->get_playback_state();
-    update_like_btn(!state.is_empty() && api_proxy->check_saved_track(state.item.id));
+    if (auto api = api_proxy.lock())
+    {
+        auto &state = api->get_playback_state();
+        update_like_btn(!state.is_empty() && api->check_saved_track(state.item.id));
+    }
 
     if (is_expanded())
         update_playing_queue(true);
@@ -861,12 +883,15 @@ void player::update_playing_queue(bool is_visible)
 
     if (is_visible)
     {
-        const auto &items = api_proxy->get_playing_queue().queue;
-        for (int i = 0; i < items.size(); i++)
+        if (auto api = api_proxy.lock())
         {
-            const auto &item = items[i];
-            far3::dialogs::add_list_item(hdlg, controls::queue_list, item.get_long_name(), i,
-                (void*)item.get_uri().c_str(), item.get_uri().size());
+            const auto &items = api->get_playing_queue().queue;
+            for (int i = 0; i < items.size(); i++)
+            {
+                const auto &item = items[i];
+                far3::dialogs::add_list_item(hdlg, controls::queue_list, item.get_long_name(), i,
+                    (void*)item.get_uri().c_str(), item.get_uri().size());
+            }
         }
     }
     
@@ -881,6 +906,10 @@ void player::on_state_changed(bool is_playing)
 
 void player::on_context_changed(const context_t &ctx)
 {
+    if (api_proxy.expired()) return;
+
+    auto api = api_proxy.lock();
+
     wstring source_label = L"";
     if (ctx.is_collection())
     {
@@ -892,13 +921,13 @@ void player::on_context_changed(const context_t &ctx)
     }
     else if (ctx.is_album())
     {
-        auto album = api_proxy->get_album(ctx.get_item_id());
+        auto album = api->get_album(ctx.get_item_id());
         if (album.id != invalid_id)
             source_label = std::format(L"Album: {}", album.get_user_name());
     }
     else if (ctx.is_playlist())
     {
-        auto playlist = api_proxy->get_playlist(ctx.get_item_id());
+        auto playlist = api->get_playlist(ctx.get_item_id());
         if (playlist.id != invalid_id)
             source_label = std::format(L"Playlist: {}", playlist.name);
     }

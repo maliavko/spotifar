@@ -140,6 +140,10 @@ protected:
     virtual auto is_request_cached(const string &url) const -> bool = 0;
 };
 
+/// @brief A dedicated type used fo passing api interface to all the main plugin's
+/// structures as a proxy parameter for the further usage
+typedef std::weak_ptr<api_abstract> api_proxy_ptr;
+
 /// @brief A helper-class for requesting data from spotify api. Incapsulated
 /// a logic for performing a request, parsing and holding final result
 /// @tparam T a final result's type
