@@ -229,7 +229,10 @@ void plugin::check_global_hotkeys()
             case hotkeys::play: return api->toggle_playback();
             case hotkeys::skip_next: return api->skip_to_next();
             case hotkeys::skip_previous: return api->skip_to_previous();
-            // TODO: finish up the commands
+            case hotkeys::seek_forward: return player->on_seek_forward_btn_clicked();
+            case hotkeys::seek_backward: return player->on_seek_backward_btn_clicked();
+            case hotkeys::volume_up: return player->on_volume_up_btn_clicked();
+            case hotkeys::volume_down: return player->on_volume_down_btn_clicked();
         }
     }
 }

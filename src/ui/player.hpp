@@ -28,6 +28,12 @@ public:
     bool is_expanded() const;
     void expand(bool is_unfolded);
 
+    // a set of public methods used by global 
+    void on_seek_forward_btn_clicked();
+    void on_seek_backward_btn_clicked();
+    void on_volume_up_btn_clicked();
+    void on_volume_down_btn_clicked();
+
     // controls' event handlers
     bool on_skip_to_next_btn_click(void* = nullptr);
     bool on_skip_to_previous_btn_click(void* = nullptr);

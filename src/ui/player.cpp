@@ -358,6 +358,26 @@ void player::expand(bool is_unfolded)
     update_playing_queue(is_unfolded);
 }
 
+void player::on_seek_forward_btn_clicked()
+{
+    update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
+}
+
+void player::on_seek_backward_btn_clicked()
+{
+    update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
+}
+
+void player::on_volume_up_btn_clicked()
+{
+    update_volume_bar(volume.next());
+}
+
+void player::on_volume_down_btn_clicked()
+{
+    update_volume_bar(volume.prev());
+}
+
 bool player::on_devices_item_selected(void *dialog_item)
 {
     FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
@@ -404,43 +424,40 @@ bool player::on_input_received(void *input_record)
                         return true;
 
                     case VK_LEFT:
+                        on_seek_backward_btn_clicked();
+                        return true;
+                    
                     case VK_RIGHT:
-                    {
-                        update_track_bar(track_progress.get_higher_boundary(),
-                            key == VK_RIGHT ? track_progress.next() : track_progress.prev());
+                        on_seek_forward_btn_clicked();
                         return true;
-                    }
+                    
                     case VK_UP:
-                    case VK_DOWN:
-                    {
-                        update_volume_bar(key == VK_UP ? volume.next() : volume.prev());
+                        on_volume_up_btn_clicked();
                         return true;
-                    }
+
+                    case VK_DOWN:
+                        on_volume_down_btn_clicked();
+                        return true;
+                    
                     case keys::r:
-                    {
                         update_repeat_btn(repeat_state.next());
                         return true;
-                    }
+                    
                     case keys::s:
-                    {
                         update_shuffle_btn(shuffle_state.next());
                         return true;
-                    }
+                    
                     case keys::s + keys::mods::shift:
-                    {
                         api->toggle_shuffle_plus(true);
                         return true;
-                    }
+                    
                     case keys::d + keys::mods::alt:
-                    {
                         far3::dialogs::open_list(hdlg, controls::devices_combo, true);
                         return true;
-                    }
+                    
                     case keys::q + keys::mods::ctrl:
-                    {
                         expand(!is_expanded());
                         return true;
-                    }
                 }
             }
             break;
