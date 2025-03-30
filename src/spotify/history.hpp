@@ -14,7 +14,7 @@ typedef std::shared_ptr<recently_played_tracks_t> recently_played_tracks_ptr;
 class play_history: public json_cache<history_items_t>
 {
 public:
-    play_history(api_abstract *api);
+    play_history(api_interface *api);
     ~play_history() { api_proxy = nullptr; }
 protected:
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
@@ -26,7 +26,7 @@ protected:
     auto get_sync_interval() const -> clock_t::duration override;
     void on_data_synced(const history_items_t &data, const history_items_t &prev_data) override;
 private:
-    api_abstract *api_proxy;
+    api_interface *api_proxy;
 };
 
 struct play_history_observer: public BaseObserverProtocol

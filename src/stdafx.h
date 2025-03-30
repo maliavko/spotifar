@@ -10,6 +10,7 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 
 #include <string>
+#include <memory>
 #include <map>
 #include <vector>
 #include <list>

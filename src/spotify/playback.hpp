@@ -12,7 +12,7 @@ namespace spotifar { namespace spotify {
 class playback_cache: public json_cache<playback_state_t>
 {
 public:
-    playback_cache(api_abstract *api): json_cache(), api_proxy(api) {}
+    playback_cache(api_interface *api): json_cache(), api_proxy(api) {}
     ~playback_cache() { api_proxy = nullptr; }
 
     /// @param tracks_uris list of spotify tracks' URIs
@@ -24,7 +24,7 @@ protected:
     auto get_sync_interval() const -> clock_t::duration override;
 
 private:
-    api_abstract *api_proxy;
+    api_interface *api_proxy;
 };
 
 struct playback_observer: public BaseObserverProtocol

@@ -20,7 +20,7 @@ plugin::plugin():
 
     // TODO: what if not initialized?
     if (api->start())
-        ui::events::show_root(api.get());
+        ui::events::show_root(api);
 
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
 }

@@ -34,13 +34,15 @@ typedef std::shared_ptr<new_releases_t> new_releases_ptr;
 typedef async_collection<simplified_track_t> album_tracks_t;
 typedef std::shared_ptr<album_tracks_t> album_tracks_ptr;
 
-struct api_abstract
+struct api_interface
 {
     template<class T> friend class item_requester;
     template<class T> friend class sync_collection;
     template<class T> friend class async_collection;
 
-    virtual ~api_abstract() {}
+    virtual ~api_interface() {}
+
+    virtual auto get_ptr() -> std::weak_ptr<api_interface> = 0;
 
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
@@ -142,7 +144,7 @@ protected:
 
 /// @brief A dedicated type used fo passing api interface to all the main plugin's
 /// structures as a proxy parameter for the further usage
-typedef std::weak_ptr<api_abstract> api_proxy_ptr;
+typedef std::weak_ptr<api_interface> api_proxy_ptr;
 
 /// @brief A helper-class for requesting data from spotify api. Incapsulated
 /// a logic for performing a request, parsing and holding final result
@@ -170,17 +172,19 @@ public:
 
     auto get_response() const -> const httplib::Result& { return response; }
 
-    bool is_cached(api_abstract *api) const
+    bool is_cached(api_proxy_ptr api) const
     {
-        return api->is_request_cached(get_url());
+        return !api.expired() && api.lock()->is_request_cached(get_url());
     }
 
-    bool execute(api_abstract *api, bool only_cached = false)
+    bool execute(api_proxy_ptr api_proxy, bool only_cached = false)
     {
-        if (only_cached && !is_cached(api))
+        if (only_cached && !is_cached(api_proxy))
             return false;
+
+        if (api_proxy.expired()) return false;
         
-        response = api->get(url, utils::http::session);
+        response = api_proxy.lock()->get(url, utils::http::session);
         if (is_success(response))
         {
             try
@@ -198,8 +202,7 @@ public:
             }
             catch (const std::exception &ex)
             {
-                log::api->error("There is error while parsing api data response, {}",
-                    ex.what());
+                log::api->error("There is error while parsing api data response, {}", ex.what());
                 return false;
             }
             return true;
@@ -245,7 +248,7 @@ public:
     /// @brief Returns a result. Valid only after a successful request
     auto get() const -> const result_t& { return result; }
 
-    bool execute(api_abstract *api, bool only_cached = false)
+    bool execute(api_proxy_ptr api, bool only_cached = false)
     {
         result.clear();
 
@@ -359,7 +362,7 @@ public:
     /// @param params get-request parameters to infuse into given `url`
     /// @param fieldname in case the data has a nested level, this is the field name
     /// to use on the parsed body
-    collection_abstract(api_abstract *api, const string &request_url,
+    collection_abstract(api_proxy_ptr api, const string &request_url,
                         httplib::Params params = {}, const string &fieldname = ""):
         api_proxy(api), url(request_url), params(params), fieldname(fieldname)
     {
@@ -412,9 +415,9 @@ protected:
     /// @brief A main requesting logic is implemented here
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
-    virtual auto fetch_all(api_abstract *api, bool only_cached) -> bool = 0;
+    virtual auto fetch_all(api_proxy_ptr api, bool only_cached) -> bool = 0;
 protected:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
     string url;
     string fieldname;
     httplib::Params params;
@@ -432,7 +435,7 @@ public:
     using collection_abstract<T>::requester_ptr;
     using collection_abstract<T>::collection_abstract;
 protected:
-    bool fetch_all(api_abstract *api, bool only_cached) override
+    bool fetch_all(api_proxy_ptr api, bool only_cached) override
     {
         auto requester = get_begin_requester();
 
@@ -476,13 +479,15 @@ public:
     using collection_abstract<T>::requester_ptr;
     using collection_abstract<T>::collection_abstract;
 protected:
-    bool fetch_all(api_abstract *api, bool only_cached) override
+    bool fetch_all(api_proxy_ptr api_proxy, bool only_cached) override
     {
+        if (api_proxy.expired()) return false;
+
         // performing the first request to obtain a total number fo items
         auto requester = make_requester(0);
 
         size_t total = 0;
-        if (requester->execute(api, only_cached))
+        if (requester->execute(api_proxy, only_cached))
             total = requester->get_total();
 
         if (total == 0) return false;
@@ -495,12 +500,15 @@ protected:
         std::vector<std::vector<T>> result(end);
         result[0] = requester->get();
 
+        /// @note for some reason passing weakref does not work here, it gets `empty`.
+        /// So, I am passing real api pointer which works well
+        auto api = api_proxy.lock();
         BS::multi_future<void> sequence_future = api->get_pool().submit_sequence(start, end,
-            [this, &result, api, only_cached](const size_t idx)
+            [this, &result, api = api.get(), only_cached](const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
 
-                if (!requester->execute(api, only_cached))
+                if (!requester->execute(api->get_ptr(), only_cached))
                     throw std::runtime_error("Unsuccesful request");
                 
                 result[idx] = requester->get();

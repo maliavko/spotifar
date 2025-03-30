@@ -16,8 +16,9 @@ using namespace spotify;
 class albums_base_view: public view_abstract
 {
 public:
-    albums_base_view(api_abstract *api, const string &view_uid,
+    albums_base_view(api_proxy_ptr api, const string &view_uid,
         const wstring &title, return_callback_t callback);
+    ~albums_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t*;
 protected:
@@ -32,7 +33,7 @@ protected:
     auto process_key_input(int combined_key) -> intptr_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 protected:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
 };
 
 /// @brief A class-view, representing the list of albums of a
@@ -40,7 +41,7 @@ protected:
 class artist_view: public albums_base_view
 {
 public:
-    artist_view(api_abstract *api, const artist_t &artist,
+    artist_view(api_proxy_ptr api, const artist_t &artist,
         return_callback_t callback);
 protected:
     // view interface
@@ -57,10 +58,10 @@ private:
 /// @brief Showing the list of the user's saved albums. Differes
 /// from the standard one with the additional implementatino of the
 /// `added_at` data, extending custom columns and sorting modes respectively
-class albums_collection_view: public albums_base_view
+class saved_albums_view: public albums_base_view
 {
 public:
-    albums_collection_view(api_abstract *api);
+    saved_albums_view(api_proxy_ptr api);
 protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
@@ -81,7 +82,7 @@ private:
 class new_releases_view: public albums_base_view
 {
 public:
-    new_releases_view(api_abstract *api);
+    new_releases_view(api_proxy_ptr api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -107,7 +108,7 @@ public:
         string played_at;
     };
 public:
-    recent_albums_view(api_abstract *api);
+    recent_albums_view(api_proxy_ptr api);
     ~recent_albums_view();
 protected:
     auto rebuild_items() -> void;
@@ -132,7 +133,7 @@ private:
 class featuring_albums_view: public albums_base_view
 {
 public:
-    featuring_albums_view(api_abstract *api);
+    featuring_albums_view(api_proxy_ptr api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;

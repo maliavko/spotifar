@@ -14,7 +14,8 @@ using namespace spotify;
 class playlist_view: public view_abstract
 {
 public:
-    playlist_view(api_abstract *api, const playlist_t &p);
+    playlist_view(api_proxy_ptr api, const playlist_t &p);
+    ~playlist_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t*;
 protected:
@@ -25,7 +26,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode,
         const data_item_t *data1, const data_item_t *data2) -> intptr_t;
 private:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
     playlist_t playlist;
     saved_tracks_ptr collection;
 };

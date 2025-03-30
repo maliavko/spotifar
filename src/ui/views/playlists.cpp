@@ -7,7 +7,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-playlists_base_view::playlists_base_view(api_abstract *api, const string &view_uid,
+playlists_base_view::playlists_base_view(api_proxy_ptr api, const string &view_uid,
                                          const wstring &title, return_callback_t callback):
     view_abstract(view_uid, title, callback),
     api_proxy(api)
@@ -32,12 +32,15 @@ const view_abstract::items_t* playlists_base_view::get_items()
         std::vector<wstring> columns;
 
         // column C0 - total playlist's tracks count
-        auto tracks = api_proxy->get_playlist_tracks(p.id);
-        auto tracks_total = tracks->peek_total();
-
         wstring tracks_label = L"";
-        if (tracks_total > 0)
-            tracks_label = std::format(L"{: >6}", tracks_total);
+        if (auto api = api_proxy.lock())
+        {
+            auto tracks = api->get_playlist_tracks(p.id);
+            auto tracks_total = tracks->peek_total();
+    
+            if (tracks_total > 0)
+                tracks_label = std::format(L"{: >6}", tracks_total);
+        }
         columns.push_back(tracks_label);
 
         items.push_back({
@@ -53,13 +56,15 @@ const view_abstract::items_t* playlists_base_view::get_items()
 
 intptr_t playlists_base_view::select_item(const data_item_t* data)
 {
-    const auto &playlist = api_proxy->get_playlist(data->id);
-    if (playlist.is_valid())
+    if (auto api = api_proxy.lock())
     {
-        events::show_playlist(api_proxy, playlist);
-        return TRUE;
+        const auto &playlist = api->get_playlist(data->id);
+        if (playlist.is_valid())
+        {
+            events::show_playlist(api_proxy, playlist);
+            return TRUE;
+        }
     }
-
     return FALSE;
 }
 
@@ -124,9 +129,12 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
                     //     return TRUE;
                     // }
                     
-                    const auto playlist = static_cast<const simplified_playlist_t*>(user_data);
-                    api_proxy->start_playback(playlist->get_uri());
-                    return TRUE;
+                    if (auto api = api_proxy.lock())
+                    {
+                        const auto playlist = static_cast<const simplified_playlist_t*>(user_data);
+                        api->start_playback(playlist->get_uri());
+                        return TRUE;
+                    }
                 }
             }
             else
@@ -140,19 +148,21 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
 
 bool playlists_base_view::request_extra_info(const data_item_t* data)
 {
-    if (data != nullptr)
-        api_proxy->get_playlist_tracks(data->id)->get_total();
+    if (data != nullptr && !api_proxy.expired())
+        api_proxy.lock()->get_playlist_tracks(data->id)->get_total();
 
     return false;
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_playlists_view::saved_playlists_view(api_abstract *api):
-    playlists_base_view(api, "saved_playlists_view", get_text(MPanelPlaylistsItemLabel),
-                        std::bind(events::show_collections, api)),
-    api_proxy(api),
-    collection(api_proxy->get_saved_playlists())
-    {}
+saved_playlists_view::saved_playlists_view(api_proxy_ptr api_proxy):
+    playlists_base_view(api_proxy, "saved_playlists_view", get_text(MPanelPlaylistsItemLabel),
+                        std::bind(events::show_collections, api_proxy)),
+    api_proxy(api_proxy)
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_playlists();
+}
 
 config::settings::view_t saved_playlists_view::get_default_settings() const
 {
@@ -161,13 +171,13 @@ config::settings::view_t saved_playlists_view::get_default_settings() const
 
 std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists()
 {
-    if (collection->fetch())
+    if (collection && collection->fetch())
         for (const auto &p: *collection)
             co_yield p;
 }
 
 
-recent_playlists_view::recent_playlists_view(api_abstract *api):
+recent_playlists_view::recent_playlists_view(api_proxy_ptr api):
     playlists_base_view(api, "recent_playlists_view", get_text(MPanelPlaylistsItemLabel),
                         std::bind(events::show_recents, api))
 {
@@ -219,16 +229,19 @@ void recent_playlists_view::rebuild_items()
 {
     items.clear();
 
+    if (api_proxy.expired()) return;
+
+    auto api = api_proxy.lock();
     std::unordered_map<string, history_item_t> unique_recent_playlists;
     
     // collecting all the tracks' albums listened to
-    for (const auto &item: api_proxy->get_play_history())
+    for (const auto &item: api->get_play_history())
         if (item.context.is_playlist())
             unique_recent_playlists[item.context.get_item_id()] = item;
 
     for (const auto &[item_id, item]: unique_recent_playlists)
     {
-        auto playlist = api_proxy->get_playlist(item_id);
+        auto playlist = api->get_playlist(item_id);
         if (!playlist.is_valid())
         {
             playlist.id = item_id;

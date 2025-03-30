@@ -5,12 +5,13 @@ namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
 
-playlist_view::playlist_view(api_abstract *api, const playlist_t &p):
-    view_abstract("playlist_view", p.name, std::bind(events::show_saved_playlists, api)),
+playlist_view::playlist_view(api_proxy_ptr api_proxy, const playlist_t &p):
+    view_abstract("playlist_view", p.name, std::bind(events::show_saved_playlists, api_proxy)),
     playlist(p),
-    api_proxy(api),
-    collection(api_proxy->get_playlist_tracks(p.id))
+    api_proxy(api_proxy)
 {
+    if (auto api = api_proxy.lock())
+        collection = api->get_playlist_tracks(p.id);
 }
 
 void playlist_view::update_panel_info(OpenPanelInfo *info)
@@ -46,7 +47,7 @@ const view_abstract::items_t* playlist_view::get_items()
 {
     static view_abstract::items_t items; items.clear();
 
-    if (!collection->fetch())
+    if (!collection || !collection->fetch())
         return &items;
     
     for (const auto &t: *collection)

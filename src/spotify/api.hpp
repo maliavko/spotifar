@@ -13,8 +13,9 @@
 namespace spotifar { namespace spotify {
 
 class api:
-    public api_abstract,
-    public auth_observer
+    public api_interface,
+    public auth_observer,
+    public std::enable_shared_from_this<api>
 {
 public:
     api();
@@ -25,6 +26,8 @@ public:
     void tick();
 
     bool is_authenticated() const { return auth->is_authenticated(); }
+    
+    auto get_ptr() -> api_proxy_ptr override { return shared_from_this(); }
 
     auto get_play_history() -> const history_items_t& { return history->get(); }
     auto get_available_devices() -> const devices_t& { return devices->get(); }

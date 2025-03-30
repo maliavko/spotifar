@@ -49,7 +49,7 @@ void playback_cache::on_data_synced(const playback_state_t &data, const playback
 bool playback_cache::request_data(playback_state_t &data)
 {
     auto req = item_requester<playback_state_t>("/v1/me/player");
-    if (req.execute(api_proxy))
+    if (req.execute(api_proxy->get_ptr()))
     {
         data = req.get();
         return true;

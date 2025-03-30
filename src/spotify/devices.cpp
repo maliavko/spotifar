@@ -69,7 +69,7 @@ void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_
 bool devices_cache::request_data(devices_t &data)
 {
     auto r = item_requester<devices_t>("/v1/me/player/devices", {}, "devices");
-    if (r.execute(api_proxy))
+    if (r.execute(api_proxy->get_ptr()))
     {
         data = r.get();
         return true;

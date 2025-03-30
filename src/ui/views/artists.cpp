@@ -7,7 +7,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-artists_base_view::artists_base_view(api_abstract *api, const string &view_uid,
+artists_base_view::artists_base_view(api_proxy_ptr api, const string &view_uid,
                                      const wstring &title, return_callback_t callback):
     view_abstract(view_uid, title, callback), api_proxy(api)
     {}
@@ -85,12 +85,15 @@ const view_abstract::items_t* artists_base_view::get_items()
         column_data.push_back(a.genres.size() > 0 ? utils::to_wstring(a.genres[0]) : L"");
         
         // column C3 - total albums
-        auto albums = api_proxy->get_artist_albums(a.id);
-        auto total_albums = albums->peek_total();
-    
         wstring albums_count = L"";
-        if (total_albums > 0)
-            albums_count = std::format(L"{: >6}", total_albums);
+        if (auto api = api_proxy.lock())
+        {
+            auto albums = api->get_artist_albums(a.id);
+            auto total_albums = albums->peek_total();
+        
+            if (total_albums > 0)
+                albums_count = std::format(L"{: >6}", total_albums);
+        }
         column_data.push_back(albums_count);
 
         items.push_back({
@@ -119,9 +122,9 @@ intptr_t artists_base_view::select_item(const data_item_t *data)
 
 bool artists_base_view::request_extra_info(const data_item_t *data)
 {
-    if (data != nullptr)
+    if (data != nullptr && !api_proxy.expired())
     {
-        api_proxy->get_artist_albums(data->id)->get_total();
+        api_proxy.lock()->get_artist_albums(data->id)->get_total();
         return true;
     }
     return false;
@@ -160,11 +163,13 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 }
 
 //-----------------------------------------------------------------------------------------------------------
-followed_artists_view::followed_artists_view(api_abstract *api):
-    artists_base_view(api, "followed_artists_view", get_text(MPanelArtistsItemLabel),
-                      std::bind(events::show_collections, api)),
-    collection(api_proxy->get_followed_artists())
+followed_artists_view::followed_artists_view(api_proxy_ptr api_proxy):
+    artists_base_view(api_proxy, "followed_artists_view", get_text(MPanelArtistsItemLabel),
+                      std::bind(events::show_collections, api_proxy))
+    
 {
+    if (auto api = api_proxy.lock())
+        collection = api->get_followed_artists();
 }
 
 config::settings::view_t followed_artists_view::get_default_settings() const
@@ -174,7 +179,7 @@ config::settings::view_t followed_artists_view::get_default_settings() const
 
 std::generator<const artist_t&> followed_artists_view::get_artists()
 {
-    if (collection->fetch())
+    if (collection && collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }
@@ -186,7 +191,7 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_artists_view::recent_artists_view(api_abstract *api):
+recent_artists_view::recent_artists_view(api_proxy_ptr api):
     artists_base_view(api, "recent_artists_view", get_text(MPanelArtistsItemLabel),
                       std::bind(events::show_recents, api))
 {
@@ -224,10 +229,13 @@ void recent_artists_view::rebuild_items()
 {
     items.clear();
 
+    if (api_proxy.expired()) return;
+
+    auto api = api_proxy.lock();
     std::unordered_map<string, history_item_t> recent_artists;
     
     // collecting all the tracks' artists listened to
-    for (const auto &item: api_proxy->get_play_history())
+    for (const auto &item: api->get_play_history())
         if (item.track.artists.size() > 0)
             recent_artists[item.track.artists[0].id] = item;
 
@@ -236,7 +244,7 @@ void recent_artists_view::rebuild_items()
         const auto &keys = std::views::keys(recent_artists);
         const auto &ids = item_ids_t(keys.begin(), keys.end());
 
-        for (const auto &artist: api_proxy->get_artists(ids))
+        for (const auto &artist: api->get_artists(ids))
             items.push_back(history_artist_t{ {artist}, recent_artists[artist.id].played_at });
     }
 }

@@ -7,7 +7,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-albums_base_view::albums_base_view(api_abstract *api, const string &view_uid,
+albums_base_view::albums_base_view(api_proxy_ptr api, const string &view_uid,
                                    const wstring &title, return_callback_t callback):
     view_abstract(view_uid, title, callback), api_proxy(api)
     {}
@@ -102,8 +102,8 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
 
 bool albums_base_view::request_extra_info(const data_item_t* data)
 {
-    if (data != nullptr)
-        return api_proxy->get_album_tracks(data->id)->fetch();
+    if (data != nullptr && !api_proxy.expired())
+        return api_proxy.lock()->get_album_tracks(data->id)->fetch();
 
     return false;
 }
@@ -115,11 +115,11 @@ intptr_t albums_base_view::process_key_input(int combined_key)
         case VK_RETURN + utils::keys::mods::shift:
         {
             auto item = utils::far3::panels::get_current_item(PANEL_ACTIVE);
-            if (item != nullptr)
+            if (item != nullptr && !api_proxy.expired())
             {
                 auto *user_data = unpack_user_data(item->UserData);
                 log::global->info("Starting playback from the panel, {}", user_data->id);
-                api_proxy->start_playback(album_t::make_uri(user_data->id));
+                api_proxy.lock()->start_playback(album_t::make_uri(user_data->id));
             }
             else
                 log::global->error("There is an error occured while getting a current panel item");
@@ -157,11 +157,14 @@ const view_abstract::items_t* albums_base_view::get_items()
 
         // column C5 - album length
         size_t total_length_ms = 0;
-        auto tracks = api_proxy->get_album_tracks(a.id);
-        if (tracks->fetch(true))
+        if (auto api = api_proxy.lock())
         {
-            for (const auto &t: *tracks)
-                total_length_ms += t.duration_ms;
+            auto tracks = api->get_album_tracks(a.id);
+            if (tracks->fetch(true))
+            {
+                for (const auto &t: *tracks)
+                    total_length_ms += t.duration_ms;
+            }
         }
 
         // TODO: column C6 - copyrights
@@ -192,11 +195,12 @@ const view_abstract::items_t* albums_base_view::get_items()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-artist_view::artist_view(api_abstract *api, const artist_t &a, return_callback_t callback):
+artist_view::artist_view(api_proxy_ptr api, const artist_t &a, return_callback_t callback):
     albums_base_view(api, "artist_view", a.name, callback),
-    artist(a),
-    collection(api->get_artist_albums(a.id))
+    artist(a)
 {
+    if (auto api = api_proxy.lock())
+        collection = api->get_artist_albums(a.id);
 }
 
 config::settings::view_t artist_view::get_default_settings() const
@@ -206,7 +210,7 @@ config::settings::view_t artist_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> artist_view::get_albums()
 {
-    if (collection->fetch())
+    if (collection && collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }
@@ -220,25 +224,27 @@ void artist_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-albums_collection_view::albums_collection_view(api_abstract *api):
-    albums_base_view(api, "albums_collection_view", get_text(MPanelAlbumsItemLabel),
-        std::bind(events::show_collections, api)),
-    collection(api_proxy->get_saved_albums())
-    {}
+saved_albums_view::saved_albums_view(api_proxy_ptr api_proxy):
+    albums_base_view(api_proxy, "saved_albums_view", get_text(MPanelAlbumsItemLabel),
+        std::bind(events::show_collections, api_proxy))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_albums();
+}
 
-config::settings::view_t albums_collection_view::get_default_settings() const
+config::settings::view_t saved_albums_view::get_default_settings() const
 {
     return { 1, false, 6 };
 }
 
-std::generator<const simplified_album_t&> albums_collection_view::get_albums()
+std::generator<const simplified_album_t&> saved_albums_view::get_albums()
 {
-    if (collection->fetch())
+    if (collection && collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }
 
-const view_abstract::sort_modes_t& albums_collection_view::get_sort_modes() const
+const view_abstract::sort_modes_t& saved_albums_view::get_sort_modes() const
 {
     using namespace utils::keys;
 
@@ -251,7 +257,7 @@ const view_abstract::sort_modes_t& albums_collection_view::get_sort_modes() cons
     return modes;
 }
 
-intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
+intptr_t saved_albums_view::compare_items(const sort_mode_t &sort_mode,
     const data_item_t *data1, const data_item_t *data2)
 {
     if (sort_mode.far_sort_mode == SM_MTIME)
@@ -265,18 +271,20 @@ intptr_t albums_collection_view::compare_items(const sort_mode_t &sort_mode,
     return albums_base_view::compare_items(sort_mode, data1, data2);
 }
 
-void albums_collection_view::show_tracks_view(const album_t &album) const
+void saved_albums_view::show_tracks_view(const album_t &album) const
 {
     events::show_album_tracks(api_proxy, album,
         std::bind(events::show_saved_albums, api_proxy));
 }
 
 //-----------------------------------------------------------------------------------------------------------
-new_releases_view::new_releases_view(api_abstract *api):
-    albums_base_view(api, "new_releases_view", get_text(MPanelNewReleasesItemLabel),
-        std::bind(events::show_browse, api)),
-    collection(api_proxy->get_new_releases())
-    {}
+new_releases_view::new_releases_view(api_proxy_ptr api_proxy):
+    albums_base_view(api_proxy, "new_releases_view", get_text(MPanelNewReleasesItemLabel),
+        std::bind(events::show_browse, api_proxy))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_new_releases();
+}
 
 config::settings::view_t new_releases_view::get_default_settings() const
 {
@@ -285,23 +293,23 @@ config::settings::view_t new_releases_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> new_releases_view::get_albums()
 {
-    if (collection->fetch())
+    if (collection && collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }
 
 void new_releases_view::show_tracks_view(const album_t &album) const
 {
-    if (album.artists.size() > 0)
+    if (album.artists.size() > 0 && !api_proxy.expired())
     {
-        const auto &artist = api_proxy->get_artist(album.artists[0].id);
+        const auto &artist = api_proxy.lock()->get_artist(album.artists[0].id);
         events::show_album_tracks(api_proxy, album,
             std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
     }
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_albums_view::recent_albums_view(api_abstract *api):
+recent_albums_view::recent_albums_view(api_proxy_ptr api):
     albums_base_view(api, "recent_albums_view", get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_recents, api))
 {
@@ -345,10 +353,13 @@ void recent_albums_view::rebuild_items()
 {
     items.clear();
 
+    if (api_proxy.expired()) return;
+
+    auto api = api_proxy.lock();
     std::unordered_map<string, history_item_t> recent_albums;
     
     // collecting all the tracks' albums listened to
-    for (const auto &item: api_proxy->get_play_history())
+    for (const auto &item: api->get_play_history())
         recent_albums[item.track.album.id] = item;
 
     if (recent_albums.size() > 0)
@@ -356,7 +367,7 @@ void recent_albums_view::rebuild_items()
         const auto &keys = std::views::keys(recent_albums);
         const auto &ids = item_ids_t(keys.begin(), keys.end());
 
-        for (const auto &album: api_proxy->get_albums(ids))
+        for (const auto &album: api->get_albums(ids))
             items.push_back(history_album_t{ {album}, recent_albums[album.id].played_at });
     }
 }
@@ -377,9 +388,9 @@ intptr_t recent_albums_view::compare_items(const sort_mode_t &sort_mode,
 
 void recent_albums_view::show_tracks_view(const album_t &album) const
 {
-    if (album.artists.size() > 0)
+    if (album.artists.size() > 0 && !api_proxy.expired())
     {
-        const auto &artist = api_proxy->get_artist(album.artists[0].id);
+        const auto &artist = api_proxy.lock()->get_artist(album.artists[0].id);
         events::show_album_tracks(api_proxy, album,
             std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
     }
@@ -394,7 +405,7 @@ void recent_albums_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-featuring_albums_view::featuring_albums_view(api_abstract *api):
+featuring_albums_view::featuring_albums_view(api_proxy_ptr api):
     albums_base_view(api, "featuring_albums_view", get_text(MPanelFeaturingAlbumsItemLabel),
         std::bind(events::show_browse, api))
     {}
@@ -414,9 +425,9 @@ std::generator<const simplified_album_t&> featuring_albums_view::get_albums()
 
 void featuring_albums_view::show_tracks_view(const album_t &album) const
 {
-    if (album.artists.size() > 0)
+    if (album.artists.size() > 0 && !api_proxy.expired())
     {
-        const auto &artist = api_proxy->get_artist(album.artists[0].id);
+        const auto &artist = api_proxy.lock()->get_artist(album.artists[0].id);
         events::show_album_tracks(api_proxy, album,
             std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
     }

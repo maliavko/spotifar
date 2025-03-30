@@ -16,8 +16,9 @@ using namespace spotify;
 class artists_base_view: public view_abstract
 {
 public:
-    artists_base_view(api_abstract *api, const string &view_uid,
+    artists_base_view(api_proxy_ptr api, const string &view_uid,
         const wstring &title, return_callback_t callback);
+    ~artists_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t*;
 protected:
@@ -31,14 +32,14 @@ protected:
     auto request_extra_info(const data_item_t *data) -> bool override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 protected:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
 };
 
 /// @brief A class-view, representing a list of followed artists
 class followed_artists_view: public artists_base_view
 {
 public:
-    followed_artists_view(api_abstract *api);
+    followed_artists_view(api_proxy_ptr api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -63,7 +64,7 @@ public:
         string played_at;
     };
 public:
-    recent_artists_view(api_abstract *api);
+    recent_artists_view(api_proxy_ptr api);
     ~recent_artists_view();
 protected:
     auto rebuild_items() -> void;

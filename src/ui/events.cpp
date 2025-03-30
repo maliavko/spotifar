@@ -18,88 +18,88 @@ namespace events {
             &ui_events_observer::show_panel_view, std::make_shared<T>(args...));
     }
 
-    void show_root(api_abstract *api)
+    void show_root(api_proxy_ptr api)
     {
         return show_panel_view<root_view>(api);
     }
 
-    void show_collections(api_abstract *api)
+    void show_collections(api_proxy_ptr api)
     {
         return show_panel_view<collection_view>(api);
     }
 
-    void show_followed_artists(api_abstract *api)
+    void show_followed_artists(api_proxy_ptr api)
     {
         return show_panel_view<followed_artists_view>(api);
     }
 
-    void show_saved_albums(api_abstract *api)
+    void show_saved_albums(api_proxy_ptr api)
     {
-        return show_panel_view<albums_collection_view>(api);
+        return show_panel_view<saved_albums_view>(api);
     }
 
-    void show_saved_tracks(api_abstract *api)
+    void show_saved_tracks(api_proxy_ptr api)
     {
         return show_panel_view<saved_tracks_view>(api);
     }
 
-    void show_browse(api_abstract *api)
+    void show_browse(api_proxy_ptr api)
     {
         return show_panel_view<browse_view>(api);
     }
 
-    void show_recents(api_abstract *api)
+    void show_recents(api_proxy_ptr api)
     {
         return show_panel_view<recents_view>(api);
     }
 
-    void show_recent_tracks(api_abstract *api)
+    void show_recent_tracks(api_proxy_ptr api)
     {
         return show_panel_view<recent_tracks_view>(api);
     }
 
-    void show_recent_albums(api_abstract *api)
+    void show_recent_albums(api_proxy_ptr api)
     {
         return show_panel_view<recent_albums_view>(api);
     }
 
-    void show_recent_artists(api_abstract *api)
+    void show_recent_artists(api_proxy_ptr api)
     {
         return show_panel_view<recent_artists_view>(api);
     }
 
-    void show_recent_playlists(api_abstract *api)
+    void show_recent_playlists(api_proxy_ptr api)
     {
         return show_panel_view<recent_playlists_view>(api);
     }
     
-    void show_new_releases(api_abstract *api)
+    void show_new_releases(api_proxy_ptr api)
     {
         return show_panel_view<new_releases_view>(api);
     }
     
-    void show_featuring_albums(api_abstract *api)
+    void show_featuring_albums(api_proxy_ptr api)
     {
         return show_panel_view<featuring_albums_view>(api);
     }
     
-    void show_featuring_artists(api_abstract *api)
+    void show_featuring_artists(api_proxy_ptr api)
     {
         // TODO
         //return show_panel_view<featuring_albums_view>(api);
     }
 
-    void show_saved_playlists(api_abstract *api)
+    void show_saved_playlists(api_proxy_ptr api)
     {
         return show_panel_view<saved_playlists_view>(api);
     }
 
-    void show_playlist(api_abstract *api, const playlist_t &playlist)
+    void show_playlist(api_proxy_ptr api, const playlist_t &playlist)
     {
         return show_panel_view<playlist_view>(api, playlist);
     }
     
-    void show_artist_albums(api_abstract *api, const artist_t &artist,
+    void show_artist_albums(api_proxy_ptr api, const artist_t &artist,
         view_abstract::return_callback_t callback)
     {
         if (!callback)
@@ -108,7 +108,7 @@ namespace events {
         return show_panel_view<artist_view>(api, artist, callback);
     }
     
-    void show_album_tracks(api_abstract *api, const album_t &album,
+    void show_album_tracks(api_proxy_ptr api, const album_t &album,
         view_abstract::return_callback_t callback)
     {
         if (!callback)

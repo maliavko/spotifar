@@ -22,8 +22,9 @@ public:
 
     typedef std::vector<root_data_t> menu_items_t;
 public:
-    root_base_view(api_abstract *api, const string &uid, const wstring &title,
+    root_base_view(api_proxy_ptr api, const string &uid, const wstring &title,
         return_callback_t callback, menu_items_t items);
+    ~root_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t*;
     auto get_key_bar_info() -> const key_bar_info_t* override;
@@ -38,7 +39,7 @@ protected:
     virtual auto get_total(const item_id_t &menu_id, bool only_cached) -> size_t { return 0; }
 protected:
     const menu_items_t menu_items;
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
 };
 
 class root_view: public root_base_view
@@ -49,7 +50,7 @@ public:
         browse_id = "browse",
         recents_id = "recents";
 public:
-    root_view(api_abstract *api);
+    root_view(api_proxy_ptr api);
 };
 
 class recents_view: public root_base_view
@@ -61,7 +62,7 @@ public:
         albums_id = "albums",
         playlists_id = "playlists";
 public:
-    recents_view(api_abstract *api);
+    recents_view(api_proxy_ptr api);
 };
 
 class collection_view: public root_base_view
@@ -73,7 +74,7 @@ public:
         tracks_id = "tracks",
         playlists_id = "playlists";
 public:
-    collection_view(api_abstract *api);
+    collection_view(api_proxy_ptr api);
 protected:
     auto get_total(const item_id_t &menu_id, bool only_cached) -> size_t override;
 };
@@ -86,7 +87,7 @@ public:
         artists_featuring_likes_id = "artists_featuring_likes",
         albums_featuring_likes_id = "albums_featuring_likes";
 public:
-    browse_view(api_abstract *api);
+    browse_view(api_proxy_ptr api);
 };
 
 } // namespace ui

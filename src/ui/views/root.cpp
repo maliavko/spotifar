@@ -6,7 +6,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 using namespace events;
 
-root_base_view::root_base_view(api_abstract *api, const string &uid, const wstring &title,
+root_base_view::root_base_view(api_proxy_ptr api, const string &uid, const wstring &title,
                                return_callback_t callback, menu_items_t items):
     view_abstract(uid, title, callback),
     api_proxy(api),
@@ -129,7 +129,7 @@ bool root_base_view::request_extra_info(const data_item_t* data)
     return total > 0;
 }
 
-root_view::root_view(api_abstract *api):
+root_view::root_view(api_proxy_ptr api):
     root_base_view(api, "root_view", L"", {}, {
         {
             { collection_id },
@@ -149,7 +149,7 @@ root_view::root_view(api_abstract *api):
     })
     {};
 
-recents_view::recents_view(api_abstract *api):
+recents_view::recents_view(api_proxy_ptr api):
     root_base_view(
         api, "recents_view", get_text(MPanelRecentsItemLabel),
         std::bind(events::show_root, api), {
@@ -176,7 +176,7 @@ recents_view::recents_view(api_abstract *api):
     })
     {}
 
-collection_view::collection_view(api_abstract *api):
+collection_view::collection_view(api_proxy_ptr api):
     root_base_view(
         api, "collection_view", L"Collection", std::bind(events::show_root, api), {
         {
@@ -204,19 +204,22 @@ collection_view::collection_view(api_abstract *api):
 
 size_t collection_view::get_total(const string &menu_id, bool only_cached)
 {
+    if (api_proxy.expired()) return 0;
+
     collection_ptr collection;
     
+    auto api = api_proxy.lock();
     if (menu_id == artists_id)
-        collection = api_proxy->get_followed_artists();
+        collection = api->get_followed_artists();
 
     if (menu_id == albums_id)
-        collection = api_proxy->get_saved_albums();
+        collection = api->get_saved_albums();
 
     if (menu_id == tracks_id)
-        collection = api_proxy->get_saved_tracks();
+        collection = api->get_saved_tracks();
 
     if (menu_id == playlists_id)
-        collection = api_proxy->get_saved_playlists();
+        collection = api->get_saved_playlists();
 
     if (collection != nullptr)
     {
@@ -228,7 +231,7 @@ size_t collection_view::get_total(const string &menu_id, bool only_cached)
     return 0;
 }
 
-browse_view::browse_view(api_abstract *api):
+browse_view::browse_view(api_proxy_ptr api):
     root_base_view(
         api, "browse_view", get_text(MPanelBrowseItemLabel),
         std::bind(events::show_root, api), {

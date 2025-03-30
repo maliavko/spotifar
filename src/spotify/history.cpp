@@ -4,7 +4,7 @@ namespace spotifar { namespace spotify {
 
 using utils::far3::synchro_tasks::dispatch_event;
 
-play_history::play_history(api_abstract *api):
+play_history::play_history(api_interface *api):
     json_cache<history_items_t>(L"play_history"),
     api_proxy(api)
 {
@@ -13,7 +13,7 @@ play_history::play_history(api_abstract *api):
 recently_played_tracks_ptr play_history::get_recently_played(std::int64_t after)
 {
     return recently_played_tracks_ptr(new recently_played_tracks_t(
-        api_proxy, "/v1/me/player/recently-played", {
+        api_proxy->get_ptr(), "/v1/me/player/recently-played", {
             { "after", std::to_string(after) }
         }));
 }

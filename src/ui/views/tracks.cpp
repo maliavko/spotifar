@@ -7,7 +7,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-tracks_base_view::tracks_base_view(api_abstract *api, const string &view_uid,
+tracks_base_view::tracks_base_view(api_proxy_ptr api, const string &view_uid,
                                    const wstring &title, return_callback_t callback):
     view_abstract(view_uid, title, callback),
     api_proxy(api)
@@ -55,7 +55,12 @@ const view_abstract::items_t* tracks_base_view::get_items()
         std::transform(track.artists.cbegin(), track.artists.cend(), back_inserter(artists_names),
             [](const auto &a) { return a.name; });
         
-        const auto &pstate = api_proxy->get_playback_state();
+        bool is_item_selected = false;
+        if (auto api = api_proxy.lock())
+        {
+            const auto &pstate = api->get_playback_state();
+            is_item_selected = pstate.item.is_valid() && pstate.item.id == track.id;
+        }
 
         items.push_back({
             track.id,
@@ -64,7 +69,7 @@ const view_abstract::items_t* tracks_base_view::get_items()
             FILE_ATTRIBUTE_VIRTUAL,
             columns,
             const_cast<simplified_track_t*>(&track),
-            pstate.item.is_valid() && pstate.item.id == track.id
+            is_item_selected
         });
     }
 
@@ -148,13 +153,15 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-album_tracks_view::album_tracks_view(api_abstract *api, const album_t &album,
+album_tracks_view::album_tracks_view(api_proxy_ptr api_proxy, const album_t &album,
                                      return_callback_t callback):
-    tracks_base_view(api, "album_tracks_view", album.name, callback),
-    album(album),
-    collection(api_proxy->get_album_tracks(album.id))
+    tracks_base_view(api_proxy, "album_tracks_view", album.name, callback),
+    album(album)
 {
     utils::events::start_listening<playback_observer>(this);
+    
+    if (auto api = api_proxy.lock())
+        collection = api->get_album_tracks(album.id);
 }
 
 album_tracks_view::~album_tracks_view()
@@ -169,8 +176,12 @@ config::settings::view_t album_tracks_view::get_default_settings() const
 
 bool album_tracks_view::start_playback(const string &track_id)
 {
-    api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        api->start_playback(album.get_uri(), track_t::make_uri(track_id));
+        return true;
+    }
+    return false;
 }
 
 std::generator<const simplified_track_t&> album_tracks_view::get_tracks()
@@ -196,7 +207,7 @@ void album_tracks_view::on_track_changed(const track_t &track)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_tracks_view::recent_tracks_view(api_abstract *api):
+recent_tracks_view::recent_tracks_view(api_proxy_ptr api):
     tracks_base_view(api, "recent_tracks_view", get_text(MPanelTracksItemLabel),
                      std::bind(events::show_recents, api))
 {
@@ -248,8 +259,9 @@ void recent_tracks_view::rebuild_items()
 {
     items.clear();
 
-    for (const auto &item: api_proxy->get_play_history())
-        items.push_back(history_track_t{ {item.track}, item.played_at });
+    if (auto api = api_proxy.lock())
+        for (const auto &item: api->get_play_history())
+            items.push_back(history_track_t{ {item.track}, item.played_at });
 }
 
 bool recent_tracks_view::start_playback(const string &track_id)
@@ -273,12 +285,13 @@ void recent_tracks_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_tracks_view::saved_tracks_view(api_abstract *api):
-    tracks_base_view(api, "saved_tracks_view", get_text(MPanelTracksItemLabel),
-                     std::bind(events::show_collections, api)),
-    collection(api_proxy->get_saved_tracks())
+saved_tracks_view::saved_tracks_view(api_proxy_ptr api_proxy):
+    tracks_base_view(api_proxy, "saved_tracks_view", get_text(MPanelTracksItemLabel),
+                     std::bind(events::show_collections, api_proxy))
 {
     utils::events::start_listening<playback_observer>(this);
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_tracks();
 }
 
 saved_tracks_view::~saved_tracks_view()
@@ -309,7 +322,7 @@ void saved_tracks_view::on_track_changed(const track_t &track)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-playing_queue_view::playing_queue_view(api_abstract *api):
+playing_queue_view::playing_queue_view(api_proxy_ptr api):
     tracks_base_view(api, "playing_queue_view", get_text(MPanelTracksItemLabel),
                      std::bind(events::show_collections, api))
 {
@@ -335,10 +348,14 @@ bool playing_queue_view::start_playback(const string &track_id)
 std::generator<const simplified_track_t&> playing_queue_view::get_tracks()
 {
     static playing_queue_t playing_queue;
-    playing_queue = api_proxy->get_playing_queue();
-
-    for (const auto &t: playing_queue.queue)
-        co_yield t;
+    
+    if (auto api = api_proxy.lock())
+    {
+        playing_queue = api->get_playing_queue();
+        
+        for (const auto &t: playing_queue.queue)
+            co_yield t;
+    }
 }
 
 const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const

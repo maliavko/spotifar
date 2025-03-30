@@ -36,7 +36,7 @@ static string generate_random_string(const int length)
     return text;
 };
 
-auth_cache::auth_cache(api_abstract *api, const string &client_id, const string &client_secret, int port):
+auth_cache::auth_cache(api_interface *api, const string &client_id, const string &client_secret, int port):
     json_cache(L"AccessToken"),
     client_id(client_id),
     client_secret(client_secret),

@@ -17,8 +17,9 @@ using namespace spotify;
 class playlists_base_view: public view_abstract
 {
 public:
-    playlists_base_view(api_abstract *api, const string &view_uid,
+    playlists_base_view(api_proxy_ptr api, const string &view_uid,
         const wstring &title, return_callback_t callback);
+    ~playlists_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t*;
 protected:
@@ -32,14 +33,14 @@ protected:
     auto process_key_input(int combined_key) -> intptr_t override;
     auto request_extra_info(const data_item_t* data) -> bool override;
 protected:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
 };
 
 /// @brief A class-view, representing a list of user's saved playlists
 class saved_playlists_view: public playlists_base_view
 {
 public:
-    saved_playlists_view(api_abstract *api);
+    saved_playlists_view(api_proxy_ptr api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -47,7 +48,7 @@ protected:
     // playlists_base_view
     auto get_playlists() -> std::generator<const simplified_playlist_t&> override;
 private:
-    api_abstract *api_proxy;
+    api_proxy_ptr api_proxy;
     saved_playlists_ptr collection;
 };
 
@@ -63,7 +64,7 @@ public:
         string played_at;
     };
 public:
-    recent_playlists_view(api_abstract *api);
+    recent_playlists_view(api_proxy_ptr api);
     ~recent_playlists_view();
 protected:
     auto rebuild_items() -> void;

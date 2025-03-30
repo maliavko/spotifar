@@ -12,7 +12,7 @@ const string spotify_api_url = "https://api.spotify.com";
 const size_t pool_size = 12;
 
 template<class R>
-auto request_item(R &&requester, api_abstract *api) -> typename R::result_t
+auto request_item(R &&requester, api_proxy_ptr api) -> typename R::result_t
 {
     if (requester.execute(api))
         return requester.get();
@@ -53,16 +53,12 @@ static void http_logger(const Request &req, const Response &res)
 
 api::api(): pool(pool_size)
 {
-    auth = std::make_unique<auth_cache>(
-        this, config::get_client_id(), config::get_client_secret(),
-        config::get_localhost_port());
+    auth = std::make_unique<auth_cache>(this, config::get_client_id(), config::get_client_secret(), config::get_localhost_port());
     devices = std::make_unique<devices_cache>(this);
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
 
-    caches.assign({
-        auth.get(), playback.get(), devices.get(), history.get(),
-    });
+    caches.assign({ auth.get(), playback.get(), devices.get(), history.get() });
 }
 
 api::~api()
@@ -109,19 +105,19 @@ void api::tick()
 artist_t api::get_artist(const item_id_t &artist_id)
 {
     return request_item(item_requester<artist_t>(
-        std::format("/v1/artists/{}", artist_id)), this);
+        std::format("/v1/artists/{}", artist_id)), get_ptr());
 }
 
 std::vector<artist_t> api::get_artists(const item_ids_t &ids)
 {
     return request_item(several_items_requester<artist_t>(
-        "/v1/artists", ids, 50, "artists"), this);
+        "/v1/artists", ids, 50, "artists"), get_ptr());
 }
 
 followed_artists_ptr api::get_followed_artists()
 {
     return followed_artists_ptr(new followed_artists_t(
-        this,
+        get_ptr(),
         "/v1/me/following", {
             { "type", "artist" }
         },
@@ -132,7 +128,7 @@ followed_artists_ptr api::get_followed_artists()
 artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
 {
     return artist_albums_ptr(new artist_albums_t(
-        this,
+        get_ptr(),
         std::format("/v1/artists/{}/albums", artist_id), {
             { "include_groups", "album" }
         }
@@ -141,47 +137,47 @@ artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
 
 saved_albums_ptr api::get_saved_albums()
 {
-    return saved_albums_ptr(new saved_albums_t(this, "/v1/me/albums"));
+    return saved_albums_ptr(new saved_albums_t(get_ptr(), "/v1/me/albums"));
 }
 
 new_releases_ptr api::get_new_releases()
 {
     return new_releases_ptr(new new_releases_t(
-        this, "/v1/browse/new-releases", {}, "albums"));
+        get_ptr(), "/v1/browse/new-releases", {}, "albums"));
 }
 
 std::vector<track_t> api::get_artist_top_tracks(const item_id_t &artist_id)
 {
     return request_item(item_requester<std::vector<track_t>>(
-        std::format("/v1/artists/{}/top-tracks", artist_id), {}, "tracks"), this);
+        std::format("/v1/artists/{}/top-tracks", artist_id), {}, "tracks"), get_ptr());
 }
     
 album_t api::get_album(const item_id_t &album_id)
 {
     return request_item(item_requester<album_t>(
-        std::format("/v1/albums/{}", album_id)), this);
+        std::format("/v1/albums/{}", album_id)), get_ptr());
 }
 
 std::vector<album_t> api::get_albums(const item_ids_t &ids)
 {
     return request_item(several_items_requester<album_t>(
-        "/v1/albums", ids, 20, "albums"), this);
+        "/v1/albums", ids, 20, "albums"), get_ptr());
 }
 
 album_tracks_ptr api::get_album_tracks(const string &album_id)
 {
     return album_tracks_ptr(new album_tracks_t(
-        this, std::format("/v1/albums/{}/tracks", album_id)));
+        get_ptr(), std::format("/v1/albums/{}/tracks", album_id)));
 }
 
 saved_tracks_ptr api::get_saved_tracks()
 {
-    return saved_tracks_ptr(new saved_tracks_t(this, "/v1/me/tracks"));
+    return saved_tracks_ptr(new saved_tracks_t(get_ptr(), "/v1/me/tracks"));
 }
 
 saved_playlists_ptr api::get_saved_playlists()
 {
-    return saved_playlists_ptr(new saved_playlists_t(this, "/v1/me/playlists"));
+    return saved_playlists_ptr(new saved_playlists_t(get_ptr(), "/v1/me/playlists"));
 }
 
 playlist_t api::get_playlist(const string &playlist_id)
@@ -190,13 +186,13 @@ playlist_t api::get_playlist(const string &playlist_id)
         std::format("/v1/playlists/{}", playlist_id), {
             { "additional_types", "track" },
             { "fields", playlist_t::get_fields_filter() },
-        }), this);
+        }), get_ptr());
 }
 
 saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 {
     return saved_tracks_ptr(new saved_tracks_t(
-        this,
+        get_ptr(),
         std::format("/v1/playlists/{}/tracks", playlist_id), {
             { "additional_types", "track" },
             { "fields", std::format("items({}),next,total", saved_track_t::get_fields_filter()) },
@@ -205,7 +201,7 @@ saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 
 playing_queue_t api::get_playing_queue()
 {
-    return request_item(item_requester<playing_queue_t>("/v1/me/player/queue"), this);
+    return request_item(item_requester<playing_queue_t>("/v1/me/player/queue"), get_ptr());
 }
 
 bool api::check_saved_track(const string &track_id)
@@ -219,7 +215,7 @@ std::deque<bool> api::check_saved_tracks(const item_ids_t &ids)
     // bloody hell, damn vector specialization with bools is not a real vector,
     // it cannot return ref to bools
     return request_item(several_items_requester<bool, std::deque<bool>>(
-        "/v1/me/tracks/contains", ids, 50), this);
+        "/v1/me/tracks/contains", ids, 50), get_ptr());
 }
 
 bool api::save_tracks(const item_ids_t &ids)

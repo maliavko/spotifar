@@ -25,7 +25,7 @@ struct auth_t
 class auth_cache: public json_cache<auth_t>
 {
 public:
-    auth_cache(api_abstract *api, const string &client_id, const string &client_secret, int port);
+    auth_cache(api_interface *api, const string &client_id, const string &client_secret, int port);
     ~auth_cache() { api_proxy = nullptr; }
     
     bool is_authenticated() const { return is_logged_in; }
@@ -46,7 +46,7 @@ private:
     const string client_id, client_secret;
     int port;
     
-    api_abstract *api_proxy;
+    api_interface *api_proxy;
 };
 
 struct auth_observer: public BaseObserverProtocol
