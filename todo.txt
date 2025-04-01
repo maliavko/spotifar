@@ -1,57 +1,40 @@
-project infrastructure
-- gcc support
-
-
 refactor
 - add possibility to register librespot as a win service to avoid interrupting music when far is closed
 - working with playlists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
 - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - finilize the rest requests and convert into sync/async requesters
-
+- gcc support
 
 application ideas
-- grab lyrics from here? https://lrclib.net/
-- is there other way to track fresh releases?
-- panels
-    - ctrl + I - filtering of albums? singles/EPs/LPs; maybe something else?
-    - managing playlists via standard Far functions: create folder, move/remove from panel
-    - comamnds for console input?
+- small improvements
     - show track progress on the win tray icon with ACTL_SETPROGRESSSTATE
-- player UI
-    - goto playlist
-    - recreate a volume control into slider?
-
+    - goto playlist from player UI
+- new functional
+    - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://stackoverflow.com/questions/3582108/create-windows-service-from-executable
+    - grab lyrics from here? https://lrclib.net/
+    - fresh releases through musicbrainz: https://musicbrainz.org/doc/MusicBrainz_API/Search, https://github.com/metabrainz/libmusicbrainz/tree/master/examples
+    - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
+    - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
+    - similar artists: https://www.music-map.com/
+    - playlists and collections management
+    - console commands support
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
+- librespot sometimes very slow while changing tracks e.g.: https://github.com/librespot-org/librespot/issues/253
 
-
-root menu
-    - collection +
-        - artists +
-            - top tracks
-            - albums +
-            - related artists?
-        - playlists +
-        - albums +
-        - tracks +
-        - [episodes]
-        - [shows]
-    - browse +
-        - search
-        - user's top items
-        - new releases for you
-        - albums featuring songs you liked
-        - artists featuring songs you liked
-    - recents +
-        - artists +
-        - albums +
-        - playlists
-        - tracks +
-
+to finish for alpha release
+- remove unfinished menus
+- to finalize "featuring" menus, user top items menu
+- to implement filter menu on each view
+- to add a proper github support: license, automations? binaries
+- to add a proper errors handling
+- to finish up librespot process start up and propagating its settings to the config dialog
+- loading splash screen
+- localizations
 
 test cases for error-proof app behaviour
 - invalid spotify api items (client id or port e.g.)
-- 429 too many requests emulation
+- 429 too many requests emulation, 500 for service outage
 - sudden network outage
