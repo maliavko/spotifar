@@ -240,7 +240,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             // to show a sort menu for the currently opened view
             case VK_F12 + keys::mods::ctrl:
             {
-                auto sort_modex_idx = show_sort_dialog(*view);
+                auto sort_modex_idx = (int)show_sort_dialog(*view);
                 if (sort_modex_idx > -1)
                     view->select_sort_mode(sort_modex_idx);
                 
@@ -333,37 +333,9 @@ void panel::on_collection_fetching_failed(const string &message)
 
 void panel::on_show_filters_menu()
 {
-    PluginDialogBuilder builder(config::ps_info, MainGuid, ConfigSpotifyDialogGuid, L"Test Dialog", NULL);
+    auto r = collections_filter::show();
 
-    builder.StartColumns();
-
-    static int radio_idx;
-    const int btns[] {
-        MPanelAlbumsItemLabel, MPanelTracksItemLabel, MPanelAlbumItemLabel, MPanelPlaylistsItemLabel
-    };
-    builder.AddRadioButtons(&radio_idx, 4, btns);
-
-    builder.ColumnBreak();
-
-    static int radio_idx2;
-    builder.AddRadioButtons(&radio_idx2, 4, btns);
-
-    builder.EndColumns();
-
-    builder.AddSeparator();
-
-    static int selected_item;
-    static const wchar_t* items[] = {
-        L"11111111111 | 11111 | 1111",
-        L"22222222222 | 22222 | 2222",
-        L"33333333333 | 33333 | 3333",
-    };
-    builder.AddListBox(&selected_item, 40, 10, items, 3, DIF_LISTNOBOX);
-
-    builder.AddOKCancel(MOk, MCancel);
-
-    auto r = builder.ShowDialogEx();
-    log::global->debug("dialog closed {} {} {}", r, radio_idx, radio_idx2);
+    log::global->debug("dialog closed {} {}", r, r == collections_filter::albums);
 }
 
 } // namespace ui

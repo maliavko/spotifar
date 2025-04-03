@@ -56,7 +56,7 @@ intptr_t show_config_menu()
     return TRUE;
 }
 
-int show_sort_dialog(const view_abstract &v)
+intptr_t show_sort_dialog(const view_abstract &v)
 {
     const auto &modes = v.get_sort_modes();
     const auto &settings = v.get_settings();
@@ -93,7 +93,38 @@ int show_sort_dialog(const view_abstract &v)
     for (auto &item: result)
         free(const_cast<wchar_t*>(item.Text));
 
-    return (int)sort_idx;
+    return sort_idx;
+}
+
+namespace collections_filter
+{
+    intptr_t show()
+    {
+        PluginDialogBuilder builder(config::ps_info, MainGuid, ConfigSpotifyDialogGuid, L"Test Dialog", NULL);
+    
+        int radio_idx = -1;
+        const int btns[] {
+            MPanelArtistsItemLabel, MPanelTracksItemLabel, MPanelAlbumsItemLabel, MPanelPlaylistsItemLabel
+        };
+        builder.AddRadioButtons(&radio_idx, 4, btns);
+    
+        builder.AddSeparator();
+    
+        static int selected_item;
+        static const wchar_t* items[] = {
+            L"11111111111 | 11111 | 1111",
+            L"22222222222 | 22222 | 2222",
+            L"33333333333 | 33333 | 3333",
+        };
+        builder.AddListBox(&selected_item, 40, 10, items, 3, DIF_LISTNOBOX);
+    
+        builder.AddOKCancel(MOk, MCancel);
+    
+        auto result = builder.ShowDialogEx();
+        if (result >= 0)
+            return radio_idx;
+        return result;
+    }
 }
 
 } // namespace ui
