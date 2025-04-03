@@ -99,10 +99,30 @@ namespace keys
     static const int
         none = 0x00,
         a = 0x41,
+        b = 0x42,
+        c = 0x43,
         d = 0x44,
+        e = 0x45,
+        f = 0x46,
+        g = 0x47,
+        h = 0x48,
+        i = 0x49,
+        j = 0x4A,
+        k = 0x4B,
+        l = 0x4C,
+        m = 0x4D,
+        n = 0x4E,
+        o = 0x4F,
+        p = 0x50,
         q = 0x51,
         r = 0x52,
         s = 0x53,
+        t = 0x54,
+        u = 0x55,
+        v = 0x56,
+        w = 0x57,
+        x = 0x58,
+        y = 0x59,
         z = 0x5A,
         key_0 = 0x30,
         key_9 = 0x39;
@@ -257,6 +277,7 @@ namespace far3
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
         auto get_info(HANDLE panel) -> PanelInfo;
+        auto quit(HANDLE panel) -> void;
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
         auto select_item(HANDLE panel, size_t item_idx) -> bool;
         auto clear_selection(HANDLE panel) -> void;
@@ -265,7 +286,13 @@ namespace far3
         /// @param filter_selected returns only selected items, in case there is no selected items - returns
         /// the one under cursor, or none if the itme under cursor is `..`
         auto get_items(HANDLE panel, bool filter_selected = false) -> std::vector<std::shared_ptr<PluginPanelItem>>;
-    }   
+    }
+
+    namespace plugins
+    {
+        /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html
+        auto get_info() -> std::shared_ptr<FarGetPluginInformation>;
+    }
 
     namespace actl
     {

@@ -25,8 +25,10 @@ public:
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
-    void show_panel_view(view_ptr view);
-    void refresh_panels(const item_id_t &item_id = "");
+    // global ui events
+    void show_panel_view(view_ptr view) override;
+    void refresh_panels(const item_id_t &item_id = "") override;
+    void on_show_filters_menu() override;
 private:
     view_ptr view;
     api_proxy_ptr api_proxy;

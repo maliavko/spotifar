@@ -10,21 +10,17 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 
 #include <string>
-#include <memory>
 #include <map>
 #include <vector>
-#include <list>
-#include <chrono>
-#include <typeindex>
-#include <algorithm>
-#include <variant>
-#include <filesystem>
+#include <chrono> // std::chrono::system_clock
+#include <typeindex> // std::type_index
+#include <filesystem> // std::filesystem::path
 #define _WINSOCKAPI_
 #ifndef NOMINMAX
 # define NOMINMAX
 #endif
-#include <generator>
-#include <windows.h>
+#include <generator> // std::generator<T>
+#include <windows.h> // win api support
 #include <shellapi.h>  // for ShellExecute
 #include <shlobj_core.h>  // for SHGetKnownFolderPath
 
@@ -38,9 +34,9 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
 
-#include <plugin.hpp>
-#include <PluginSettings.hpp>
-#include <DlgBuilder.hpp>
+#include <plugin.hpp> // far api
+#include <PluginSettings.hpp> // far plugin's data storage access
+#include <DlgBuilder.hpp> // far autocatic dialogs builders
 
 #include "lng.hpp"
 #include "guid.hpp"

@@ -11,6 +11,7 @@ application ideas
     - show track progress on the win tray icon with ACTL_SETPROGRESSSTATE
     - goto playlist from player UI
 - new functional
+    - splash screen with notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://stackoverflow.com/questions/3582108/create-windows-service-from-executable
     - grab lyrics from here? https://lrclib.net/
     - fresh releases through musicbrainz: https://musicbrainz.org/doc/MusicBrainz_API/Search, https://github.com/metabrainz/libmusicbrainz/tree/master/examples

@@ -95,6 +95,17 @@ namespace events
 
 namespace far3
 {
+    template<class T>
+    static std::shared_ptr<T> make_sized_shared(size_t size)
+    {
+        struct free_deleter
+        {
+            void operator()(void *data) { free(data); }
+        };
+
+        return std::shared_ptr<T>((T*)malloc(size), free_deleter());
+    }
+
     string get_plugin_version()
     {
         return std::format("{}.{}.{}.{}.{}",
@@ -254,11 +265,6 @@ namespace far3
 
     namespace panels
     {
-        struct free_deleter
-        {
-            void operator()(void *data) { free(data); }
-        };
-
         intptr_t control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1, void *param2)
         {
             return config::ps_info.PanelControl(panel, cmd, param1, param2);
@@ -310,8 +316,7 @@ namespace far3
         std::shared_ptr<PluginPanelItem> get_current_item(HANDLE panel)
         {
             size_t size = control(panel, FCTL_GETCURRENTPANELITEM, 0, 0);
-            std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
-            if (ppi)
+            if (auto ppi = make_sized_shared<PluginPanelItem>(size))
             {
                 FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
                 control(panel, FCTL_GETCURRENTPANELITEM, 0, &fgppi);
@@ -360,8 +365,7 @@ namespace far3
             for (size_t i = 0; i < items_number; i++)
             {
                 size_t size = control(panel, cmd, i, 0);
-                std::shared_ptr<PluginPanelItem> ppi((PluginPanelItem*)malloc(size), free_deleter());
-                if (ppi)
+                if (auto ppi = make_sized_shared<PluginPanelItem>(size))
                 {
                     FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
                     control(panel, cmd, i, &fgppi);
@@ -378,6 +382,33 @@ namespace far3
             PanelInfo pinfo;
             control(panel, FCTL_GETPANELINFO, 0, &pinfo);
             return pinfo;
+        }
+        
+        void quit(HANDLE panel)
+        {
+            control(panel, FCTL_CLOSEPANEL, 0, NULL);
+        }
+    }
+    
+    namespace plugins
+    {
+        std::shared_ptr<FarGetPluginInformation> get_info()
+        {
+            HANDLE plugin_handle = (HANDLE)config::ps_info.PluginsControl(
+                INVALID_HANDLE_VALUE, PCTL_FINDPLUGIN, PFM_GUID, (void*)&MainGuid);
+            
+            if (plugin_handle != NULL)
+            {
+                intptr_t data_size = config::ps_info.PluginsControl(
+                    plugin_handle, PCTL_GETPLUGININFORMATION, NULL, NULL);
+                    
+                if (auto plugin_info = make_sized_shared<FarGetPluginInformation>(data_size))
+                {
+                    config::ps_info.PluginsControl(plugin_handle, PCTL_GETPLUGININFORMATION, data_size, plugin_info.get());
+                    return plugin_info;
+                }
+            }
+            return nullptr;
         }
     }
     

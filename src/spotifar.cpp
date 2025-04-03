@@ -2,6 +2,7 @@
 #include "config.hpp"
 #include "plugin.h"
 #include "ui/dialogs/menus.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar {
 
@@ -116,9 +117,47 @@ intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
     return static_cast<plugin*>(info->hPanel)->set_directory(info);
 }
 
+/// @brief https://api.farmanager.com/ru/exported_functions/processconsoleinputw.html
+intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
+{
+    namespace keys = utils::keys;
+
+    auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE);
+    if (pinfo.OwnerGuid != MainGuid) // process handlers only in case the plugin is loaded into panel
+        return FALSE;
+
+    auto &key_event = info->Rec.Event.KeyEvent;
+    if (key_event.bKeyDown)
+    {
+        switch (keys::make_combined(key_event))
+        {
+            case keys::i + keys::mods::ctrl:
+            {
+                ObserverManager::notify(&ui::ui_events_observer::on_show_filters_menu);
+                return TRUE;
+            }
+        }
+    }
+    return 0;
+}
+
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
 intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
+    namespace keys = utils::keys;
+    
+    auto &key_event = info->Rec.Event.KeyEvent;
+    if (key_event.bKeyDown)
+    {
+        switch (keys::make_combined(key_event))
+        {
+            case keys::i + keys::mods::ctrl:
+            {
+                spdlog::debug("ProcessPanelInputW");
+                return TRUE;
+            }
+        }
+    }
     return static_cast<plugin*>(info->hPanel)->process_input(info);
 }
 

@@ -66,6 +66,8 @@ struct ui_events_observer: public BaseObserverProtocol
 
     /// @brief Sends a `view` instance to the panel to show it
     virtual void show_panel_view(view_ptr view) {}
+
+    virtual void on_show_filters_menu() {};
 };
 
 } // namespace ui
