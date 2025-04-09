@@ -383,7 +383,7 @@ void player::on_volume_down_btn_clicked()
 
 bool player::on_devices_item_selected(void *dialog_item)
 {
-    const FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
+    const auto *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
     auto device_id = far3::dialogs::get_list_current_item_data<string>(
         hdlg, controls::devices_combo);
@@ -405,7 +405,7 @@ bool player::on_input_received(void *input_record)
 
     auto api = api_proxy.lock();
     const auto &state = api->get_playback_state();
-    const INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     switch (ir->EventType)
     {
         case KEY_EVENT:
@@ -458,6 +458,10 @@ bool player::on_input_received(void *input_record)
                     case keys::q + keys::mods::ctrl:
                         expand(!is_expanded());
                         return true;
+
+                    case keys::j + keys::mods::ctrl:
+                        far3::panels::quit(PANEL_ACTIVE);
+                        return true;
                 }
             }
             break;
@@ -467,7 +471,7 @@ bool player::on_input_received(void *input_record)
 
 static bool get_playback_button_style(void *dialog_item_colors, bool is_enabled)
 {
-    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
     dic->Colors->BackgroundColor = colors::dgray;
     dic->Colors->ForegroundColor = is_enabled ? colors::black : colors::gray;
@@ -494,7 +498,7 @@ bool player::on_prev_btn_style_applied(void *dialog_item_colors)
 
 bool player::on_track_bar_style_applied(void *dialog_item_colors)
 {
-    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
     dic->Colors->ForegroundColor = colors::black;
     return true;
@@ -502,7 +506,7 @@ bool player::on_track_bar_style_applied(void *dialog_item_colors)
 
 bool player::on_artist_label_input_received(void *input_record)
 {
-    const INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -559,7 +563,7 @@ bool player::on_artist_label_input_received(void *input_record)
 
 bool player::on_track_label_input_received(void *input_record)
 {
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -582,7 +586,7 @@ bool player::on_track_label_input_received(void *input_record)
 
 bool player::on_playing_queue_input_received(void *input_record)
 {
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -601,7 +605,7 @@ bool player::on_playing_queue_input_received(void *input_record)
 
 bool player::on_source_label_input_received(void *input_record)
 {
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -617,11 +621,11 @@ bool player::on_track_bar_input_received(void *input_record)
     if (playback.is_empty())
         return false;
 
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    SMALL_RECT dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
+    auto dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
     
     auto track_bar_layout = dlg_items_layout[controls::track_bar];
     auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
@@ -634,7 +638,7 @@ bool player::on_track_bar_input_received(void *input_record)
 
 bool player::on_inactive_control_style_applied(void *dialog_item_colors)
 {
-    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
     dic->Colors->ForegroundColor = colors::dgray;
     return true;
@@ -642,7 +646,7 @@ bool player::on_inactive_control_style_applied(void *dialog_item_colors)
 
 bool player::on_like_btn_input_received(void *input_record)
 {
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -685,7 +689,7 @@ bool player::on_like_btn_style_applied(void *dialog_item_colors)
 
 bool player::on_shuffle_btn_style_applied(void *dialog_item_colors)
 {
-    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     if (shuffle_state.get_offset_value())
     {
         dic->Colors->ForegroundColor = colors::black;
@@ -700,7 +704,7 @@ bool player::on_shuffle_btn_style_applied(void *dialog_item_colors)
 
 bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
 {
-    FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
+    auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     if (repeat_state.get_offset_value() != playback_state_t::repeat_off)
     {
         dic->Colors->ForegroundColor = colors::black;

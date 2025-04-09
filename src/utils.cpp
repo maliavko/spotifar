@@ -407,12 +407,15 @@ namespace far3
     
     namespace plugins
     {
+        HANDLE get_handle()
+        {
+            return (HANDLE)config::ps_info.PluginsControl(
+                INVALID_HANDLE_VALUE, PCTL_FINDPLUGIN, PFM_GUID, (void*)&MainGuid);
+        }
+
         std::shared_ptr<FarGetPluginInformation> get_info()
         {
-            HANDLE plugin_handle = (HANDLE)config::ps_info.PluginsControl(
-                INVALID_HANDLE_VALUE, PCTL_FINDPLUGIN, PFM_GUID, (void*)&MainGuid);
-            
-            if (plugin_handle != NULL)
+            if (auto plugin_handle = get_handle())
             {
                 intptr_t data_size = config::ps_info.PluginsControl(
                     plugin_handle, PCTL_GETPLUGININFORMATION, NULL, NULL);
@@ -424,6 +427,13 @@ namespace far3
                 }
             }
             return nullptr;
+        }
+
+        bool unload()
+        {
+            if (auto plugin_handle = get_handle())
+                return config::ps_info.PluginsControl(plugin_handle, PCTL_UNLOADPLUGIN, NULL, NULL) == TRUE;
+            return false;
         }
     }
     
@@ -589,8 +599,21 @@ namespace log
                 std::wcout.rdbuf(wcout_old_buf);
         #endif
 
-        log::global->info("Closing plugin\n\n");
+        log::global->info("Shutting down logging subsystem\n\n");
         spdlog::shutdown();
+    }
+    
+    void tick(const clock_t::duration &delta)
+    {
+        static clock_t::duration flush_period = 10s, accumulated_delta{};
+
+        // flushing logs once per `period` time
+        accumulated_delta += delta;
+        if (accumulated_delta >= flush_period)
+        {
+            accumulated_delta = accumulated_delta % delta;
+            spdlog::apply_all([](const auto &logger){ logger->flush(); });
+        }
     }
 
     void enable_verbose_logs(bool is_verbose)
