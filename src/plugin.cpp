@@ -148,6 +148,8 @@ void plugin::launch_sync_worker()
 
                 log::tick(delta);
 
+                log::tick(delta);
+
                 std::this_thread::sleep_for(50ms);
             }
         }
