@@ -239,6 +239,11 @@ void write()
         ctx->set_int64(get_hotkey_node_name(key), MAKELONG(p.second, p.first));
 }
 
+void cleanup()
+{
+    write();
+}
+
 bool is_added_to_disk_menu()
 {
     return _settings.add_to_disk_menu;

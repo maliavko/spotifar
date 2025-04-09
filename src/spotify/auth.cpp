@@ -56,6 +56,7 @@ void auth_cache::on_data_synced(const auth_t &data, const auth_t &prev_data)
     log::api->info("A valid access token is found, expires in {}",
         std::format("{:%T}", get_expires_at() - clock_t::now()));
     
+    // TODO: return back for safety
     // utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data);
 
     // calling through synchro event postpones the event for a quite some time, hope this call in

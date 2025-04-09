@@ -91,6 +91,8 @@ namespace log
 
     void fini();
 
+    void tick(const clock_t::duration &delta);
+
     void enable_verbose_logs(bool is_verbose);
 }
 
@@ -288,10 +290,12 @@ namespace far3
         auto get_items(HANDLE panel, bool filter_selected = false) -> std::vector<std::shared_ptr<PluginPanelItem>>;
     }
 
+    /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html
     namespace plugins
     {
-        /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html
+        auto get_handle() -> HANDLE;
         auto get_info() -> std::shared_ptr<FarGetPluginInformation>;
+        auto unload() -> bool;
     }
 
     namespace actl

@@ -123,6 +123,9 @@ void read(const PluginStartupInfo *info);
 /// @brief Dump settings to the far settings file
 void write();
 
+/// @brief The method is used to prepare config system for the next plugin launch
+void cleanup();
+
 /// @brief Returns the flag, indicating whether the plugin is added to the disk menu
 bool is_added_to_disk_menu();
 

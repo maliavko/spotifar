@@ -47,11 +47,11 @@ void plugin::start()
 
 void plugin::shutdown()
 {
+    player->hide();
+
     shutdown_sync_worker();
 
-    player->hide();
     api->shutdown();
-
     librespot.shutdown();
 }
 
@@ -62,7 +62,7 @@ void plugin::update_panel_info(OpenPanelInfo *info)
 
 intptr_t plugin::update_panel_items(GetFindDataInfo *info)
 {
-    // plugins does not use Far's traditional recursive search mechanism
+    // plugin does not use Far's traditional recursive search mechanism
     if (info->OpMode & OPM_FIND)
         return FALSE;
         
@@ -112,13 +112,19 @@ void plugin::launch_sync_worker()
 {
     std::packaged_task<void()> task([this]
     {
-        string exit_msg = "";
         std::lock_guard worker_lock(sync_worker_mutex);
+     
+        string exit_msg = "";   
+        clock_t::time_point last_tick = clock_t::now();
 
         try
-        {
+        {   
             while (is_worker_listening)
             {
+                auto now = clock_t::now();
+                auto delta = now - last_tick;
+                last_tick = now;
+
                 api->tick();
                 player->tick();
                 librespot.tick();
@@ -126,6 +132,8 @@ void plugin::launch_sync_worker()
                 background_tasks.process_all(); // ticking background tasks if any
 
                 check_global_hotkeys();
+
+                log::tick(delta);
 
                 std::this_thread::sleep_for(50ms);
             }

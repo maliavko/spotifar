@@ -133,7 +133,7 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
         {
             case keys::i + keys::mods::ctrl:
             {
-                ObserverManager::notify(&ui::ui_events_observer::on_show_filters_menu);
+                //ObserverManager::notify(&ui::ui_events_observer::on_show_filters_menu);
                 return TRUE;
             }
         }
@@ -167,6 +167,7 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
     auto &p = *static_cast<plugin*>(info->hPanel);
     if (info->Event == FE_CLOSE)
     {
+        log::global->debug("Plugin closing event is received, processing");
         p.shutdown();
         return FALSE; // return TRUE if the panel should not close
     }
@@ -189,10 +190,12 @@ intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html 
 void WINAPI ClosePanelW(const ClosePanelInfo *info)
 {
+    log::global->debug("Plugin's panel is closed, cleaning resources");
+
     // after auto-variable is destroyed, the unique_ptr will be as well
     std::unique_ptr<plugin>(static_cast<plugin*>(info->hPanel));
 
-    config::write();
+    config::cleanup();
     log::fini();
     far3::synchro_tasks::clear();
 }
