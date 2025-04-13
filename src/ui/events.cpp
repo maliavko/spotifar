@@ -119,7 +119,7 @@ namespace events {
     
     void show_player()
     {
-        return ObserverManager::notify(&ui_events_observer::show_player);
+        return utils::far3::synchro_tasks::dispatch_event(&ui_events_observer::show_player);
     }
     
     void show_config()
@@ -129,7 +129,7 @@ namespace events {
     
     void refresh_panels(const string &item_id)
     {
-        return ObserverManager::notify(&ui_events_observer::refresh_panels, item_id);
+        return utils::far3::synchro_tasks::dispatch_event(&ui_events_observer::refresh_panels, item_id);
     }
 
 } // namespace events

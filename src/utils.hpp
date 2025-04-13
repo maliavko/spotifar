@@ -70,7 +70,7 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
 class tasks_queue
 {
 public:
-    typedef std::function<void(void)> task_t;
+    using task_t = std::function<void(void)>;
 
     auto push_task(task_t task) -> intptr_t;
     void process_one(intptr_t task_id);
@@ -345,8 +345,7 @@ namespace json
     using rapidjson::PrettyWriter;
     using rapidjson::kObjectType;
     using rapidjson::kArrayType;
-    
-    typedef typename Document::AllocatorType Allocator;
+    using Allocator = typename Document::AllocatorType;
     
     /// @brief string support for rapidjson parse/pack
     void from_json(const Value &j, string &result);
@@ -474,6 +473,12 @@ namespace http
     using namespace httplib;
 
     bool is_success(int response_code);
+
+    /// @brief Returns a given `url` without postfixed added parameters
+    string trim_params(const string &url);
+    
+    /// @brief Returns a given `url` without prefixed domain name 
+    string trim_domain(const string &url);
     
     /// @brief A static constant, representing the flag of a session-wide caching
     static const auto session = clock_t::duration(-1);
@@ -483,7 +488,7 @@ namespace http
     class json_body_builder: public Writer<StringBuffer>
     {
     public:
-        typedef std::function<void(void)> scope_handler_t;
+        using scope_handler_t = std::function<void(void)>;
     public:
         json_body_builder(): Writer<StringBuffer>(sb) {}
 

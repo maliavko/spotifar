@@ -1,9 +1,5 @@
 refactor
-- add possibility to register librespot as a win service to avoid interrupting music when far is closed
-- working with playlists through Use the snapshot_id to reduce amount of requests
 - investigate "market" fields for some API requests, for now completly
-- propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
-- finilize the rest requests and convert into sync/async requesters
 - gcc support
 
 application ideas
@@ -19,21 +15,29 @@ application ideas
     - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
     - similar artists: https://www.music-map.com/
     - playlists and collections management
+        - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support
+    - add possibility to register librespot as a win service to avoid interrupting music when far is closed
+    - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
 - librespot sometimes very slow while changing tracks e.g.: https://github.com/librespot-org/librespot/issues/253
+- to add lock_guard to the access API caches and especially to the resync method
 
 to finish for alpha release
 - remove unfinished menus
+- to review TODOs
 - to finalize "featuring" menus, user top items menu
 - to implement filter menu on each view
 - to add a proper github support: license, automations? binaries
 - to add a proper errors handling
 - to finish up librespot process start up and propagating its settings to the config dialog
-- loading splash screen
++ loading splash screen
 - localizations
+- finilize the settings menu
+    - audio backend view with options
+    - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 
 test cases for error-proof app behaviour
 - invalid spotify api items (client id or port e.g.)

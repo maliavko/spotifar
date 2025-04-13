@@ -52,7 +52,7 @@ private:
 struct auth_observer: public BaseObserverProtocol
 {
     /// @brief An auth status has been changed
-    virtual void on_auth_status_changed(const auth_t &auth) {};
+    virtual void on_auth_status_changed(const auth_t &auth) {}
 };
 
 } // namespace spotify

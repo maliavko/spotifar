@@ -8,8 +8,8 @@
 
 namespace spotifar { namespace spotify {
 
-typedef sync_collection<history_item_t> recently_played_tracks_t;
-typedef std::shared_ptr<recently_played_tracks_t> recently_played_tracks_ptr;
+using recently_played_tracks_t = sync_collection<history_item_t>;
+using recently_played_tracks_ptr = std::shared_ptr<recently_played_tracks_t>;
 
 class play_history: public json_cache<history_items_t>
 {
@@ -31,7 +31,7 @@ private:
 
 struct play_history_observer: public BaseObserverProtocol
 {
-    virtual void on_items_changed() {};
+    virtual void on_items_changed() {}
 };
 
 } // namespace spotify

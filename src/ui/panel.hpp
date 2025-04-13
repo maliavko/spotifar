@@ -11,13 +11,15 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class panel: public ui_events_observer // global view commands listener
+class panel:
+    public ui_events_observer, // for processing view opening requests
+    public requester_observer // for showing splash screen during long httl requests
 {
 public:
     panel(api_proxy_ptr api);
     virtual ~panel();
 
-    // FAR API interface
+    // Far API interface
     void update_panel_info(OpenPanelInfo *info);
     auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
     void free_panel_items(const FreeFindDataInfo *info);
@@ -29,12 +31,17 @@ protected:
     void show_panel_view(view_ptr view) override;
     void refresh_panels(const item_id_t &item_id = "") override;
     void on_show_filters_menu() override;
+
+    // requesters progress notifications
+    void on_request_started(const string &url) override;
+    void on_request_finished(const string &url) override;
+    void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
 private:
     view_ptr view;
     api_proxy_ptr api_proxy;
 };
 
-typedef std::shared_ptr<panel> panel_ptr;
+using panel_ptr = std::shared_ptr<panel>;
 
 } // namespace ui
 } // namespace spotifar

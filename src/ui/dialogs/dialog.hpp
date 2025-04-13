@@ -12,7 +12,7 @@ FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x
 class modal_dialog
 {
 public:
-    typedef std::vector<FarDialogItem> layout_t;
+    using layout_t = std::vector<FarDialogItem>;
 public:
     modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
         FARDIALOGFLAGS flags = FDLG_NONE);

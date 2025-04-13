@@ -13,7 +13,7 @@ using utils::clock_t;
 template<typename T>
 struct descriptor_abstract
 {
-    typedef T value_t;
+    using value_t = T;
 
     /// @brief Sets the given value as a current one 
     virtual void set_value(const T &v) = 0;
@@ -121,8 +121,8 @@ template<typename T>
 class delayed_control
 {
 public:
-    typedef typename T::value_t value_t;
-    typedef std::function<void(value_t)> delegate_t;
+    using value_t = typename T::value_t;
+    using delegate_t = std::function<void(value_t)>;
 
     inline static const auto delay = 300ms;
 
@@ -153,8 +153,8 @@ public:
     void set_higher_boundary(int high) { descr.high = high; }
 };
 
-typedef delayed_control<cycled_set_descriptor<bool>> cycled_bool_control;
-typedef delayed_control<cycled_set_descriptor<string>> cycled_string_control;
+using cycled_bool_control = delayed_control<cycled_set_descriptor<bool>>;
+using cycled_string_control = delayed_control<cycled_set_descriptor<string>>;
 
 template<typename T>
 auto delayed_control<T>::next(int steps) -> const delayed_control<T>::value_t

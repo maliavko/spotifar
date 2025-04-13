@@ -77,7 +77,7 @@ template<class T>
 class json_cache: public cached_data_abstract
 {
 public:
-    typedef std::function<void(json::Document &)> patch_handler_t;
+    using patch_handler_t = std::function<void(json::Document &)>;
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
     /// the cache is not getting saved to disk, kept for sessino only

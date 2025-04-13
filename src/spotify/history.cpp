@@ -4,6 +4,8 @@ namespace spotifar { namespace spotify {
 
 using utils::far3::synchro_tasks::dispatch_event;
 
+static const size_t max_history_size = 250;
+
 play_history::play_history(api_interface *api):
     json_cache<history_items_t>(L"play_history"),
     api_proxy(api)
@@ -49,10 +51,10 @@ bool play_history::request_data(history_items_t &data)
     if (new_items->fetch() && new_items->size() > 0)
         data.insert(data.begin(), new_items->begin(), new_items->end());
 
-    // keeping only 150 items of a history
-    if (data.size() > 150)
+    // truncating the history to the certain amount of entries
+    if (data.size() > max_history_size)
     {
-        data.resize(150);
+        data.resize(max_history_size);
         data.shrink_to_fit();
     }
 

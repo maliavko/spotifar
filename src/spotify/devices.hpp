@@ -29,7 +29,7 @@ private:
 struct devices_observer: public BaseObserverProtocol
 {
     /// @brief A list of available devices has been changed
-    virtual void on_devices_changed(const devices_t &devices) {};
+    virtual void on_devices_changed(const devices_t &devices) {}
 };
 
 } // namespace spotify

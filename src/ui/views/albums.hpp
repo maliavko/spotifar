@@ -111,7 +111,7 @@ public:
     recent_albums_view(api_proxy_ptr api);
     ~recent_albums_view();
 protected:
-    auto rebuild_items() -> void;
+    void rebuild_items();
 
     // view interface
     auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;

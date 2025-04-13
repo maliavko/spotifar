@@ -38,11 +38,11 @@ public:
         bool is_selected = false;
     };
 
-    typedef std::vector<sort_mode_t> sort_modes_t;
-    typedef std::vector<item_t> items_t;
-    typedef std::unordered_map<FarKey, wstring> key_bar_info_t;
-    typedef std::vector<InfoPanelLine> info_lines_t;
-    typedef std::function<void(void)> return_callback_t;
+    using sort_modes_t = std::vector<sort_mode_t>;
+    using items_t = std::vector<item_t>;
+    using key_bar_info_t = std::unordered_map<FarKey, wstring>;
+    using info_lines_t = std::vector<InfoPanelLine>;
+    using return_callback_t = std::function<void(void)>;
 
 public:
     view_abstract(const string &uid, const wstring &title, return_callback_t callback);
@@ -88,7 +88,7 @@ private:
     wstring title;
 };
 
-typedef std::shared_ptr<view_abstract> view_ptr;
+using view_ptr = std::shared_ptr<view_abstract>;
 
 } // namespace ui
 } // namespace spotifar

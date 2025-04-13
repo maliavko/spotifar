@@ -210,6 +210,7 @@ config::settings::view_t artist_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> artist_view::get_albums()
 {
+    // TODO: the pattern is copied bunch of times, reconsider the code, remove duplicates
     if (collection && collection->fetch())
         for (const auto &a: *collection)
             co_yield a;

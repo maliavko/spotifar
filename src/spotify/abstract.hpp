@@ -2,6 +2,7 @@
 #define ABSTRACT_HPP_981E825E_A57D_4FB6_AA7D_FC27D37304A6
 #pragma once
 
+#include "stdafx.h"
 #include "utils.hpp"
 #include "config.hpp"
 #include "items.hpp"
@@ -9,30 +10,31 @@
 namespace spotifar { namespace spotify {
 
 using httplib::Result;
+using utils::far3::synchro_tasks::dispatch_event;
 
 template<class T> class sync_collection;
 template<class T> class async_collection;
 
-typedef sync_collection<artist_t> followed_artists_t;
-typedef std::shared_ptr<followed_artists_t> followed_artists_ptr;
+using followed_artists_t = sync_collection<artist_t>;
+using followed_artists_ptr = std::shared_ptr<followed_artists_t>;
 
-typedef async_collection<saved_album_t> saved_albums_t;
-typedef std::shared_ptr<saved_albums_t> saved_albums_ptr;
+using saved_albums_t = async_collection<saved_album_t>;
+using saved_albums_ptr = std::shared_ptr<saved_albums_t>;
 
-typedef async_collection<saved_track_t> saved_tracks_t;
-typedef std::shared_ptr<saved_tracks_t> saved_tracks_ptr;
+using saved_tracks_t = async_collection<saved_track_t>;
+using saved_tracks_ptr = std::shared_ptr<saved_tracks_t>;
 
-typedef async_collection<simplified_playlist_t> saved_playlists_t;
-typedef std::shared_ptr<saved_playlists_t> saved_playlists_ptr;
+using saved_playlists_t = async_collection<simplified_playlist_t>;
+using saved_playlists_ptr = std::shared_ptr<saved_playlists_t>;
 
-typedef async_collection<simplified_album_t> artist_albums_t;
-typedef std::shared_ptr<artist_albums_t> artist_albums_ptr;
+using artist_albums_t = async_collection<simplified_album_t>;
+using artist_albums_ptr = std::shared_ptr<artist_albums_t>;
 
-typedef async_collection<simplified_album_t> new_releases_t;
-typedef std::shared_ptr<new_releases_t> new_releases_ptr;
+using new_releases_t = async_collection<simplified_album_t>;
+using new_releases_ptr = std::shared_ptr<new_releases_t>;
 
-typedef async_collection<simplified_track_t> album_tracks_t;
-typedef std::shared_ptr<album_tracks_t> album_tracks_ptr;
+using album_tracks_t = async_collection<simplified_track_t>;
+using album_tracks_ptr = std::shared_ptr<album_tracks_t>;
 
 struct api_interface
 {
@@ -42,6 +44,8 @@ struct api_interface
 
     virtual ~api_interface() {}
 
+    /// @brief A public interface for obtaining a weak pointer to the API interface
+    /// instance. Used in many helper classes, avoiding passing a direct pointer for safety reasons
     virtual auto get_ptr() -> std::weak_ptr<api_interface> = 0;
 
     /// @brief Checks the spotify authorizations status
@@ -144,7 +148,48 @@ protected:
 
 /// @brief A dedicated type used fo passing api interface to all the main plugin's
 /// structures as a proxy parameter for the further usage
-typedef std::weak_ptr<api_interface> api_proxy_ptr;
+using api_proxy_ptr = std::weak_ptr<api_interface>;
+
+struct requester_observer: public BaseObserverProtocol
+{
+    /// @brief The handler is called, when some multi-page requester is about
+    /// to execute a remote request
+    /// @param url a request's url to identify requests from each other
+    virtual void on_request_started(const string &url) {}
+
+    /// @brief The handler is called, when some multi-page requester is about
+    /// to finish a remote request execution
+    /// @param url a request's url to identify requests from each other
+    virtual void on_request_finished(const string &url) {}
+
+    /// @brief Some multi-page requester has received an intermediate result
+    /// @param url a requester url
+    /// @param progress an amount of data entries accumulated so far
+    /// @param total an amount of total entries to receive
+    virtual void on_request_progress_changed(const string &url, size_t progress, size_t total) {}
+};
+
+/// @brief A helper class to propagate multi-page requesters progress to the listeners
+struct [[nodiscard]] requester_progress_notifier
+{
+    requester_progress_notifier(const string &url): request_url(url)
+    {
+        ObserverManager::notify(&requester_observer::on_request_started, request_url);
+    }
+
+    ~requester_progress_notifier()
+    {
+        ObserverManager::notify(&requester_observer::on_request_finished, request_url);
+    }
+
+    void send_progress(size_t progress, size_t total)
+    {
+        ObserverManager::notify(&requester_observer::on_request_progress_changed,
+            request_url, progress, total);
+    }
+
+    string request_url;
+};
 
 /// @brief A helper-class for requesting data from spotify api. Incapsulated
 /// a logic for performing a request, parsing and holding final result
@@ -153,7 +198,7 @@ template<class T>
 class item_requester
 {
 public:
-    typedef T result_t;
+    using result_t = T;
 public:
     /// @param url a url to request
     /// @param params get-request parameters to infuse into given `url`
@@ -170,25 +215,34 @@ public:
 
     auto get_url() const -> const string& { return url; }
 
-    auto get_response() const -> const httplib::Result& { return response; }
+    /// @brief Retuns the http-result object
+    /// @note result is valid only after a proper request
+    auto get_response() const -> const Result& { return response; }
 
+    /// @brief Checks whether the requested result has already been cached and
+    /// cab be obtained quickly without a delay
     bool is_cached(api_proxy_ptr api) const
     {
         return !api.expired() && api.lock()->is_request_cached(get_url());
     }
 
+    /// @brief Launches a requester and obtaines a result over http. If `only_cache` is true,
+    /// the request will be launched only in case the result is cached and valid to avoid
+    /// long waiting delays.
+    /// @returns a flag whether the request has been finished without errors
     bool execute(api_proxy_ptr api_proxy, bool only_cached = false)
     {
         if (only_cached && !is_cached(api_proxy))
             return false;
 
         if (api_proxy.expired()) return false;
-        
+
         response = api_proxy.lock()->get(url, utils::http::session);
         if (is_success(response))
         {
             try
             {
+                // there is no content, no need to parse anything
                 if (response->status == httplib::NoContent_204)
                     return true;
                 
@@ -199,18 +253,18 @@ public:
                     body = body[fieldname];
 
                 on_read_result(body, result);
+                return true;
             }
             catch (const std::exception &ex)
             {
                 log::api->error("There is error while parsing api data response, {}", ex.what());
                 return false;
             }
-            return true;
         }
         return false;
     }
 protected:
-    virtual bool is_success(httplib::Result &r) const { return utils::http::is_success(r->status); }
+    virtual bool is_success(Result &r) const { return utils::http::is_success(r->status); }
 
     /// @brief Provides a way for derived classes to specify result parsing approach
     /// @param body parsed response body
@@ -223,18 +277,19 @@ protected:
     string fieldname;
     string url;
     result_t result;
-    httplib::Result response;
+    Result response;
 };
 
-/// @brief A class-helpers to request several items from Spotify. As their
+/// @brief A class-helper, used for requesting several items from Spotify. As their
 /// API allows requesting with a limited number of items, the requester implements
-/// an interface to get data by chunks.
-/// @tparam T the tyope of the data returned, iterable
+/// an interface to get data by chunks, stores them in one container and the returns
+/// @tparam T a type of the data returned, iterable
+/// @tparam ContainerT a type for the result's container-holder
 template<class T, class ContainerT = std::vector<typename T>>
 class several_items_requester
 {
 public:
-    typedef ContainerT result_t;
+    using result_t = ContainerT;
 public:
     /// @param chunk_size a max size of a data chunk to request
     /// @param data_field some responses have nested data under `data_field` key name
@@ -249,12 +304,14 @@ public:
     auto get() const -> const result_t& { return result; }
 
     bool execute(api_proxy_ptr api, bool only_cached = false)
-    {
+    {   
         result.clear();
 
         auto chunk_begin = ids.begin();
         auto chunk_end = ids.begin();
-
+        
+        requester_progress_notifier notifier(url);
+        
         do
         {
             if (std::distance(chunk_end, ids.end()) <= chunk_size)
@@ -262,10 +319,12 @@ public:
             else
                 std::advance(chunk_end, chunk_size); // ..or just advance iterator further
 
+            notifier.send_progress(result.size(), ids.size());
+
             item_requester<result_t> requester(url, {
                 { "ids", utils::string_join(item_ids_t(chunk_begin, chunk_end), ",") },
             }, data_field);
-            
+
             if (!requester.execute(api, only_cached))
                 return false;
             
@@ -274,7 +333,7 @@ public:
         
             chunk_begin = chunk_end;
         }
-        while (std::distance(chunk_begin, ids.end()) > 0);
+        while (std::distance(chunk_begin, ids.end()) > 0); // there are still items between iterators
 
         return true;
     }
@@ -340,13 +399,14 @@ struct collection_interface
     virtual bool is_populated() const = 0;
 };
 
-typedef std::shared_ptr<collection_interface> collection_ptr;
+using collection_interface_ptr = std::shared_ptr<collection_interface>;
 
 /// @brief A maximum number of one-time requested collection items
 static const size_t max_limit = 50ULL;
 
-/// @brief An abstract class of an API collection object. Provides an interface
-/// to fetch collection from server, to get total count of items in collection
+/// @brief An abstract class of an API collection object. Behaves like a vector,
+/// always empty after creation and has to be populated manually. Provides an interface
+/// to fetch collection from the server or to get total count of items held in collection
 /// without fetching all the data.
 template<class T>
 class collection_abstract:
@@ -354,9 +414,9 @@ class collection_abstract:
     public collection_interface
 {
 public:
-    typedef std::vector<T> container_t;
-    typedef collection_requester<container_t> requester_t;
-    typedef std::shared_ptr<requester_t> requester_ptr;
+    using container_t = std::vector<T>;
+    using requester_t = collection_requester<container_t>;
+    using requester_ptr = std::shared_ptr<requester_t>;
 public:
     /// @param url a url to request
     /// @param params get-request parameters to infuse into given `url`
@@ -424,8 +484,8 @@ protected:
     bool populated = false;
 };
 
-/// @brief Performs populating the collection page by page, each page
-/// has a link to the next one
+/// @brief The items collection, which populates itself, requesting data
+/// from the server synchronously page by page
 /// @tparam T result data type
 template<class T>
 class sync_collection: public collection_abstract<T>
@@ -436,8 +496,9 @@ public:
     using collection_abstract<T>::collection_abstract;
 protected:
     bool fetch_all(api_proxy_ptr api, bool only_cached) override
-    {
+    {       
         auto requester = get_begin_requester();
+        requester_progress_notifier notifier(requester->get_url());
 
         while (requester != nullptr)
         {
@@ -445,6 +506,8 @@ protected:
             // is aborted
             if (!requester->execute(api, only_cached))
                 return false;
+
+            notifier.send_progress(this->size(), requester->get_total());
 
             // reserving all the container length space at once
             if (this->capacity() != requester->get_total())
@@ -469,7 +532,9 @@ protected:
     }
 };
 
-/// @brief Performs populating the collection asynchronously
+/// @brief The items collection, which populates itself, requesting data
+/// from the server asynchronously. Once all the responsed are received,
+/// accumulates them in the right order
 /// @tparam T result data type
 template<class T>
 class async_collection: public collection_abstract<T>
@@ -480,17 +545,18 @@ public:
     using collection_abstract<T>::collection_abstract;
 protected:
     bool fetch_all(api_proxy_ptr api_proxy, bool only_cached) override
-    {
+    {   
         if (api_proxy.expired()) return false;
 
-        // performing the first request to obtain a total number fo items
         auto requester = make_requester(0);
-
+        // performing the first request to obtain a total number fo items
         size_t total = 0;
         if (requester->execute(api_proxy, only_cached))
             total = requester->get_total();
 
         if (total == 0) return false;
+
+        requester_progress_notifier notifier(requester->get_url());
 
         // calculating the amount of pages
         size_t start = 1ULL, end = total / max_limit;
@@ -504,7 +570,7 @@ protected:
         /// So, I am passing real api pointer which works well
         auto api = api_proxy.lock();
         BS::multi_future<void> sequence_future = api->get_pool().submit_sequence(start, end,
-            [this, &result, api = api.get(), only_cached](const size_t idx)
+            [this, &result, api = api.get(), only_cached, &notifier, total](const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
 
@@ -512,6 +578,12 @@ protected:
                     throw std::runtime_error("Unsuccesful request");
                 
                 result[idx] = requester->get();
+
+                size_t items_received = 0;
+                for (const auto &chunk: result)
+                    items_received += chunk.size();
+                
+                notifier.send_progress(items_received, total);
             });
 
         try

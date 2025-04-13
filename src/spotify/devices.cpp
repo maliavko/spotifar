@@ -41,16 +41,16 @@ bool devices_cache::pick_up_device(const string &device_id)
             return true;
         }
 
-    if (available_devices.size() > 0)
-    {
-        auto device = available_devices[0];
-        if (device.is_active)
-            return true;
+    // if (available_devices.size() > 0)
+    // {
+    //     auto device = available_devices[0];
+    //     if (device.is_active)
+    //         return true;
         
-        log::api->debug("Picking up a first available device {}", device.to_str());
-        api_proxy->transfer_playback(device.id);
-        return true;
-    }
+    //     log::api->debug("Picking up a first available device {}", device.to_str());
+    //     api_proxy->transfer_playback(device.id);
+    //     return true;
+    // }
     
     log::api->warn("No available devices for picking up, playback is not transferred");
     return false;

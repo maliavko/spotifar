@@ -649,32 +649,38 @@ intptr_t tasks_queue::push_task(task_t task)
 
 void tasks_queue::process_one(intptr_t task_id)
 {
-    std::lock_guard lock(guard);
-
     auto it = tasks.find(task_id);
     if (it == tasks.end())
         return log::global->error("There is no task registered with the given id, {}", task_id);
 
     execute_task(it->second);
-    tasks.erase(it);
+    
+    {
+        std::lock_guard lock(guard);
+        tasks.erase(it);
+    }
 }
 
 void tasks_queue::process_all()
 {
-    std::lock_guard lock(guard);
-
     for (auto &[task_id, task]: tasks)
         execute_task(task);
-    tasks.clear();
+    
+    {
+        std::lock_guard lock(guard);
+        tasks.clear();
+    }
 }
 
 void tasks_queue::clear_tasks()
 {
-    std::lock_guard lock(guard);
-
     if (tasks.size() > 0)
-        log::global->error("Unexpected tasks are stuck in the queue, {}", tasks.size());
-    tasks.clear();
+        log::global->error("Unfinished tasks are stuck in the queue, {}", tasks.size());
+    
+    {
+        std::lock_guard lock(guard);
+        tasks.clear();
+    }
 }
 
 void tasks_queue::execute_task(task_t &task)
@@ -695,6 +701,22 @@ namespace http
     {
         return (response_code == OK_200 || response_code == NoContent_204 ||
             response_code == NotModified_304);
+    }
+
+    string trim_params(const string &url)
+    {
+        return url.substr(0, url.find("?"));
+    }
+    
+    string trim_domain(const string &url)
+    {
+        static std::regex pattern("^.*://([^/?:]+)(/?.*$)");
+        
+        std::smatch match;
+        if (std::regex_search(url, match, pattern) && match.size() > 2)
+            return match[2];
+
+        return url;
     }
 
     void json_body_builder::object(scope_handler_t scope)

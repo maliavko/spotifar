@@ -17,18 +17,10 @@ plugin::plugin():
     utils::events::start_listening<config::config_observer>(this);
     utils::events::start_listening<spotify::auth_observer>(this);
     utils::events::start_listening<ui::ui_events_observer>(this);
-
-    // TODO: what if not initialized?
-    if (api->start())
-        ui::events::show_root(api);
-
-    on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
 }
 
 plugin::~plugin()
 {
-    on_global_hotkeys_setting_changed(false);
-
     utils::events::stop_listening<spotify::auth_observer>(this);
     utils::events::stop_listening<config::config_observer>(this);
     utils::events::stop_listening<ui::ui_events_observer>(this);
@@ -41,17 +33,25 @@ plugin::~plugin()
 void plugin::start()
 {
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
+    
+    // TODO: what if not initialized?
+    if (api->start())
+        ui::events::show_root(api);
 
+    on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+    
     launch_sync_worker();
 }
 
 void plugin::shutdown()
 {
+    background_tasks.clear_tasks();
+
     shutdown_sync_worker();
 
     player->hide();
-    api->shutdown();
 
+    api->shutdown();
     librespot.shutdown();
 }
 

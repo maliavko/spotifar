@@ -20,7 +20,7 @@ public:
         return_callback_t callback{};
     };
 
-    typedef std::vector<root_data_t> menu_items_t;
+    using menu_items_t = std::vector<root_data_t>;
 public:
     root_base_view(api_proxy_ptr api, const string &uid, const wstring &title,
         return_callback_t callback, menu_items_t items);

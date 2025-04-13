@@ -12,9 +12,6 @@ namespace synchro_tasks = far3::synchro_tasks;
 /// while the instance of the class exists in the particular scope
 struct [[nodiscard]] dlg_events_supressor
 {
-    bool were_events_suppressed;
-    player *dialog;
-
     dlg_events_supressor(player *d):
         dialog(d)
     {
@@ -26,6 +23,9 @@ struct [[nodiscard]] dlg_events_supressor
     {
         dialog->are_dlg_events_suppressed = were_events_suppressed;
     }
+    
+    bool were_events_suppressed;
+    player *dialog;
 };
 
 /// @brief A helper class to avoid redrawing in the function scope,
@@ -128,7 +128,8 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     control(DI_LISTBOX,     qview_x1, qview_y1, qview_x2, qview_y2, DIF_LISTWRAPMODE | DIF_NOFOCUS | DIF_LISTNOCLOSE, L"Playing Queue"),
 };
 
-typedef bool (player::*control_handler_t)(void*);
+using control_handler_t = bool (player::*)(void*);
+
 static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_event_handlers{
     { controls::no_control, {
         { DN_CONTROLINPUT, &player::on_input_received },

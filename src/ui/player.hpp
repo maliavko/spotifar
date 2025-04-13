@@ -98,7 +98,7 @@ private:
                                         // by dialog for some cases
 };
 
-typedef std::shared_ptr<player> player_ptr;
+using player_ptr = std::shared_ptr<player>;
     
 } // namespace ui
 } // namespace spotifar

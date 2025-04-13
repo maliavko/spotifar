@@ -41,9 +41,10 @@ struct settings
     };
 
     /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }
-    typedef std::unordered_map<int, std::pair<WORD, WORD>> hotkeys_t;
+    using hotkeys_t = std::unordered_map<int, std::pair<WORD, WORD>>;
+    
     /// @brief { view_uid, { sort mode idx, is order descending, panel view mode } }
-    typedef std::unordered_map<string, view_t> views_t;
+    using views_t = std::unordered_map<string, view_t>;
 
     bool add_to_disk_menu;
     bool is_global_hotkeys_enabled;
@@ -176,7 +177,7 @@ template<typename T>
 class persistent_data: public persistent_data_abstract
 {
 public:
-    typedef typename T value_t;
+    using value_t = typename T;
 
     persistent_data(const wstring &storage_key);
 

@@ -8,15 +8,32 @@ namespace far3 = utils::far3;
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
+/// @brief Shows a splash loading screen in the middle of the Far. If the `message` is not provided,
+/// the default one is shown.
+/// @note the message is closed automatically by the next panels redrawal
+static void show_loading_splash(const wstring &message = L"")
+{
+    const wchar_t* msgs[] = { L"", L"" };
+
+    if (message.empty())
+        msgs[1] = L" Requesting data... ";
+    else
+        msgs[1] = message.c_str();
+
+    config::ps_info.Message(&MainGuid, &FarMessageGuid, 0, L"", msgs, std::size(msgs), 0);
+}
+
 panel::panel(api_proxy_ptr api):
     api_proxy(api)
 {
     utils::events::start_listening<ui_events_observer>(this);
+    utils::events::start_listening<requester_observer>(this);
 }
 
 panel::~panel()
 {
     utils::events::stop_listening<ui_events_observer>(this);
+    utils::events::stop_listening<requester_observer>(this);
 
     view.reset();
     api_proxy.reset();
@@ -86,6 +103,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
+    // TODO: refactor, no need to return nullptr, remove all the further checks afterwards
     auto items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
@@ -161,6 +179,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
         auto key = keys::make_combined(key_event);
         switch (key)
         {
+            // to request and show extra info on the panel for the item under cursor
             case VK_F3:
             {
                 bool should_refresh = false;
@@ -168,22 +187,20 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                     if (view->request_extra_info(ppi.get()))
                         should_refresh = true;
 
-                if (should_refresh) // refreshing only in case something has changed
+                if (should_refresh) // refreshing only in case anything has changed
                     refresh_panels();
         
                 // blocking F3 panel processing in general, as we have a custom one
                 return TRUE;
             }
-            case VK_F2:
-            {
-                return TRUE;
-            }
+            // to show a sort menu for the currently opened view
             case VK_F12 + keys::mods::ctrl:
             {
                 auto sort_modex_idx = show_sort_dialog(*view);
                 if (sort_modex_idx > -1)
                     view->select_sort_mode(sort_modex_idx);
-                return TRUE;
+                
+                return TRUE; // no need to show a standard sorting menu
             }
         }
 
@@ -222,6 +239,41 @@ void panel::refresh_panels(const string &item_id)
     }
 
     far3::panels::redraw(PANEL_ACTIVE);
+}
+
+/// @brief The requests, which do not require showing splash screen, as they are processed
+/// in the background, hidden from user
+static const std::set<string> no_splash_requests{
+    "/v1/me/player/recently-played",
+    "/v1/me/tracks/contains",
+};
+
+void panel::on_request_started(const string &url)
+{
+    using namespace utils::http;
+
+    if (no_splash_requests.contains(trim_domain(trim_params(url))))
+        return;
+    
+    // the handler is called only when complex http requests are being initiated, like
+    // sync and async multipage collections fetching. In most of the cases it is done when
+    // the new view is created and getting populated. So, we show a splash screen and it will
+    // get closed automatically when the view initialization is done and the panel is redrawn
+    show_loading_splash();
+}
+
+void panel::on_request_finished(const string &url)
+{
+}
+
+void panel::on_request_progress_changed(const string &url, size_t progress, size_t total)
+{
+    using namespace utils::http;
+
+    if (no_splash_requests.contains(trim_domain(trim_params(url))))
+        return;
+    
+    show_loading_splash(std::format(L"Fetching progress: {}/{}", progress, total));
 }
 
 void panel::on_show_filters_menu()

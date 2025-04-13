@@ -19,15 +19,6 @@ auto request_item(R &&requester, api_proxy_ptr api) -> typename R::result_t
     return {};
 }
 
-/// @brief clearing domain from path
-static string trim_webapi_url(const string &url)
-{
-    if (url.starts_with(spotify_api_url))
-        return url.substr(spotify_api_url.size(), url.size());
-    
-    return url;
-}
-
 static void http_logger(const Request &req, const Response &res)
 {
     static const std::set<string> exclude{
@@ -38,11 +29,10 @@ static void http_logger(const Request &req, const Response &res)
 
     if (http::is_success(res.status))
     {
-        auto url = req.path.substr(0, req.path.find("?")); // trim parameters
-        if (!exclude.contains(url))
+        if (!exclude.contains(http::trim_params(req.path)))
         {
             log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
-                res.status, req.method, trim_webapi_url(req.path));
+                res.status, req.method, http::trim_domain(req.path));
         }
     }
     else
@@ -516,7 +506,7 @@ void api::start_playback_raw(const string &body, const string &device_id)
 
 bool api::is_request_cached(const string &url) const
 {
-    string u = trim_webapi_url(url);
+    string u = http::trim_domain(url);
     return api_responses_cache.is_cached(u) && api_responses_cache.get(u).is_valid();
 }
 
@@ -527,7 +517,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     using namespace httplib;
 
     string cached_etag = "";
-    string url = trim_webapi_url(request_url);
+    string url = http::trim_domain(request_url);
 
     // we have a cache for the requested url and it is still valid
     if (api_responses_cache.is_cached(url))

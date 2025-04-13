@@ -13,9 +13,8 @@ namespace json = utils::json;
 
 using json::from_json;
 using json::to_json;
-
-typedef string item_id_t;
-typedef std::vector<item_id_t> item_ids_t;
+using item_id_t = string;
+using item_ids_t = std::vector<item_id_t>;
 
 static const item_id_t invalid_id = "";
 
@@ -281,8 +280,8 @@ struct playing_queue_t
     friend void to_json(json::Value &j, const playing_queue_t &i, json::Allocator &allocator);
 };
 
-typedef std::vector<device_t> devices_t;
-typedef std::vector<history_item_t> history_items_t;
+using devices_t = std::vector<device_t>;
+using history_items_t = std::vector<history_item_t>;
 
 } // namespace spotify
 } // namespace spotifar

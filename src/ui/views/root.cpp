@@ -206,7 +206,7 @@ size_t collection_view::get_total(const string &menu_id, bool only_cached)
 {
     if (api_proxy.expired()) return 0;
 
-    collection_ptr collection;
+    collection_interface_ptr collection;
     
     auto api = api_proxy.lock();
     if (menu_id == artists_id)
