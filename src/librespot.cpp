@@ -1,9 +1,14 @@
 #include "librespot.hpp"
 #include "config.hpp"
+#include "lng.hpp"
 
 namespace spotifar {
 
 using namespace utils;
+using utils::far3::get_text;
+using utils::far3::get_vtext;
+
+static const wstring device_name = L"librespot";
 
 bool librespot_handler::launch(const string &access_token)
 {
@@ -35,20 +40,33 @@ bool librespot_handler::launch(const string &access_token)
     ZeroMemory(&pi, sizeof(pi));
 
     std::wstringstream cmd;
+
+    // https://github.com/librespot-org/librespot/wiki/Options
     cmd << std::format(L"{}\\librespot.exe", config::get_plugin_launch_folder());
     cmd << std::format(L" --cache {}\\cache", config::get_plugin_data_folder());
     cmd << std::format(L" --system-cache {}\\system-cache", config::get_plugin_data_folder());
     cmd << L" --access-token " << utils::to_wstring(access_token);
-    cmd << L" --name librespot";
-    //cmd << L" --disable-audio-cache";
+    cmd << L" --name " << device_name;
+    cmd << L" --device-type computer";
+    cmd << L" --cache-size-limit 1.5G";
     cmd << L" --bitrate 320";
-    // cmd << L" --backend rodio";
     cmd << L" --disable-discovery";
-    // cmd << L" --initial-volume 90";
     cmd << L" --enable-volume-normalisation";
+
+    // configurable options
+    // bitrate - Bitrate (kbps): 96, 160, 320. Defaults to 160.
+    // format - Output format: F64, F32, S32, S24, S24_3, S16. Defaults to S16.
+    // dither - Dither algorithm: none, gpdf, tpdf, tpdf_hp. Defaults to tpdf for formats S16, S24, S24_3 and none for other formats.
+    // initial-volume - 0-100
+    // enable-volume-normalisation [b]
+    // volume-ctrl - Volume control type cubic, fixed, linear, log. Defaults to log.
+    // autoplay [b]
+    // disable-gapless [b]
+    // disable-audio-cache [b]
     
-    if (config::is_verbose_logging_enabled())
-        cmd << L" --verbose";
+    // while verbocity is extended, the process freezes and stutter heavily for some reason
+    // if (config::is_verbose_logging_enabled())
+    //     cmd << L" --verbose";
 
     if(!CreateProcess(
         NULL,
@@ -71,6 +89,8 @@ bool librespot_handler::launch(const string &access_token)
     SetNamedPipeHandleState(pipe_read, &dw_mode, NULL, NULL);
 
     is_running = true;
+    
+    utils::events::start_listening<devices_observer>(this);
 
     return true;
 }
@@ -80,9 +100,12 @@ void librespot_handler::shutdown()
     if (!is_running)
         return;
     
+    utils::events::stop_listening<devices_observer>(this);
+    
     // sending a control stop event to the librespot process
     GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
     
+    // closing all the used handles
     if (pipe_read != NULL)
     {
         CloseHandle(pipe_read);
@@ -93,8 +116,6 @@ void librespot_handler::shutdown()
         CloseHandle(pipe_write);
         pipe_write = NULL;
     }
-
-    // Close process and thread handles
     if (pi.hProcess != NULL)
     {
         CloseHandle(pi.hProcess);
@@ -112,15 +133,22 @@ void librespot_handler::tick()
     if (!is_running)
         return;
     
+    // the algo below parses all the accumulated Librespot process messages and propagates
+    // them into regular plugin's log file
     DWORD dwRead;
     static CHAR chBuf[512];
     BOOL bSuccess = FALSE;
 
-    static auto r = std::regex("\\[(.+) (\\w+) .+\\] (.+)");
+    /// 1 - do not remember; 2 - message log level; 3 - the message itself
+    static auto pattern = std::regex("\\[(.+) (\\w+) .+\\] (.+)");
+
+    // stringstream is used to read output buffer line by line, it is static, as some lines
+    // can be unfinished in the moment of parsing, so the ending should stay somewhere to be
+    // concatanated later and parsed again
     static std::stringstream ss(std::ios_base::app | std::ios_base::in | std::ios_base::out);
 
     bSuccess = ReadFile(pipe_read, chBuf, 512, &dwRead, NULL);
-    if (bSuccess && dwRead != 0)
+    if (bSuccess && dwRead != 0) // if the process's output buffer has something to read
     {
         ss.write(chBuf, dwRead);
     
@@ -128,7 +156,7 @@ void librespot_handler::tick()
         while (std::getline(ss, sline) && !ss.eof())
         {
             std::smatch match;
-            if (std::regex_search(sline, match, r))
+            if (std::regex_search(sline, match, pattern))
             {
                 if (match[2] == "INFO")
                     log::librespot->info(match[3].str());
@@ -147,6 +175,44 @@ void librespot_handler::tick()
             ss.str(sline);
         }
     }
+}
+
+void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
+{   
+    // searching for an active device if any
+    auto active_dev_it = std::find_if(
+        devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
+
+    for (const auto &device: devices)
+        if (device.name == device_name)
+        {
+            // stop listening after a correct device is detected
+            utils::events::stop_listening<devices_observer>(this);
+
+            if (auto api = api_proxy.lock())
+            {
+                // some other device is already active
+                if (active_dev_it != devices.end() && active_dev_it->id != device.id)
+                {
+                    // let's provide a choice for the user to pick it up or leave the active one untouched
+                    static const wchar_t* msgs[] =
+                    {
+                        get_text(MTransferPlaybackTitle),
+                        get_vtext(MTransferPlaybackMessage, active_dev_it->name, device_name).c_str()
+                    };
+
+                    bool need_to_transfer = config::ps_info.Message(
+                        &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+                    ) == 0;
+
+                    if (!need_to_transfer) return;
+                }
+
+                log::librespot->info("A librespot process is found, trasferring playback...");
+                api->transfer_playback(device.id, true);
+                return;
+            }
+        }
 }
 
 } // namespace spotifar

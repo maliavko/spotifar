@@ -305,6 +305,14 @@ namespace far3
     /// @brief Localize given far string id
     const wchar_t* get_text(int msg_id);
 
+    /// @brief The method helps to get a localized string with the given `msg_id` and
+    /// format it with the given `args`
+    template<typename... Args>
+    wstring get_vtext(int msg_id, Args&&... args)
+    {
+        return std::vformat(get_text(msg_id), std::make_wformat_args(args...));
+    }
+
     /// @brief ProcessSynchroEventW mechanism
     namespace synchro_tasks
     {

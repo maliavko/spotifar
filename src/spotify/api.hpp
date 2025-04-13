@@ -14,7 +14,6 @@ namespace spotifar { namespace spotify {
 
 class api:
     public api_interface,
-    public auth_observer,
     public std::enable_shared_from_this<api>
 {
 public:
@@ -86,8 +85,6 @@ protected:
     
     auto get_pool() -> BS::thread_pool& override { return pool; };
     auto is_request_cached(const string &url) const -> bool override;
-    
-    void on_auth_status_changed(const auth_t &auth) override; // auth status listener
 private:
     BS::thread_pool pool;
     http_cache api_responses_cache;

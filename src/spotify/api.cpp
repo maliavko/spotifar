@@ -58,8 +58,6 @@ api::~api()
 
 bool api::start()
 {
-    utils::events::start_listening<auth_observer>(this);
-
     auto ctx = config::lock_settings();
 
     // initializing persistent caches
@@ -73,8 +71,6 @@ bool api::start()
 
 void api::shutdown()
 {
-    utils::events::stop_listening<auth_observer>(this);
-
     auto ctx = config::lock_settings();
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->write(*ctx); });
 
@@ -539,6 +535,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     {
         if (r->status == OK_200)
         {
+            // TODO: caught here racing memory exception
             auto etag = r->get_header_value("etag", "");
 
             // caching only requests which have ETag or `cache-for` instruction
@@ -626,12 +623,6 @@ std::shared_ptr<httplib::Client> api::get_client() const
     });
 
     return client;
-}
-
-void api::on_auth_status_changed(const auth_t &auth)
-{
-    // pick up the some device for playback
-    devices->pick_up_device();
 }
 
 } // namespace spotify

@@ -1,4 +1,5 @@
 #include "root.hpp"
+#include "lng.hpp"
 #include "ui/events.hpp"
 
 namespace spotifar { namespace ui {

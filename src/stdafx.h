@@ -36,9 +36,8 @@
 
 #include <plugin.hpp> // far api
 #include <PluginSettings.hpp> // far plugin's data storage access
-#include <DlgBuilder.hpp> // far autocatic dialogs builders
+#include <DlgBuilder.hpp> // far automatic dialogs builders
 
-#include "lng.hpp"
 #include "guid.hpp"
 #include "version.hpp"
 

@@ -1,5 +1,6 @@
 #include "ui/panel.hpp"
 #include "ui/dialogs/menus.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -20,7 +21,7 @@ static void show_loading_splash(const wstring &message = L"")
     else
         msgs[1] = message.c_str();
 
-    config::ps_info.Message(&MainGuid, &FarMessageGuid, 0, L"", msgs, std::size(msgs), 0);
+    config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
 }
 
 panel::panel(api_proxy_ptr api):

@@ -8,7 +8,7 @@ application ideas
     - goto playlist from player UI
 - new functional
     - splash screen with notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
-    - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://stackoverflow.com/questions/3582108/create-windows-service-from-executable
+    - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
     - grab lyrics from here? https://lrclib.net/
     - fresh releases through musicbrainz: https://musicbrainz.org/doc/MusicBrainz_API/Search, https://github.com/metabrainz/libmusicbrainz/tree/master/examples
     - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
@@ -17,7 +17,6 @@ application ideas
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support
-    - add possibility to register librespot as a win service to avoid interrupting music when far is closed
     - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
 
 bugs
@@ -32,7 +31,7 @@ to finish for alpha release
 - to implement filter menu on each view
 - to add a proper github support: license, automations? binaries
 - to add a proper errors handling
-- to finish up librespot process start up and propagating its settings to the config dialog
+- to finish up librespot process start up and propagating its settings to the config dialog: https://github.com/librespot-org/librespot/wiki/Options
 + loading splash screen
 - localizations
 - finilize the settings menu

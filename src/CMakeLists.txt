@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/dialogs/dialog.cpp
 	ui/dialogs/config_hotkeys.cpp
 	ui/dialogs/config_general.cpp
+	ui/dialogs/config_backend.cpp
 	../thirdparty/ObserverManager/ObserverManager/ObserverManager.cpp
 	../thirdparty/ObserverManager/ObserverManager/BaseObserverProtocol.cpp
 	spotifar.vc.def

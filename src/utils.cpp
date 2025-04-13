@@ -1,5 +1,6 @@
 ﻿#include "utils.hpp"
 #include "config.hpp"
+#include "lng.hpp"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"

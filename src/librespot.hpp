@@ -3,25 +3,35 @@
 #pragma once
 
 #include "stdafx.h"
+#include "spotify/devices.hpp"
 
 namespace spotifar {
 
-class librespot_handler
+class librespot_handler:
+    public spotify::devices_observer // to wait for the Librespot device get available and pick it up
 {
 public:
+    librespot_handler(spotify::api_proxy_ptr api): api_proxy(api) {}
+    ~librespot_handler() { api_proxy.reset(); }
+
     auto launch(const string &access_token) -> bool;
     auto shutdown() -> void;
 
     auto tick() -> void;
     auto is_launched() const -> bool { return is_running; }
-
+protected:
+    void on_devices_changed(const spotify::devices_t &devices) override;
 private:
+    spotify::api_proxy_ptr api_proxy;
     bool is_running = false;
+
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     HANDLE pipe_read = NULL;
     HANDLE pipe_write = NULL;
 };
+
+using librespot_ptr = std::shared_ptr<librespot_handler>;
 
 } // namespace spotifar
 

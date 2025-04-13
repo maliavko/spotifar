@@ -14,7 +14,7 @@ namespace spotifar {
 
 class plugin:
     public config::config_observer, // for catching chnging config settings
-    public spotify::auth_observer,  // for launching librespot once credentials were acquared
+    public spotify::auth_observer,  // for launching librespot once credentials were acquaired
     public ui::ui_events_observer   // for showin up the player by request
 {
 public:
@@ -41,8 +41,10 @@ protected:
     void on_global_hotkeys_setting_changed(bool is_enabled) override;
     void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys) override;
     void on_logging_verbocity_changed(bool is_verbose) override;
-    // auto handler
+
+    // auth handler
     void on_auth_status_changed(const spotify::auth_t &auth) override;
+    
     // panel events handlers
     void show_player() override;
 private:
@@ -53,7 +55,7 @@ private:
     // background thread, like hotkeys check etc.
     utils::tasks_queue background_tasks;
 
-    librespot_handler librespot;
+    librespot_ptr librespot;
     spotify::api_ptr api;
     ui::panel_ptr panel;
     ui::player_ptr player;

@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "lng.hpp"
 #include "config.hpp"
 #include "plugin.h"
 #include "ui/dialogs/menus.hpp"

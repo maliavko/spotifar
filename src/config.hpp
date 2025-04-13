@@ -28,6 +28,50 @@ namespace hotkeys
     };
 }
 
+namespace playback
+{
+    namespace bitrate
+    {
+        inline static const string bps96 = "96";
+        inline static const string bps160 = "160";
+        inline static const string bps320 = "320";
+
+        static const std::vector<string> all{ bps96, bps160, bps320 };
+    }
+
+    namespace format
+    {
+        inline static const string S16 = "S16";
+        inline static const string S24_3 = "S24_3";
+        inline static const string S24 = "S24";
+        inline static const string S32 = "S32";
+        inline static const string F32 = "F32";
+        inline static const string F64 = "F64";
+
+        static const std::vector<string> all{ S16, S24_3, S24, S32, F32, F64 };
+    }
+
+    namespace dither
+    {
+        inline static const string none = "none";
+        inline static const string gpdf = "gpdf";
+        inline static const string tpdf = "tpdf";
+        inline static const string tpdf_hp = "tpdf_hp";
+
+        static const std::vector<string> all{ none, gpdf, tpdf, tpdf_hp };
+    }
+
+    namespace volume_ctrl
+    {
+        inline static const string cubic = "cubic";
+        inline static const string fixed = "fixed";
+        inline static const string linear = "linear";
+        inline static const string log = "log";
+
+        static const std::vector<string> all{ cubic, fixed, linear, log };
+    }
+}
+
 struct settings
 {
     struct view_t
@@ -46,16 +90,35 @@ struct settings
     /// @brief { view_uid, { sort mode idx, is order descending, panel view mode } }
     using views_t = std::unordered_map<string, view_t>;
 
+    // general settings
     bool add_to_disk_menu;
-    bool is_global_hotkeys_enabled;
     bool verbose_logging;
-    int localhost_service_port;
+
+    // spotify settings
     wstring spotify_client_id;
     wstring spotify_client_secret;
+    int localhost_service_port;
+
+    // backend settings
+    bool playback_backend_enabled;
+    bool volume_normalisation_enabled;
+    bool playback_autoplay_enabled;
+    bool gapless_playback_enabled;
+    bool playback_cache_enabled;
+    string playback_bitrate;
+    string playback_format;
+    string playback_dither;
+    string playback_volume_ctrl;
+    int playback_initial_volume;
+
+    // global hotkeys
+    bool is_global_hotkeys_enabled;
+    hotkeys_t hotkeys;
+
+    // complimentary data
+    views_t views;
     wstring plugin_startup_folder;
     wstring plugin_data_folder;
-    hotkeys_t hotkeys;
-    views_t views;
 };
 
 struct config_observer: public BaseObserverProtocol
@@ -152,6 +215,26 @@ auto get_plugin_data_folder() -> const wstring&;
 auto get_hotkey(int hotkey_id) -> const std::pair<WORD, WORD>*;
 
 auto get_panel_settings(const string &view_uid, const settings::view_t &def) -> settings::view_t*;
+
+auto is_playback_backend_enabled() -> bool;
+
+auto is_playback_normalisation_enabled() -> bool;
+
+auto is_playback_autoplay_enabled() -> bool;
+
+auto is_gapless_playback_enabled() -> bool;
+
+auto is_playback_cache_enabled() -> bool;
+
+auto get_playback_bitrate() -> string;
+
+auto get_playback_format() -> string;
+
+auto get_playback_dither() -> string;
+
+auto get_playback_volume_ctrl() -> string;
+
+auto get_playback_initial_volume() -> size_t;
 
 
 /// @brief An interface to the class, which provides functionality to write

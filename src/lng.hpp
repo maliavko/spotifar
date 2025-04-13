@@ -73,6 +73,8 @@ namespace spotifar
         MFarMessageErrorTitle,
         MFarMessageErrorStartup,
         MFarMessageWarning,
+        MTransferPlaybackTitle,
+        MTransferPlaybackMessage,
     };
 }
 

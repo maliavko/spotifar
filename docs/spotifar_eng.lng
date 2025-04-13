@@ -67,3 +67,5 @@
 "Critical error"
 "An error has occured while initializing plugin."
 "Warning"
+"Transferring playback"
+"Some other device is active now '{0}', would you like to transfer playback to '{1}'?"

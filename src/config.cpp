@@ -12,7 +12,17 @@ static const wchar_t
     *views_settings_opt = L"ViewsSettings",
     *spotify_client_id_opt = L"SpotifyClientID",
     *spotify_client_secret_opt = L"SpotifyClientSecret",
-    *localhost_service_port_opt = L"LocalhostServicePort";
+    *localhost_service_port_opt = L"LocalhostServicePort",
+    *playback_backend_enabled_opt = L"PlaybackBackendEnabled",
+    *volume_normalisation_enabled_opt = L"VolumeNormalisationEnabled",
+    *playback_autoplay_enabled_opt = L"PlaybackAutoplayEnabled",
+    *gapless_playback_enabled_opt = L"GaplessPlaybackEnabled",
+    *playback_cache_enabled_opt = L"PlaybackCacheEnabled",
+    *playback_bitrate_opt = L"PlaybackBitrate",
+    *playback_format_opt = L"PlaybackFormat",
+    *playback_dither_opt = L"PlaybackDither",
+    *playback_volume_ctrl_opt = L"PlaybackVolumeCtrl",
+    *playback_initial_volume_opt = L"PlaybackInitialVolume";
 
 PluginStartupInfo ps_info;
 FarStandardFunctions fsf;
@@ -205,6 +215,19 @@ void read(const PluginStartupInfo *info)
     _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
     _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, false);
+    
+    // playback settings
+    _settings.playback_backend_enabled = ctx->get_bool(playback_backend_enabled_opt, true);
+    _settings.volume_normalisation_enabled = ctx->get_bool(volume_normalisation_enabled_opt, true);
+    _settings.playback_autoplay_enabled = ctx->get_bool(playback_autoplay_enabled_opt, false);
+    _settings.gapless_playback_enabled = ctx->get_bool(gapless_playback_enabled_opt, true);
+    _settings.playback_cache_enabled = ctx->get_bool(playback_cache_enabled_opt, true);
+    // TODO: validate incorrect data from the file
+    _settings.playback_bitrate = ctx->get_str(playback_bitrate_opt, playback::bitrate::bps160);
+    _settings.playback_format = ctx->get_str(playback_format_opt, playback::format::S16);
+    _settings.playback_dither = ctx->get_str(playback_dither_opt, playback::dither::tpdf);
+    _settings.playback_volume_ctrl= ctx->get_str(playback_volume_ctrl_opt, playback::volume_ctrl::log);
+    _settings.playback_initial_volume = ctx->get_int(playback_initial_volume_opt, 50);
 
     auto views_settings_json = ctx->get_str(views_settings_opt, "");
     if (!views_settings_json.empty())
@@ -231,6 +254,18 @@ void write()
     ctx->set_wstr(spotify_client_id_opt, _settings.spotify_client_id);
     ctx->set_wstr(spotify_client_secret_opt, _settings.spotify_client_secret);
     ctx->set_int(localhost_service_port_opt, _settings.localhost_service_port);
+    
+    // playback settings
+    ctx->set_bool(playback_backend_enabled_opt, _settings.playback_backend_enabled);
+    ctx->set_bool(volume_normalisation_enabled_opt, _settings.volume_normalisation_enabled);
+    ctx->set_bool(playback_autoplay_enabled_opt, _settings.playback_autoplay_enabled);
+    ctx->set_bool(gapless_playback_enabled_opt, _settings.gapless_playback_enabled);
+    ctx->set_bool(playback_cache_enabled_opt, _settings.playback_cache_enabled);
+    ctx->set_str(playback_bitrate_opt, _settings.playback_bitrate);
+    ctx->set_str(playback_format_opt, _settings.playback_format);
+    ctx->set_str(playback_dither_opt, _settings.playback_dither);
+    ctx->set_str(playback_volume_ctrl_opt, _settings.playback_volume_ctrl);
+    ctx->set_int(playback_initial_volume_opt, _settings.playback_initial_volume);
     
     auto buffer = json::dump(_settings.views);
     ctx->set_str(views_settings_opt, buffer->GetString());
@@ -291,6 +326,56 @@ settings::view_t* get_panel_settings(const string &view_uid, const settings::vie
 {
     auto result = _settings.views.emplace(view_uid, def);
     return &result.first->second;
+}
+
+bool is_playback_backend_enabled()
+{
+    return _settings.playback_backend_enabled;
+}
+
+bool is_playback_normalisation_enabled()
+{
+    return _settings.volume_normalisation_enabled;
+}
+
+bool is_playback_autoplay_enabled()
+{
+    return _settings.playback_autoplay_enabled;
+}
+
+bool is_gapless_playback_enabled()
+{
+    return _settings.gapless_playback_enabled;
+}
+
+bool is_playback_cache_enabled()
+{
+    return _settings.playback_cache_enabled;
+}
+
+string get_playback_bitrate()
+{
+    return _settings.playback_bitrate;
+}
+
+string get_playback_format()
+{
+    return _settings.playback_format;
+}
+
+string get_playback_dither()
+{
+    return _settings.playback_dither;
+}
+
+string get_playback_volume_ctrl()
+{
+    return _settings.playback_volume_ctrl;
+}
+
+size_t get_playback_initial_volume()
+{
+    return _settings.playback_initial_volume;
 }
 
 } // namespace config

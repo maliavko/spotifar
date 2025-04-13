@@ -1,6 +1,7 @@
 #include "plugin.h"
 #include "config.hpp"
 #include "utils.hpp"
+#include "lng.hpp"
 #include "ui/events.hpp"
 
 namespace spotifar {
@@ -9,11 +10,12 @@ using namespace utils;
 namespace hotkeys = config::hotkeys;
 namespace far3 = utils::far3;
 
-plugin::plugin():
-    api(new spotify::api()),
-    panel(new ui::panel(api)),
-    player(new ui::player(api))
+plugin::plugin(): api(new spotify::api())
 {
+    panel = std::make_shared<ui::panel>(api);
+    player = std::make_shared<ui::player>(api);
+    librespot = std::make_shared<librespot_handler>(api);
+
     utils::events::start_listening<config::config_observer>(this);
     utils::events::start_listening<spotify::auth_observer>(this);
     utils::events::start_listening<ui::ui_events_observer>(this);
@@ -28,6 +30,7 @@ plugin::~plugin()
     panel.reset();
     player.reset();
     api.reset();
+    librespot.reset();
 }
 
 void plugin::start()
@@ -52,7 +55,7 @@ void plugin::shutdown()
     player->hide();
 
     api->shutdown();
-    librespot.shutdown();
+    librespot->shutdown();
 }
 
 void plugin::update_panel_info(OpenPanelInfo *info)
@@ -121,7 +124,7 @@ void plugin::launch_sync_worker()
             {
                 api->tick();
                 player->tick();
-                librespot.tick();
+                librespot->tick();
 
                 background_tasks.process_all(); // ticking background tasks if any
 
@@ -199,14 +202,14 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth)
 {
-    // if (auth.is_valid() && !librespot.is_launched())
-    //     if (!librespot.launch(auth.access_token))
-    //     {
-    //         librespot.shutdown(); // cleaning up the allocated resources if any
-    //         utils::far3::show_far_error_dlg(
-    //             MFarMessageErrorStartup, L"There is a problem launching Librespot "
-    //             "process, look into logs");
-    //     }
+    if (auth.is_valid() && !librespot->is_launched())
+        if (!librespot->launch(auth.access_token))
+        {
+            librespot->shutdown(); // cleaning up the allocated resources if any
+            utils::far3::show_far_error_dlg(
+                MFarMessageErrorStartup, L"There is a problem launching Librespot "
+                "process, look at the logs");
+        }
 }
 
 void plugin::show_player()

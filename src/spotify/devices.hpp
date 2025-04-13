@@ -13,10 +13,8 @@ class devices_cache: public json_cache<devices_t>
 public:
     devices_cache(api_interface *api): json_cache(), api_proxy(api) {}
     ~devices_cache() { api_proxy = nullptr; }
-
-    bool pick_up_device(const string &device_id = "");
 protected:
-    // `json_cache` class overloads
+    // `json_cache` class interface
     bool is_active() const override;
     bool request_data(devices_t &data) override;
     void on_data_synced(const devices_t &data, const devices_t &prev_data) override;

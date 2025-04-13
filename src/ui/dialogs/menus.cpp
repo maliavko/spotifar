@@ -1,20 +1,24 @@
 #include "config.hpp"
+#include "lng.hpp"
 #include "utils.hpp"
 #include "menus.hpp"
 #include "config_hotkeys.hpp"
 #include "config_general.hpp"
+#include "config_backend.hpp"
 
 namespace spotifar { namespace ui {
 
 using namespace utils;
 using namespace utils::far3;
 
+using far3::get_text;
+
 intptr_t show_config_menu()
 {
     static FarMenuItem items[] = {
-        { MIF_NONE, far3::get_text(MConfigDialogMenuGeneralOpt) },
-        { MIF_NONE, far3::get_text(MConfigDialogMenuBackendOpt) },
-        { MIF_NONE, far3::get_text(MConfigDialogMenuHotkeysOpt) },
+        { MIF_NONE, get_text(MConfigDialogMenuGeneralOpt) },
+        { MIF_NONE, get_text(MConfigDialogMenuBackendOpt) },
+        { MIF_NONE, get_text(MConfigDialogMenuHotkeysOpt) },
     };
 
     while (1)
@@ -24,7 +28,7 @@ intptr_t show_config_menu()
             &ConfigMenuGuid,
             -1, -1, 0, // centered, autowidth
             FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-            far3::get_text(MConfigDialogMenuTitle), L"",
+            get_text(MConfigDialogMenuTitle), L"",
             {}, {}, {}, // no break codes, no help topic
             items, std::size(items)
         );
@@ -39,6 +43,10 @@ intptr_t show_config_menu()
         if (opt_idx == 0)
         {
             config_general_dialog().run();
+        }
+        else if (opt_idx == 1)
+        {
+            config_backend_dialog().run();
         }
         else if (opt_idx == 2)
         {
@@ -77,7 +85,7 @@ int show_sort_dialog(const view_abstract &v)
         &SortDialogGuid,
         info.PanelRect.left + 5, -1, 0, // horizontally alligned to the active panel left
         FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-        far3::get_text(MSortDialogTitle), L"",
+        get_text(MSortDialogTitle), L"",
         {}, {}, {}, // no break codes, no help topic
         &result[0], result.size()
     );
