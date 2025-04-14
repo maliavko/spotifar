@@ -8,6 +8,7 @@
 		"openssl",
 		"spdlog",
 		"bshoshany-thread-pool",
-		"rapidjson"
+		"rapidjson",
+		"wintoast"
   ]
 }

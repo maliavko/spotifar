@@ -2,6 +2,7 @@
 find_package(httplib CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(RapidJSON CONFIG REQUIRED)
+find_package(unofficial-wintoast CONFIG REQUIRED)
 
 set(SPDLOG_WCHAR_FILENAMES ON)
 find_package(spdlog CONFIG REQUIRED)
@@ -65,6 +66,7 @@ target_link_libraries(${PROJECT_NAME}
 		OpenSSL::Crypto
 		spdlog::spdlog_header_only
 		rapidjson
+		unofficial::wintoast::wintoast
 )
 
 # copy docs to the final package

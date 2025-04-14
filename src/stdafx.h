@@ -33,6 +33,7 @@
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
+#include "wintoastlib.h"
 
 #include <plugin.hpp> // far api
 #include <PluginSettings.hpp> // far plugin's data storage access

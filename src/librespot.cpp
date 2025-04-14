@@ -195,10 +195,9 @@ void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
                 if (active_dev_it != devices.end() && active_dev_it->id != device.id)
                 {
                     // let's provide a choice for the user to pick it up or leave the active one untouched
-                    static const wchar_t* msgs[] =
-                    {
-                        get_text(MTransferPlaybackTitle),
-                        get_vtext(MTransferPlaybackMessage, active_dev_it->name, device_name).c_str()
+                    auto message = get_vtext(MTransferPlaybackMessage, active_dev_it->name, device_name);
+                    const wchar_t* msgs[] = {
+                        get_text(MTransferPlaybackTitle), message.c_str()
                     };
 
                     bool need_to_transfer = config::ps_info.Message(
