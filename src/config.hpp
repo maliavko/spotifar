@@ -37,6 +37,9 @@ namespace playback
         inline static const string bps320 = "320";
 
         static const std::vector<string> all{ bps96, bps160, bps320 };
+
+        /// @brief Checks whether the given `bps` is a valid bitrate value
+        bool is_valid(const string &bps);
     }
 
     namespace format
@@ -49,6 +52,12 @@ namespace playback
         inline static const string F64 = "F64";
 
         static const std::vector<string> all{ S16, S24_3, S24, S32, F32, F64 };
+
+        /// @brief Checks whether the given format supports dithering
+        bool does_support_dither(const string &fmt);
+
+        /// @brief Checks whether the given `fmt` is a valid format value
+        bool is_valid(const string &fmt);
     }
 
     namespace dither
@@ -59,6 +68,9 @@ namespace playback
         inline static const string tpdf_hp = "tpdf_hp";
 
         static const std::vector<string> all{ none, gpdf, tpdf, tpdf_hp };
+
+        /// @brief Checks whether the given `dither` is a valid dithering value
+        bool is_valid(const string &dither);
     }
 
     namespace volume_ctrl
@@ -69,6 +81,9 @@ namespace playback
         inline static const string log = "log";
 
         static const std::vector<string> all{ cubic, fixed, linear, log };
+
+        /// @brief Checks whether the given `vctrl` is a valid volume control value
+        bool is_valid(const string &vctrl);
     }
 }
 

@@ -12,7 +12,8 @@ class config_backend_dialog: public modal_dialog
 public:
     config_backend_dialog();
 protected:
-    auto handle_result(intptr_t dialog_run_result) -> intptr_t;
+    void init() override;
+    auto handle_result(intptr_t dialog_run_result) -> intptr_t override;
 };
 
 } // namespace ui

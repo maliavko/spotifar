@@ -149,7 +149,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
 
                 auto cli = httplib::Client(match[1]);
 
-                std::ofstream file("D:\\downloads\\tmp.png", std::ios_base::binary);
+                std::ofstream file("D:\\tmp.png", std::ios_base::binary);
 
                 auto res = cli.Get(match[2],
                     [&](const char *data, size_t data_length)
@@ -166,7 +166,7 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
                 std::regex_search(img.url, match, pattern);
                 auto cli2 = httplib::Client(match[1]);
 
-                std::ofstream file2("D:\\downloads\\tmp2.png", std::ios_base::binary);
+                std::ofstream file2("D:\\tmp2.png", std::ios_base::binary);
 
                 res = cli2.Get(match[2],
                     [&](const char *data, size_t data_length)
@@ -180,10 +180,10 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
 
                 
                 // if (WinToast::isWin10AnniversaryOrHigher())
-                //     templ.setHeroImagePath(L"D:\\downloads\\tmp2.png", false);
+                //     templ.setHeroImagePath(L"D:\\tmp2.png", false);
                 
                 templ.setAttributionText(L"Spotify content");
-                templ.setImagePath(L"D:\\downloads\\tmp.png", WinToastTemplate::CropHint::Circle);
+                templ.setImagePath(L"D:\\tmp.png", WinToastTemplate::CropHint::Circle);
                 
                 templ.setTextField(pstate.item.name, WinToastTemplate::FirstLine);
                 templ.setTextField(pstate.item.get_artist_name(), WinToastTemplate::SecondLine);
@@ -304,7 +304,7 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth)
 {
-    if (auth.is_valid() && !librespot->is_launched())
+    if (auth.is_valid() && !librespot->is_launched() && config::is_playback_backend_enabled())
         if (!librespot->launch(auth.access_token))
         {
             librespot->shutdown(); // cleaning up the allocated resources if any

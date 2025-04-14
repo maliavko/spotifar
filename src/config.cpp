@@ -5,6 +5,46 @@ namespace spotifar { namespace config {
 
 using utils::far3::synchro_tasks::dispatch_event;
 
+namespace playback
+{
+    namespace bitrate
+    {
+        bool is_valid(const string &bps)
+        {
+            return std::find(all.begin(), all.end(), bps) != all.end();
+        }
+    }
+
+    namespace format
+    {
+        bool does_support_dither(const string &fmt)
+        {
+            return fmt == S16 || fmt == S24_3 || fmt == S24;
+        }
+        
+        bool is_valid(const string &fmt)
+        {
+            return std::find(all.begin(), all.end(), fmt) != all.end();
+        }
+    }
+
+    namespace dither
+    {
+        bool is_valid(const string &dither)
+        {
+            return std::find(all.begin(), all.end(), dither) != all.end();
+        }
+    }
+
+    namespace volume_ctrl
+    {
+        bool is_valid(const string &vctrl)
+        {
+            return std::find(all.begin(), all.end(), vctrl) != all.end();
+        }
+    }
+}
+
 static const wchar_t
     *add_to_disk_menu_opt = L"AddToDisksMenu",
     *activate_global_hotkeys_opt = L"ActivateGlobalHotkeys",

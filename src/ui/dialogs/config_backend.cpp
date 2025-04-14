@@ -11,11 +11,21 @@ enum controls : int
 {
     no_control = -1,
     dialog_box,
+
     backend_checkbox,
     volume_normalisation_checkbox,
     autoplay_checkbox,
     gapless_playback_checkbox,
     playback_cache_checkbox,
+
+    bitrate_label,
+    bitrate_combo,
+    format_label,
+    format_combo,
+    dither_label,
+    dither_combo,
+    volume_ctrl_label,
+    volume_ctrl_combo,
 
     buttons_separator,
     ok_button,
@@ -23,28 +33,49 @@ enum controls : int
 };
 
 static const int
-    hotkeys_box_y = 1, // y position of a panel with hotkeys settings
-    buttons_box_y = hotkeys_box_y + 9, // x position of a buttons panel
+    main_box_y = 2, // y position of a panel with hotkeys settings
+    buttons_box_y = main_box_y + 7, // y position of a buttons panel
     width = 62, height = buttons_box_y + 4, // overall dialog height is a summ of all the panels included
     box_x1 = 3, box_y1 = 1, box_x2 = width - 4, box_y2 = height - 2,
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1,
-    view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2;
+    view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2,
+    col2_x = view_center_x + 2;
+
+static const auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_DROPDOWNLIST;
 
 // TODO: localize strings
 static const std::vector<FarDialogItem> dlg_items_layout{
-    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,                 DIF_NONE, L""),
-    ctrl(DI_CHECKBOX,    view_center_x-8, hotkeys_box_y, view_center_x+8, 1, DIF_CENTERTEXT, L"Playback backend"),
+    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,            DIF_NONE, L""),
 
-    ctrl(DI_CHECKBOX,    view_x1, hotkeys_box_y+1, box_x1+10, 1,         DIF_CENTERTEXT, L"Vol. normalisation"),
-    ctrl(DI_CHECKBOX,    view_x1, hotkeys_box_y+2, box_x1+10, 1,         DIF_CENTERTEXT, L"Autoplay similar"),
-    ctrl(DI_CHECKBOX,    view_center_x+1, hotkeys_box_y+1, box_x1+10, 1, DIF_CENTERTEXT, L"Gapless playback"),
-    ctrl(DI_CHECKBOX,    view_center_x+1, hotkeys_box_y+2, box_x1+10, 1, DIF_CENTERTEXT, L"Audio cache"),
+    ctrl(DI_CHECKBOX,    view_center_x-8, 1, view_center_x+8, 1,    DIF_CENTERTEXT, L"Playback backend"),
+    ctrl(DI_CHECKBOX,    view_x1, main_box_y+1, view_x1+10, 1,      DIF_CENTERTEXT, L"Vol. normalisation"),
+    ctrl(DI_CHECKBOX,    view_x1, main_box_y+2, view_x1+10, 1,      DIF_CENTERTEXT, L"Autoplay similar"),
+    ctrl(DI_CHECKBOX,    col2_x, main_box_y+1, col2_x+10, 1,        DIF_CENTERTEXT, L"Gapless playback"),
+    ctrl(DI_CHECKBOX,    col2_x, main_box_y+2, col2_x+10, 1,        DIF_CENTERTEXT, L"Audio cache"),
+    
+    ctrl(DI_TEXT,        view_x1, main_box_y+4, view_x1+10, 1,      0, L"Bitrate"),
+    ctrl(DI_COMBOBOX,    view_x1+11, main_box_y+4, view_x1+21, 1,   combo_flags),
+    ctrl(DI_TEXT,        view_x1, main_box_y+5, view_x1+10, 1,      0, L"Format"),
+    ctrl(DI_COMBOBOX,    view_x1+11, main_box_y+5, view_x1+21, 1,   combo_flags),
+    ctrl(DI_TEXT,        col2_x, main_box_y+4, col2_x+10, 1,        0, L"Dither"),
+    ctrl(DI_COMBOBOX,    col2_x+13, main_box_y+4, col2_x+23, 1,     combo_flags),
+    ctrl(DI_TEXT,        col2_x, main_box_y+5, col2_x+10, 1,        0, L"Volume ctrl"),
+    ctrl(DI_COMBOBOX,    col2_x+13, main_box_y+5, col2_x+23, 1,     combo_flags),
     
     // buttons block
-    ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,          DIF_SEPARATOR),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP, L"Cancel"),
+    ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,     DIF_SEPARATOR),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP, L"Cancel"),
 };
+
+static void populate_combobox(HANDLE hdlg, int combo_id, std::vector<string> items, const string &current)
+{
+    for (int idx = 0; idx < items.size(); idx++)
+    {
+        const auto &item = items[idx];
+        dialogs::add_list_item(hdlg, combo_id, utils::to_wstring(item), idx, (void*)item.c_str(), item.size(), item == current);
+    }
+}
 
 config_backend_dialog::config_backend_dialog():
     modal_dialog(&ConfigBackendDialogGuid, width, height, dlg_items_layout)
@@ -54,6 +85,14 @@ config_backend_dialog::config_backend_dialog():
     dialogs::set_checked(hdlg, autoplay_checkbox, config::is_playback_autoplay_enabled());
     dialogs::set_checked(hdlg, gapless_playback_checkbox, config::is_gapless_playback_enabled());
     dialogs::set_checked(hdlg, playback_cache_checkbox, config::is_playback_cache_enabled());
+}
+
+void config_backend_dialog::init()
+{
+    populate_combobox(hdlg, bitrate_combo, config::playback::bitrate::all, config::get_playback_bitrate());
+    populate_combobox(hdlg, format_combo, config::playback::format::all, config::get_playback_format());
+    populate_combobox(hdlg, dither_combo, config::playback::dither::all, config::get_playback_dither());
+    populate_combobox(hdlg, volume_ctrl_combo, config::playback::volume_ctrl::all, config::get_playback_volume_ctrl());
 }
 
 intptr_t config_backend_dialog::handle_result(intptr_t dialog_run_result)
@@ -69,6 +108,11 @@ intptr_t config_backend_dialog::handle_result(intptr_t dialog_run_result)
             s.playback_autoplay_enabled = dialogs::is_checked(hdlg, autoplay_checkbox);
             s.gapless_playback_enabled = dialogs::is_checked(hdlg, gapless_playback_checkbox);
             s.playback_cache_enabled = dialogs::is_checked(hdlg, playback_cache_checkbox);
+
+            s.playback_bitrate = dialogs::get_list_current_item_data<string>(hdlg, bitrate_combo);
+            s.playback_format = dialogs::get_list_current_item_data<string>(hdlg, format_combo);
+            s.playback_dither = dialogs::get_list_current_item_data<string>(hdlg, dither_combo);
+            s.playback_volume_ctrl = dialogs::get_list_current_item_data<string>(hdlg, volume_ctrl_combo);
 
             ctx->fire_events(); // notify all the listeners
         }

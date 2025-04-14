@@ -20,8 +20,8 @@ public:
 
     auto run() -> bool;
 
-    virtual auto init() -> void {};
-    virtual auto cleanup() -> void {};
+    virtual void init() {};
+    virtual void cleanup() {};
 protected:
     virtual auto handle_result(intptr_t dialog_run_result) -> intptr_t { return FALSE; };
     virtual auto handle_key_pressed(int ctrl_id, int combined_key) -> bool { return FALSE; }

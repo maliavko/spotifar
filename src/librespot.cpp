@@ -45,25 +45,37 @@ bool librespot_handler::launch(const string &access_token)
     cmd << std::format(L"{}\\librespot.exe", config::get_plugin_launch_folder());
     cmd << std::format(L" --cache {}\\cache", config::get_plugin_data_folder());
     cmd << std::format(L" --system-cache {}\\system-cache", config::get_plugin_data_folder());
-    cmd << L" --access-token " << utils::to_wstring(access_token);
     cmd << L" --name " << device_name;
     cmd << L" --device-type computer";
     cmd << L" --cache-size-limit 1.5G";
-    cmd << L" --bitrate 320";
     cmd << L" --disable-discovery";
-    cmd << L" --enable-volume-normalisation";
-
-    // configurable options
-    // bitrate - Bitrate (kbps): 96, 160, 320. Defaults to 160.
-    // format - Output format: F64, F32, S32, S24, S24_3, S16. Defaults to S16.
-    // dither - Dither algorithm: none, gpdf, tpdf, tpdf_hp. Defaults to tpdf for formats S16, S24, S24_3 and none for other formats.
-    // initial-volume - 0-100
-    // enable-volume-normalisation [b]
-    // volume-ctrl - Volume control type cubic, fixed, linear, log. Defaults to log.
-    // autoplay [b]
-    // disable-gapless [b]
-    // disable-audio-cache [b]
+    cmd << L" --bitrate " << utils::to_wstring(config::get_playback_bitrate());
+    cmd << L" --volume-ctrl " << utils::to_wstring(config::get_playback_volume_ctrl());
     
+    auto pb_fmt = config::get_playback_format();
+    cmd << L" --format " << utils::to_wstring(pb_fmt);
+
+    if (config::playback::format::does_support_dither(pb_fmt))
+        cmd << L" --dither " << utils::to_wstring(config::get_playback_dither());
+
+    if (config::is_playback_normalisation_enabled())
+        cmd << L" --enable-volume-normalisation";
+
+    if (config::is_playback_autoplay_enabled())
+        cmd << L" --autoplay";
+
+    if (!config::is_gapless_playback_enabled())
+        cmd << L" --disable-gapless";
+
+    if (!config::is_playback_cache_enabled())
+        cmd << L" --disable-audio-cache";
+
+
+    /// logging Librespot's command line arguments for debugging purposes
+    log::global->info("Starting Librespot process, {}", utils::to_string(cmd.str()));
+
+    cmd << L" --access-token " << utils::to_wstring(access_token);
+
     // while verbocity is extended, the process freezes and stutter heavily for some reason
     // if (config::is_verbose_logging_enabled())
     //     cmd << L" --verbose";
