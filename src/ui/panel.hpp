@@ -41,8 +41,6 @@ private:
     api_proxy_ptr api_proxy;
 };
 
-using panel_ptr = std::shared_ptr<panel>;
-
 } // namespace ui
 } // namespace spotifar
 

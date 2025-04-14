@@ -31,8 +31,6 @@ private:
     HANDLE pipe_write = NULL;
 };
 
-using librespot_ptr = std::shared_ptr<librespot_handler>;
-
 } // namespace spotifar
 
 #endif // LIBRESPOT_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180

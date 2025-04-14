@@ -508,8 +508,6 @@ bool api::is_request_cached(const string &url) const
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 {
-    // TODO: the method is called in separate threads while populating async collections,
-    // sometimes it races for `api_responses_cache`. It needs to introduce some mutex here
     using namespace httplib;
 
     string cached_etag = "";

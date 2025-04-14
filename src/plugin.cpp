@@ -12,9 +12,9 @@ namespace far3 = utils::far3;
 
 plugin::plugin(): api(new spotify::api())
 {
-    panel = std::make_shared<ui::panel>(api);
-    player = std::make_shared<ui::player>(api);
-    librespot = std::make_shared<librespot_handler>(api);
+    panel = std::make_unique<ui::panel>(api);
+    player = std::make_unique<ui::player>(api);
+    librespot = std::make_unique<librespot_handler>(api);
 
     utils::events::start_listening<config::config_observer>(this);
     utils::events::start_listening<spotify::auth_observer>(this);

@@ -55,10 +55,11 @@ private:
     // background thread, like hotkeys check etc.
     utils::tasks_queue background_tasks;
 
-    librespot_ptr librespot;
+    std::unique_ptr<librespot_handler> librespot;
+    std::unique_ptr<ui::panel> panel;
+    std::unique_ptr<ui::player> player;
+    
     spotify::api_ptr api;
-    ui::panel_ptr panel;
-    ui::player_ptr player;
 };
 
 } // namespace spotifar

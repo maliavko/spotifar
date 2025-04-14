@@ -141,14 +141,15 @@ const http_cache::cache_entry& http_cache::get(const string &url) const
 
 void http_cache::store(const string &url, string body, const string &etag, clock_t::duration cache_for)
 {
-    std::lock_guard lock(guard);
-
     clock_t::time_point cached_until = clock_t::now() + cache_for;
 
     if (cache_for == http::session)
         cached_until = clock_t::time_point::max();
 
-    cached_responses[url] = { etag, body, cached_until };
+    {
+        std::lock_guard lock(guard);
+        cached_responses[url] = { etag, body, cached_until };
+    }
 }
 
 void http_cache::store(const string &url, const cache_entry &entry)

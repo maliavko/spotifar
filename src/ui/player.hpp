@@ -15,9 +15,11 @@ class player:
     public playback_observer, // represent timely playback changes in UI
     public devices_observer // to keep up to date the list of available devices
 {
+    friend struct dlg_events_supressor; // a helper to supress processing of the events
+                                        // by dialog for some cases
 public:
     player(api_proxy_ptr api);
-    virtual ~player();
+    ~player();
 
     bool show();
     bool hide();
@@ -93,12 +95,7 @@ private:
     slider_control volume, track_progress;
     cycled_bool_control shuffle_state;
     cycled_string_control repeat_state;
-    
-    friend struct dlg_events_supressor; // a helper to supress processing of the events
-                                        // by dialog for some cases
 };
-
-using player_ptr = std::shared_ptr<player>;
     
 } // namespace ui
 } // namespace spotifar
