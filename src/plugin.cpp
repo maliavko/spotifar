@@ -99,11 +99,11 @@ void plugin::shutdown()
     background_tasks.clear_tasks();
 
     shutdown_sync_worker();
+    shutdown_librespot_process();
 
     player->hide();
 
     api->shutdown();
-    librespot->shutdown();
 }
 
 void plugin::update_panel_info(OpenPanelInfo *info)
@@ -207,6 +207,24 @@ void plugin::shutdown_sync_worker()
     log::api->info("Plugin's background thread has been stopped");
 }
 
+void plugin::launch_librespot_process(const string &access_token)
+{
+    if (!config::is_playback_backend_enabled()) return;
+
+    if (librespot != nullptr && !librespot->is_launched() && !librespot->launch(access_token))
+    {
+        shutdown_librespot_process(); // cleaning up the allocated resources if any
+        utils::far3::show_far_error_dlg(
+            MFarMessageErrorStartup, L"There is a problem launching Librespot "
+            "process, look at the logs");
+    }
+}
+void plugin::shutdown_librespot_process()
+{
+    if (librespot != nullptr && librespot->is_launched())
+        librespot->shutdown();
+}
+
 void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
 {
     // the definition of the global hotkeys must be performed in the
@@ -248,21 +266,44 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
     log::enable_verbose_logs(is_verbose);
 }
 
+void plugin::on_playback_backend_setting_changed(bool is_enabled)
+{
+    log::global->debug("on_playback_backend_setting_changed, {}", is_enabled);
+
+    if (is_enabled)
+    {
+        const auto &access_token = api->get_access_token();
+        if (!access_token.empty())
+            launch_librespot_process(access_token);
+    }
+    else
+        shutdown_librespot_process();
+}
+
+void plugin::on_playback_backend_configuration_changed()
+{
+    log::global->debug("on_playback_backend_configuration_changed");
+    
+    const auto &access_token = api->get_access_token();
+    if (librespot != nullptr && !access_token.empty())
+    {
+        shutdown_librespot_process();
+    
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        launch_librespot_process(access_token);
+    }
+}
+
 void plugin::on_auth_status_changed(const spotify::auth_t &auth)
 {
-    if (auth.is_valid() && !librespot->is_launched() && config::is_playback_backend_enabled())
-        if (!librespot->launch(auth.access_token))
-        {
-            librespot->shutdown(); // cleaning up the allocated resources if any
-            utils::far3::show_far_error_dlg(
-                MFarMessageErrorStartup, L"There is a problem launching Librespot "
-                "process, look at the logs");
-        }
+    if (auth.is_valid())
+        launch_librespot_process(auth.access_token);
 }
 
 void plugin::on_track_changed(const spotify::track_t &track)
 {
-    if (config::is_track_changed_notification_enabled())
+    if (config::is_track_changed_notification_enabled() && track.is_valid())
         show_now_playing_notification(track);
 }
 

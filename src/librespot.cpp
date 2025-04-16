@@ -12,6 +12,12 @@ static const wstring device_name = L"librespot";
 
 bool librespot_handler::launch(const string &access_token)
 {
+    if (is_running)
+    {
+        log::global->warn("The Librespot process is already running");
+        return false;
+    }
+
     SECURITY_ATTRIBUTES sa_attrs;
     ZeroMemory(&sa_attrs, sizeof(sa_attrs));
 
@@ -62,7 +68,7 @@ bool librespot_handler::launch(const string &access_token)
         cmd << L" --enable-volume-normalisation";
 
     if (config::is_playback_autoplay_enabled())
-        cmd << L" --autoplay";
+        cmd << L" --autoplay on";
 
     if (!config::is_gapless_playback_enabled())
         cmd << L" --disable-gapless";
@@ -110,7 +116,10 @@ bool librespot_handler::launch(const string &access_token)
 void librespot_handler::shutdown()
 {
     if (!is_running)
+    {
+        log::global->warn("The Librespot process is already shutdown");
         return;
+    }
     
     utils::events::stop_listening<devices_observer>(this);
     
@@ -138,12 +147,13 @@ void librespot_handler::shutdown()
         CloseHandle(pi.hThread);
         pi.hThread = NULL;
     }
+
+    is_running = false;
 }
 
 void librespot_handler::tick()
 {
-    if (!is_running)
-        return;
+    if (!is_running) return;
     
     // the algo below parses all the accumulated Librespot process messages and propagates
     // them into regular plugin's log file

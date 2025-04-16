@@ -4,7 +4,6 @@ refactor
 
 application ideas
 - small improvements
-    - show track progress on the win tray icon with ACTL_SETPROGRESSSTATE
     - goto playlist from player UI
 - new functional
     - splash screen with notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
@@ -21,9 +20,8 @@ application ideas
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
-- librespot sometimes very slow while changing tracks e.g.: https://github.com/librespot-org/librespot/issues/253
 - to add lock_guard to the access API caches and especially to the resync method
-- changing librespot settings in the settings window does not recreate librespot process
+- if the playing queue is opened and 'shuffle' is clicked, the queue is not updated
 
 to finish for alpha release
 - remove unfinished menus
@@ -32,12 +30,11 @@ to finish for alpha release
 - to implement filter menu on each view
 - to add a proper github support: license, automations? binaries
 - to add a proper errors handling
-- to finish up librespot process start up and propagating its settings to the config dialog: https://github.com/librespot-org/librespot/wiki/Options
 + loading splash screen
 - localizations
-- finilize the settings menu
-    - audio backend view with options
-    - propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
++ finilize the settings menu
+    + audio backend view with options
+    + propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 
 test cases for error-proof app behaviour
 - invalid spotify api items (client id or port e.g.)

@@ -144,13 +144,19 @@ struct settings
 struct config_observer: public BaseObserverProtocol
 {
     /// @brief The global hotkeys setting's state has been changed: on/off
-    virtual void on_global_hotkeys_setting_changed(bool is_enabled) {};
+    virtual void on_global_hotkeys_setting_changed(bool is_enabled) {}
 
     /// @brief The logging verbosity level has been changed
-    virtual void on_logging_verbocity_changed(bool is_verbose) {};
+    virtual void on_logging_verbocity_changed(bool is_verbose) {}
 
     /// @brief The event is called if hotkey's key code or modifiers have changed
-    virtual void on_global_hotkey_changed(settings::hotkeys_t changed_keys) {};
+    virtual void on_global_hotkey_changed(settings::hotkeys_t changed_keys) {}
+
+    /// @brief The event is called when playback backend activation is changed
+    virtual void on_playback_backend_setting_changed(bool is_enabled) {}
+
+    /// @brief The event is called when any of the backend configuration has changed
+    virtual void on_playback_backend_configuration_changed() {}
 };
 
 class settings_context

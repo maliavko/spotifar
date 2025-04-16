@@ -121,8 +121,7 @@ settings_context::settings_context(const wstring &subkey):
 void settings_context::fire_events()
 {
     if (_settings.is_global_hotkeys_enabled != settings_copy.is_global_hotkeys_enabled)
-        dispatch_event(&config_observer::on_global_hotkeys_setting_changed,
-            _settings.is_global_hotkeys_enabled);
+        dispatch_event(&config_observer::on_global_hotkeys_setting_changed, _settings.is_global_hotkeys_enabled);
 
     settings::hotkeys_t changed_keys;
     for (const auto &[hotkey_id, hotkey]: _settings.hotkeys)
@@ -136,8 +135,24 @@ void settings_context::fire_events()
         dispatch_event(&config_observer::on_global_hotkey_changed, changed_keys);
     
     if (_settings.verbose_logging != settings_copy.verbose_logging)
-        dispatch_event(&config_observer::on_logging_verbocity_changed,
-            _settings.verbose_logging);
+        dispatch_event(&config_observer::on_logging_verbocity_changed, _settings.verbose_logging);
+
+    // any playback's configuration changes require librespot process to restart, at any moment we send
+    // only one event: either global activation status changed or any configuration settings changed
+    if (_settings.playback_backend_enabled != settings_copy.playback_backend_enabled)
+        dispatch_event(&config_observer::on_playback_backend_setting_changed, _settings.playback_backend_enabled);
+    else if (
+        (_settings.volume_normalisation_enabled != settings_copy.volume_normalisation_enabled) ||
+        (_settings.playback_autoplay_enabled != settings_copy.playback_autoplay_enabled) ||
+        (_settings.gapless_playback_enabled != settings_copy.gapless_playback_enabled) ||
+        (_settings.playback_cache_enabled != settings_copy.playback_cache_enabled) ||
+        (_settings.playback_bitrate != settings_copy.playback_bitrate) ||
+        (_settings.playback_format != settings_copy.playback_format) ||
+        (_settings.playback_dither != settings_copy.playback_dither) ||
+        (_settings.playback_volume_ctrl != settings_copy.playback_volume_ctrl) ||
+        (_settings.playback_initial_volume != settings_copy.playback_initial_volume)
+    )
+        dispatch_event(&config_observer::on_playback_backend_configuration_changed);
 
     settings_copy = _settings;
 }

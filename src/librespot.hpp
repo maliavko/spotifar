@@ -15,9 +15,9 @@ public:
     ~librespot_handler() { api_proxy.reset(); }
 
     auto launch(const string &access_token) -> bool;
-    auto shutdown() -> void;
+    void shutdown();
 
-    auto tick() -> void;
+    void tick();
     auto is_launched() const -> bool { return is_running; }
 protected:
     void on_devices_changed(const spotify::devices_t &devices) override;

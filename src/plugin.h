@@ -35,6 +35,9 @@ public:
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
+
+    void launch_librespot_process(const string &access_token);
+    void shutdown_librespot_process();
     
     void process_win_messages_queue();
     void show_now_playing_notification(const spotify::track_t &track, bool show_buttons = false);
@@ -43,6 +46,8 @@ protected:
     void on_global_hotkeys_setting_changed(bool is_enabled) override;
     void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys) override;
     void on_logging_verbocity_changed(bool is_verbose) override;
+    void on_playback_backend_setting_changed(bool is_enabled) override;
+    void on_playback_backend_configuration_changed() override;
 
     // auth handler
     void on_auth_status_changed(const spotify::auth_t &auth) override;

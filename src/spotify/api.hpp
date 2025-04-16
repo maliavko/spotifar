@@ -28,6 +28,7 @@ public:
     
     auto get_ptr() -> api_proxy_ptr override { return shared_from_this(); }
 
+    auto get_access_token() -> const string& override { return auth->get().access_token; }
     auto get_play_history(bool force_resync = false) -> const history_items_t& override;
     auto get_available_devices(bool force_resync = false) -> const devices_t& override;
     auto get_playback_state(bool force_resync = false) -> const playback_state_t& override;
