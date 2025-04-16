@@ -24,6 +24,7 @@ namespace hotkeys
         seek_backward,
         volume_up,
         volume_down,
+        show_toast,
         last
     };
 }

@@ -88,6 +88,30 @@ void api::tick()
     pool.wait();
 }
 
+const playback_state_t& api::get_playback_state(bool force_resync)
+{
+    if (force_resync)
+        playback->resync(true);
+    
+    return playback->get();
+}
+
+const devices_t& api::get_available_devices(bool force_resync)
+{
+    if (force_resync)
+        devices->resync(true);
+    
+    return devices->get();
+}
+
+const history_items_t& api::get_play_history(bool force_resync)
+{
+    if (force_resync)
+        history->resync(true);
+    
+    return history->get();
+}
+
 artist_t api::get_artist(const item_id_t &artist_id)
 {
     return request_item(item_requester<artist_t>(
@@ -213,8 +237,8 @@ bool api::save_tracks(const item_ids_t &ids)
         body.insert("ids", ids);
     });
 
-    auto r = put("/v1/me/tracks", body.str());
-    return http::is_success(r->status);
+    auto res = put("/v1/me/tracks", body.str());
+    return http::is_success(res->status);
 }
 
 bool api::remove_saved_tracks(const item_ids_t &ids)
@@ -226,8 +250,8 @@ bool api::remove_saved_tracks(const item_ids_t &ids)
         body.insert("ids", ids);
     });
 
-    auto r = del("/v1/me/tracks", body.str());
-    return http::is_success(r->status);
+    auto res = del("/v1/me/tracks", body.str());
+    return http::is_success(res->status);
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
@@ -301,7 +325,7 @@ void api::pause_playback(const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = put(append_query_params("/v1/me/player/pause", params));
-            if (http::is_success(res))
+            if (http::is_success(res->status))
                 cache.patch([](auto &v) {
                     json::Pointer("/is_playing").Set(v, false);
                 });
@@ -493,11 +517,47 @@ void api::start_playback_raw(const string &body, const string &device_id)
         ]
         {
             auto res = put(request_url, body);
-            if (http::is_success(res))
+            if (http::is_success(res->status))
                 cache.patch([](auto &d) {
                     json::Pointer("/is_playing").Set(d, true);
                 });
         });
+}
+
+wstring api::get_image(const image_t &image, const item_id_t &item_id)
+{
+    static const wstring cache_folder = std::format(L"{}\\images", config::get_plugin_data_folder());
+
+    if (!std::filesystem::exists(cache_folder))
+        std::filesystem::create_directories(cache_folder);
+
+    const wstring filepath = std::format(L"{}\\{}.{}.png", cache_folder, utils::to_wstring(item_id), image.width);
+    
+    if (!std::filesystem::exists(filepath))
+    {
+        std::ofstream file(filepath, std::ios_base::binary);
+        if (!file.good())
+        {
+            log::api->error("Cound not create a file for downloading image, {}. {}", utils::to_string(filepath),
+                utils::get_last_system_error());
+            return L"";
+        }
+
+        auto splitted_url = http::split_url(image.url);
+
+        httplib::Client client(splitted_url.first);
+
+        auto res = client.Get(splitted_url.second,
+            [&](const char *data, size_t data_length)
+            {
+                file.write(data, data_length);
+                return true;
+            });
+        
+        if (http::is_success(res->status))
+            return filepath;
+    }
+    return filepath;
 }
 
 bool api::is_request_cached(const string &url) const
@@ -528,25 +588,25 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
         cached_etag = cache.etag;
     }
 
-    auto r = get_client()->Get(request_url, {{ "If-None-Match", cached_etag }});
-    if (http::is_success(r->status))
+    auto res = get_client()->Get(request_url, {{ "If-None-Match", cached_etag }});
+    if (http::is_success(res->status))
     {
-        if (r->status == OK_200)
+        if (res->status == OK_200)
         {
             // TODO: caught here racing memory exception
-            auto etag = r->get_header_value("etag", "");
+            auto etag = res->get_header_value("etag", "");
 
             // caching only requests which have ETag or `cache-for` instruction
             if (!etag.empty() || cache_for > clock_t::duration::zero())
-                api_responses_cache.store(url, r->body, etag, cache_for);
+                api_responses_cache.store(url, res->body, etag, cache_for);
         }
-        else if (r->status == NotModified_304)
+        else if (res->status == NotModified_304)
         {
             const auto &cache = api_responses_cache.get(url);
 
             // replacing empty body with the cached one, so the client
             // does not see the difference
-            r->body = cache.body;
+            res->body = cache.body;
 
             // the response is still valid, so caching for a session or any other
             // time if needed
@@ -554,7 +614,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
                 api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
     }
-    else if (r->status == TooManyRequests_429)
+    else if (res->status == TooManyRequests_429)
     {
         // TODO: I hope it will not go into recursion one day, sorry guys
         std::this_thread::sleep_for(1.5s);
@@ -562,7 +622,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
         return get(request_url, cache_for);
     }
 
-    return r;
+    return res;
 }
 
 httplib::Result api::put(const string &request_url, const string &body)

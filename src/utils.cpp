@@ -434,6 +434,11 @@ namespace far3
         {
             return config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, user_data);
         }
+
+        bool is_wnd_in_focus()
+        {
+            return GetForegroundWindow() == get_far_hwnd();
+        }
     }
 
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
@@ -492,6 +497,28 @@ namespace log
         api  = nullptr,
         librespot = nullptr;
 
+    static std::wstreambuf *wcout_old_buf = nullptr;
+
+    class callback_wstreambuf : public std::wstreambuf
+    {
+    public:
+        callback_wstreambuf(std::function<void(wchar_t const*, std::streamsize)> callback): callback(callback) {}
+    protected:
+        std::streamsize xsputn(char_type const* s, std::streamsize count)
+        {
+            callback(s, count);
+            return count;
+        }
+    
+    private:
+        std::function<void(wchar_t const*, std::streamsize)> callback;
+    };
+    
+    static void wcout_stream_handler(wchar_t const* data, std::streamsize count)
+    {
+        log::api->debug("[WinToast] {}", utils::to_string(data));
+    }
+
     void init()
     {
         auto filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_data_folder());
@@ -517,6 +544,11 @@ namespace log
             {
                 logger->sinks().push_back(msvc_debug_sink);
             });
+
+            // WinToast library send debug messages to the std::wcout, this is the attempt to redirect
+            // them to the log. It looks like working, but not sure about any corner cases
+            static auto buf = callback_wstreambuf(wcout_stream_handler);
+            wcout_old_buf = std::wcout.rdbuf(&buf);
         #endif
         
         global->info("Plugin logging system is initialized");
@@ -528,6 +560,11 @@ namespace log
 
     void fini()
     {
+        #ifdef _DEBUG
+            if (wcout_old_buf != nullptr)
+                std::wcout.rdbuf(wcout_old_buf);
+        #endif
+
         log::global->info("Closing plugin\n\n");
         spdlog::shutdown();
     }
@@ -698,6 +735,17 @@ void tasks_queue::execute_task(task_t &task)
 
 namespace http
 {
+    std::pair<string, string> split_url(const string &url)
+    {
+        static std::regex pattern("(^.*://[^/?:]+)?(/?.*$)");
+        
+        std::smatch match;
+        if (std::regex_search(url, match, pattern) && match.size() > 2)
+            return std::make_pair(match[1], match[2]);
+
+        return std::make_pair(url, "");
+    }
+
     bool is_success(int response_code)
     {
         return (response_code == OK_200 || response_code == NoContent_204 ||
@@ -711,13 +759,7 @@ namespace http
     
     string trim_domain(const string &url)
     {
-        static std::regex pattern("^.*://([^/?:]+)(/?.*$)");
-        
-        std::smatch match;
-        if (std::regex_search(url, match, pattern) && match.size() > 2)
-            return match[2];
-
-        return url;
+        return split_url(url).second;
     }
 
     void json_body_builder::object(scope_handler_t scope)

@@ -51,9 +51,17 @@ struct api_interface
     /// @brief Checks the spotify authorizations status
     virtual bool is_authenticated() const = 0;
 
-    virtual auto get_play_history() -> const history_items_t& = 0;
-    virtual auto get_available_devices() -> const devices_t& = 0;
-    virtual auto get_playback_state() -> const playback_state_t& = 0;
+    /// @brief Returns a played history list of items. If `force_resync` is true, the data
+    /// is forcibly resynced before it is returned
+    virtual auto get_play_history(bool force_resync = false) -> const history_items_t& = 0;
+
+    /// @brief Returns a list of available playback devices. If `force_resync` is true, the data
+    /// is forcibly resynced before it is returned
+    virtual auto get_available_devices(bool force_resync = false) -> const devices_t& = 0;
+
+    /// @brief Returns a currently playing state object. If `force_resync` is true, the data
+    /// is forcibly resynced before it is returned
+    virtual auto get_playback_state(bool force_resync = false) -> const playback_state_t& = 0;
     
     // library & collections interface
 
@@ -106,6 +114,11 @@ struct api_interface
     virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
     virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
     virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
+    
+    /// @brief Returns the downloaded and cached image filepath in case of success or empty string.
+    /// @param image the image_t object to fetch from the Spotify server
+    /// @param item_id the id of the item the image belongs to (e.g. album id or artist id)
+    virtual auto get_image(const image_t &image, const item_id_t &item_id) -> wstring = 0;
 
     // playback interface
     virtual void start_playback(const string &context_uri, const string &track_uri = "",

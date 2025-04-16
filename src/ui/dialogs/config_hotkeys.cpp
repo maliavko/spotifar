@@ -55,6 +55,12 @@ enum controls : int
     volume_down_hotkey_ctrl,
     volume_down_hotkey_shift,
     volume_down_hotkey_alt,
+    show_toast_hotkey_label,
+    show_toast_hotkey_key,
+    show_toast_hotkey_char,
+    show_toast_hotkey_ctrl,
+    show_toast_hotkey_shift,
+    show_toast_hotkey_alt,
 
     buttons_separator,
     ok_button,
@@ -69,11 +75,12 @@ static const std::unordered_map<controls, int> hotkey_edits{
     { seek_backward_hotkey_key, hotkeys::seek_backward },
     { volume_up_hotkey_key, hotkeys::volume_up },
     { volume_down_hotkey_key, hotkeys::volume_down },
+    { show_toast_hotkey_key, hotkeys::show_toast },
 };
 
 static const int
     hotkeys_box_y = 1, // y position of a panel with hotkeys settings
-    buttons_box_y = hotkeys_box_y + 9, // x position of a buttons panel
+    buttons_box_y = hotkeys_box_y + 10, // y position of a buttons panel
     width = 62, height = buttons_box_y + 4, // overall dialog height is a summ of all the panels included
     box_x1 = 3, box_y1 = 1, box_x2 = width - 4, box_y2 = height - 2,
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1,
@@ -134,6 +141,13 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
+    // show toast hotkey
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+9, view_x1+15, 1,        DIF_LEFTTEXT, L"show toast"),
+    ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+9, view_x1+22, 1,     DIF_LEFTTEXT),
+    ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+9, view_x1+32, 1,     DIF_CENTERTEXT),
+    ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+9, 1, 1,              DIF_LEFTTEXT),
+    ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+9, 1, 1,              DIF_LEFTTEXT),
+    ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+9, 1, 1,              DIF_LEFTTEXT),
 
     // buttons block
     ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,          DIF_SEPARATOR),

@@ -23,6 +23,7 @@ bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
 - librespot sometimes very slow while changing tracks e.g.: https://github.com/librespot-org/librespot/issues/253
 - to add lock_guard to the access API caches and especially to the resync method
+- changing librespot settings in the settings window does not recreate librespot process
 
 to finish for alpha release
 - remove unfinished menus
@@ -42,3 +43,7 @@ test cases for error-proof app behaviour
 - invalid spotify api items (client id or port e.g.)
 - 429 too many requests emulation, 500 for service outage
 - sudden network outage
+- to check each http request and app behaviour in case the data does not come
+- no auth token provided
+- background worker catches the exception
+- librespot process does not initialize

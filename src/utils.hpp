@@ -157,24 +157,34 @@ namespace events
 {
     extern std::map<std::type_index, size_t> observers_number;
 
+    /// @brief Returns a status flag, whether the specified `P` observer
+    /// protocol has any active listeners subscribed
     template<class P>
     static bool has_observers()
     {
         return observers_number[typeid(P)] > 0;
     }
 
+    /// @brief A facade method for subscribing to ObserverManager bus events, provides additional
+    /// functionality to track a number of actively subscribed observers.
+    /// @param is_weak indicates the listeners, which do not increment number of observers of the
+    /// events specified and has no impact on the result of the `has_observers` method's result
     template<class P, class T>
-    void start_listening(T *o)
+    void start_listening(T *o, bool is_weak = false)
     {
         ObserverManager::subscribe<P>(o);
-        observers_number[typeid(P)]++;
+
+        if (!is_weak)
+            observers_number[typeid(P)]++;
     }
 
     template<class P, class T>
-    void stop_listening(T *o)
+    void stop_listening(T *o, bool is_weak = false)
     {
         ObserverManager::unsubscribe<P>(o);
-        observers_number[typeid(P)]--;
+
+        if (!is_weak)
+            observers_number[typeid(P)]--;
     }
 }
 
@@ -300,6 +310,9 @@ namespace far3
         auto get_far_hwnd() -> HWND;
         auto quit(intptr_t exit_code) -> intptr_t;
         auto synchro(void *user_data) -> intptr_t;
+
+        /// @brief Is Far window in focus or not 
+        auto is_wnd_in_focus() -> bool;
     }
     
     /// @brief Localize given far string id
@@ -481,11 +494,16 @@ namespace http
     using namespace httplib;
 
     bool is_success(int response_code);
+    
+    /// @brief Splits and returns a given `url` as a two components pair: domain & path with parameters.
+    /// If the url has only domain, so the second part of the pair will be empty, if only path - the first is empty
+    std::pair<string, string> split_url(const string &url);
 
     /// @brief Returns a given `url` without postfixed added parameters
     string trim_params(const string &url);
     
-    /// @brief Returns a given `url` without prefixed domain name 
+    /// @brief Returns a given `url` without prefixed domain name; returns a whole `url` as is
+    /// in case of an error
     string trim_domain(const string &url);
     
     /// @brief A static constant, representing the flag of a session-wide caching
