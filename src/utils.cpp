@@ -262,6 +262,14 @@ namespace far3
             size_t item_data_size = send(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
             return string(reinterpret_cast<const char*>(item_data), item_data_size);
         }
+
+        template<>
+        wstring get_list_item_data<wstring>(HANDLE hdlg, int ctrl_id, size_t item_idx)
+        {
+            auto item_data = send(hdlg, DM_LISTGETDATA, ctrl_id, (void*)item_idx);
+            size_t item_data_size = send(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
+            return wstring(reinterpret_cast<const wchar_t*>(item_data), item_data_size);
+        }
     }
 
     namespace panels

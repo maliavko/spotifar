@@ -21,49 +21,82 @@ enum controls : int
     api_port_label,
     api_port_edit,
     
+    ui_separator,
+    track_changed_notifications,
+    image_shape_label,
+    image_shape_combo,
+    
     buttons_separator,
     ok_button,
     cancel_button,
 };
 
 static const int
-    api_box_y = 5, // y position of a panel with api settings
-    buttons_box_y = api_box_y + 4, // y position of a buttons panel
+    api_box_y = 5, // y position of the api settings block
+    ui_box_y = api_box_y + 5, // y position of the UI settings block
+    buttons_box_y = ui_box_y + 3, // y position of a buttons block
     width = 62, height = buttons_box_y + 4, // overall dialog height is a summ of all the panels included
     box_x1 = 3, box_y1 = 1, box_x2 = width - 4, box_y2 = height - 2,
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1,
     view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2;
 
+static const auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_DROPDOWNLIST;
+
 static const std::vector<FarDialogItem> dlg_items_layout{
-    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,             DIF_NONE, L"General"),
+    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,            DIF_NONE, L"General"),
 
     // global settings
-    ctrl(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,          DIF_LEFTTEXT, L"Add to disk menu"),
-    ctrl(DI_CHECKBOX,    view_x1, view_y1+1, view_x1 + 15, 1,        DIF_LEFTTEXT, L"Verbose logging"),
+    ctrl(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,         DIF_LEFTTEXT, L"Add to disk menu"),
+    ctrl(DI_CHECKBOX,    view_x1, view_y1+1, view_x1 + 15, 1,       DIF_LEFTTEXT, L"Verbose logging"),
     
     // api settings
-    ctrl(DI_TEXT,        -1, api_box_y, box_x2, box_y2,              DIF_SEPARATOR, L"Spotify API"),
-    ctrl(DI_TEXT,        view_x1, api_box_y+1, view_x1+15, 1,        DIF_LEFTTEXT, L"Client ID"),
-    ctrl(DI_EDIT,        view_x1+15, api_box_y+1, view_x2, 1,        DIF_LEFTTEXT),
-    ctrl(DI_TEXT,        view_x1, api_box_y+2, view_x1+15, 1,        DIF_LEFTTEXT, L"Client secret"),
-    ctrl(DI_EDIT,        view_x1+15, api_box_y+2, view_x2, 1,        DIF_LEFTTEXT),
-    ctrl(DI_TEXT,        view_x1, api_box_y+3, view_x1+15, 1,        DIF_LEFTTEXT, L"Localhost port"),
-    ctrl(DI_EDIT,        view_x1+15, api_box_y+3, view_x2, 1,        DIF_LEFTTEXT),
+    ctrl(DI_TEXT,        -1, api_box_y, box_x2, box_y2,             DIF_SEPARATOR, L"Spotify API"),
+    ctrl(DI_TEXT,        view_x1, api_box_y+1, view_x1+15, 1,       DIF_LEFTTEXT, L"Client ID"),
+    ctrl(DI_EDIT,        view_x1+15, api_box_y+1, view_x2, 1,       DIF_LEFTTEXT),
+    ctrl(DI_TEXT,        view_x1, api_box_y+2, view_x1+15, 1,       DIF_LEFTTEXT, L"Client secret"),
+    ctrl(DI_EDIT,        view_x1+15, api_box_y+2, view_x2, 1,       DIF_LEFTTEXT),
+    ctrl(DI_TEXT,        view_x1, api_box_y+3, view_x1+15, 1,       DIF_LEFTTEXT, L"Localhost port"),
+    ctrl(DI_EDIT,        view_x1+15, api_box_y+3, view_x2, 1,       DIF_LEFTTEXT),
+    
+    // ui block
+    ctrl(DI_TEXT,        -1, ui_box_y, box_x2, box_y2,              DIF_SEPARATOR, L"Notifications"),
+    ctrl(DI_CHECKBOX,    view_x1, ui_box_y+1, view_x1 + 15, 1,      DIF_LEFTTEXT, L"Track changed"),
+    ctrl(DI_TEXT,        view_center_x, ui_box_y+1, view_center_x+10, 1,     DIF_LEFTTEXT, L"Image shape"),
+    ctrl(DI_COMBOBOX,    view_center_x+13, ui_box_y+1, view_center_x+25, 1,        combo_flags, L""),
 
     // buttons block
-    ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,      DIF_SEPARATOR),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,    DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,    DIF_CENTERGROUP, L"Cancel"),
+    ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,     DIF_SEPARATOR),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP, L"Cancel"),
 };
 
 config_general_dialog::config_general_dialog():
     modal_dialog(&ConfigGeneralDialogGuid, width, height, dlg_items_layout)
 {
+    // general
     dialogs::set_checked(hdlg, add_to_disk_checkbox, config::is_added_to_disk_menu());
     dialogs::set_checked(hdlg, verbose_logging_checkbox, config::is_verbose_logging_enabled());
+
+    // spotify
     dialogs::set_text(hdlg, api_client_id_edit, config::get_client_id());
     dialogs::set_text(hdlg, api_client_secret_edit, config::get_client_secret());
     dialogs::set_text(hdlg, api_port_edit, std::to_string(config::get_localhost_port()));
+    
+    // notifications
+    dialogs::set_checked(hdlg, track_changed_notifications, config::is_track_changed_notification_enabled());
+}
+
+void config_general_dialog::init()
+{
+    static const std::vector<string> items{ "square", "circle" };
+
+    auto is_circled = config::is_notification_image_circled();
+    for (int idx = 0; idx < items.size(); idx++)
+    {
+        const auto &item = items[idx];
+        dialogs::add_list_item(hdlg, image_shape_combo, utils::to_wstring(item), idx,
+            (void*)item.c_str(), item.size(), idx == int(is_circled));
+    }
 }
 
 intptr_t config_general_dialog::handle_result(intptr_t dialog_run_result)
@@ -74,11 +107,18 @@ intptr_t config_general_dialog::handle_result(intptr_t dialog_run_result)
             auto ctx = config::lock_settings();
             auto &s = ctx->get_settings();
 
+            // general
             s.add_to_disk_menu = dialogs::is_checked(hdlg, add_to_disk_checkbox);
             s.verbose_logging = dialogs::is_checked(hdlg, verbose_logging_checkbox);
+
+            // spotify
             s.spotify_client_id = dialogs::get_text(hdlg, api_client_id_edit);
             s.spotify_client_secret = dialogs::get_text(hdlg, api_client_secret_edit);
             s.localhost_service_port = std::stoi(dialogs::get_text(hdlg, api_port_edit));
+
+            // notifications
+            s.track_changed_notification_enabled = dialogs::is_checked(hdlg, track_changed_notifications);
+            s.is_circled_notification_image = dialogs::get_list_current_item_data<string>(hdlg, image_shape_combo) == "circle";
 
             ctx->fire_events(); // notify all the listeners
         }

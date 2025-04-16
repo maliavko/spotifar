@@ -115,6 +115,10 @@ struct settings
     wstring spotify_client_secret;
     int localhost_service_port;
 
+    // notifications
+    bool track_changed_notification_enabled;
+    bool is_circled_notification_image;
+
     // backend settings
     bool playback_backend_enabled;
     bool volume_normalisation_enabled;
@@ -230,27 +234,55 @@ auto get_plugin_data_folder() -> const wstring&;
 /// @brief Returning a pair(virtual key code, modifiers) pointer or nullptr
 auto get_hotkey(int hotkey_id) -> const std::pair<WORD, WORD>*;
 
+/// @brief Returns persistend view settings by its `view_uid`. In case there is no view
+/// settings cached, returns `def` value
 auto get_panel_settings(const string &view_uid, const settings::view_t &def) -> settings::view_t*;
 
+/// @brief A flag whether a librespot playback is active and should
+/// be launched while starting the plugin
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto is_playback_backend_enabled() -> bool;
 
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto is_playback_normalisation_enabled() -> bool;
 
+/// @brief Whether Spotify should continue playing similar tracks
+/// after the playing context is ended
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto is_playback_autoplay_enabled() -> bool;
 
+/// @brief Shortened gap between tracks while playing one after another
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto is_gapless_playback_enabled() -> bool;
 
+/// @brief Whether the audio is cached while playing
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto is_playback_cache_enabled() -> bool;
 
+/// @brief One of the config::playback::bitrate::all
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto get_playback_bitrate() -> string;
 
+/// @brief One of the config::playback::format::all
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto get_playback_format() -> string;
 
+/// @brief One of the config::playback::dither::all
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto get_playback_dither() -> string;
 
+/// @brief Volume control interpolation method
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto get_playback_volume_ctrl() -> string;
 
+/// https://github.com/librespot-org/librespot/wiki/Options
 auto get_playback_initial_volume() -> size_t;
+
+/// @brief Whether to show Windows pop-up notification when the track is changed
+auto is_track_changed_notification_enabled() -> bool;
+
+/// @brief THe image on the notifications will be squared or circled
+auto is_notification_image_circled() -> bool;
 
 
 /// @brief An interface to the class, which provides functionality to write

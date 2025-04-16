@@ -262,7 +262,8 @@ void plugin::on_auth_status_changed(const spotify::auth_t &auth)
 
 void plugin::on_track_changed(const spotify::track_t &track)
 {
-    show_now_playing_notification(track);
+    if (config::is_track_changed_notification_enabled())
+        show_now_playing_notification(track);
 }
 
 void plugin::show_player()
@@ -312,21 +313,28 @@ void plugin::show_now_playing_notification(const spotify::track_t &track, bool s
         return;
  
     WinToastTemplate toast(WinToastTemplate::ImageAndText02);   
-    toast.setAttributionText(L"Content is provided by Spotify service");
-    toast.setImagePath(img_path, WinToastTemplate::CropHint::Circle);
-    
-    toast.setTextField(track.name, WinToastTemplate::FirstLine);
-    toast.setTextField(track.get_artist_name(), WinToastTemplate::SecondLine);
+
+    // image
+    auto crop_hint = WinToastTemplate::CropHint::Square;
+    if (config::is_notification_image_circled())
+        crop_hint = WinToastTemplate::CropHint::Circle;
+    toast.setImagePath(img_path, crop_hint);
     
     // if (WinToast::isWin10AnniversaryOrHigher())
     //     toast.setHeroImagePath(L"D:\\tmp2.jpg", false);
     
+    // text
+    toast.setTextField(track.name, WinToastTemplate::FirstLine);
+    toast.setTextField(track.get_artist_name(), WinToastTemplate::SecondLine);
+    toast.setAttributionText(L"Content is provided by Spotify service");
+    
+    // buttons
     if (show_buttons)
     {
         toast.addAction(L"Like");
     }
     
-    // Read the additional options section in the article
+    // attributes
     toast.setDuration(WinToastTemplate::Duration::Short);
     toast.setAudioOption(WinToastTemplate::AudioOption::Silent);
     toast.setAudioPath(WinToastTemplate::AudioSystemFile::DefaultSound);

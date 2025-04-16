@@ -265,7 +265,10 @@ namespace far3
             size_t item_data_size = dialogs::send(hdlg, DM_LISTGETDATASIZE, ctrl_id, (void*)item_idx);
             return reinterpret_cast<T>(item_data);
         }
+
         template<> string get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
+
+        template<> wstring get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
 
         template<class T>
         T get_list_current_item_data(HANDLE hdlg, int ctrl_id)

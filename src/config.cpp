@@ -62,7 +62,9 @@ static const wchar_t
     *playback_format_opt = L"PlaybackFormat",
     *playback_dither_opt = L"PlaybackDither",
     *playback_volume_ctrl_opt = L"PlaybackVolumeCtrl",
-    *playback_initial_volume_opt = L"PlaybackInitialVolume";
+    *playback_initial_volume_opt = L"PlaybackInitialVolume",
+    *track_changed_notification_enabled_opt = L"TrackChangedNotificationEnabled",
+    *is_circled_notification_image_opt = L"IsNotificationImageCircled";
 
 PluginStartupInfo ps_info;
 FarStandardFunctions fsf;
@@ -249,12 +251,18 @@ void read(const PluginStartupInfo *info)
 
     auto ctx = lock_settings();
 
+    // general
+    _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
+    _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, false);
+
+    // spotify
     _settings.spotify_client_id = ctx->get_wstr(spotify_client_id_opt, L"");
     _settings.spotify_client_secret = ctx->get_wstr(spotify_client_secret_opt, L"");
     _settings.localhost_service_port = ctx->get_int(localhost_service_port_opt, 5050);
-    _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);
-    _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
-    _settings.verbose_logging = ctx->get_bool(verbose_logging_enabled_opt, false);
+
+    // notifications
+    _settings.track_changed_notification_enabled = ctx->get_bool(track_changed_notification_enabled_opt, true);
+    _settings.is_circled_notification_image = ctx->get_bool(is_circled_notification_image_opt, false);
     
     // playback settings
     _settings.playback_backend_enabled = ctx->get_bool(playback_backend_enabled_opt, true);
@@ -269,31 +277,41 @@ void read(const PluginStartupInfo *info)
     _settings.playback_volume_ctrl= ctx->get_str(playback_volume_ctrl_opt, playback::volume_ctrl::log);
     _settings.playback_initial_volume = ctx->get_int(playback_initial_volume_opt, 50);
 
+    // views settings
     auto views_settings_json = ctx->get_str(views_settings_opt, "");
     if (!views_settings_json.empty())
         json::parse_to(views_settings_json, _settings.views);
 
-    _settings.plugin_startup_folder = get_plugin_launch_folder(info);
-    _settings.plugin_data_folder = get_user_app_data_folder();
-
+    // hotkeys
+    _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
     for (int hotkey_id = hotkeys::play; hotkey_id != hotkeys::last; hotkey_id++)
     {
         auto key_and_mods = ctx->get_int64(get_hotkey_node_name(hotkey_id), 0);
         // packing key code and modifiers into one big int
         _settings.hotkeys[hotkey_id] = std::make_pair(HIWORD(key_and_mods), LOWORD(key_and_mods));
     }
+
+    // complimentary config data
+    _settings.plugin_startup_folder = get_plugin_launch_folder(info);
+    _settings.plugin_data_folder = get_user_app_data_folder();
 }
 
 void write()
 {
     auto ctx = lock_settings();
 
+    // general
     ctx->set_bool(add_to_disk_menu_opt, _settings.add_to_disk_menu);
-    ctx->set_bool(activate_global_hotkeys_opt, _settings.is_global_hotkeys_enabled);
     ctx->set_bool(verbose_logging_enabled_opt, _settings.verbose_logging);
+
+    // spotify
     ctx->set_wstr(spotify_client_id_opt, _settings.spotify_client_id);
     ctx->set_wstr(spotify_client_secret_opt, _settings.spotify_client_secret);
     ctx->set_int(localhost_service_port_opt, _settings.localhost_service_port);
+
+    // notifications
+    ctx->set_bool(track_changed_notification_enabled_opt, _settings.track_changed_notification_enabled);
+    ctx->set_bool(is_circled_notification_image_opt, _settings.is_circled_notification_image);
     
     // playback settings
     ctx->set_bool(playback_backend_enabled_opt, _settings.playback_backend_enabled);
@@ -307,9 +325,12 @@ void write()
     ctx->set_str(playback_volume_ctrl_opt, _settings.playback_volume_ctrl);
     ctx->set_int(playback_initial_volume_opt, _settings.playback_initial_volume);
     
+    // view
     auto buffer = json::dump(_settings.views);
     ctx->set_str(views_settings_opt, buffer->GetString());
 
+    // global hotkeys
+    ctx->set_bool(activate_global_hotkeys_opt, _settings.is_global_hotkeys_enabled);
     for (const auto &[key, p]: _settings.hotkeys)
         ctx->set_int64(get_hotkey_node_name(key), MAKELONG(p.second, p.first));
 }
@@ -416,6 +437,16 @@ string get_playback_volume_ctrl()
 size_t get_playback_initial_volume()
 {
     return _settings.playback_initial_volume;
+}
+
+bool is_track_changed_notification_enabled()
+{
+    return _settings.track_changed_notification_enabled;
+}
+
+bool is_notification_image_circled()
+{
+    return _settings.is_circled_notification_image;
 }
 
 } // namespace config
