@@ -12,6 +12,7 @@ static const wstring device_name = L"librespot";
 
 bool librespot_handler::launch(const string &access_token)
 {
+    return false;
     if (is_running)
     {
         log::global->warn("The Librespot process is already running");

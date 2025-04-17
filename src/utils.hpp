@@ -92,6 +92,8 @@ namespace log
     void fini();
 
     void enable_verbose_logs(bool is_verbose);
+
+    wstring get_logs_folder();
 }
 
 namespace keys
@@ -293,7 +295,10 @@ namespace far3
         auto quit(HANDLE panel) -> void;
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
         auto select_item(HANDLE panel, size_t item_idx) -> bool;
-        auto clear_selection(HANDLE panel) -> void;
+        void clear_selection(HANDLE panel);
+
+        /// @brief Sets the given `folder` path to the `panel`
+        auto set_directory(HANDLE panel, const wstring &folder) -> intptr_t;
 
         /// @brief Returns the items, currently placed on the `panel`.
         /// @param filter_selected returns only selected items, in case there is no selected items - returns
@@ -354,7 +359,14 @@ namespace far3
         }
     }
 
-    intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message = L"");
+    /// @brief Show an error far message, shows a second line with an additional information
+    /// if provided via `extra_message`
+    /// @param error_msg_id main message msg_id
+    /// @param extra_message extra message string to show as a second line
+    /// @param extra_button_msg_id extra button msg_id
+    /// @param extra_btn_handler the extra buttong custom handler
+    intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message = L"",
+        int extra_button_msg_id = -1, std::function<void(void)> extra_btn_handler = nullptr);
 }
 
 namespace json

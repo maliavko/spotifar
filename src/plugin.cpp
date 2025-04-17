@@ -210,7 +210,10 @@ void plugin::launch_librespot_process(const string &access_token)
     if (librespot != nullptr && !librespot->is_launched() && !librespot->launch(access_token))
     {
         shutdown_librespot_process(); // cleaning up the allocated resources if any
-        utils::far3::show_far_error_dlg(MErrorPluginStartupUnexpected);
+        far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
+            {
+                far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
+            });
     }
 }
 void plugin::shutdown_librespot_process()

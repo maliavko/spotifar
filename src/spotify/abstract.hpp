@@ -7,7 +7,6 @@
 #include "config.hpp"
 #include "items.hpp"
 
-// test commit
 namespace spotifar { namespace spotify {
 
 using httplib::Result;

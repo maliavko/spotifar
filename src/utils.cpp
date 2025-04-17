@@ -356,6 +356,12 @@ namespace far3
             }
         }
         
+        intptr_t set_directory(HANDLE panel, const wstring &folder)
+        {
+            FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), folder.c_str(), nullptr, {0}, nullptr};
+            return control(panel, FCTL_SETPANELDIRECTORY, 0, &dirInfo);
+        }
+        
         std::vector<std::shared_ptr<PluginPanelItem>> get_items(HANDLE panel, bool filter_selected)
         {
             std::vector<std::shared_ptr<PluginPanelItem>> result;
@@ -449,21 +455,34 @@ namespace far3
         }
     }
 
-    intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
+    intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message,
+        int extra_button_msg_id, std::function<void(void)> extra_btn_handler)
     {
-        const wchar_t* msgs[] =
+        bool has_extra_btn = extra_button_msg_id != 0;
+    
+        std::vector<const wchar_t*> msgs =
         {
             get_text(MFarMessageErrorTitle),
             get_text(error_msg_id),
-            extra_message.c_str(),
-            get_text(MOk),
         };
-        
-        FARMESSAGEFLAGS flags = FMSG_WARNING;
-        if (extra_message.empty() && GetLastError())  // if there's no error code, no need to show it in the dialog
-            flags |= FMSG_ERRORTYPE;
 
-        return config::ps_info.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, std::size(msgs), 1);
+        // custom extram message to show as a second string on the dialog
+        if (!extra_message.empty())
+            msgs.push_back(extra_message.c_str());
+        
+        msgs.push_back(get_text(MOk)); // mandatory `OK` button
+
+        if (has_extra_btn) // extra custom button
+            msgs.push_back(get_text(extra_button_msg_id));
+
+        auto res = config::ps_info.Message(
+            &MainGuid, &FarMessageGuid, FMSG_WARNING, 0, &msgs[0], std::size(msgs), has_extra_btn ? 2 : 1);
+        
+        // activate given handler for a custom button
+        if (has_extra_btn && res == 1 && extra_btn_handler != nullptr)
+            extra_btn_handler();
+
+        return res;
     }
 
     const wchar_t* get_text(int msg_id)
@@ -524,7 +543,7 @@ namespace log
 
     void init()
     {
-        auto filepath = std::format(L"{}\\logs\\spotifar.log", config::get_plugin_data_folder());
+        auto filepath = std::format(L"{}\\spotifar.log", get_logs_folder());
 
         // a default sink to the file 
         auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
@@ -582,6 +601,11 @@ namespace log
         spdlog::set_level(level);
 
         global->info("Logging level has been changed: {}", spdlog::level::to_string_view(level));
+    }
+
+    wstring get_logs_folder()
+    {
+        return std::format(L"{}\\logs\\", config::get_plugin_data_folder());
     }
 }
 

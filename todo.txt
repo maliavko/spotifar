@@ -48,4 +48,4 @@ test cases for error-proof app behaviour
 - to check each http request and app behaviour in case the data does not come
 - no auth token provided
 - background worker catches the exception
-- librespot process does not initialize
++ librespot process does not initialize

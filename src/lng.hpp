@@ -10,8 +10,8 @@ namespace spotifar
 
         MOk,
         MCancel,
-        MError,
         MYes,
+        MShowLogs,
 
         MSortDialogTitle,
 
