@@ -83,11 +83,7 @@ void plugin::start()
 
     WinToast::WinToastError error;
     if (!WinToast::instance()->initialize(&error))
-        utils::far3::show_far_error_dlg(
-            MFarMessageErrorStartup,
-            std::format(L"Could not initialize a notifications library, {}",
-                WinToast::strerror(error))
-        );
+        utils::far3::show_far_error_dlg(MErrorWinToastStartupUnexpected, WinToast::strerror(error));
     
     launch_sync_worker();
 }
@@ -214,9 +210,7 @@ void plugin::launch_librespot_process(const string &access_token)
     if (librespot != nullptr && !librespot->is_launched() && !librespot->launch(access_token))
     {
         shutdown_librespot_process(); // cleaning up the allocated resources if any
-        utils::far3::show_far_error_dlg(
-            MFarMessageErrorStartup, L"There is a problem launching Librespot "
-            "process, look at the logs");
+        utils::far3::show_far_error_dlg(MErrorPluginStartupUnexpected);
     }
 }
 void plugin::shutdown_librespot_process()

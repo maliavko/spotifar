@@ -17,6 +17,7 @@ application ideas
         - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support
     - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
+    - it is not clear what to do when a copy or cut operation is called on the track or album etc.
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
@@ -35,6 +36,10 @@ to finish for alpha release
 + finilize the settings menu
     + audio backend view with options
     + propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
+- to review the panels views and clean up the view and sort modes
+    - to show saved albums, artists and tracks
+    - to launch playback from all the possible views
+    - track number/dosci number is shown weird
 
 test cases for error-proof app behaviour
 - invalid spotify api items (client id or port e.g.)

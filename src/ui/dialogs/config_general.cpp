@@ -1,6 +1,7 @@
 #include "config_general.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -43,26 +44,26 @@ static const int
 static const auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_DROPDOWNLIST;
 
 static const std::vector<FarDialogItem> dlg_items_layout{
-    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,            DIF_NONE, L"General"),
+    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,            DIF_NONE),
 
     // global settings
-    ctrl(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,         DIF_LEFTTEXT, L"Add to disk menu"),
-    ctrl(DI_CHECKBOX,    view_x1, view_y1+1, view_x1 + 15, 1,       DIF_LEFTTEXT, L"Verbose logging"),
+    ctrl(DI_CHECKBOX,    view_x1, view_y1, view_x1 + 15, 1,         DIF_LEFTTEXT),
+    ctrl(DI_CHECKBOX,    view_x1, view_y1+1, view_x1 + 15, 1,       DIF_LEFTTEXT),
     
     // api settings
-    ctrl(DI_TEXT,        -1, api_box_y, box_x2, box_y2,             DIF_SEPARATOR, L"Spotify API"),
-    ctrl(DI_TEXT,        view_x1, api_box_y+1, view_x1+15, 1,       DIF_LEFTTEXT, L"Client ID"),
+    ctrl(DI_TEXT,        -1, api_box_y, box_x2, box_y2,             DIF_SEPARATOR),
+    ctrl(DI_TEXT,        view_x1, api_box_y+1, view_x1+15, 1,       DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, api_box_y+1, view_x2, 1,       DIF_LEFTTEXT),
-    ctrl(DI_TEXT,        view_x1, api_box_y+2, view_x1+15, 1,       DIF_LEFTTEXT, L"Client secret"),
+    ctrl(DI_TEXT,        view_x1, api_box_y+2, view_x1+15, 1,       DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, api_box_y+2, view_x2, 1,       DIF_LEFTTEXT),
-    ctrl(DI_TEXT,        view_x1, api_box_y+3, view_x1+15, 1,       DIF_LEFTTEXT, L"Localhost port"),
+    ctrl(DI_TEXT,        view_x1, api_box_y+3, view_x1+15, 1,       DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, api_box_y+3, view_x2, 1,       DIF_LEFTTEXT),
     
     // ui block
     ctrl(DI_TEXT,        -1, ui_box_y, box_x2, box_y2,              DIF_SEPARATOR, L"Notifications"),
     ctrl(DI_CHECKBOX,    view_x1, ui_box_y+1, view_x1 + 15, 1,      DIF_LEFTTEXT, L"Track changed"),
     ctrl(DI_TEXT,        view_center_x, ui_box_y+1, view_center_x+10, 1,     DIF_LEFTTEXT, L"Image shape"),
-    ctrl(DI_COMBOBOX,    view_center_x+13, ui_box_y+1, view_center_x+25, 1,        combo_flags, L""),
+    ctrl(DI_COMBOBOX,    view_center_x+13, ui_box_y+1, view_center_x+25, 1,        combo_flags),
 
     // buttons block
     ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,     DIF_SEPARATOR),
@@ -90,6 +91,7 @@ void config_general_dialog::init()
 {
     static const std::vector<string> items{ "square", "circle" };
 
+    // image shape combo box initialization
     auto is_circled = config::is_notification_image_circled();
     for (int idx = 0; idx < items.size(); idx++)
     {
@@ -97,6 +99,21 @@ void config_general_dialog::init()
         dialogs::add_list_item(hdlg, image_shape_combo, utils::to_wstring(item), idx,
             (void*)item.c_str(), item.size(), idx == int(is_circled));
     }
+
+    // labels
+    dialogs::set_text(hdlg, dialog_box, get_text(MConfigGeneralBoxTitle));
+    dialogs::set_text(hdlg, add_to_disk_checkbox, get_text(MConfigAddToDisksMenu));
+    dialogs::set_text(hdlg, verbose_logging_checkbox, get_text(MConfigVerboseLoggingSetting));
+    dialogs::set_text(hdlg, spotify_api_separator, get_text(MConfigSpotifyBlockTitle));
+    dialogs::set_text(hdlg, api_client_id_label, get_text(MConfigSpotifyClientID));
+    dialogs::set_text(hdlg, api_client_secret_label, get_text(MConfigSpotifyClientSecret));
+    dialogs::set_text(hdlg, api_port_label, get_text(MConfigLocalhostServicePort));
+    dialogs::set_text(hdlg, api_port_label, get_text(MConfigLocalhostServicePort));
+    dialogs::set_text(hdlg, ui_separator, get_text(MConfigNotificationsBlockTitle));
+    dialogs::set_text(hdlg, track_changed_notifications, get_text(MConfigTrackChangedSetting));
+    dialogs::set_text(hdlg, image_shape_label, get_text(MConfigImageShapeSetting));
+    dialogs::set_text(hdlg, ok_button, get_text(MOk));
+    dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
 intptr_t config_general_dialog::handle_result(intptr_t dialog_run_result)

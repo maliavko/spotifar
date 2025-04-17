@@ -451,11 +451,11 @@ namespace far3
 
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message)
     {
-        // TODO: refactor dialog system
-        auto err_msg = get_text(error_msg_id);
-        const wchar_t* msgs[] = {
+        const wchar_t* msgs[] =
+        {
             get_text(MFarMessageErrorTitle),
-            err_msg, extra_message.c_str(),
+            get_text(error_msg_id),
+            extra_message.c_str(),
             get_text(MOk),
         };
         
@@ -464,11 +464,6 @@ namespace far3
             flags |= FMSG_ERRORTYPE;
 
         return config::ps_info.Message(&MainGuid, &FarMessageGuid, flags, 0, msgs, std::size(msgs), 1);
-    }
-    
-    intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message)
-    {
-        return show_far_error_dlg(error_msg_id, utils::to_wstring(extra_message));
     }
 
     const wchar_t* get_text(int msg_id)

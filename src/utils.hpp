@@ -355,7 +355,6 @@ namespace far3
     }
 
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message = L"");
-    intptr_t show_far_error_dlg(int error_msg_id, const string &extra_message = "");
 }
 
 namespace json

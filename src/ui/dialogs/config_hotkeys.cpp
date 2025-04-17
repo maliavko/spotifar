@@ -1,6 +1,7 @@
 #include "config_hotkeys.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -13,48 +14,56 @@ enum controls : int
     dialog_box,
     hotkeys_checkbox,
     hotkeys_table_label,
+
     play_pause_hotkey_label,
     play_pause_hotkey_key,
     play_pause_hotkey_char,
     play_pause_hotkey_ctrl,
     play_pause_hotkey_shift,
     play_pause_hotkey_alt,
+
     skip_next_hotkey_label,
     skip_next_hotkey_key,
     skip_next_hotkey_char,
     skip_next_hotkey_ctrl,
     skip_next_hotkey_shift,
     skip_next_hotkey_alt,
+
     skip_prev_hotkey_label,
     skip_prev_hotkey_key,
     skip_prev_hotkey_char,
     skip_prev_hotkey_ctrl,
     skip_prev_hotkey_shift,
     skip_prev_hotkey_alt,
+
     seek_forward_hotkey_label,
     seek_forward_hotkey_key,
     seek_forward_hotkey_char,
     seek_forward_hotkey_ctrl,
     seek_forward_hotkey_shift,
     seek_forward_hotkey_alt,
+
     seek_backward_hotkey_label,
     seek_backward_hotkey_key,
     seek_backward_hotkey_char,
     seek_backward_hotkey_ctrl,
     seek_backward_hotkey_shift,
     seek_backward_hotkey_alt,
+
     volume_up_hotkey_label,
     volume_up_hotkey_key,
     volume_up_hotkey_char,
     volume_up_hotkey_ctrl,
     volume_up_hotkey_shift,
     volume_up_hotkey_alt,
+
     volume_down_hotkey_label,
     volume_down_hotkey_key,
     volume_down_hotkey_char,
     volume_down_hotkey_ctrl,
     volume_down_hotkey_shift,
     volume_down_hotkey_alt,
+
     show_toast_hotkey_label,
     show_toast_hotkey_key,
     show_toast_hotkey_char,
@@ -86,63 +95,62 @@ static const int
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1,
     view_center_x = (view_x1 + view_x2)/2, view_center_y = (view_y1 + view_y2)/2;
 
-// TODO: localize strings
 static const std::vector<FarDialogItem> dlg_items_layout{
-    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,                 DIF_NONE, L"Global hotkeys"),
-    ctrl(DI_CHECKBOX,    view_center_x-8, hotkeys_box_y, view_center_x+8, 1, DIF_CENTERTEXT, L"Global hotkeys"),
-    ctrl(DI_TEXT,        view_x1+26, hotkeys_box_y+1, view_x2, 1,        DIF_LEFTTEXT, L"VKey    Ctrl  Shift   Alt"),
+    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,                 DIF_NONE),
+    ctrl(DI_CHECKBOX,    view_center_x-8, hotkeys_box_y, view_center_x+8, 1, DIF_CENTERTEXT),
+    ctrl(DI_TEXT,        view_x1+26, hotkeys_box_y+1, view_x2, 1,        DIF_LEFTTEXT),
 
     // play/pause hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+2, view_x1+15, 1,        DIF_LEFTTEXT, L"play/pause"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+2, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+2, view_x1+22, 1,     DIF_CENTERTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+2, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+2, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+2, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+2, 1, 1,              DIF_LEFTTEXT),
     // skip to next hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+3, view_x1+15, 1,        DIF_LEFTTEXT, L"skip to next"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+3, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+3, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+3, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+3, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+3, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+3, 1, 1,              DIF_LEFTTEXT),
     // skip to prev hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+4, view_x1+15, 1,        DIF_LEFTTEXT, L"skip to prev"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+4, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+4, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+4, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+4, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+4, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+4, 1, 1,              DIF_LEFTTEXT),
     // seek forward hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+5, view_x1+15, 1,        DIF_LEFTTEXT, L"seek forward"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+5, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+5, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+5, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+5, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+5, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+5, 1, 1,              DIF_LEFTTEXT),
     // seek backward hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+6, view_x1+15, 1,        DIF_LEFTTEXT, L"seek backward"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+6, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+6, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+6, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+6, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+6, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+6, 1, 1,              DIF_LEFTTEXT),
     // volume up hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+7, view_x1+15, 1,        DIF_LEFTTEXT, L"volume up"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+7, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+7, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+7, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+7, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+7, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+7, 1, 1,              DIF_LEFTTEXT),
     // volume down hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+8, view_x1+15, 1,        DIF_LEFTTEXT, L"volume down"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+8, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+8, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+8, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+41, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
     ctrl(DI_CHECKBOX,    view_x1+48, hotkeys_box_y+8, 1, 1,              DIF_LEFTTEXT),
     // show toast hotkey
-    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+9, view_x1+15, 1,        DIF_LEFTTEXT, L"show toast"),
+    ctrl(DI_TEXT,        view_x1, hotkeys_box_y+9, view_x1+15, 1,        DIF_LEFTTEXT),
     ctrl(DI_EDIT,        view_x1+15, hotkeys_box_y+9, view_x1+22, 1,     DIF_LEFTTEXT),
     ctrl(DI_TEXT,        view_x1+23, hotkeys_box_y+9, view_x1+32, 1,     DIF_CENTERTEXT),
     ctrl(DI_CHECKBOX,    view_x1+34, hotkeys_box_y+9, 1, 1,              DIF_LEFTTEXT),
@@ -151,8 +159,8 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 
     // buttons block
     ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,          DIF_SEPARATOR),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP, L"Cancel"),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP | DIF_DEFAULTBUTTON),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP),
 };
 
 config_hotkeys_dialog::config_hotkeys_dialog():
@@ -172,6 +180,23 @@ config_hotkeys_dialog::config_hotkeys_dialog():
         dialogs::set_checked(hdlg, ctrl_id + 3, key_and_mods->second & MOD_SHIFT);
         dialogs::set_checked(hdlg, ctrl_id + 4, key_and_mods->second & MOD_ALT);
     }
+}
+
+void config_hotkeys_dialog::init()
+{
+    dialogs::set_text(hdlg, hotkeys_checkbox, get_text(MConfigHotkeysBoxLabel));
+    dialogs::set_text(hdlg, hotkeys_table_label, get_text(MConfigHotkeysTableTitle));
+    dialogs::set_text(hdlg, play_pause_hotkey_label, get_text(MConfigPlayPauseSetting));
+    dialogs::set_text(hdlg, skip_next_hotkey_label, get_text(MConfigSkipToNextSetting));
+    dialogs::set_text(hdlg, skip_prev_hotkey_label, get_text(MConfigSkipToPrevSetting));
+    dialogs::set_text(hdlg, seek_forward_hotkey_label, get_text(MConfigSeekForwardSetting));
+    dialogs::set_text(hdlg, seek_backward_hotkey_label, get_text(MConfigSeekBackwardSetting));
+    dialogs::set_text(hdlg, volume_up_hotkey_label, get_text(MConfigVolumeUpSetting));
+    dialogs::set_text(hdlg, volume_down_hotkey_label, get_text(MConfigVolumeDownSetting));
+    dialogs::set_text(hdlg, show_toast_hotkey_label, get_text(MConfigShowToastSetting));
+
+    dialogs::set_text(hdlg, ok_button, get_text(MOk));
+    dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
 intptr_t config_hotkeys_dialog::handle_result(intptr_t dialog_run_result)

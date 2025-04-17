@@ -12,8 +12,9 @@ class config_hotkeys_dialog: public modal_dialog
 public:
     config_hotkeys_dialog();
 protected:
-    auto handle_result(intptr_t dialog_run_result) -> intptr_t;
-    auto handle_key_pressed(int ctrl_id, int combined_key) -> bool;
+    void init() override;
+    auto handle_result(intptr_t dialog_run_result) -> intptr_t override;
+    auto handle_key_pressed(int ctrl_id, int combined_key) -> bool override;
 };
 
 } // namespace ui

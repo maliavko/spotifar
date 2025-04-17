@@ -15,16 +15,46 @@ namespace spotifar
 
         MSortDialogTitle,
 
+        // config menu
         MConfigDialogMenuTitle,
         MConfigDialogMenuGeneralOpt,
         MConfigDialogMenuBackendOpt,
         MConfigDialogMenuHotkeysOpt,
 
+        // general configuration dialog
+        MConfigGeneralBoxTitle,
         MConfigAddToDisksMenu,
-        MConfigSpotifySettings,
+        MConfigVerboseLoggingSetting,
+        MConfigSpotifyBlockTitle,
         MConfigSpotifyClientID,
         MConfigSpotifyClientSecret,
         MConfigLocalhostServicePort,
+        MConfigNotificationsBlockTitle,
+        MConfigTrackChangedSetting,
+        MConfigImageShapeSetting,
+
+        // playback configuration dialog
+        MConfigPlaybackSetting,
+        MConfigNormalisationSetting,
+        MConfigAutoplaySetting,
+        MConfigGaplessSetting,
+        MConfigCacheSetting,
+        MConfigBitrateSetting,
+        MConfigFormatSetting,
+        MConfigDitherSetting,
+        MConfigVolumeCtrlSetting,
+
+        // hotkeys configuration dialog
+        MConfigHotkeysBoxLabel,
+        MConfigHotkeysTableTitle,
+        MConfigPlayPauseSetting,
+        MConfigSkipToNextSetting,
+        MConfigSkipToPrevSetting,
+        MConfigSeekForwardSetting,
+        MConfigSeekBackwardSetting,
+        MConfigVolumeUpSetting,
+        MConfigVolumeDownSetting,
+        MConfigShowToastSetting,
 
         MPanelRootItemLabel,
         MPanelRootItemDescr,
@@ -68,11 +98,19 @@ namespace spotifar
         MPlayerRepeatAllBtn,
         MPlayerShuffleBtn,
 
-        MKeyBarF4,
+        // spotify specifics
+        MArtistUnknown,
 
+        // warnings & errors
         MFarMessageErrorTitle,
-        MFarMessageErrorStartup,
-        MFarMessageWarning,
+
+        MErrorPluginStartupUnexpected,
+        MErrorPluginStartupNoClientID,
+        MErrorPluginStartupNoClientSecret,
+        MErrorLibrespotStartupUnexpected,
+        MErrorWinToastStartupUnexpected,
+
+        // complimentary dialogs & menus
         MTransferPlaybackTitle,
         MTransferPlaybackMessage,
     };

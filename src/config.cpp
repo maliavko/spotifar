@@ -177,9 +177,10 @@ wstring settings_context::get_wstr(const wstring &name, const wstring &def)
     return ps.Get(subkey_idx, name.c_str(), def.c_str());
 }
 
-string settings_context::get_str(const wstring &name, const string &def)
+string settings_context::get_str(const wstring &name, const string &def, std::function<bool(const string&)> validator)
 {
-    return utils::to_string(get_wstr(name, utils::to_wstring(def)));
+    auto value = utils::to_string(get_wstr(name, utils::to_wstring(def)));
+    return !validator || validator(value) ? value : def;
 }
 
 void settings_context::set_bool(const wstring &name, bool value)
@@ -285,11 +286,10 @@ void read(const PluginStartupInfo *info)
     _settings.playback_autoplay_enabled = ctx->get_bool(playback_autoplay_enabled_opt, false);
     _settings.gapless_playback_enabled = ctx->get_bool(gapless_playback_enabled_opt, true);
     _settings.playback_cache_enabled = ctx->get_bool(playback_cache_enabled_opt, true);
-    // TODO: validate incorrect data from the file
-    _settings.playback_bitrate = ctx->get_str(playback_bitrate_opt, playback::bitrate::bps160);
-    _settings.playback_format = ctx->get_str(playback_format_opt, playback::format::S16);
-    _settings.playback_dither = ctx->get_str(playback_dither_opt, playback::dither::tpdf);
-    _settings.playback_volume_ctrl= ctx->get_str(playback_volume_ctrl_opt, playback::volume_ctrl::log);
+    _settings.playback_bitrate = ctx->get_str(playback_bitrate_opt, playback::bitrate::bps160, playback::bitrate::is_valid);
+    _settings.playback_format = ctx->get_str(playback_format_opt, playback::format::S16, playback::format::is_valid);
+    _settings.playback_dither = ctx->get_str(playback_dither_opt, playback::dither::tpdf, playback::dither::is_valid);
+    _settings.playback_volume_ctrl= ctx->get_str(playback_volume_ctrl_opt, playback::volume_ctrl::log, playback::volume_ctrl::is_valid);
     _settings.playback_initial_volume = ctx->get_int(playback_initial_volume_opt, 50);
 
     // views settings

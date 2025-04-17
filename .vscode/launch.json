@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Debug.x64/Far.exe",
             "type":"cppvsdbg",
             "request": "launch",
-            "cwd": "${fileDirname}",
+            //"cwd": "${fileDirname}",
             "console": "externalTerminal",
             "logging": {
                 "exceptions": true,

@@ -19,7 +19,7 @@ const view_abstract::key_bar_info_t* root_base_view::get_key_bar_info()
 {
     // TODO: test data
     static key_bar_info_t key_bar{
-        { { VK_F4, 0 }, get_text(MKeyBarF4) },
+        // { { VK_F4, 0 }, get_text(MKeyBarF4) },
     };
 
     return &key_bar;

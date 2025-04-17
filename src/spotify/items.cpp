@@ -1,5 +1,6 @@
 #include "items.hpp"
 #include "utils.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -221,7 +222,7 @@ wstring track_t::get_artist_name() const
 {
     if (artists.size() > 0)
         return artists[0].name;
-    return L"Unknown"; // TODO: localize
+    return utils::far3::get_text(MArtistUnknown);
 }
 
 wstring track_t::get_long_name() const

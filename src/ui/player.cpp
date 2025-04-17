@@ -876,13 +876,20 @@ void player::on_repeat_state_changed(const string &state)
 
 void player::update_repeat_btn(const string &repeate_state)
 {
+    static const std::map<const string, const wchar_t*> labels{
+        { playback_state_t::repeat_off, far3::get_text(MPlayerRepeatNoneBtn) },
+        { playback_state_t::repeat_track, far3::get_text(MPlayerRepeatOneBtn) },
+        { playback_state_t::repeat_context, far3::get_text(MPlayerRepeatAllBtn) },
+    };
+
     no_redraw nr(hdlg);
 
     static wstring repeat_label;
     
-    // TODO: localize?
-    repeat_label = utils::utf8_decode(repeate_state);
-    set_control_text(controls::repeat_btn, repeat_label);
+    if (labels.contains(repeate_state))
+        set_control_text(controls::repeat_btn, labels.at(repeate_state));
+    else // unexpected situation, just showing what we've received
+        set_control_text(controls::repeat_btn, utils::to_wstring(repeate_state));
 }
 
 void player::update_like_btn(bool is_saved)

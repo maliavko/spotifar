@@ -170,7 +170,7 @@ public:
     auto get_int64(const wstring &name, std::int64_t def) -> std::int64_t;
     auto get_int(const wstring &name, int def) -> int;
     auto get_wstr(const wstring &name, const wstring &def) -> wstring;
-    auto get_str(const wstring &name, const string &def) -> string;
+    auto get_str(const wstring &name, const string &def, std::function<bool(const string&)> validator = nullptr) -> string;
     
     void set_bool(const wstring &name, bool value);
     void set_int64(const wstring &name, std::int64_t value);

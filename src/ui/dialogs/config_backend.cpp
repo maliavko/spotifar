@@ -1,6 +1,7 @@
 #include "config_backend.hpp"
 #include "config.hpp"
 #include "utils.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -43,29 +44,28 @@ static const int
 
 static const auto combo_flags = DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE | DIF_DROPDOWNLIST;
 
-// TODO: localize strings
 static const std::vector<FarDialogItem> dlg_items_layout{
-    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,            DIF_NONE, L""),
+    ctrl(DI_DOUBLEBOX,   box_x1, box_y1, box_x2, box_y2,            DIF_NONE),
 
-    ctrl(DI_CHECKBOX,    view_center_x-8, 1, view_center_x+8, 1,    DIF_CENTERTEXT, L"Playback backend"),
-    ctrl(DI_CHECKBOX,    view_x1, main_box_y+1, view_x1+10, 1,      DIF_CENTERTEXT, L"Vol. normalisation"),
-    ctrl(DI_CHECKBOX,    view_x1, main_box_y+2, view_x1+10, 1,      DIF_CENTERTEXT, L"Autoplay similar"),
-    ctrl(DI_CHECKBOX,    col2_x, main_box_y+1, col2_x+10, 1,        DIF_CENTERTEXT, L"Gapless playback"),
-    ctrl(DI_CHECKBOX,    col2_x, main_box_y+2, col2_x+10, 1,        DIF_CENTERTEXT, L"Audio cache"),
+    ctrl(DI_CHECKBOX,    view_center_x-8, 1, view_center_x+8, 1,    DIF_CENTERTEXT),
+    ctrl(DI_CHECKBOX,    view_x1, main_box_y+1, view_x1+10, 1,      DIF_CENTERTEXT),
+    ctrl(DI_CHECKBOX,    view_x1, main_box_y+2, view_x1+10, 1,      DIF_CENTERTEXT),
+    ctrl(DI_CHECKBOX,    col2_x, main_box_y+1, col2_x+10, 1,        DIF_CENTERTEXT),
+    ctrl(DI_CHECKBOX,    col2_x, main_box_y+2, col2_x+10, 1,        DIF_CENTERTEXT),
     
-    ctrl(DI_TEXT,        view_x1, main_box_y+4, view_x1+10, 1,      0, L"Bitrate"),
+    ctrl(DI_TEXT,        view_x1, main_box_y+4, view_x1+10, 1,      DIF_NONE),
     ctrl(DI_COMBOBOX,    view_x1+11, main_box_y+4, view_x1+21, 1,   combo_flags),
-    ctrl(DI_TEXT,        view_x1, main_box_y+5, view_x1+10, 1,      0, L"Format"),
+    ctrl(DI_TEXT,        view_x1, main_box_y+5, view_x1+10, 1,      DIF_NONE),
     ctrl(DI_COMBOBOX,    view_x1+11, main_box_y+5, view_x1+21, 1,   combo_flags),
-    ctrl(DI_TEXT,        col2_x, main_box_y+4, col2_x+10, 1,        0, L"Dither"),
+    ctrl(DI_TEXT,        col2_x, main_box_y+4, col2_x+10, 1,        DIF_NONE),
     ctrl(DI_COMBOBOX,    col2_x+13, main_box_y+4, col2_x+23, 1,     combo_flags),
-    ctrl(DI_TEXT,        col2_x, main_box_y+5, col2_x+10, 1,        0, L"Volume ctrl"),
+    ctrl(DI_TEXT,        col2_x, main_box_y+5, col2_x+10, 1,        DIF_NONE),
     ctrl(DI_COMBOBOX,    col2_x+13, main_box_y+5, col2_x+23, 1,     combo_flags),
     
     // buttons block
     ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,     DIF_SEPARATOR),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP, L"Cancel"),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP | DIF_DEFAULTBUTTON),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP),
 };
 
 static void populate_combobox(HANDLE hdlg, int combo_id, std::vector<string> items, const string &current)
@@ -89,10 +89,23 @@ config_backend_dialog::config_backend_dialog():
 
 void config_backend_dialog::init()
 {
+    // comboboxes initialization
     populate_combobox(hdlg, bitrate_combo, config::playback::bitrate::all, config::get_playback_bitrate());
     populate_combobox(hdlg, format_combo, config::playback::format::all, config::get_playback_format());
     populate_combobox(hdlg, dither_combo, config::playback::dither::all, config::get_playback_dither());
     populate_combobox(hdlg, volume_ctrl_combo, config::playback::volume_ctrl::all, config::get_playback_volume_ctrl());
+
+    dialogs::set_text(hdlg, backend_checkbox, get_text(MConfigPlaybackSetting));
+    dialogs::set_text(hdlg, volume_normalisation_checkbox, get_text(MConfigNormalisationSetting));
+    dialogs::set_text(hdlg, autoplay_checkbox, get_text(MConfigAutoplaySetting));
+    dialogs::set_text(hdlg, gapless_playback_checkbox, get_text(MConfigGaplessSetting));
+    dialogs::set_text(hdlg, playback_cache_checkbox, get_text(MConfigCacheSetting));
+    dialogs::set_text(hdlg, bitrate_label, get_text(MConfigBitrateSetting));
+    dialogs::set_text(hdlg, format_label, get_text(MConfigFormatSetting));
+    dialogs::set_text(hdlg, dither_label, get_text(MConfigDitherSetting));
+    dialogs::set_text(hdlg, volume_ctrl_label, get_text(MConfigVolumeCtrlSetting));
+    dialogs::set_text(hdlg, ok_button, get_text(MOk));
+    dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
 intptr_t config_backend_dialog::handle_result(intptr_t dialog_run_result)

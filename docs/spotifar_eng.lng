@@ -9,16 +9,46 @@
 
 "Sort by"
 
+// config menu
 "Spotifar settings"
 "General"
 "Audio backend"
 "Global Hotkeys"
 
-"Add to &Disks menu"
+// general configuration dialog
+"General"
+"Add to disks menu"
+"Verbose logging"
 "Spotify API"
 "Client ID"
 "Client Secret"
 "Port"
+"Notifications"
+"Track changed"
+"Image shape"
+
+// playback configuration dialog
+"Backend enabled"
+"Vol. normalisation"
+"Autoplay similar"
+"Gapless playback"
+"Audio cache"
+"Bitrate"
+"Format"
+"Dither"
+"Volume ctrl"
+
+// hotkeys configuration dialog
+"Global hotkeys"
+"VKey    Ctrl  Shift   Alt"
+"play/pause"
+"skip to next"
+"skip to prev"
+"seek forward"
+"seek backward"
+"volume up"
+"volume down"
+"show toast"
 
 "Root Menu"
 ""
@@ -62,10 +92,16 @@
 "All"
 "Shuffle"
 
-"Player"
+// spotify specifics
+"Unknown"
 
 "Critical error"
+
 "An error has occured while initializing plugin."
-"Warning"
+"An error has occured while initializing plugin: Spotify client ID is not specified."
+"An error has occured while initializing plugin: Spotify client secret is not specified."
+"There is a problem launching Librespot process, see logs for the details."
+"Could not initialize a notifications library."
+
 "Transferring playback"
 "Some other device is active now '{0}', would you like to transfer playback to '{1}'?"

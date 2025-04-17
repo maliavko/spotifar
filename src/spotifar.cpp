@@ -67,7 +67,7 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
     catch (const std::exception &ex)
     {
         far3::show_far_error_dlg(
-            MFarMessageErrorStartup, utils::utf8_decode(ex.what()));
+            MErrorLibrespotStartupUnexpected, utils::utf8_decode(ex.what()));
     }
 }
 
@@ -76,15 +76,13 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
 {
     if (config::get_client_id().empty())
     {
-        far3::show_far_error_dlg(
-            MFarMessageErrorStartup, L"Spotify client ID is not specified");
+        far3::show_far_error_dlg(MErrorPluginStartupNoClientID);
         return NULL;
     }
 
     if (config::get_client_secret().empty())
     {
-        far3::show_far_error_dlg(
-            MFarMessageErrorStartup, L"Spotify client secret is not specified");
+        far3::show_far_error_dlg(MErrorPluginStartupNoClientSecret);
         return NULL;
     }
 
@@ -145,20 +143,6 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
 intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
-    namespace keys = utils::keys;
-    
-    auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
-    {
-        switch (keys::make_combined(key_event))
-        {
-            case keys::i + keys::mods::ctrl:
-            {
-                spdlog::debug("ProcessPanelInputW");
-                return TRUE;
-            }
-        }
-    }
     return static_cast<plugin*>(info->hPanel)->process_input(info);
 }
 
@@ -175,7 +159,7 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
     if (info->Event == FE_CHANGEVIEWMODE)
     {
         // TODO: to implement a persistent storing of the picked view mode for the views
-        const wchar_t *clumns = static_cast<const wchar_t*>(info->Param);
+        // const wchar_t *clumns = static_cast<const wchar_t*>(info->Param);
     }
 
     return FALSE;
@@ -218,6 +202,7 @@ intptr_t WINAPI CompareW(const CompareInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 
 HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 {
+    // TODO: unfinished
     // spdlog::debug("HANDLE WINAPI AnalyseW(const AnalyseInfo *info)");
     return NULL;
 }
@@ -227,30 +212,27 @@ HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 {
     // TODO: unfinished
-    spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *info)");
+    // spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *info)");
     
-    // wchar_t FileName[MAX_PATH];
-    // config::ps_info.fsf->MkTemp(FileName, std::size(FileName), L"");
+    // // wchar_t FileName[MAX_PATH];
+    // // config::ps_info.fsf->MkTemp(FileName, std::size(FileName), L"");
 
-    auto file = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[0].FileName);
-    std::ofstream fout(file, std::ios::trunc);
-    fout << "Test data" << std::endl;
-    fout.close();
+    // auto file = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[0].FileName);
+    // std::ofstream fout(file, std::ios::trunc);
+    // fout << "Test data" << std::endl;
+    // fout.close();
 
-    return TRUE;
+    // return TRUE;
+
+    return FALSE;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/deletefilesw.html
 intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
 {
-    spdlog::debug("intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)");
-    return TRUE;
-}
-
-/// @brief https://api.farmanager.com/ru/exported_functions/exitfarw.html 
-void WINAPI ExitFARW(const ExitInfo *info)
-{
-    // spdlog::debug("void WINAPI ExitFARW(const ExitInfo *info)");
+    // TODO: unfinished
+    // spdlog::debug("intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)");
+    return FALSE;
 }
 
 } // namespace spotifar
