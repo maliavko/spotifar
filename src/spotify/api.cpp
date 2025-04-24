@@ -19,28 +19,6 @@ auto request_item(R &&requester, api_proxy_ptr api) -> typename R::result_t
     return {};
 }
 
-static void http_logger(const Request &req, const Response &res)
-{
-    static const std::set<string> exclude{
-        "/v1/me/player",
-        "/v1/me/player/devices",
-        "/v1/me/player/recently-played",
-    };
-
-    if (http::is_success(res.status))
-    {
-        if (!exclude.contains(http::trim_params(req.path)))
-        {
-            log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}",
-                res.status, req.method, http::trim_domain(req.path));
-        }
-    }
-    else
-    {
-        log::api->error(http::dump_error(req, res));
-    }
-}
-
 api::api(): pool(pool_size)
 {
     auth = std::make_unique<auth_cache>(this, config::get_client_id(), config::get_client_secret(), config::get_localhost_port());
@@ -81,11 +59,11 @@ void api::shutdown()
 
 void api::tick()
 {
-    pool.detach_loop(0ULL, caches.size(),
+    auto future = pool.submit_loop(0ULL, caches.size(),
         [&caches = this->caches](const std::size_t idx) {
             caches[idx]->resync();
         }, BS::pr::high);
-    pool.wait();
+    future.get();
 }
 
 const playback_state_t& api::get_playback_state(bool force_resync)
@@ -238,7 +216,7 @@ bool api::save_tracks(const item_ids_t &ids)
     });
 
     auto res = put("/v1/me/tracks", body.str());
-    return http::is_success(res->status);
+    return http::is_success(res);
 }
 
 bool api::remove_saved_tracks(const item_ids_t &ids)
@@ -251,7 +229,7 @@ bool api::remove_saved_tracks(const item_ids_t &ids)
     });
 
     auto res = del("/v1/me/tracks", body.str());
-    return http::is_success(res->status);
+    return http::is_success(res);
 }
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
@@ -325,7 +303,7 @@ void api::pause_playback(const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = put(append_query_params("/v1/me/player/pause", params));
-            if (http::is_success(res->status))
+            if (http::is_success(res))
                 cache.patch([](auto &v) {
                     json::Pointer("/is_playing").Set(v, false);
                 });
@@ -379,7 +357,7 @@ void api::seek_to_position(int position_ms, const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = put(append_query_params("/v1/me/player/seek", params));
-            if (http::is_success(res->status))
+            if (http::is_success(res))
                 cache.patch([position_ms](auto &v) {
                     json::Pointer("/progress_ms").Set(v, position_ms);
                 });
@@ -399,7 +377,7 @@ void api::toggle_shuffle(bool is_on, const string &device_id)
                 params.insert({ "device_id", dev_id });
             
             auto res = put(append_query_params("/v1/me/player/shuffle", params));
-            if (http::is_success(res->status))
+            if (http::is_success(res))
                 cache.patch([is_on](auto &v) {
                     json::Pointer("/shuffle_state").Set(v, is_on);
                 });
@@ -449,7 +427,7 @@ void api::set_repeat_state(const string &mode, const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = put(append_query_params("/v1/me/player/repeat", params));
-            if (http::is_success(res->status))
+            if (http::is_success(res))
                 cache.patch([mode](auto &d) {
                     json::Pointer("/repeat_state").Set(d, mode);
                 });
@@ -469,7 +447,7 @@ void api::set_playback_volume(int volume_percent, const string &device_id)
                 params.insert({ "device_id", dev_id });
 
             auto res = put(append_query_params("/v1/me/player/volume", params));
-            if (http::is_success(res->status))
+            if (http::is_success(res))
                 cache.patch([volume_percent](auto &d) {
                     json::Pointer("/device/volume_percent").Set(d, volume_percent);
                 });
@@ -517,7 +495,7 @@ void api::start_playback_raw(const string &body, const string &device_id)
         ]
         {
             auto res = put(request_url, body);
-            if (http::is_success(res->status))
+            if (http::is_success(res))
                 cache.patch([](auto &d) {
                     json::Pointer("/is_playing").Set(d, true);
                 });
@@ -554,8 +532,8 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
                 return true;
             });
         
-        if (http::is_success(res->status))
-            return filepath;
+        if (!http::is_success(res))
+            return L"";
     }
     return filepath;
 }
@@ -589,7 +567,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     }
 
     auto res = get_client()->Get(request_url, {{ "If-None-Match", cached_etag }});
-    if (http::is_success(res->status))
+    if (http::is_success(res))
     {
         if (res->status == OK_200)
         {
@@ -614,7 +592,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
                 api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
     }
-    else if (res->status == TooManyRequests_429)
+    else if (res && res->status == TooManyRequests_429)
     {
         // TODO: I hope it will not go into recursion one day, sorry guys
         std::this_thread::sleep_for(1.5s);
@@ -635,7 +613,7 @@ httplib::Result api::put(const string &request_url, const string &body)
     else
         res = client->Put(request_url);
     
-    if (http::is_success(res->status))
+    if (http::is_success(res))
     {
         // invalidate all cached GET responses with the same base urls
         api_responses_cache.invalidate(request_url);
@@ -648,7 +626,7 @@ httplib::Result api::del(const string &request_url, const string &body)
 {
     auto res = get_client()->Delete(request_url, body, "application/json");
     
-    if (http::is_success(res->status))
+    if (http::is_success(res))
     {
         // invalidate all the cached repsonses with the same base urls
         api_responses_cache.invalidate(request_url);
@@ -661,7 +639,7 @@ httplib::Result api::post(const string &request_url, const string &body)
 {
     auto res = get_client()->Post(request_url, body, "application/json");
     
-    if (http::is_success(res->status))
+    if (http::is_success(res))
     {
         // invalidate all the cached repsonses with the same base urls
         api_responses_cache.invalidate(request_url);

@@ -458,7 +458,7 @@ namespace far3
     intptr_t show_far_error_dlg(int error_msg_id, const wstring &extra_message,
         int extra_button_msg_id, std::function<void(void)> extra_btn_handler)
     {
-        bool has_extra_btn = extra_button_msg_id != 0;
+        bool has_extra_btn = extra_button_msg_id != -1;
     
         std::vector<const wchar_t*> msgs =
         {
@@ -481,6 +481,8 @@ namespace far3
         // activate given handler for a custom button
         if (has_extra_btn && res == 1 && extra_btn_handler != nullptr)
             extra_btn_handler();
+
+        log::global->error("Showing far error message, {}", utils::to_string(utils::string_join(msgs, L",")));
 
         return res;
     }
@@ -773,10 +775,17 @@ namespace http
         return std::make_pair(url, "");
     }
 
-    bool is_success(int response_code)
+    bool is_success(const http::Result &res)
     {
-        return (response_code == OK_200 || response_code == NoContent_204 ||
-            response_code == NotModified_304);
+        return res && (res->status == OK_200 || res->status == NoContent_204 ||
+            res->status == NotModified_304);
+    }
+    
+    string get_status_message(const http::Result &res)
+    {
+        if (!res)
+            return httplib::to_string(res.error());
+        return std::format("{}({})", httplib::status_message(res->status), res->status);
     }
 
     string trim_params(const string &url)
@@ -852,7 +861,7 @@ namespace http
         ss << std::endl << "A response received: " << std::endl;
         ss << std::format("{} {}", res.status, res.version) << std::endl;
 
-        //ss << dump_headers(res.headers) << std::endl;
+        ss << dump_headers(res.headers) << std::endl;
 
         if (!res.body.empty())
             ss << res.body << std::endl;
@@ -894,13 +903,6 @@ namespace json
     void to_json(Value &j, const bool &result, Allocator &allocator)
     {
         j.SetBool(result);
-    }
-
-    std::shared_ptr<Document> parse(const string &json)
-    {
-        auto document = std::make_shared<Document>();
-        document->Parse(json);
-        return document;
     }
 
     void pretty_print(Value &v)

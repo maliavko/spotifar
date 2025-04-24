@@ -12,7 +12,6 @@ static const wstring device_name = L"librespot";
 
 bool librespot_handler::launch(const string &access_token)
 {
-    return false;
     if (is_running)
     {
         log::global->warn("The Librespot process is already running");
@@ -158,9 +157,9 @@ void librespot_handler::tick()
     
     // the algo below parses all the accumulated Librespot process messages and propagates
     // them into regular plugin's log file
-    DWORD dwRead;
-    static CHAR chBuf[512];
-    BOOL bSuccess = FALSE;
+    DWORD bytes_read;
+    static CHAR buffer[512];
+    BOOL success = FALSE;
 
     /// 1 - do not remember; 2 - message log level; 3 - the message itself
     static auto pattern = std::regex("\\[(.+) (\\w+) .+\\] (.+)");
@@ -170,10 +169,10 @@ void librespot_handler::tick()
     // concatanated later and parsed again
     static std::stringstream ss(std::ios_base::app | std::ios_base::in | std::ios_base::out);
 
-    bSuccess = ReadFile(pipe_read, chBuf, 512, &dwRead, NULL);
-    if (bSuccess && dwRead != 0) // if the process's output buffer has something to read
+    success = ReadFile(pipe_read, buffer, 512, &bytes_read, NULL);
+    if (success && bytes_read != 0) // if the process's output buffer has something to read
     {
-        ss.write(chBuf, dwRead);
+        ss.write(buffer, bytes_read);
     
         string sline;
         while (std::getline(ss, sline) && !ss.eof())

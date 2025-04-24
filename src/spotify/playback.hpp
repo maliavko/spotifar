@@ -3,7 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "abstract.hpp"
+#include "common.hpp"
 #include "items.hpp"
 #include "cache.hpp"
 

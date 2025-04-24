@@ -3,6 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "rapidjson/error/en.h"
 
 namespace spotifar { namespace utils {
 
@@ -52,6 +53,16 @@ S string_join(const std::vector<S> &parts, const E *delim)
         os << *b;
 
     return os.str();
+}
+
+template<typename E, typename S = std::basic_string<E>>
+S string_join(const std::vector<const E*> parts, const E *delim)
+{
+    std::vector<S> str_parts;
+    for (const E *str: parts)
+        str_parts.push_back(str);
+
+    return string_join(str_parts, delim);
 }
 
 /// @brief Returns a copy of a given string without trailing whitespaces
@@ -380,6 +391,7 @@ namespace json
     using rapidjson::PrettyWriter;
     using rapidjson::kObjectType;
     using rapidjson::kArrayType;
+    using rapidjson::ParseResult;
     using Allocator = typename Document::AllocatorType;
     
     /// @brief string support for rapidjson parse/pack
@@ -487,15 +499,14 @@ namespace json
 
         return sb;
     }
-
-    auto parse(const string &json) -> std::shared_ptr<Document>;
     
     template<class T>
     void parse_to(const string &json, T &value)
     {
         Document doc;
-        doc.Parse(json);
-
+        if (doc.Parse(json).HasParseError())
+            std::runtime_error(GetParseError_En(doc.GetParseError()));
+        
         from_json(doc, value);
     }
 
@@ -507,7 +518,11 @@ namespace http
     using namespace json;
     using namespace httplib;
 
-    bool is_success(int response_code);
+    /// @brief Returns whether the http request's result is successful (response code is 200, 204 or 304)
+    bool is_success(const http::Result &res);
+
+    /// @brief Returns a string message, representing a response result
+    string get_status_message(const http::Result &res);
     
     /// @brief Splits and returns a given `url` as a two components pair: domain & path with parameters.
     /// If the url has only domain, so the second part of the pair will be empty, if only path - the first is empty

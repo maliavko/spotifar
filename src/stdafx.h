@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define BS_THREAD_POOL_ENABLE_PRIORITY
 #define RAPIDJSON_HAS_STDSTRING 1
+#define RAPIDJSON_ASSERT(x) if (!(x)) throw std::exception("Error parsing json data, " #x);
 
 #include <string>
 #include <map>

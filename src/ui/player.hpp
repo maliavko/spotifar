@@ -2,7 +2,7 @@
 #define PLAYER_DIALOG_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
 
 #include "stdafx.h"
-#include "spotify/abstract.hpp"
+#include "spotify/common.hpp"
 #include "spotify/playback.hpp"
 #include "spotify/devices.hpp"
 #include "controls.hpp"
@@ -70,7 +70,6 @@ protected:
     void update_playing_queue(bool is_visible);
 
     // api even handlers
-    void on_playback_sync_finished(const string &err_msg);
     void on_devices_changed(const devices_t &devices);
     void on_track_changed(const track_t &track);
     void on_track_progress_changed(int duration, int progress);

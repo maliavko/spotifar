@@ -262,9 +262,10 @@ public:
                 if (response->status == httplib::NoContent_204)
                     return true;
                 
-                auto doc = json::parse(response->body);
+                json::Document doc;
+                doc.Parse(response->body);
                 
-                json::Value &body = *doc;
+                json::Value &body = doc;
                 if (!fieldname.empty())
                     body = body[fieldname];
 
@@ -280,7 +281,7 @@ public:
         return false;
     }
 protected:
-    virtual bool is_success(Result &r) const { return utils::http::is_success(r->status); }
+    virtual bool is_success(const Result &r) const { return utils::http::is_success(r); }
 
     /// @brief Provides a way for derived classes to specify result parsing approach
     /// @param body parsed response body
@@ -635,6 +636,8 @@ protected:
         return requester_ptr(new requester_t(this->url, updated_params, this->fieldname));
     }
 };
+
+void http_logger(const httplib::Request &req, const httplib::Response &res);
 
 } // namespace spotify
 } // namespace spotifar

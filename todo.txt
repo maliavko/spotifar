@@ -42,7 +42,7 @@ to finish for alpha release
     - track number/dosci number is shown weird
 
 test cases for error-proof app behaviour
-- invalid spotify api items (client id or port e.g.)
++ invalid spotify api items (client id or port e.g.)
 - 429 too many requests emulation, 500 for service outage
 - sudden network outage
 - to check each http request and app behaviour in case the data does not come

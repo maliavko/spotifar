@@ -2,7 +2,7 @@
 #define DEVICES_HPP_C39A5DF6_0432_4CF0_ADA2_10DA51FB40DC
 #pragma once
 
-#include "abstract.hpp"
+#include "common.hpp"
 #include "items.hpp"
 #include "cache.hpp"
 

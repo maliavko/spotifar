@@ -2,7 +2,7 @@
 #define CACHE_HPP_6BE0F54C_3187_4D5F_AC83_CE8B78223B72
 #pragma once
 
-#include "abstract.hpp"
+#include "common.hpp"
 #include "items.hpp"
 #include "cache.hpp"
 

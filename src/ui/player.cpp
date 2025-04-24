@@ -742,14 +742,6 @@ bool player::on_play_btn_click(void *empty)
     return false;
 }
 
-void player::on_playback_sync_finished(const string &exit_msg)
-{
-    // if (!exit_msg.empty())
-    //     far3::show_far_error_dlg(MFarMessageErrorPlaybackSync, exit_msg);
-    
-    hide();
-}
-
 void player::on_devices_changed(const devices_t &devices)
 {
     no_redraw nr(hdlg);

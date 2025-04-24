@@ -3,7 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "spotify/abstract.hpp"
+#include "spotify/common.hpp"
 #include "ui/views/view.hpp" // view_abstract
 #include "ui/events.hpp" // ui_events_observer
 

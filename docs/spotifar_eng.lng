@@ -102,6 +102,7 @@
 "An error has occured while initializing plugin: Spotify client secret is not specified."
 "There is a problem launching Librespot process, see logs for the details."
 "Could not initialize a notifications library."
+"A worker thread caught an exception and stopped unexpectedly, closing plugin."
 
 "Transferring playback"
 "Some other device is active now '{0}', would you like to transfer playback to '{1}'?"

@@ -109,6 +109,7 @@ namespace spotifar
         MErrorPluginStartupNoClientSecret,
         MErrorLibrespotStartupUnexpected,
         MErrorWinToastStartupUnexpected,
+        MErrorSyncThreadFailed,
 
         // complimentary dialogs & menus
         MTransferPlaybackTitle,

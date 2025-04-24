@@ -159,11 +159,9 @@ void plugin::launch_sync_worker()
 {
     std::packaged_task<void()> task([this]
     {
-        string exit_msg = "";
-        std::lock_guard worker_lock(sync_worker_mutex);
-
         try
         {
+            std::lock_guard worker_lock(sync_worker_mutex);
             while (is_worker_listening)
             {
                 api->tick();
@@ -179,13 +177,11 @@ void plugin::launch_sync_worker()
         }
         catch (const std::exception &ex)
         {
-            // TODO: what if there is an error, but no playback is opened
-            exit_msg = ex.what();
-            log::api->critical("An exception occured in the background thread: {}", exit_msg);
+            far3::synchro_tasks::push([ex]{
+                far3::show_far_error_dlg(MErrorSyncThreadFailed, to_wstring(ex.what()));
+                far3::panels::quit(PANEL_ACTIVE);
+            });
         }
-        
-        // TODO: remove and cleanup the code
-        // ObserverManager::notify(&BasicApiObserver::on_playback_sync_finished, exit_msg);
     });
 
     is_worker_listening = true;

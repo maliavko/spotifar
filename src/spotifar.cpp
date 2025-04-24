@@ -179,7 +179,6 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
 
     config::write();
     log::fini();
-    far3::synchro_tasks::clear();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processsynchroeventw.html

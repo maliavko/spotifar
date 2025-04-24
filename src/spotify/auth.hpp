@@ -2,7 +2,7 @@
 #define AUTH_HPP_EB78B9BD_C144_43F0_9A9F_EB678C5C23AA
 #pragma once
 
-#include "abstract.hpp"
+#include "common.hpp"
 #include "cache.hpp"
 
 namespace spotifar { namespace spotify {
@@ -29,11 +29,11 @@ public:
     ~auth_cache() { api_proxy = nullptr; }
     
     bool is_authenticated() const { return is_logged_in; }
-    auto get_access_token() const { return get().access_token; }
+    auto get_access_token() const -> const string& { return get().access_token; }
 protected:
-    virtual bool request_data(auth_t &data);
-    virtual clock_t::duration get_sync_interval() const;
-    virtual void on_data_synced(const auth_t &data, const auth_t &prev_data);
+    bool request_data(auth_t &data) override;
+    clock_t::duration get_sync_interval() const override;
+    void on_data_synced(const auth_t &data, const auth_t &prev_data) override;
     
     string request_auth_code();
     auth_t auth_with_code(const string &auth_code);
