@@ -3,12 +3,13 @@
 #pragma once
 
 #define UNICODE
-#define SPDLOG_WCHAR_FILENAMES
+#define SPDLOG_WCHAR_FILENAMES // using wstring with spdlog library
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
-#define BS_THREAD_POOL_ENABLE_PRIORITY
-#define RAPIDJSON_HAS_STDSTRING 1
-#define RAPIDJSON_ASSERT(x) if (!(x)) throw std::exception("Error parsing json data, " #x);
+#define BS_THREAD_POOL_ENABLE_PRIORITY // possibility to use priorities for the thread tasks in BS::thread_pool
+#define RAPIDJSON_HAS_STDSTRING 1 // using string with rapidjson library
+// replacing asserts with runtime exceptions, while working with rapidson for proper error handling
+#define RAPIDJSON_ASSERT(x) if (!(x)) throw std::runtime_error("json error, " #x);
 
 #include <string>
 #include <map>
@@ -25,16 +26,16 @@
 #include <shellapi.h>  // for ShellExecute
 #include <shlobj_core.h>  // for SHGetKnownFolderPath
 
-#include "httplib.h"
-#include "spdlog/spdlog.h"
-#include "BS_thread_pool.hpp"
-#include "ObserverManager.h"
+#include "httplib.h" // single-threaded http client/server library
+#include "spdlog/spdlog.h" // logging library
+#include "BS_thread_pool.hpp" // thread pool library
+#include "ObserverManager.h" // event bus library
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/document.h"
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-#include "wintoastlib.h"
+#include "wintoastlib.h" // win toast notifications library
 
 #include <plugin.hpp> // far api
 #include <PluginSettings.hpp> // far plugin's data storage access

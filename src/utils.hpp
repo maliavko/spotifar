@@ -486,6 +486,8 @@ namespace json
         }
     }
 
+    /// @brief Dumps a given serialization supporting object to string. Returns a shared_ptr to StringBuffer
+    /// @tparam T `value` object type, must support jsong serialization (from_json/to_json methods)
     template<class T>
     auto dump(const T &value) -> std::shared_ptr<StringBuffer>
     {
@@ -500,14 +502,26 @@ namespace json
         return sb;
     }
     
+    /// @brief Parses a given `json` string into given object `value`. Raises an exception if the parsing
+    /// ends with errors eaither while parsing string or reading the data from the valid json
     template<class T>
     void parse_to(const string &json, T &value)
     {
         Document doc;
         if (doc.Parse(json).HasParseError())
-            std::runtime_error(GetParseError_En(doc.GetParseError()));
+            throw std::runtime_error(GetParseError_En(doc.GetParseError()));
         
-        from_json(doc, value);
+        try
+        {
+            from_json(doc, value);
+        }
+        catch (const std::exception &ex)
+        {
+            log::global->error(std::format(
+                "There is an error parsing a json object: {}. Object type '{}', jsong string '{}'",
+                ex.what(), typeid(T).name(), json));
+            throw ex;
+        }
     }
 
     void pretty_print(Value &doc);

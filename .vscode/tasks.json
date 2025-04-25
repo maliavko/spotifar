@@ -109,7 +109,7 @@
             "presentation": {
                 "reveal": "silent"
             },
-            //"dependsOn": ["Create Spotifar plugin folder"],
+            "dependsOn": ["Create Spotifar plugin folder"],
             "group": {
                 "kind": "build"
             }
@@ -125,22 +125,21 @@
             "presentation": {
                 "reveal": "silent"
             },
-            //"dependsOn": ["Create Spotifar plugin folder"],
             "group": {
                 "kind": "build"
             }
         },
-        // {
-        //     "label": "Create Spotifar plugin folder",
-        //     "type": "shell",
-        //     "command": "mkdir",
-        //     "args": [
-        //         "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
-        //     ],
-        //     "group": {
-        //         "kind": "build"
-        //     }
-        // }
+        {
+            "label": "Create Spotifar plugin folder",
+            "type": "shell",
+            "command": "mkdir",
+            "args": [
+                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
+            ],
+            "group": {
+                "kind": "build"
+            }
+        }
     ],
     "inputs": [
         {
