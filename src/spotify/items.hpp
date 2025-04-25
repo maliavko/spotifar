@@ -5,8 +5,6 @@
 #include "stdafx.h"
 #include "utils.hpp"
 
-// TODO: to make a review of the methods, now some items have methods for formatting data,
-// which possibly is needed only for views
 namespace spotifar { namespace spotify {
 
 namespace json = utils::json;
@@ -84,9 +82,9 @@ struct simplified_album_t: public data_item_t
     
     auto get_uri() const -> string { return make_uri(id); }
     auto is_single() const -> bool { return album_type == single; }
+    auto is_compilation() const -> bool { return album_type == compilation; }
     auto get_release_year() const -> string;
     auto get_type_abbrev() const -> wstring;
-    auto get_user_name() const -> wstring;
     
     friend void from_json(const json::Value &j, simplified_album_t &a);
     friend void to_json(json::Value &j, const simplified_album_t &a, json::Allocator &allocator);
@@ -131,9 +129,11 @@ struct track_t: public simplified_track_t
 
     static const string& get_fields_filter();
 
+    /// @brief Takes a first available artists or returns a sturb string 
     wstring get_artist_name() const;
+
+    /// @brief Returns a string, containing all the track's artists separated by comma 
     wstring get_artists_full_name() const;
-    wstring get_long_name() const;
 
     friend void from_json(const json::Value &j, track_t &t);
     friend void to_json(json::Value &j, const track_t &t, json::Allocator &allocator);

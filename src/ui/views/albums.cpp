@@ -61,7 +61,7 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     static PanelMode modes[10];
 
     static const wchar_t* titles_3[] = { L"Yr", L"Name", L"Tx", L"Time", L"Type" };
-    modes[3].ColumnTypes = L"C0,NON,C2,C5,C1";
+    modes[3].ColumnTypes = L"C0,NON,C2,C4,C1";
     modes[3].ColumnWidths = L"6,0,4,8,6";
     modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
@@ -75,7 +75,7 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     modes[4].StatusColumnWidths = NULL;
 
     static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Tx", L"Type", L"Release" };
-    modes[5].ColumnTypes = L"C0,NON,C2,C1,C4";
+    modes[5].ColumnTypes = L"C0,NON,C2,C1,C3";
     modes[5].ColumnWidths = L"6,0,4,6,10";
     modes[5].ColumnTitles = titles_5;
     modes[5].StatusColumnTypes = NULL;
@@ -150,13 +150,10 @@ const view_abstract::items_t* albums_base_view::get_items()
         // column C2 - total tracks
         columns.push_back(std::format(L"{:3}", a.total_tracks));
 
-        // column C3 - full name
-        columns.push_back(a.get_user_name());
-
-        // column C4 - full release date
+        // column C3 - full release date
         columns.push_back(std::format(L"{: ^10}", utils::to_wstring(a.release_date)));
 
-        // column C5 - album length
+        // column C4 - album length
         size_t total_length_ms = 0;
         if (auto api = api_proxy.lock())
         {
@@ -168,7 +165,7 @@ const view_abstract::items_t* albums_base_view::get_items()
             }
         }
 
-        // TODO: column C6 - copyrights
+        // TODO: column C5 - copyrights
         // album popularity
         // music label
         // external ids

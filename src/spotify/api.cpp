@@ -571,7 +571,6 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     {
         if (res->status == OK_200)
         {
-            // TODO: caught here racing memory exception
             auto etag = res->get_header_value("etag", "");
 
             // caching only requests which have ETag or `cache-for` instruction

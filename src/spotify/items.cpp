@@ -99,14 +99,6 @@ wstring simplified_album_t::get_type_abbrev() const
     return L"??";
 }
 
-wstring simplified_album_t::get_user_name() const
-{
-    wstring user_name = std::format(L"[{}] {}", utils::to_wstring(get_release_year()), name);
-    if (is_single())
-        user_name += L" [EP]";
-    return user_name;
-}
-
 void from_json(const json::Value &j, simplified_album_t &a)
 {
     a.id = j["id"].GetString();
@@ -223,11 +215,6 @@ wstring track_t::get_artist_name() const
     if (artists.size() > 0)
         return artists[0].name;
     return utils::far3::get_text(MArtistUnknown);
-}
-
-wstring track_t::get_long_name() const
-{
-    return std::format(L"{} - {}", get_artist_name(), name);
 }
 
 void to_json(json::Value &result, const track_t &t, json::Allocator &allocator)

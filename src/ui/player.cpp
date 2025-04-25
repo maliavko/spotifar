@@ -907,7 +907,8 @@ void player::update_playing_queue(bool is_visible)
             for (int i = 0; i < items.size(); i++)
             {
                 const auto &item = items[i];
-                far3::dialogs::add_list_item(hdlg, controls::queue_list, item.get_long_name(), i,
+                const auto &long_name = std::format(L"{} - {}", item.get_artist_name(), item.name);
+                far3::dialogs::add_list_item(hdlg, controls::queue_list, long_name, i,
                     (void*)item.get_uri().c_str(), item.get_uri().size());
             }
         }
@@ -940,13 +941,19 @@ void player::on_context_changed(const context_t &ctx)
     else if (ctx.is_album())
     {
         auto album = api->get_album(ctx.get_item_id());
-        if (album.id != invalid_id)
-            source_label = std::format(L"Album: {}", album.get_user_name());
+        if (album.is_valid())
+        {
+            wstring full_name = std::format(L"[{}] {}", utils::to_wstring(album.get_release_year()), album.name);
+            if (album.is_single() || album.is_compilation())
+                full_name += L" " + album.get_type_abbrev();
+            
+            source_label = std::format(L"Album: {}", full_name);
+        }
     }
     else if (ctx.is_playlist())
     {
         auto playlist = api->get_playlist(ctx.get_item_id());
-        if (playlist.id != invalid_id)
+        if (playlist.is_valid())
             source_label = std::format(L"Playlist: {}", playlist.name);
     }
     
