@@ -24,11 +24,39 @@ static void show_loading_splash(const wstring &message = L"")
     config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
 }
 
+/// @brief A stub-view used for first panel initialization, before any other
+/// view to be shown. Purposely visible when the user is not yet authorized
+class stub_view: public view_abstract
+{
+public:
+    stub_view(): view_abstract("stub_view", L"", nullptr) {}
+protected:
+    auto get_sort_modes() const -> const sort_modes_t& override
+    {
+        static const sort_modes_t sort_modes{};
+        return sort_modes;
+    };
+
+    auto get_default_settings() const -> config::settings::view_t override
+    {
+        static const config::settings::view_t settings{};
+        return settings;
+    };
+    
+    auto get_items() -> const items_t* override
+    {
+        static const items_t items{};
+        return &items;
+    }
+};
+
 panel::panel(api_proxy_ptr api):
     api_proxy(api)
 {
     utils::events::start_listening<ui_events_observer>(this);
     utils::events::start_listening<requester_observer>(this);
+
+    show_stub_view();
 }
 
 panel::~panel()
@@ -43,6 +71,9 @@ panel::~panel()
 void panel::update_panel_info(OpenPanelInfo *info)
 {
     static wchar_t dir_name[64], title[64];
+
+    if (view == nullptr)
+        return;
     
     const auto &view_cur_dir = view->get_dir_name();
     if (!view_cur_dir.empty())
@@ -99,11 +130,13 @@ void panel::update_panel_info(OpenPanelInfo *info)
         }
 
     // allowing view to customize OpenPanelInfo struct
-    return view->update_panel_info(info);
+    view->update_panel_info(info);
 }
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
+    if (view == nullptr) return TRUE;
+
     // TODO: refactor, no need to return nullptr, remove all the further checks afterwards
     auto items = view->get_items();
 
@@ -111,7 +144,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
     if (panel_item == nullptr)
     {
         log::global->error("Could not allocate memory for panel items");
-        return FALSE;
+        return TRUE;
     }
 
     for (size_t idx = 0; idx < items->size(); idx++)
@@ -219,6 +252,11 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 intptr_t panel::compare_items(const CompareInfo *info)
 {
     return view->compare_items(info);
+}
+
+void panel::show_stub_view()
+{
+    return show_panel_view(std::shared_ptr<stub_view>(new stub_view()));
 }
 
 void panel::show_panel_view(view_ptr v)

@@ -70,9 +70,7 @@ void plugin::start()
 {
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
     
-    // TODO: what if not initialized?
-    if (api->start())
-        ui::events::show_root(api);
+    api->start();
 
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
     
@@ -90,16 +88,14 @@ void plugin::start()
 
 void plugin::shutdown()
 {
-    WinToast::instance()->clear();
+    player->hide();
 
     background_tasks.clear_tasks();
 
+    api->shutdown();
+
     shutdown_sync_worker();
     shutdown_librespot_process();
-
-    player->hide();
-
-    api->shutdown();
 }
 
 void plugin::update_panel_info(OpenPanelInfo *info)
@@ -177,7 +173,7 @@ void plugin::launch_sync_worker()
         }
         catch (const std::exception &ex)
         {
-            far3::synchro_tasks::push([ex]{
+            far3::synchro_tasks::push([ex] {
                 far3::show_far_error_dlg(MErrorSyncThreadFailed, to_wstring(ex.what()));
                 far3::panels::quit(PANEL_ACTIVE);
             });
@@ -207,9 +203,9 @@ void plugin::launch_librespot_process(const string &access_token)
     {
         shutdown_librespot_process(); // cleaning up the allocated resources if any
         far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
-            {
-                far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
-            });
+        {
+            far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
+        });
     }
 }
 void plugin::shutdown_librespot_process()
@@ -280,18 +276,23 @@ void plugin::on_playback_backend_configuration_changed()
     const auto &access_token = api->get_access_token();
     if (librespot != nullptr && !access_token.empty())
     {
+        // restart external process routine: shutdown, wait for the better and start over
         shutdown_librespot_process();
-    
         std::this_thread::sleep_for(std::chrono::seconds(1));
-
         launch_librespot_process(access_token);
     }
 }
 
-void plugin::on_auth_status_changed(const spotify::auth_t &auth)
+void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
 {
-    if (auth.is_valid())
+    if (auth.is_valid() && !is_renewal) // only if it is not token renewal
+    {
         launch_librespot_process(auth.access_token);
+        
+        // after first valid authentication we show root view
+        ui::events::show_root(api);
+        ui::events::refresh_panels();
+    }
 }
 
 void plugin::on_track_changed(const spotify::track_t &track)

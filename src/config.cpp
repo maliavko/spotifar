@@ -19,7 +19,7 @@ namespace playback
     {
         bool does_support_dither(const string &fmt)
         {
-            return fmt == S16 || fmt == S24_3 || fmt == S24;
+            return fmt == S16 /*|| fmt == S24_3 || fmt == S24*/;
         }
         
         bool is_valid(const string &fmt)

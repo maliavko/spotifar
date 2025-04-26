@@ -50,7 +50,7 @@ bool api::start()
 void api::shutdown()
 {
     auto ctx = config::lock_settings();
-    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->write(*ctx); });
+    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->shutdown(*ctx); });
 
     pool.purge(); // remove unfinished tasks from the queue
 

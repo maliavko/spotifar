@@ -52,7 +52,9 @@ public:
     bool on_playing_queue_input_received(void *input_record);
 
     // controls' styles
-    bool on_playback_control_style_applied(void *dialog_item_colors);
+    bool on_play_btn_style_applied(void *dialog_item_colors);
+    bool on_prev_btn_style_applied(void *dialog_item_colors);
+    bool on_next_btn_style_applied(void *dialog_item_colors);
     bool on_track_bar_style_applied(void *dialog_item_colors);
     bool on_inactive_control_style_applied(void *dialog_item_colors);
     bool on_shuffle_btn_style_applied(void *dialog_item_colors);
@@ -78,11 +80,12 @@ protected:
     void on_repeat_state_changed(const string &state);
     void on_state_changed(bool is_playing);
     void on_context_changed(const context_t &ctx);
-    void on_permissions_changed(const spotify::actions_t &actions);
+    void on_permissions_changed(const actions_t &actions);
 
     // helpers
     intptr_t set_control_text(int control_id, const wstring &text);
     intptr_t set_control_enabled(int control_id, bool is_enabled);
+    bool is_control_enabled(int control_id);
 
 private:
     api_proxy_ptr api_proxy;

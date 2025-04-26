@@ -16,7 +16,7 @@ bool operator==(const data_item_t &lhs, const data_item_t &rhs)
     return lhs.id == rhs.id;
 }
 
-void to_json(json::Value &result, const image_t &i, json::Allocator &allocator)
+void to_json(Value &result, const image_t &i, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -25,14 +25,14 @@ void to_json(json::Value &result, const image_t &i, json::Allocator &allocator)
     result.AddMember("height", Value(i.height), allocator);
 }
 
-void from_json(const json::Value &j, image_t &i)
+void from_json(const Value &j, image_t &i)
 {
     i.url = j["url"].GetString();
     i.width = j["width"].GetUint64();
     i.height = j["height"].GetUint64();
 }
 
-void to_json(json::Value &result, const simplified_artist_t &a, json::Allocator &allocator)
+void to_json(Value &result, const simplified_artist_t &a, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -46,7 +46,7 @@ void from_json(const Value &j, simplified_artist_t &a)
     a.name = utils::utf8_decode(j["name"].GetString());
 }
 
-void to_json(json::Value &result, const artist_t &a, json::Allocator &allocator)
+void to_json(Value &result, const artist_t &a, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -99,7 +99,7 @@ wstring simplified_album_t::get_type_abbrev() const
     return L"??";
 }
 
-void from_json(const json::Value &j, simplified_album_t &a)
+void from_json(const Value &j, simplified_album_t &a)
 {
     a.id = j["id"].GetString();
     a.name = utils::utf8_decode(j["name"].GetString());
@@ -112,7 +112,7 @@ void from_json(const json::Value &j, simplified_album_t &a)
     from_json(j["artists"], a.artists);
 }
 
-void to_json(json::Value &result, const simplified_album_t &a, json::Allocator &allocator)
+void to_json(Value &result, const simplified_album_t &a, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -132,7 +132,7 @@ void to_json(json::Value &result, const simplified_album_t &a, json::Allocator &
     result.AddMember("artists", artists, allocator);
 }
 
-void to_json(json::Value &result, const album_t &a, json::Allocator &allocator)
+void to_json(Value &result, const album_t &a, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
     to_json(result, dynamic_cast<const simplified_album_t&>(a), allocator);
@@ -143,7 +143,7 @@ void from_json(const Value &j, album_t &a)
     from_json(j, dynamic_cast<simplified_album_t&>(a));
 }
 
-void to_json(json::Value &result, saved_album_t &a, json::Allocator &allocator)
+void to_json(Value &result, saved_album_t &a, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -166,7 +166,7 @@ const string& simplified_track_t::get_fields_filter()
     return fields;
 }
 
-void to_json(json::Value &result, const simplified_track_t &t, json::Allocator &allocator)
+void to_json(Value &result, const simplified_track_t &t, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -217,7 +217,7 @@ wstring track_t::get_artist_name() const
     return utils::far3::get_text(MArtistUnknown);
 }
 
-void to_json(json::Value &result, const track_t &t, json::Allocator &allocator)
+void to_json(Value &result, const track_t &t, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -241,7 +241,7 @@ const string& saved_track_t::get_fields_filter()
     return fields;
 }
 
-void to_json(json::Value &result, const saved_track_t &t, json::Allocator &allocator)
+void to_json(Value &result, const saved_track_t &t, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -258,7 +258,7 @@ void from_json(const Value &j, saved_track_t &t)
     t.added_at = j["added_at"].GetString();
 }
 
-void to_json(json::Value &result, const simplified_playlist_t &p, json::Allocator &allocator)
+void to_json(Value &result, const simplified_playlist_t &p, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -293,7 +293,7 @@ void from_json(const Value &j, simplified_playlist_t &p)
     p.description = utils::utf8_decode(j["description"].GetString());
 }
 
-void to_json(json::Value &result, const playlist_t &a, json::Allocator &allocator)
+void to_json(Value &result, const playlist_t &a, json::Allocator &allocator)
 {
     to_json(result, dynamic_cast<const simplified_playlist_t&>(a), allocator);
 }
@@ -316,7 +316,26 @@ const string& playlist_t::get_fields_filter()
     return fields;
 }
 
-void to_json(json::Value &result, const playback_state_t &p, json::Allocator &allocator)
+void from_json(const Value &j, playback_state_t &p)
+{
+    from_json(j["device"], p.device);
+    from_json(j["actions"], p.actions);
+
+    if (j.HasMember("context") && !j["context"].IsNull())
+        from_json(j["context"], p.context);
+
+    if (j.HasMember("item") && !j["item"].IsNull())
+        from_json(j["item"], p.item);
+
+    p.progress_ms = j.HasMember("progress_ms") ? j["progress_ms"].GetInt() : 0;
+    p.progress = p.progress_ms / 1000;
+
+    p.repeat_state = j["repeat_state"].GetString();
+    p.shuffle_state = j["shuffle_state"].GetBool();
+    p.is_playing = j["is_playing"].GetBool();
+}
+
+void to_json(Value &result, const playback_state_t &p, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -342,25 +361,6 @@ void to_json(json::Value &result, const playback_state_t &p, json::Allocator &al
     result.AddMember("context", context, allocator);
 }
 
-void from_json(const json::Value &j, playback_state_t &p)
-{
-    from_json(j["device"], p.device);
-    from_json(j["actions"], p.actions);
-
-    if (j.HasMember("context") && !j["context"].IsNull())
-        from_json(j["context"], p.context);
-
-    if (j.HasMember("item") && !j["item"].IsNull())
-        from_json(j["item"], p.item);
-
-    p.progress_ms = j.HasMember("progress_ms") ? j["progress_ms"].GetInt() : 0;
-    p.progress = p.progress_ms / 1000;
-
-    p.repeat_state = j["repeat_state"].GetString();
-    p.shuffle_state = j["shuffle_state"].GetBool();
-    p.is_playing = j["is_playing"].GetBool();
-}
-
 bool operator==(const actions_t &lhs, const actions_t &rhs)
 {
     return (
@@ -377,39 +377,68 @@ bool operator==(const actions_t &lhs, const actions_t &rhs)
     );
 }
 
-void to_json(json::Value &result, const actions_t &a, json::Allocator &allocator)
-{
-    result = Value(json::kObjectType);
-    // TODO: unfinished
-}
-
 void from_json(const Value &j, actions_t &a)
 {
-    auto get_bool = [&](const string &fieldname) -> bool
+    if (j.HasMember("disallows"))
     {
-        return j.HasMember(fieldname) ? j[fieldname].GetBool() : false;
-    };
+        const auto &actions = j["disallows"];
 
-    a.interrupting_playback = get_bool("interrupting_playback");
-    a.pausing = get_bool("pausing");
-    a.resuming = get_bool("resuming");
-    a.seeking = get_bool("seeking");
-    a.skipping_next = get_bool("skipping_next");
-    a.skipping_prev = get_bool("skipping_prev");
-    a.toggling_repeat_context = get_bool("toggling_repeat_context");
-    a.toggling_repeat_track = get_bool("toggling_repeat_track");
-    a.toggling_shuffle = get_bool("toggling_shuffle");
-    a.trasferring_playback = get_bool("trasferring_playback");
+        // data contains disallowing flags, so we need to invert them in order to
+        // comply the other code usage
+        auto is_allowed = [&](const string &fieldname) -> bool
+        {
+            return actions.HasMember(fieldname) ? !actions[fieldname].GetBool() : true;
+        };
+    
+        a.interrupting_playback = is_allowed("interrupting_playback");
+        a.pausing = is_allowed("pausing");
+        a.resuming = is_allowed("resuming");
+        a.seeking = is_allowed("seeking");
+        a.skipping_next = is_allowed("skipping_next");
+        a.skipping_prev = is_allowed("skipping_prev");
+        a.toggling_repeat_context = false;
+        a.toggling_repeat_track = false;
+        a.toggling_repeat_context = is_allowed("toggling_repeat_context");
+        a.toggling_repeat_track = is_allowed("toggling_repeat_track");
+        a.toggling_shuffle = is_allowed("toggling_shuffle");
+        a.trasferring_playback = is_allowed("trasferring_playback");
+    }
 }
 
-void from_json(const json::Value &j, context_t &c)
+void to_json(Value &result, const actions_t &a, json::Allocator &al)
+{
+    result = Value(json::kObjectType);
+    result.AddMember("disallows", Value(json::kObjectType), al);
+
+    auto &disallows = result["disallows"];
+    
+    // helper to add only the positive flags into the object
+    auto write_action = [&](const string &fieldname, bool value)
+    {
+        if (!value)
+            disallows.AddMember(Value(fieldname, al), Value(true), al);
+    };
+
+    write_action("interrupting_playback", a.interrupting_playback);
+    write_action("pausing", a.pausing);
+    write_action("resuming", a.resuming);
+    write_action("seeking", a.seeking);
+    write_action("skipping_next", a.skipping_next);
+    write_action("skipping_prev", a.skipping_prev);
+    write_action("toggling_repeat_context", a.toggling_repeat_context);
+    write_action("toggling_repeat_track", a.toggling_repeat_track);
+    write_action("toggling_shuffle", a.toggling_shuffle);
+    write_action("trasferring_playback", a.trasferring_playback);
+}
+
+void from_json(const Value &j, context_t &c)
 {
     c.type = j["type"].GetString();
     c.uri = j["uri"].GetString();
     c.href = j["href"].GetString();
 }
 
-void to_json(json::Value &result, const context_t &c, json::Allocator &allocator)
+void to_json(Value &result, const context_t &c, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -438,12 +467,14 @@ void from_json(const Value &j, device_t &d)
     d.is_active = j["is_active"].GetBool();
     d.type = j["type"].GetString();
     d.supports_volume = j["supports_volume"].GetBool();
+    d.is_private_session = j["is_private_session"].GetBool();
+    d.is_restricted = j["is_restricted"].GetBool();
     d.name = utils::utf8_decode(j["name"].GetString());
 
     d.volume_percent = j.HasMember("volume_percent") ? j["volume_percent"].GetInt() : 0;
 }
 
-void to_json(json::Value &result, const device_t &d, json::Allocator &allocator)
+void to_json(Value &result, const device_t &d, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -453,6 +484,8 @@ void to_json(json::Value &result, const device_t &d, json::Allocator &allocator)
     result.AddMember("type", Value(d.type, allocator), allocator);
     result.AddMember("volume_percent", Value(d.volume_percent), allocator);
     result.AddMember("supports_volume", Value(d.supports_volume), allocator);
+    result.AddMember("is_private_session", Value(d.is_private_session), allocator);
+    result.AddMember("is_restricted", Value(d.is_restricted), allocator);
 }
 
 string device_t::to_str() const
@@ -460,7 +493,7 @@ string device_t::to_str() const
     return std::format("device(name={}, id={})", utils::to_string(name), id);
 }
 
-void to_json(json::Value &result, const history_item_t &i, json::Allocator &allocator)
+void to_json(Value &result, const history_item_t &i, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -475,7 +508,7 @@ void to_json(json::Value &result, const history_item_t &i, json::Allocator &allo
     result.AddMember("context", context, allocator);
 }
     
-void from_json(const json::Value &j, history_item_t &p)
+void from_json(const Value &j, history_item_t &p)
 {
     p.played_at = j["played_at"].GetString();
 
@@ -485,7 +518,7 @@ void from_json(const json::Value &j, history_item_t &p)
         from_json(j["context"], p.context);
 }
 
-void to_json(json::Value &result, const playing_queue_t &p, json::Allocator &allocator)
+void to_json(Value &result, const playing_queue_t &p, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
@@ -499,7 +532,7 @@ void to_json(json::Value &result, const playing_queue_t &p, json::Allocator &all
     result.AddMember("queue", queue, allocator);
 }
 
-void from_json(const json::Value &j, playing_queue_t &p)
+void from_json(const Value &j, playing_queue_t &p)
 {
     if (!j["currently_playing"].IsNull())
         from_json(j["currently_playing"], p.currently_playing);

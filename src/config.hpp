@@ -45,14 +45,15 @@ namespace playback
 
     namespace format
     {
+        // a default playback device Rodio supports only S16 and F32 formats
         inline static const string S16 = "S16";
-        inline static const string S24_3 = "S24_3";
-        inline static const string S24 = "S24";
-        inline static const string S32 = "S32";
+        // inline static const string S24_3 = "S24_3";
+        // inline static const string S24 = "S24";
+        // inline static const string S32 = "S32";
         inline static const string F32 = "F32";
-        inline static const string F64 = "F64";
+        // inline static const string F64 = "F64";
 
-        static const std::vector<string> all{ S16, S24_3, S24, S32, F32, F64 };
+        static const std::vector<string> all{ S16, /*S24_3, S24, S32,*/ F32, /*F64*/ };
 
         /// @brief Checks whether the given format supports dithering
         bool does_support_dither(const string &fmt);

@@ -274,7 +274,8 @@ public:
             }
             catch (const std::exception &ex)
             {
-                log::api->error("There is error while parsing api data response, {}", ex.what());
+                log::api->error("There is error while parsing api data response: {}. "
+                    "Request '{}', data '{}'", ex.what(), url, response->body);
                 return false;
             }
         }

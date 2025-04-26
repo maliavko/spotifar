@@ -23,8 +23,12 @@ bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
 - to add lock_guard to the access API caches and especially to the resync method
 - if the playing queue is opened and 'shuffle' is clicked, the queue is not updated
+- if I open plugin through the disk menu on the passive panel all my PANEL_ACTIVE refreshings are faling miserably
+- if librespot crashes, the far with plugin opened does not close
 
 to finish for alpha release
+- disabled shuffle plus, move it to some separate branch
+- help window
 - remove unfinished menus
 - to review TODOs
 - to finalize "featuring" menus, user top items menu

@@ -42,8 +42,6 @@ void playback_cache::on_data_synced(const playback_state_t &data, const playback
 
     if (data.actions != prev_data.actions)
         dispatch_event(&playback_observer::on_permissions_changed, data.actions);
-
-    // TODO: send changes in permissions
 }
 
 bool playback_cache::request_data(playback_state_t &data)

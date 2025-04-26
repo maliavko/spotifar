@@ -40,13 +40,21 @@ static string generate_random_string(const int length)
 };
 
 auth_cache::auth_cache(api_interface *api, const string &client_id, const string &client_secret, int port):
-    json_cache(L"AccessToken2"),
+    json_cache(L"AccessToken"),
     client_id(client_id),
     client_secret(client_secret),
     port(port),
     api_proxy(api)
 {
 };
+
+void auth_cache::shutdown(config::settings_context &ctx)
+{
+    json_cache::shutdown(ctx);
+
+    if (auth_server.is_running())
+        auth_server.stop();
+}
 
 clock_t::duration auth_cache::get_sync_interval() const
 {
@@ -59,19 +67,18 @@ void auth_cache::on_data_synced(const auth_t &data, const auth_t &prev_data)
     log::api->info("A valid access token is found, expires in {}",
         std::format("{:%T}", get_expires_at() - clock_t::now()));
     
-    // utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data);
+    // utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data, is_logged_in);
 
     // calling through synchro event postpones the event for a quite some time, hope this call in
     // the sync-thread will not bring me troubles
-    ObserverManager::notify(&auth_observer::on_auth_status_changed, data);
+    ObserverManager::notify(&auth_observer::on_auth_status_changed, data, is_logged_in);
 
     is_logged_in = true;
 }
 
 bool auth_cache::request_data(auth_t &data)
 {
-    string refresh_token = "";
-    // auto refresh_token = get().refresh_token;
+    auto refresh_token = get().refresh_token;
     if (!refresh_token.empty())
     {
         data = auth_with_refresh_token(refresh_token);
@@ -136,53 +143,9 @@ auth_t auth_cache::authenticate(const httplib::Params &params)
 
 string auth_cache::request_auth_code()
 {
+    assert(!auth_server.is_running());
+
     auto state = generate_random_string(16);
-
-    // launching a http-server to receive an API auth reponse
-    auto a = std::async(std::launch::deferred,
-        [this, req_state = state]
-        {
-            string result, result_msg;
-            httplib::Server svr;
-
-            svr.Get("/auth/callback", [&](const httplib::Request &req, httplib::Response &res)
-            {
-                auto state = req.get_param_value("state");
-
-                if (req_state == state)
-                {
-                    result = req.get_param_value("code");
-                    if (result.empty())
-                    {
-                        res.status = httplib::StatusCode::InternalServerError_500;
-                        result_msg = "received access code is empty";
-                    }
-                    else
-                    {
-                        res.status = httplib::StatusCode::OK_200;
-                        result_msg = "access token is retrieved successfully";
-                    }
-                }
-                else
-                {
-                    res.status = httplib::StatusCode::InternalServerError_500;
-                    result_msg = std::format("state field does not match, requested '{}', "
-                        "received '{}'", req_state, state);
-                }
-
-                res.set_content(std::format("<h1>{}, {}</h1><p>{}</p>",
-                    httplib::status_message(res.status), res.status, result_msg), "text/html");
-                svr.stop();
-            });
-
-            svr.listen("127.0.0.1", port);
-
-            if (result.empty()) // if the result is empty, the message contains an error message
-                throw std::runtime_error(std::format("An error occured while receiving response from "
-                    "spotify auth API: '{}'", result_msg));
-
-            return result;
-        });
     
     // making a request through user's system browser, as he has to
     // login and provide an auth coockie to complete request
@@ -200,7 +163,62 @@ string auth_cache::request_auth_code()
     log::api->info("Requesting spotify auth code, redirecting to the external browser");
     ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
 
-    return a.get();
+    // launching a http-server to receive an API auth reponse
+    string result, result_msg = "could not retrive an access token for unknown reason";
+
+    auth_server.Get("/auth/callback", [&](const httplib::Request &req, httplib::Response &res)
+    {
+        auto response_state = req.get_param_value("state");
+
+        if (response_state == state)
+        {
+            result = req.get_param_value("code");
+            if (result.empty())
+            {
+                res.status = httplib::StatusCode::InternalServerError_500;
+                result_msg = "received access code is empty";
+            }
+            else
+            {
+                res.status = httplib::StatusCode::OK_200;
+                result_msg = "access token is retrieved successfully";
+            }
+        }
+        else
+        {
+            res.status = httplib::StatusCode::InternalServerError_500;
+            result_msg = std::format("state field does not match, requested '{}', "
+                "received '{}'", state, response_state);
+        }
+
+        res.set_content(std::format("<h1>{}, {}</h1><p>{}</p>",
+            httplib::status_message(res.status), res.status, result_msg), "text/html");
+        auth_server.stop();
+    });
+
+    // a waiting timeout for the user to enter his credentials. Works well, not sure
+    // this functionality is needed at all
+    // auto a = std::async(std::launch::async, [this]
+    // {
+    //     // preliminary 1200 iterations by 25 milliseconds ~30 seconds, no need in
+    //     // precision here
+    //     for (size_t i = 0; i < 1200; i++)
+    //     {
+    //         std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+    //         // in case the server is stopped - we finilize a handler
+    //         if (!auth_server.is_running())
+    //             return;
+    //     }
+    //     auth_server.stop();
+    // });
+
+    auth_server.listen("127.0.0.1", port);
+
+    if (result.empty())
+        throw std::runtime_error(std::format("Authentication error: '{}'", result_msg));
+
+    return result;
 }
 
 string auth_cache::get_auth_callback_url() const

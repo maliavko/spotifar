@@ -60,20 +60,20 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
     {
         // initialize the global settings
         config::read(info);
-        
-        // initialize logging system
-        log::init();
     }
     catch (const std::exception &ex)
     {
         far3::show_far_error_dlg(
-            MErrorLibrespotStartupUnexpected, utils::utf8_decode(ex.what()));
+            MErrorPluginStartupUnexpected, utils::utf8_decode(ex.what()));
     }
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/openw.html 
 HANDLE WINAPI OpenW(const OpenInfo *info)
-{
+{    
+    // initialize logging system
+    log::init();
+
     if (config::get_client_id().empty())
     {
         far3::show_far_error_dlg(MErrorPluginStartupNoClientID);

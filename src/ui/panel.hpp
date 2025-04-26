@@ -27,6 +27,8 @@ public:
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
+    void show_stub_view();
+    
     // global ui events
     void show_panel_view(view_ptr view) override;
     void refresh_panels(const item_id_t &item_id = "") override;

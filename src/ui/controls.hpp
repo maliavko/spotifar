@@ -125,7 +125,6 @@ public:
     using delegate_t = std::function<void(value_t)>;
 
     inline static const auto delay = 300ms;
-
 public:
     delayed_control(T descr): descr(descr) {}
 
@@ -139,7 +138,6 @@ public:
     /// @brief Checks, whether the offset delay is expired and if so,
     /// applies the offset and calls the `delegate`
     bool check(delegate_t delegate);
-
 protected:
     clock_t::time_point last_change_time{};
     T descr;

@@ -28,31 +28,36 @@ public:
     auth_cache(api_interface *api, const string &client_id, const string &client_secret, int port);
     ~auth_cache() { api_proxy = nullptr; }
     
+    void shutdown(config::settings_context &ctx) override;
+
     bool is_authenticated() const { return is_logged_in; }
     auto get_access_token() const -> const string& { return get().access_token; }
 protected:
-    bool request_data(auth_t &data) override;
-    clock_t::duration get_sync_interval() const override;
-    void on_data_synced(const auth_t &data, const auth_t &prev_data) override;
-    
     string request_auth_code();
     auth_t auth_with_code(const string &auth_code);
     auth_t auth_with_refresh_token(const string &refresh_token);
     auth_t authenticate(const httplib::Params &params);
     string get_auth_callback_url() const;
-
+    
+    // json_cache interface
+    bool request_data(auth_t &data) override;
+    auto get_sync_interval() const -> clock_t::duration override;
+    void on_data_synced(const auth_t &data, const auth_t &prev_data) override;
 private:
     bool is_logged_in = false;
-    const string client_id, client_secret;
+    const string client_id;
+    const string client_secret;
     int port;
-    
+
+    httplib::Server auth_server;
     api_interface *api_proxy;
 };
 
 struct auth_observer: public BaseObserverProtocol
 {
-    /// @brief An auth status has been changed
-    virtual void on_auth_status_changed(const auth_t &auth) {}
+    /// @brief An auth status has been changed. For the first login `is_renewal` flag
+    /// will be `false`
+    virtual void on_auth_status_changed(const auth_t &auth, bool is_renewal) {}
 };
 
 } // namespace spotify

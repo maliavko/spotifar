@@ -140,15 +140,15 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
     { controls::next_btn, {
         { DN_BTNCLICK, &player::on_skip_to_next_btn_click },
-        { DN_CTLCOLORDLGITEM, &player::on_playback_control_style_applied },
+        { DN_CTLCOLORDLGITEM, &player::on_next_btn_style_applied },
     }},
     { controls::prev_btn, {
         { DN_BTNCLICK, &player::on_skip_to_previous_btn_click },
-        { DN_CTLCOLORDLGITEM, &player::on_playback_control_style_applied },
+        { DN_CTLCOLORDLGITEM, &player::on_prev_btn_style_applied },
     }},
     { controls::play_btn, {
         { DN_BTNCLICK, &player::on_play_btn_click },
-        { DN_CTLCOLORDLGITEM, &player::on_playback_control_style_applied },
+        { DN_CTLCOLORDLGITEM, &player::on_play_btn_style_applied },
     }},
     { controls::track_bar, {
         { DN_CTLCOLORDLGITEM, &player::on_track_bar_style_applied },
@@ -260,7 +260,8 @@ bool player::show()
 
             if (auto api = api_proxy.lock())
             {
-                auto &state = api->get_playback_state();
+                const auto &state = api->get_playback_state(true);
+
                 on_track_changed(state.item);
                 on_track_progress_changed(state.item.duration, state.progress);
                 on_volume_changed(state.device.volume_percent);
@@ -268,8 +269,8 @@ bool player::show()
                 on_context_changed(state.context);
                 on_shuffle_state_changed(state.shuffle_state);
                 on_repeat_state_changed(state.repeat_state);
-                
-                auto &devices = api->get_available_devices();
+                on_permissions_changed(state.actions);
+        
                 on_devices_changed(api->get_available_devices());
 
                 visible = true;
@@ -382,7 +383,7 @@ void player::on_volume_down_btn_clicked()
 
 bool player::on_devices_item_selected(void *dialog_item)
 {
-    FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
+    const FarDialogItem *item = reinterpret_cast<FarDialogItem*>(dialog_item);
 
     auto device_id = far3::dialogs::get_list_current_item_data<string>(
         hdlg, controls::devices_combo);
@@ -392,7 +393,7 @@ bool player::on_devices_item_selected(void *dialog_item)
 
     if (auto api = api_proxy.lock())
     {
-        auto &state = api->get_playback_state();
+        const auto &state = api->get_playback_state();
         api->transfer_playback(device_id, state.is_playing);
     }
     return true;
@@ -403,8 +404,8 @@ bool player::on_input_received(void *input_record)
     if (api_proxy.expired()) return false;
 
     auto api = api_proxy.lock();
-    auto state = api->get_playback_state();
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto &state = api->get_playback_state();
+    const INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     switch (ir->EventType)
     {
         case KEY_EVENT:
@@ -442,7 +443,7 @@ bool player::on_input_received(void *input_record)
                         return true;
                     
                     case keys::r:
-                        update_repeat_btn(repeat_state.next());
+                        on_repeat_btn_click();
                         return true;
                     
                     case keys::s:
@@ -454,7 +455,8 @@ bool player::on_input_received(void *input_record)
                         return true;
                     
                     case keys::d + keys::mods::alt:
-                        far3::dialogs::open_list(hdlg, controls::devices_combo, true);
+                        if (is_control_enabled(controls::devices_combo))
+                            far3::dialogs::open_list(hdlg, controls::devices_combo, true);
                         return true;
                     
                     case keys::q + keys::mods::ctrl:
@@ -467,13 +469,31 @@ bool player::on_input_received(void *input_record)
     return false;
 }
 
-bool player::on_playback_control_style_applied(void *dialog_item_colors)
+static bool get_playback_button_style(void *dialog_item_colors, bool is_enabled)
 {
     FarDialogItemColors *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     dic->Flags = FCF_BG_INDEX | FCF_FG_INDEX;
     dic->Colors->BackgroundColor = colors::dgray;
-    dic->Colors->ForegroundColor = colors::black;
+    dic->Colors->ForegroundColor = is_enabled ? colors::black : colors::gray;
     return true;
+}
+
+bool player::on_play_btn_style_applied(void *dialog_item_colors)
+{
+    return get_playback_button_style(dialog_item_colors,
+        is_control_enabled(controls::play_btn));
+}
+
+bool player::on_next_btn_style_applied(void *dialog_item_colors)
+{
+    return get_playback_button_style(dialog_item_colors,
+        is_control_enabled(controls::next_btn));
+}
+
+bool player::on_prev_btn_style_applied(void *dialog_item_colors)
+{
+    return get_playback_button_style(dialog_item_colors,
+        is_control_enabled(controls::prev_btn));
 }
 
 bool player::on_track_bar_style_applied(void *dialog_item_colors)
@@ -486,15 +506,15 @@ bool player::on_track_bar_style_applied(void *dialog_item_colors)
 
 bool player::on_artist_label_input_received(void *input_record)
 {
-    INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
     // searching for a specific artist in the list of them, which
     // user has clicked on
-    SMALL_RECT dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
+    const SMALL_RECT &dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
     
-    auto label_layout = dlg_items_layout[controls::artist_name];
+    const auto &label_layout = dlg_items_layout[controls::artist_name];
     auto label_length = label_layout.X2 - label_layout.X1;
     auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + label_layout.X1);
     
@@ -505,7 +525,7 @@ bool player::on_artist_label_input_received(void *input_record)
     // we are iterating through all the names separated by comma in the full string,
     // and check whether the clicking position happened within range of symbols
     // of this particular name
-    auto &playback = api->get_playback_state();
+    const auto &playback = api->get_playback_state();
     wstring ws = playback.item.get_artists_full_name();
     static std::wregex pattern(L"[^,]+");
 
@@ -550,7 +570,7 @@ bool player::on_track_label_input_received(void *input_record)
     if (api_proxy.expired()) return false;
 
     auto api = api_proxy.lock();
-    auto &playback = api->get_playback_state();
+    const auto &playback = api->get_playback_state();
 
     const auto &artist = api->get_artist(playback.item.artists[0].id);
     if (artist.is_valid())
@@ -699,6 +719,8 @@ bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
 
 bool player::on_skip_to_next_btn_click(void *empty)
 {
+    if (!is_control_enabled(next_btn)) return false;
+
     if (auto api = api_proxy.lock())
     {
         api->skip_to_next();
@@ -709,6 +731,8 @@ bool player::on_skip_to_next_btn_click(void *empty)
 
 bool player::on_skip_to_previous_btn_click(void *empty)
 {
+    if (!is_control_enabled(prev_btn)) return false;
+
     if (auto api = api_proxy.lock())
     {
         api->skip_to_previous();
@@ -719,18 +743,41 @@ bool player::on_skip_to_previous_btn_click(void *empty)
 
 bool player::on_shuffle_btn_click(void *empty)
 {
+    if (!is_control_enabled(shuffle_btn)) return false;
+
     update_shuffle_btn(shuffle_state.next());
     return true;
 }
 
 bool player::on_repeat_btn_click(void *empty)
 {
-    update_repeat_btn(repeat_state.next());
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        const auto &pstate = api->get_playback_state();
+
+        auto s = repeat_state.next();
+    
+        // if `repeat_track` selected and it is not permitted now, we skip it to next
+        if (s == playback_state_t::repeat_track && !pstate.actions.toggling_repeat_track)
+            s = repeat_state.next();
+        
+        // ...the same logic, skipping to next
+        if (s == playback_state_t::repeat_context& !pstate.actions.toggling_repeat_context)
+            s = repeat_state.next();
+    
+        if (s != pstate.repeat_state)
+        {
+            update_repeat_btn(s);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool player::on_play_btn_click(void *empty)
 {
+    if (!is_control_enabled(play_btn)) return false;
+
     if (auto api = api_proxy.lock())
     {
         auto device_id = far3::dialogs::get_list_current_item_data<string>(
@@ -964,9 +1011,19 @@ void player::on_context_changed(const context_t &ctx)
     set_control_text(controls::source_name, source_label);
 }
 
-void player::on_permissions_changed(const spotify::actions_t &actions)
+void player::on_permissions_changed(const actions_t &actions)
 {
-    // TODO: finish the content
+    if (auto api = api_proxy.lock())
+    {
+        const auto &state = api->get_playback_state();
+
+        set_control_enabled(play_btn, state.is_playing ? actions.pausing : actions.resuming);
+        set_control_enabled(track_bar, actions.seeking);
+        set_control_enabled(prev_btn, actions.skipping_prev);
+        set_control_enabled(next_btn, actions.skipping_next);
+        set_control_enabled(shuffle_btn, actions.toggling_shuffle);
+        set_control_enabled(devices_combo, actions.trasferring_playback);
+    }
 }
 
 intptr_t player::set_control_text(int control_id, const wstring &text)
@@ -977,6 +1034,11 @@ intptr_t player::set_control_text(int control_id, const wstring &text)
 intptr_t player::set_control_enabled(int control_id, bool is_enabled)
 {
     return far3::dialogs::enable(hdlg, control_id, is_enabled);
+}
+
+bool player::is_control_enabled(int control_id)
+{
+    return far3::dialogs::is_enabled(hdlg, control_id);
 }
 
 } // namespace ui

@@ -67,7 +67,7 @@ public:
     virtual auto get_items() -> const items_t* { return nullptr; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
-    virtual auto update_panel_info(OpenPanelInfo *info) -> void {}
+    virtual void update_panel_info(OpenPanelInfo *info) {}
 protected:
     /// @brief A helper function to unpack user data from the far items
     static auto unpack_user_data(const UserDataItem &user_data) -> const data_item_t*;

@@ -161,8 +161,9 @@ void librespot_handler::tick()
     static CHAR buffer[512];
     BOOL success = FALSE;
 
-    /// 1 - do not remember; 2 - message log level; 3 - the message itself
+    /// 1 - timestamp; 2 - message log level; 3 - the message itself
     static auto pattern = std::regex("\\[(.+) (\\w+) .+\\] (.+)");
+    static auto pattern_not_implemented = std::regex("(not implemented:.*)");
 
     // stringstream is used to read output buffer line by line, it is static, as some lines
     // can be unfinished in the moment of parsing, so the ending should stay somewhere to be
@@ -189,6 +190,10 @@ void librespot_handler::tick()
                 else if (match[2] == "ERROR" || match[2] == "CRITICAL")
                     log::librespot->debug(match[3].str());
             }
+
+            // special tracer for particular `not implemented: ***` messages with errors
+            if (std::regex_search(sline, match, pattern_not_implemented))
+                log::librespot->warn(match[1].str());
         }
 
         if (!ss.good())

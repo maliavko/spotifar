@@ -16,6 +16,8 @@ using settings_ctx = config::settings_context;
 /// and store it in the local storage
 struct cached_data_abstract: public config::persistent_data_abstract
 {
+    virtual void shutdown(config::settings_context &ctx) { write(ctx); }
+    
     /// @brief An method to resync data from the server
     /// @param force - if true, the data will be resynced regardless of the cache validity
     virtual void resync(bool force = false) = 0;

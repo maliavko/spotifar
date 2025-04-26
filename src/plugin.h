@@ -50,7 +50,7 @@ protected:
     void on_playback_backend_configuration_changed() override;
 
     // auth handler
-    void on_auth_status_changed(const spotify::auth_t &auth) override;
+    void on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal) override;
     
     // playback handlers
     void on_track_changed(const spotify::track_t &track) override;

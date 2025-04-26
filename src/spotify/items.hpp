@@ -177,6 +177,7 @@ struct playlist_t: public simplified_playlist_t
     friend void to_json(json::Value &j, const playlist_t &a, json::Allocator &allocator);
 };
 
+// true - allowed, false - disallowed
 struct actions_t
 {
     bool interrupting_playback = false;
@@ -230,6 +231,8 @@ struct device_t: public data_item_t
     string type;
     int volume_percent = 100;
     bool supports_volume = false;
+    bool is_private_session = false;
+    bool is_restricted = false;
 
     string to_str() const;
     
@@ -237,7 +240,6 @@ struct device_t: public data_item_t
     friend void to_json(json::Value &j, const device_t &d, json::Allocator &allocator);
 };
 
-// https://developer.spotify.com/documentation/web-api/reference/get-information-about-the-users-current-playback
 struct playback_state_t
 {
     inline static const string
