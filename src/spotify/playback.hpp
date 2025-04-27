@@ -14,9 +14,6 @@ class playback_cache: public json_cache<playback_state_t>
 public:
     playback_cache(api_interface *api): json_cache(), api_proxy(api) {}
     ~playback_cache() { api_proxy = nullptr; }
-
-    /// @param tracks_uris list of spotify tracks' URIs
-    void activate_super_shuffle(const std::vector<string> &tracks_uris);
 protected:
     bool is_active() const override;
     void on_data_synced(const playback_state_t &data, const playback_state_t &prev_data) override;

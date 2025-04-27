@@ -68,7 +68,6 @@ public:
     void skip_to_previous(const item_id_t &device_id = "") override;
     void seek_to_position(int position_ms, const item_id_t &device_id = "") override;
     void toggle_shuffle(bool is_on, const item_id_t &device_id = "") override;
-    void toggle_shuffle_plus(bool is_on) override;
     void set_repeat_state(const string &mode, const item_id_t &device_id = "") override;
     void set_playback_volume(int volume_percent, const item_id_t &device_id = "") override;
     void transfer_playback(const item_id_t &device_id, bool start_playing = false) override;

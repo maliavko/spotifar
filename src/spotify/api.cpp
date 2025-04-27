@@ -429,36 +429,6 @@ void api::toggle_shuffle(bool is_on, const item_id_t &device_id)
         });
 }
 
-void api::toggle_shuffle_plus(bool is_on)
-{
-    if (is_on)
-    {
-        std::vector<string> uris;
-        auto &state = get_playback_state();
-        if (state.context.is_album())
-        {
-            auto tracks = get_album_tracks(state.context.get_item_id());
-            if (tracks->fetch())
-                std::transform(tracks->begin(), tracks->end(), std::back_inserter(uris),
-                                [](const auto &t) { return t.get_uri(); });
-        }
-        else if (state.context.is_playlist())
-        {
-            auto tracks = get_playlist_tracks(state.context.get_item_id());
-            if (tracks->fetch())
-                std::transform(tracks->begin(), tracks->end(), std::back_inserter(uris),
-                               [](const auto &t) { return t.get_uri(); });
-        }
-        else if (state.context.is_artist())
-        {
-            const auto &tracks = get_artist_top_tracks(state.context.get_item_id());
-            std::transform(tracks.begin(), tracks.end(), std::back_inserter(uris),
-                            [](const auto &t) { return t.get_uri(); });
-        }
-        playback->activate_super_shuffle(uris);
-    }
-}
-
 void api::set_repeat_state(const string &mode, const item_id_t &device_id)
 {
     pool.detach_task(

@@ -167,7 +167,6 @@ struct api_interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/toggle-shuffle-for-users-playback
     virtual void toggle_shuffle(bool is_on, const item_id_t &device_id = "") = 0;
-    virtual void toggle_shuffle_plus(bool is_on) = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/set-repeat-mode-on-users-playback
     /// @param mode string, either `track`, `context` or `off`

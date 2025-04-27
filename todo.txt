@@ -27,7 +27,7 @@ bugs
 - if librespot crashes, the far with plugin opened does not close
 
 to finish for alpha release
-- disabled shuffle plus, move it to some separate branch
++ disabled shuffle plus, move it to some separate branch
 - help window
 - remove unfinished menus
 - to review TODOs

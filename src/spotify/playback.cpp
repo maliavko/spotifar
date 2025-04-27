@@ -55,20 +55,5 @@ bool playback_cache::request_data(playback_state_t &data)
     return false;
 }
 
-void playback_cache::activate_super_shuffle(const std::vector<string> &tracks_uris)
-{
-    log::api->debug("activate_super_shuffle, traks number: {}", tracks_uris.size());
-
-    auto uris = tracks_uris;
-    std::random_device rd{}; 
-    std::default_random_engine rng{ rd() };
-    std::ranges::shuffle(uris, rng);
-
-    // TODO: finish up, avoid includ api.hpp
-    // uris.resize(100); // soft-cap for now, just first 100 tracks
-    // api* a = dynamic_cast<api*>(api);
-    // a->start_playback(uris);
-}
-
 } // namespace spotify
 } // namespace spotifar

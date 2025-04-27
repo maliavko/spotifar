@@ -450,10 +450,6 @@ bool player::on_input_received(void *input_record)
                         update_shuffle_btn(shuffle_state.next());
                         return true;
                     
-                    case keys::s + keys::mods::shift:
-                        api->toggle_shuffle_plus(true);
-                        return true;
-                    
                     case keys::d + keys::mods::alt:
                         if (is_control_enabled(controls::devices_combo))
                             far3::dialogs::open_list(hdlg, controls::devices_combo, true);
