@@ -17,8 +17,8 @@ root_base_view::root_base_view(api_proxy_ptr api, const string &uid, const wstri
 
 const view_abstract::key_bar_info_t* root_base_view::get_key_bar_info()
 {
-    // TODO: test data
     static key_bar_info_t key_bar{
+        // example data
         // { { VK_F4, 0 }, get_text(MKeyBarF4) },
     };
 
@@ -27,11 +27,11 @@ const view_abstract::key_bar_info_t* root_base_view::get_key_bar_info()
 
 const view_abstract::info_lines_t* root_base_view::get_info_lines()
 {
-    // TODO: test data
     static info_lines_t lines{
-        { L"1", L"1" },
-        { L"3", L"3", IPLFLAGS_SEPARATOR },
-        { L"4", L"4" },
+        // example data
+        // { L"1", L"1" },
+        // { L"3", L"3", IPLFLAGS_SEPARATOR },
+        // { L"4", L"4" },
     };
     return &lines;
 }

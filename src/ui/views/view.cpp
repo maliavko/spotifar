@@ -3,7 +3,9 @@
 
 namespace spotifar { namespace ui {
 
-namespace panels = utils::far3::panels;
+namespace far3 = utils::far3;
+namespace panels = far3::panels;
+namespace keys = utils::keys;
 
 view_abstract::view_abstract(const string &uid, const wstring &title, return_callback_t callback):
     uid(uid),
@@ -48,10 +50,12 @@ void view_abstract::on_items_updated()
         settings = get_settings();
         sort_modes = get_sort_modes();
         
+        // settings a stored sort mode
         if (sort_modes.size() > settings->sort_mode_idx)
             panels::set_sort_mode(PANEL_ACTIVE,
                 sort_modes[settings->sort_mode_idx].far_sort_mode, settings->is_descending);
 
+        // settings a stored view mode
         panels::set_view_mode(PANEL_ACTIVE, settings->view_mode);
     }
 }
@@ -76,10 +80,10 @@ intptr_t view_abstract::compare_items(const CompareInfo *info)
 
 intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
 {
-    auto &key_event = info->Rec.Event.KeyEvent;
+    const auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        int key = utils::keys::make_combined(key_event);
+        int key = keys::make_combined(key_event);
         
         for (int idx = 0; idx < sort_modes.size(); idx++)
         {
@@ -90,6 +94,20 @@ intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
                 return TRUE;
             }
         }
+        
+        // all the sorting hotkeys Ctrl+(F3...F12) are blocked, due to custom plugin implementation
+        for (int key_code = VK_F3; key_code <= VK_F12; key_code++)
+            if (key == key_code + keys::mods::ctrl)
+                return TRUE;
+        
+        // view mode hotkeys Ctrl+(1...0) pre-handling: saving the index into
+        // specific view persistent settings to recover later
+        for (int key_code = keys::key_0; key_code <= keys::key_9; key_code++)
+            if (key == key_code + keys::mods::ctrl)
+            {
+                settings->view_mode = key_code - keys::key_0;
+                return TRUE;
+            }
 
         return process_key_input(key);
     }

@@ -211,7 +211,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 {
     namespace keys = utils::keys;
 
-    auto &key_event = info->Rec.Event.KeyEvent;
+    const auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
         auto key = keys::make_combined(key_event);
@@ -242,13 +242,9 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             }
         }
 
+        // propagating the event processing routine to the nested view
         if (view->process_input(info))
             return TRUE;
-
-        // the sorting hotkeys are blocked, due to custom plugin implementation
-        for (int key_code = VK_F3; key_code <= VK_F12; key_code++)
-            if (key == key_code + keys::mods::ctrl)
-                return TRUE;
     }
     return FALSE;
 }

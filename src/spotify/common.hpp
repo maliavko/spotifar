@@ -285,14 +285,14 @@ public:
         return !api.expired() && api.lock()->is_request_cached(get_url());
     }
 
-    /// @brief Launches a requester and obtaines a result over http. If `only_cache` is true,
+    /// @brief Launches a requester and retrieves a result over http. If `only_cache` is true,
     /// the request will be launched only in case the result is cached and valid to avoid
     /// long waiting delays.
     /// @returns a flag whether the request has been finished without errors
     bool execute(api_proxy_ptr api_proxy, bool only_cached = false)
     {
         if (only_cached && !is_cached(api_proxy))
-            return false;
+            return true;
 
         if (api_proxy.expired()) return false;
 
@@ -548,6 +548,13 @@ protected:
     bool populated = false;
 };
 
+template<class R>
+string get_fetching_error(const R &requester)
+{
+    return std::format("collection fetching error '{}', url '{}'",
+        utils::http::get_status_message(requester->get_response()), requester->get_url());
+}
+
 /// @brief The items collection, which populates itself, requesting data
 /// from the server synchronously page by page
 /// @tparam T result data type
@@ -569,9 +576,8 @@ protected:
             // if some of the pages were not requested well, all the operation is aborted
             if (!requester->execute(api, only_cached))
             {
-                const auto msg = std::format("collection fetching error '{}', url '{}'",
-                    utils::http::get_status_message(requester->get_response()), requester->get_url());
-                dispatch_event(&api_requests_observer::on_collection_fetching_failed, msg);
+                dispatch_event(&api_requests_observer::on_collection_fetching_failed,
+                    get_fetching_error(requester));
                 return false;
             }
 
@@ -620,9 +626,8 @@ protected:
         // performing the first request to obtain a total number fo items
         if (!requester->execute(api_proxy, only_cached))
         {
-            const auto msg = std::format("collection fetching error '{}', url '{}'",
-                utils::http::get_status_message(requester->get_response()), requester->get_url());
-            dispatch_event(&api_requests_observer::on_collection_fetching_failed, msg);
+            dispatch_event(&api_requests_observer::on_collection_fetching_failed,
+                get_fetching_error(requester));
             return false;
         }
 
@@ -649,10 +654,7 @@ protected:
                 auto requester = make_requester(idx * max_limit);
 
                 if (!requester->execute(api->get_ptr(), only_cached))
-                    throw std::runtime_error(
-                        std::format("collection fetching error '{}', url '{}'",
-                            utils::http::get_status_message(requester->get_response()), requester->get_url())
-                    );
+                    throw std::runtime_error(get_fetching_error(requester));
                 
                 result[idx] = requester->get();
 

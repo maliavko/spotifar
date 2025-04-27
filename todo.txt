@@ -34,7 +34,7 @@ to finish for alpha release
 - to finalize "featuring" menus, user top items menu
 - to implement filter menu on each view
 - to add a proper github support: license, automations? binaries
-- to add a proper errors handling
++ to add a proper errors handling
 + loading splash screen
 - localizations
 + finilize the settings menu
@@ -47,9 +47,9 @@ to finish for alpha release
 
 test cases for error-proof app behaviour
 + invalid spotify api items (client id or port e.g.)
-- 429 too many requests emulation, 500 for service outage
++ 429 too many requests emulation, 500 for service outage
 - sudden network outage
-- to check each http request and app behaviour in case the data does not come
-- no auth token provided
-- background worker catches the exception
++ to check each http request and app behaviour in case the data does not come
++ no auth token provided
++ background worker catches the exception
 + librespot process does not initialize

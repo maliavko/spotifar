@@ -149,19 +149,14 @@ intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/processpaneleventw.html
 intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 {
-    auto &p = *static_cast<plugin*>(info->hPanel);
-    if (info->Event == FE_CLOSE)
+    if (auto p = static_cast<plugin*>(info->hPanel))
     {
-        p.shutdown();
-        return FALSE; // return TRUE if the panel should not close
+        if (info->Event == FE_CLOSE)
+        {
+            p->shutdown();
+            return FALSE; // return TRUE if the panel should not close
+        }
     }
-
-    if (info->Event == FE_CHANGEVIEWMODE)
-    {
-        // TODO: to implement a persistent storing of the picked view mode for the views
-        // const wchar_t *clumns = static_cast<const wchar_t*>(info->Param);
-    }
-
     return FALSE;
 }
 
