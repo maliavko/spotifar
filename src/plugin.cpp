@@ -88,14 +88,24 @@ void plugin::start()
 
 void plugin::shutdown()
 {
-    player->hide();
+    try
+    {
+        WinToast::instance()->clear();
 
-    background_tasks.clear_tasks();
+        player->hide();
 
-    api->shutdown();
+        background_tasks.clear_tasks();
 
-    shutdown_sync_worker();
-    shutdown_librespot_process();
+        api->shutdown();
+
+        shutdown_sync_worker();
+        shutdown_librespot_process();
+    }
+    catch (const std::exception &ex)
+    {
+        log::global->warn("There is an error, while shutting down the "
+            "plugin: {}", ex.what());
+    }
 }
 
 void plugin::update_panel_info(OpenPanelInfo *info)

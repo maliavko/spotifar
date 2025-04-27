@@ -43,10 +43,10 @@ protected:
         return settings;
     };
     
-    auto get_items() -> const items_t* override
+    auto get_items() -> const items_t& override
     {
         static const items_t items{};
-        return &items;
+        return items;
     }
 };
 
@@ -137,23 +137,27 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
     if (view == nullptr) return TRUE;
 
-    // TODO: refactor, no need to return nullptr, remove all the further checks afterwards
-    auto items = view->get_items();
+    const auto &items = view->get_items();
 
-    auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items->size());
+    auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
     if (panel_item == nullptr)
     {
         log::global->error("Could not allocate memory for panel items");
         return TRUE;
     }
 
-    for (size_t idx = 0; idx < items->size(); idx++)
+    for (size_t idx = 0; idx < items.size(); idx++)
     {
-        const auto &item = (*items)[idx];
+        const auto &item = items[idx];
         const auto &columns = item.columns_data;
 
-        // TODO: what if no memory allocated?
         auto **column_data = (const wchar_t**)malloc(sizeof(wchar_t*) * columns.size());
+        if (column_data == nullptr)
+        {
+            log::global->error("Could not allocate memory for panel columns");
+            return TRUE;
+        }
+
         for (size_t i = 0; i < columns.size(); i++)
             column_data[i] = _wcsdup(columns[i].c_str());
 
@@ -177,7 +181,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
     view->on_items_updated();
 
     info->PanelItem = panel_item;
-    info->ItemsNumber = items->size();
+    info->ItemsNumber = items.size();
 
     return TRUE;
 }

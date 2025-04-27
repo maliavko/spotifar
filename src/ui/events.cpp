@@ -85,8 +85,6 @@ namespace events {
     
     void show_featuring_artists(api_proxy_ptr api)
     {
-        // TODO
-        //return show_panel_view<featuring_albums_view>(api);
     }
 
     void show_saved_playlists(api_proxy_ptr api)

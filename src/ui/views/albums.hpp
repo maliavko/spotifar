@@ -20,10 +20,10 @@ public:
         const wstring &title, return_callback_t callback);
     ~albums_base_view() { api_proxy.reset(); }
 
-    auto get_items() -> const items_t*;
+    auto get_items() -> const items_t& override;
 protected:
     virtual auto get_albums() -> std::generator<const simplified_album_t&> = 0;
-    virtual auto show_tracks_view(const album_t &album) const -> void = 0;
+    virtual void show_tracks_view(const album_t &album) const = 0;
 
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;

@@ -3,6 +3,7 @@
 
 namespace spotifar { namespace ui {
 
+using namespace utils::far3;
 using utils::far3::get_text;
 
 playlist_view::playlist_view(api_proxy_ptr api_proxy, const playlist_t &p):
@@ -43,12 +44,12 @@ void playlist_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view_abstract::items_t* playlist_view::get_items()
+const view_abstract::items_t& playlist_view::get_items()
 {
     static view_abstract::items_t items; items.clear();
 
     if (!collection || !collection->fetch())
-        return &items;
+        return items;
     
     for (const auto &t: *collection)
     {
@@ -88,17 +89,7 @@ const view_abstract::items_t* playlist_view::get_items()
         });
     }
 
-    return &items;
-}
-
-intptr_t playlist_view::select_item(const data_item_t* data)
-{
-    const auto &track_id = data->id;
-    
-    // TODO: what to do here? start playing?
-    // auto playlist = api->get_playlist(playlist_id);
-
-    return FALSE;
+    return items;
 }
 
 const view_abstract::sort_modes_t& playlist_view::get_sort_modes() const
@@ -140,6 +131,36 @@ intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
             return item1->added_at.compare(item2->added_at);
     }
     return -2;
+}
+
+intptr_t playlist_view::process_key_input(int combined_key)
+{
+    switch (combined_key)
+    {
+        case VK_RETURN + utils::keys::mods::shift:
+        {
+            if (const auto &item = panels::get_current_item(PANEL_ACTIVE))
+            {
+                if (const auto *user_data = unpack_user_data(item->UserData))
+                {
+                    if (auto api = api_proxy.lock())
+                    {
+                        api->start_playback(
+                            playlist,
+                            *static_cast<const saved_track_t*>(user_data)
+                        );
+                        return TRUE;
+                    }
+                }
+            }
+
+            log::global->error("An error occured while trying to start playback for "
+                "playlist '{}[{}]'", utils::to_string(playlist.name), playlist.id);
+
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 } // namespace ui

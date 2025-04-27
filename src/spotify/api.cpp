@@ -152,7 +152,7 @@ std::vector<album_t> api::get_albums(const item_ids_t &ids)
         "/v1/albums", ids, 20, "albums"), get_ptr());
 }
 
-album_tracks_ptr api::get_album_tracks(const string &album_id)
+album_tracks_ptr api::get_album_tracks(const item_id_t &album_id)
 {
     return album_tracks_ptr(new album_tracks_t(
         get_ptr(), std::format("/v1/albums/{}/tracks", album_id)));
@@ -168,7 +168,7 @@ saved_playlists_ptr api::get_saved_playlists()
     return saved_playlists_ptr(new saved_playlists_t(get_ptr(), "/v1/me/playlists"));
 }
 
-playlist_t api::get_playlist(const string &playlist_id)
+playlist_t api::get_playlist(const item_id_t &playlist_id)
 {
     return request_item(item_requester<playlist_t>(
         std::format("/v1/playlists/{}", playlist_id), {
@@ -192,7 +192,7 @@ playing_queue_t api::get_playing_queue()
     return request_item(item_requester<playing_queue_t>("/v1/me/player/queue"), get_ptr());
 }
 
-bool api::check_saved_track(const string &track_id)
+bool api::check_saved_track(const item_id_t &track_id)
 {
     const auto &flags = check_saved_tracks({ track_id });
     return flags.size() > 0 && flags[0];
@@ -234,7 +234,7 @@ bool api::remove_saved_tracks(const item_ids_t &ids)
 
 // https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
 void api::start_playback(const string &context_uri, const string &track_uri,
-                         int position_ms, const string &device_id)
+                         int position_ms, const item_id_t &device_id)
 {
     http::json_body_builder body;
 
@@ -254,7 +254,7 @@ void api::start_playback(const string &context_uri, const string &track_uri,
     start_playback_raw(body.str(), device_id);
 }
 
-void api::start_playback(const std::vector<string> &uris, const string &device_id)
+void api::start_playback(const std::vector<string> &uris, const item_id_t &device_id)
 {
     assert(uris.size() > 0);
 
@@ -278,12 +278,12 @@ void api::start_playback(const simplified_playlist_t &playlist, const simplified
     return start_playback(playlist.get_uri(), track.get_uri());
 }
 
-void api::resume_playback(const string &device_id)
+void api::resume_playback(const item_id_t &device_id)
 {
     return start_playback_raw("", device_id);
 }
 
-void api::toggle_playback(const string &device_id)
+void api::toggle_playback(const item_id_t &device_id)
 {
     playback->resync(true);
     auto &state = playback->get();
@@ -293,7 +293,7 @@ void api::toggle_playback(const string &device_id)
         return pause_playback(device_id);
 }
 
-void api::pause_playback(const string &device_id)
+void api::pause_playback(const item_id_t &device_id)
 {
     pool.detach_task(
         [&cache = *playback, dev_id = std::as_const(device_id), this]
@@ -310,7 +310,7 @@ void api::pause_playback(const string &device_id)
         });
 }
 
-void api::skip_to_next(const string &device_id)
+void api::skip_to_next(const item_id_t &device_id)
 {
     pool.detach_task(
         [this, dev_id = std::as_const(device_id)]
@@ -327,7 +327,7 @@ void api::skip_to_next(const string &device_id)
         });
 }
 
-void api::skip_to_previous(const string &device_id)
+void api::skip_to_previous(const item_id_t &device_id)
 {
     pool.detach_task(
         [this, dev_id = std::as_const(device_id)]
@@ -344,7 +344,7 @@ void api::skip_to_previous(const string &device_id)
         });
 }
 
-void api::seek_to_position(int position_ms, const string &device_id)
+void api::seek_to_position(int position_ms, const item_id_t &device_id)
 {
     pool.detach_task(
         [position_ms, &cache = *playback, dev_id = std::as_const(device_id), this]
@@ -364,7 +364,7 @@ void api::seek_to_position(int position_ms, const string &device_id)
         });
 }
 
-void api::toggle_shuffle(bool is_on, const string &device_id)
+void api::toggle_shuffle(bool is_on, const item_id_t &device_id)
 {
     pool.detach_task(
         [is_on, &cache = *playback, dev_id = std::as_const(device_id), this]
@@ -414,7 +414,7 @@ void api::toggle_shuffle_plus(bool is_on)
     }
 }
 
-void api::set_repeat_state(const string &mode, const string &device_id)
+void api::set_repeat_state(const string &mode, const item_id_t &device_id)
 {
     pool.detach_task(
         [mode, &cache = *playback, dev_id = std::as_const(device_id), this]
@@ -434,7 +434,7 @@ void api::set_repeat_state(const string &mode, const string &device_id)
         });
 }
 
-void api::set_playback_volume(int volume_percent, const string &device_id)
+void api::set_playback_volume(int volume_percent, const item_id_t &device_id)
 {
     pool.detach_task(
         [volume_percent, &cache = *playback, dev_id = std::as_const(device_id), this]
@@ -454,9 +454,9 @@ void api::set_playback_volume(int volume_percent, const string &device_id)
         });
 }
 
-void api::transfer_playback(const string &device_id, bool start_playing)
+void api::transfer_playback(const item_id_t &device_id, bool start_playing)
 {   
-    auto devices = get_available_devices();
+    const auto &devices = get_available_devices();
     auto device_it = std::find_if(devices.begin(), devices.end(),
         [&device_id](auto &d) { return d.id == device_id; });
 
@@ -482,7 +482,7 @@ void api::transfer_playback(const string &device_id, bool start_playing)
         });
 }
 
-void api::start_playback_raw(const string &body, const string &device_id)
+void api::start_playback_raw(const string &body, const item_id_t &device_id)
 {
     Params params = {};
     if (!device_id.empty())

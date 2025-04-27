@@ -19,13 +19,13 @@ public:
         const wstring &title, return_callback_t callback);
     ~tracks_base_view() { api_proxy.reset(); }
 
-    auto get_items() -> const items_t* override;
+    auto get_items() -> const items_t& override;
 protected:
-    virtual auto start_playback(const string &track_id) -> bool = 0;
+    virtual bool start_playback(const string &track_id) = 0;
     virtual auto get_tracks() -> std::generator<const simplified_track_t&> = 0;
 
     // view interface
-    auto update_panel_info(OpenPanelInfo *info) -> void override;
+    void update_panel_info(OpenPanelInfo *info) override;
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t override;

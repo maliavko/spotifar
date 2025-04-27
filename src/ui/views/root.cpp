@@ -82,7 +82,7 @@ void root_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view_abstract::items_t* root_base_view::get_items()
+const view_abstract::items_t& root_base_view::get_items()
 {
     static items_t items; items.clear();
     
@@ -105,7 +105,7 @@ const view_abstract::items_t* root_base_view::get_items()
         });
     }
 
-    return &items;
+    return items;
 }
 
 intptr_t root_base_view::select_item(const data_item_t *data)

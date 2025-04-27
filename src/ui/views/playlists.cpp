@@ -24,7 +24,7 @@ const view_abstract::sort_modes_t& playlists_base_view::get_sort_modes() const
     return modes;
 }
 
-const view_abstract::items_t* playlists_base_view::get_items()
+const view_abstract::items_t& playlists_base_view::get_items()
 {
     static view_abstract::items_t items; items.clear();
 
@@ -52,7 +52,7 @@ const view_abstract::items_t* playlists_base_view::get_items()
         });
     }
 
-    return &items;
+    return items;
 }
 
 intptr_t playlists_base_view::select_item(const data_item_t* data)

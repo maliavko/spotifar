@@ -20,7 +20,7 @@ public:
         const wstring &title, return_callback_t callback);
     ~artists_base_view() { api_proxy.reset(); }
 
-    auto get_items() -> const items_t*;
+    auto get_items() -> const items_t& override;
 protected:
     virtual auto get_artists() -> std::generator<const artist_t&> = 0;
     virtual void show_albums_view(const artist_t &artist) const = 0;

@@ -17,14 +17,14 @@ public:
     playlist_view(api_proxy_ptr api, const playlist_t &p);
     ~playlist_view() { api_proxy.reset(); }
 
-    auto get_items() -> const items_t*;
+    auto get_items() -> const items_t& override;
 protected:
-    auto get_sort_modes() const -> const sort_modes_t&;
-    auto get_default_settings() const -> config::settings::view_t;
-    auto select_item(const data_item_t* data) -> intptr_t;
-    auto update_panel_info(OpenPanelInfo *info) -> void;
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    void update_panel_info(OpenPanelInfo *info) override;
     auto compare_items(const sort_mode_t &sort_mode,
-        const data_item_t *data1, const data_item_t *data2) -> intptr_t;
+        const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto process_key_input(int combined_key) -> intptr_t override;
 private:
     api_proxy_ptr api_proxy;
     playlist_t playlist;

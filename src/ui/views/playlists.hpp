@@ -21,7 +21,7 @@ public:
         const wstring &title, return_callback_t callback);
     ~playlists_base_view() { api_proxy.reset(); }
 
-    auto get_items() -> const items_t*;
+    auto get_items() -> const items_t& override;
 protected:
     virtual auto get_playlists() -> std::generator<const simplified_playlist_t&> = 0;
 

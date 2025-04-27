@@ -26,7 +26,7 @@ public:
         return_callback_t callback, menu_items_t items);
     ~root_base_view() { api_proxy.reset(); }
 
-    auto get_items() -> const items_t*;
+    auto get_items() -> const items_t& override;
     auto get_key_bar_info() -> const key_bar_info_t* override;
     auto get_info_lines() -> const info_lines_t* override;
 protected:

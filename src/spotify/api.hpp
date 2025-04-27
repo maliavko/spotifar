@@ -77,7 +77,7 @@ protected:
     /// fills up all the default attributes and token, and returns it
     auto get_client() const -> std::shared_ptr<httplib::Client>;
     
-    void start_playback_raw(const string &body, const string &device_id);
+    void start_playback_raw(const string &body, const item_id_t &device_id);
     
     // the main interface for raw http requests
     auto get(const string &url, utils::clock_t::duration cache_for = {}) -> Result override;

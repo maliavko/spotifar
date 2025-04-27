@@ -131,7 +131,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-const view_abstract::items_t* albums_base_view::get_items()
+const view_abstract::items_t& albums_base_view::get_items()
 {
     static items_t items; items.clear();
 
@@ -189,7 +189,7 @@ const view_abstract::items_t* albums_base_view::get_items()
             const_cast<simplified_album_t*>(&a)
         });
     }
-    return &items;
+    return items;
 }
 
 //-----------------------------------------------------------------------------------------------------------

@@ -43,7 +43,6 @@ public:
     using key_bar_info_t = std::unordered_map<FarKey, wstring>;
     using info_lines_t = std::vector<InfoPanelLine>;
     using return_callback_t = std::function<void(void)>;
-
 public:
     view_abstract(const string &uid, const wstring &title, return_callback_t callback);
     virtual ~view_abstract() {}
@@ -52,19 +51,19 @@ public:
 
     /// @brief a helper event from outside, its called right after the items
     /// are populated on the panel
-    auto on_items_updated() -> void;
+    void on_items_updated();
     auto compare_items(const CompareInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
     auto get_item_idx(const string &item_id) -> size_t;
     auto get_settings() const -> config::settings::view_t*;
-    auto select_sort_mode(int sort_mode_idx) -> void;
+    void select_sort_mode(int sort_mode_idx);
     auto get_return_callback() const -> const return_callback_t& { return return_callback; }
 
-    virtual auto get_dir_name() const -> const wstring& { return title; }
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
-    virtual auto get_items() -> const items_t* { return nullptr; }
+    virtual auto get_items() -> const items_t& = 0;
+    virtual auto get_dir_name() const -> const wstring& { return title; }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual void update_panel_info(OpenPanelInfo *info) {}
