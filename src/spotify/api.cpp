@@ -7,18 +7,37 @@ using namespace utils;
 
 const string spotify_api_url = "https://api.spotify.com";
 
-// majority of time they are not needed, but in case of requesting
+// majority of time the threads are not needed, but in case of requesting
 // a collection with bunch of pages we perform them asynchronously
 const size_t pool_size = 12;
 
+// a helper-function to avoid copy-pasting. Performs an execution of a given
+// requester, checks the result and returns it back
 template<class R>
 auto request_item(R &&requester, api_proxy_ptr api) -> typename R::result_t
 {
     if (requester.execute(api))
         return requester.get();
+    
+    // perhaps at some point it'd be good to add an error propagation here
+    // to show to the user
     return {};
 }
 
+// a helpers function to dispatch a playback command execution error higher
+// to the listeners
+template <typename... Args>
+void playback_cmd_error(string msg_fmt, Args &&...args)
+{
+    auto formatted = std::vformat(msg_fmt, std::make_format_args(args...));
+    
+    log::api->error(formatted);
+
+    utils::far3::synchro_tasks::dispatch_event(
+        &api_requests_observer::on_playback_command_failed, formatted);
+}
+
+//----------------------------------------------------------------------------------------------
 api::api(): pool(pool_size)
 {
     auth = std::make_unique<auth_cache>(this, config::get_client_id(), config::get_client_secret(), config::get_localhost_port());
@@ -201,7 +220,7 @@ bool api::check_saved_track(const item_id_t &track_id)
 std::deque<bool> api::check_saved_tracks(const item_ids_t &ids)
 {
     // bloody hell, damn vector specialization with bools is not a real vector,
-    // it cannot return ref to bools
+    // it cannot return ref to bools, so deque is used instead
     return request_item(several_items_requester<bool, std::deque<bool>>(
         "/v1/me/tracks/contains", ids, 50), get_ptr());
 }
@@ -216,7 +235,12 @@ bool api::save_tracks(const item_ids_t &ids)
     });
 
     auto res = put("/v1/me/tracks", body.str());
-    return http::is_success(res);
+    if (!http::is_success(res))
+    {
+        playback_cmd_error(http::get_status_message(res));
+        return false;
+    }
+    return true;
 }
 
 bool api::remove_saved_tracks(const item_ids_t &ids)
@@ -229,10 +253,15 @@ bool api::remove_saved_tracks(const item_ids_t &ids)
     });
 
     auto res = del("/v1/me/tracks", body.str());
-    return http::is_success(res);
+    if (!http::is_success(res))
+    {
+        playback_cmd_error(http::get_status_message(res));
+        return false;
+    }
+
+    return true;
 }
 
-// https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
 void api::start_playback(const string &context_uri, const string &track_uri,
                          int position_ms, const item_id_t &device_id)
 {
@@ -286,9 +315,9 @@ void api::resume_playback(const item_id_t &device_id)
 void api::toggle_playback(const item_id_t &device_id)
 {
     playback->resync(true);
-    auto &state = playback->get();
+    const auto &state = playback->get();
     if (!state.is_playing)
-        return start_playback_raw("", device_id);
+        return resume_playback(device_id);
     else
         return pause_playback(device_id);
 }
@@ -304,9 +333,13 @@ void api::pause_playback(const item_id_t &device_id)
 
             auto res = put(append_query_params("/v1/me/player/pause", params));
             if (http::is_success(res))
+                // patching the data in the cache, so the client represents a correct UI,
+                // while the updates still coming from the server
                 cache.patch([](auto &v) {
                     json::Pointer("/is_playing").Set(v, false);
                 });
+            else
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -323,7 +356,9 @@ void api::skip_to_next(const item_id_t &device_id)
                     body.insert("device_id", dev_id);
             });
 
-            return post("/v1/me/player/next", body.str());
+            auto res = post("/v1/me/player/next", body.str());
+            if (!http::is_success(res))
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -340,7 +375,9 @@ void api::skip_to_previous(const item_id_t &device_id)
                     body.insert("device_id", dev_id);
             });
             
-            return post("/v1/me/player/previous", body.str());
+            auto res = post("/v1/me/player/previous", body.str());
+            if (!http::is_success(res))
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -358,9 +395,13 @@ void api::seek_to_position(int position_ms, const item_id_t &device_id)
 
             auto res = put(append_query_params("/v1/me/player/seek", params));
             if (http::is_success(res))
+                // patching the data in the cache, so the client represents a correct UI,
+                // while the updates still coming from the server
                 cache.patch([position_ms](auto &v) {
                     json::Pointer("/progress_ms").Set(v, position_ms);
                 });
+            else
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -378,9 +419,13 @@ void api::toggle_shuffle(bool is_on, const item_id_t &device_id)
             
             auto res = put(append_query_params("/v1/me/player/shuffle", params));
             if (http::is_success(res))
+                // patching the data in the cache, so the client represents a correct UI,
+                // while the updates still coming from the server
                 cache.patch([is_on](auto &v) {
                     json::Pointer("/shuffle_state").Set(v, is_on);
                 });
+            else
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -428,9 +473,13 @@ void api::set_repeat_state(const string &mode, const item_id_t &device_id)
 
             auto res = put(append_query_params("/v1/me/player/repeat", params));
             if (http::is_success(res))
+                // patching the data in the cache, so the client represents a correct UI,
+                // while the updates still coming from the server
                 cache.patch([mode](auto &d) {
                     json::Pointer("/repeat_state").Set(d, mode);
                 });
+            else
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -448,23 +497,27 @@ void api::set_playback_volume(int volume_percent, const item_id_t &device_id)
 
             auto res = put(append_query_params("/v1/me/player/volume", params));
             if (http::is_success(res))
+                // patching the data in the cache, so the client represents a correct UI,
+                // while the updates still coming from the server
                 cache.patch([volume_percent](auto &d) {
                     json::Pointer("/device/volume_percent").Set(d, volume_percent);
                 });
+            else
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
 void api::transfer_playback(const item_id_t &device_id, bool start_playing)
-{   
+{
     const auto &devices = get_available_devices();
     auto device_it = std::find_if(devices.begin(), devices.end(),
-        [&device_id](auto &d) { return d.id == device_id; });
+        [&device_id](const auto &d) { return d.id == device_id; });
 
     if (device_it == devices.end())
-        return log::api->error("There is no devices with the given id={}", device_id);
+        return playback_cmd_error("There is no devices with the given id={}", device_id);
 
     if (device_it->is_active)
-        return log::api->warn("The given device is already active, {}", device_it->to_str());
+        return playback_cmd_error("The given device is already active, {}", device_it->to_str());
     
     pool.detach_task(
         [this, start_playing, dev_id = std::as_const(device_id)]
@@ -478,7 +531,8 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
             });
 
             auto res = put("/v1/me/player", body.str());
-            // TODO: handle errors
+            if (!http::is_success(res))
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 
@@ -496,9 +550,13 @@ void api::start_playback_raw(const string &body, const item_id_t &device_id)
         {
             auto res = put(request_url, body);
             if (http::is_success(res))
+                // patching the data in the cache, so the client represents a correct UI,
+                // while the updates still coming from the server
                 cache.patch([](auto &d) {
                     json::Pointer("/is_playing").Set(d, true);
                 });
+            else
+                playback_cmd_error(http::get_status_message(res));
         });
 }
 

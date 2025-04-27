@@ -113,10 +113,17 @@ struct api_interface
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-queue
     virtual auto get_playing_queue() -> playing_queue_t = 0;
 
-    virtual auto check_saved_track(const item_id_t &track_id) -> bool = 0;
+    /// @brief Checks whether the given track id is in used saved collection
+    virtual bool check_saved_track(const item_id_t &track_id) = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/check-users-saved-tracks 
     virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
-    virtual auto save_tracks(const item_ids_t &ids) -> bool = 0;
-    virtual auto remove_saved_tracks(const item_ids_t &ids) -> bool = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/save-tracks-user
+    virtual bool save_tracks(const item_ids_t &ids) = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/remove-tracks-user
+    virtual bool remove_saved_tracks(const item_ids_t &ids) = 0;
     
     /// @brief Returns the downloaded and cached image filepath in case of success or empty string.
     /// @param image the image_t object to fetch from the Spotify server
@@ -124,21 +131,52 @@ struct api_interface
     virtual auto get_image(const image_t &image, const item_id_t &item_id) -> wstring = 0;
 
     // playback interface
+
+    /// @brief Starts playback of a given `context_uri` context. If the `track_uri` is not empty,
+    /// then starts given context from the specified track. If the `position_ms` is not 0,
+    /// the given track is being started from the specified position in milliseconds
     virtual void start_playback(const string &context_uri, const string &track_uri = "",
         int position_ms = 0, const item_id_t &device_id = "") = 0;
+
+    /// @brief Stars playback of a given list of tracks, provided via spotify URIs
     virtual void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") = 0;
+
+    /// @brief Starts playback of the given `album` from the given `track` if provided
     virtual void start_playback(const simplified_album_t &album, const simplified_track_t &track) = 0;
+
+    /// @brief Starts playback of the given `playlist` from the given `track` if provided
     virtual void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) = 0;
+
+    /// @brief Resumes suspended playback
     virtual void resume_playback(const item_id_t &device_id = "") = 0;
+
+    /// @brief Toggles playback state to the opposite one, depending on the current state: play/pause
     virtual void toggle_playback(const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback
     virtual void pause_playback(const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/skip-users-playback-to-next-track
     virtual void skip_to_next(const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/skip-users-playback-to-previous-track
     virtual void skip_to_previous(const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/seek-to-position-in-currently-playing-track
     virtual void seek_to_position(int position_ms, const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/toggle-shuffle-for-users-playback
     virtual void toggle_shuffle(bool is_on, const item_id_t &device_id = "") = 0;
     virtual void toggle_shuffle_plus(bool is_on) = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/set-repeat-mode-on-users-playback
+    /// @param mode string, either `track`, `context` or `off`
     virtual void set_repeat_state(const string &mode, const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
     virtual void set_playback_volume(int volume_percent, const item_id_t &device_id = "") = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
     virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
 protected:
     /// @brief Performs an HTTP GET request
@@ -166,14 +204,14 @@ protected:
 /// structures as a proxy parameter for the further usage
 using api_proxy_ptr = std::weak_ptr<api_interface>;
 
-struct requester_observer: public BaseObserverProtocol
+struct api_requests_observer: public BaseObserverProtocol
 {
-    /// @brief The handler is called, when some multi-page requester is about
+    /// @brief The event is called, when some multi-page requester is about
     /// to execute a remote request
     /// @param url a request's url to identify requests from each other
     virtual void on_request_started(const string &url) {}
 
-    /// @brief The handler is called, when some multi-page requester is about
+    /// @brief The event is called, when some multi-page requester is about
     /// to finish a remote request execution
     /// @param url a request's url to identify requests from each other
     virtual void on_request_finished(const string &url) {}
@@ -183,6 +221,9 @@ struct requester_observer: public BaseObserverProtocol
     /// @param progress an amount of data entries accumulated so far
     /// @param total an amount of total entries to receive
     virtual void on_request_progress_changed(const string &url, size_t progress, size_t total) {}
+
+    /// @brief The controlling playback command is failed: start_playback, skip_to_next and etc.
+    virtual void on_playback_command_failed(const string &message) {}
 };
 
 /// @brief A helper class to propagate multi-page requesters progress to the listeners
@@ -190,17 +231,17 @@ struct [[nodiscard]] requester_progress_notifier
 {
     requester_progress_notifier(const string &url): request_url(url)
     {
-        ObserverManager::notify(&requester_observer::on_request_started, request_url);
+        ObserverManager::notify(&api_requests_observer::on_request_started, request_url);
     }
 
     ~requester_progress_notifier()
     {
-        ObserverManager::notify(&requester_observer::on_request_finished, request_url);
+        ObserverManager::notify(&api_requests_observer::on_request_finished, request_url);
     }
 
     void send_progress(size_t progress, size_t total)
     {
-        ObserverManager::notify(&requester_observer::on_request_progress_changed,
+        ObserverManager::notify(&api_requests_observer::on_request_progress_changed,
             request_url, progress, total);
     }
 

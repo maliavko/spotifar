@@ -482,7 +482,7 @@ namespace far3
         if (has_extra_btn && res == 1 && extra_btn_handler != nullptr)
             extra_btn_handler();
 
-        log::global->error("Showing far error message, {}", utils::to_string(utils::string_join(msgs, L",")));
+        log::global->debug("Showing far error message, {}", utils::to_string(utils::string_join(msgs, L",")));
 
         return res;
     }

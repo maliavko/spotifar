@@ -13,7 +13,7 @@ using namespace spotify;
 
 class panel:
     public ui_events_observer, // for processing view opening requests
-    public requester_observer // for showing splash screen during long httl requests
+    public api_requests_observer // for showing splash screen during long httl requests
 {
 public:
     panel(api_proxy_ptr api);
@@ -38,6 +38,7 @@ protected:
     void on_request_started(const string &url) override;
     void on_request_finished(const string &url) override;
     void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
+    void on_playback_command_failed(const string &message) override;
 private:
     view_ptr view;
     api_proxy_ptr api_proxy;

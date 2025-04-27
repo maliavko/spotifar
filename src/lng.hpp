@@ -110,6 +110,7 @@ namespace spotifar
         MErrorLibrespotStartupUnexpected,
         MErrorWinToastStartupUnexpected,
         MErrorSyncThreadFailed,
+        MErrorPlaybackCmdFailed,
 
         // complimentary dialogs & menus
         MTransferPlaybackTitle,

@@ -54,7 +54,7 @@ panel::panel(api_proxy_ptr api):
     api_proxy(api)
 {
     utils::events::start_listening<ui_events_observer>(this);
-    utils::events::start_listening<requester_observer>(this);
+    utils::events::start_listening<api_requests_observer>(this);
 
     show_stub_view();
 }
@@ -62,7 +62,7 @@ panel::panel(api_proxy_ptr api):
 panel::~panel()
 {
     utils::events::stop_listening<ui_events_observer>(this);
-    utils::events::stop_listening<requester_observer>(this);
+    utils::events::stop_listening<api_requests_observer>(this);
 
     view.reset();
     api_proxy.reset();
@@ -317,6 +317,11 @@ void panel::on_request_progress_changed(const string &url, size_t progress, size
         return;
     
     show_loading_splash(std::format(L"Fetching progress: {}/{}", progress, total));
+}
+
+void panel::on_playback_command_failed(const string &message)
+{
+    utils::far3::show_far_error_dlg(MErrorPlaybackCmdFailed, utils::to_wstring(message));
 }
 
 void panel::on_show_filters_menu()
