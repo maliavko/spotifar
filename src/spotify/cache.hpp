@@ -113,6 +113,9 @@ protected:
     /// @brief The amount of time the data is valid and will not be resynced
     virtual auto get_sync_interval() const -> clock_t::duration = 0;
     
+    /// @brief Applies all the valid accumulated patches (right now it is 1500ms
+    /// expiration time) to the given `item`. Helps to keep up the data valid,
+    /// even when the proper updated item has not yet received from the server
     void apply_patches(T &item);
 
     /// @brief The method is called when the data is successfully resynced, either
@@ -188,10 +191,14 @@ void json_cache<T>::resync(bool force)
         apply_patches(new_data);
 
         data.set(new_data);
-        last_sync_time.set(sync_time);
 
         on_data_synced(new_data, old_data);
     }
+    
+    // initially the sync timestamp was updated only in case of successful response,
+    // over time it was moved here to be updated at any response, since in the case of an error
+    // the server gets overwhelmed with the reinitiated failed requests every tick
+    last_sync_time.set(sync_time);
 }
 
 template<typename T>

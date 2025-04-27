@@ -561,7 +561,11 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
             });
         
         if (!http::is_success(res))
+        {
+            log::api->error("An error occured while downloading an image cover for the track: {}, url {}",
+                http::get_status_message(res), image.url);
             return L"";
+        }
     }
     return filepath;
 }
@@ -618,13 +622,6 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
             if (cache_for != clock_t::duration::zero())
                 api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
-    }
-    else if (res && res->status == TooManyRequests_429)
-    {
-        // TODO: I hope it will not go into recursion one day, sorry guys
-        std::this_thread::sleep_for(1.5s);
-        log::api->debug("Postponing an api http request due to reached rate limits, {}", request_url);
-        return get(request_url, cache_for);
     }
 
     return res;

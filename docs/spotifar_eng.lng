@@ -104,6 +104,7 @@
 "Could not initialize a notifications library."
 "A worker thread caught an exception and stopped unexpectedly, closing plugin."
 "A command execution failed."
+"An error while fetching the collection."
 
 "Transferring playback"
 "Some other device is active now '{0}', would you like to transfer playback to '{1}'?"

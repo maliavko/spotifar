@@ -223,6 +223,9 @@ struct api_requests_observer: public BaseObserverProtocol
 
     /// @brief The controlling playback command is failed: start_playback, skip_to_next and etc.
     virtual void on_playback_command_failed(const string &message) {}
+
+    /// @brief The collection fetching was failed
+    virtual void on_collection_fetching_failed(const string &message) {}
 };
 
 /// @brief A helper class to propagate multi-page requesters progress to the listeners
@@ -294,32 +297,35 @@ public:
         if (api_proxy.expired()) return false;
 
         response = api_proxy.lock()->get(url, utils::http::session);
-        if (is_success(response))
+        if (!is_success(response))
         {
-            try
-            {
-                // there is no content, no need to parse anything
-                if (response->status == httplib::NoContent_204)
-                    return true;
-                
-                json::Document doc;
-                doc.Parse(response->body);
-                
-                json::Value &body = doc;
-                if (!fieldname.empty())
-                    body = body[fieldname];
-
-                on_read_result(body, result);
-                return true;
-            }
-            catch (const std::exception &ex)
-            {
-                log::api->error("There is error while parsing api data response: {}. "
-                    "Request '{}', data '{}'", ex.what(), url, response->body);
-                return false;
-            }
+            log::api->error("There is an error while executing API fetching request: '{}', "
+                "url '{}'", utils::http::get_status_message(response), url);
+            return false;
         }
-        return false;
+        
+        try
+        {
+            // there is no content, no need to parse anything
+            if (response->status == httplib::NoContent_204)
+                return true;
+            
+            json::Document doc;
+            doc.Parse(response->body);
+            
+            json::Value &body = doc;
+            if (!fieldname.empty())
+                body = body[fieldname];
+
+            on_read_result(body, result);
+            return true;
+        }
+        catch (const std::exception &ex)
+        {
+            log::api->error("There is an error while parsing api data response: {}. "
+                "Request '{}', data '{}'", ex.what(), url, response->body);
+            return false;
+        }
     }
 protected:
     virtual bool is_success(const Result &r) const { return utils::http::is_success(r); }
@@ -560,10 +566,14 @@ protected:
 
         while (requester != nullptr)
         {
-            // if some of the pages were not requested well, all the operation
-            // is aborted
+            // if some of the pages were not requested well, all the operation is aborted
             if (!requester->execute(api, only_cached))
+            {
+                const auto msg = std::format("collection fetching error '{}', url '{}'",
+                    utils::http::get_status_message(requester->get_response()), requester->get_url());
+                dispatch_event(&api_requests_observer::on_collection_fetching_failed, msg);
                 return false;
+            }
 
             notifier.send_progress(this->size(), requester->get_total());
 
@@ -571,7 +581,7 @@ protected:
             if (this->capacity() != requester->get_total())
                 this->reserve(requester->get_total());
             
-            auto &items = requester->get();
+            const auto &items = requester->get();
             this->insert(this->end(), items.begin(), items.end());
     
             const auto &next_url = requester->get_next_url();
@@ -608,11 +618,17 @@ protected:
 
         auto requester = make_requester(0);
         // performing the first request to obtain a total number fo items
-        size_t total = 0;
-        if (requester->execute(api_proxy, only_cached))
-            total = requester->get_total();
+        if (!requester->execute(api_proxy, only_cached))
+        {
+            const auto msg = std::format("collection fetching error '{}', url '{}'",
+                utils::http::get_status_message(requester->get_response()), requester->get_url());
+            dispatch_event(&api_requests_observer::on_collection_fetching_failed, msg);
+            return false;
+        }
 
-        if (total == 0) return false;
+        size_t total = requester->get_total();
+        if (total == 0)
+            return false;
 
         requester_progress_notifier notifier(requester->get_url());
 
@@ -627,13 +643,16 @@ protected:
         /// @note for some reason passing weakref does not work here, it gets `empty`.
         /// So, I am passing real api pointer which works well
         auto api = api_proxy.lock();
-        BS::multi_future<void> sequence_future = api->get_pool().submit_sequence(start, end,
+        auto sequence_future = api->get_pool().submit_sequence(start, end,
             [this, &result, api = api.get(), only_cached, &notifier, total](const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
 
                 if (!requester->execute(api->get_ptr(), only_cached))
-                    throw std::runtime_error("Unsuccesful request");
+                    throw std::runtime_error(
+                        std::format("collection fetching error '{}', url '{}'",
+                            utils::http::get_status_message(requester->get_response()), requester->get_url())
+                    );
                 
                 result[idx] = requester->get();
 
@@ -649,8 +668,9 @@ protected:
             sequence_future.wait();
             sequence_future.get();
         }
-        catch (const std::runtime_error&)
+        catch (const string &message)
         {
+            dispatch_event(&api_requests_observer::on_collection_fetching_failed, message);
             return false;
         }
 

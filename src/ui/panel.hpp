@@ -39,6 +39,7 @@ protected:
     void on_request_finished(const string &url) override;
     void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
     void on_playback_command_failed(const string &message) override;
+    void on_collection_fetching_failed(const string &message) override;
 private:
     view_ptr view;
     api_proxy_ptr api_proxy;

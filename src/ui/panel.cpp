@@ -324,6 +324,11 @@ void panel::on_playback_command_failed(const string &message)
     utils::far3::show_far_error_dlg(MErrorPlaybackCmdFailed, utils::to_wstring(message));
 }
 
+void panel::on_collection_fetching_failed(const string &message)
+{
+    utils::far3::show_far_error_dlg(MErrorCollectionFetchFailed, utils::to_wstring(message));
+}
+
 void panel::on_show_filters_menu()
 {
     PluginDialogBuilder builder(config::ps_info, MainGuid, ConfigSpotifyDialogGuid, L"Test Dialog", NULL);

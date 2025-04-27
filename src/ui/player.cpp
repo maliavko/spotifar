@@ -314,7 +314,7 @@ void player::tick()
 
     track_progress.check([this](int p) {
         synchro_tasks::push([api = api_proxy.lock(), p] {
-            auto &state = api->get_playback_state();
+            const auto &state = api->get_playback_state();
             api->seek_to_position(p * 1000, state.device.id);
         });
     });
@@ -613,7 +613,7 @@ bool player::on_track_bar_input_received(void *input_record)
     if (api_proxy.expired()) return false;
 
     auto api = api_proxy.lock();
-    auto &playback = api->get_playback_state();
+    const auto &playback = api->get_playback_state();
     if (playback.is_empty())
         return false;
 
@@ -649,7 +649,7 @@ bool player::on_like_btn_input_received(void *input_record)
     if (api_proxy.expired()) return false;
 
     auto api = api_proxy.lock();
-    auto &playback = api->get_playback_state();
+    const auto &playback = api->get_playback_state();
     if (playback.is_empty())
         return true;
     
@@ -670,7 +670,7 @@ bool player::on_like_btn_style_applied(void *dialog_item_colors)
 
     auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     auto api = api_proxy.lock();
-    auto &playback = api->get_playback_state();
+    const auto &playback = api->get_playback_state();
     if (!playback.is_empty() && api->check_saved_track(playback.item.id))
     {
         dic->Colors->ForegroundColor = colors::black;
@@ -815,7 +815,7 @@ void player::on_track_changed(const track_t &track)
 
     if (auto api = api_proxy.lock())
     {
-        auto &state = api->get_playback_state();
+        const auto &state = api->get_playback_state();
         update_like_btn(!state.is_empty() && api->check_saved_track(state.item.id));
     }
 

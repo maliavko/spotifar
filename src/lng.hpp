@@ -111,6 +111,7 @@ namespace spotifar
         MErrorWinToastStartupUnexpected,
         MErrorSyncThreadFailed,
         MErrorPlaybackCmdFailed,
+        MErrorCollectionFetchFailed,
 
         // complimentary dialogs & menus
         MTransferPlaybackTitle,
