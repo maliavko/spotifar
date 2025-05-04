@@ -37,6 +37,64 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
         &api_requests_observer::on_playback_command_failed, formatted);
 }
 
+
+#include "cache.hpp"
+
+class recent_releases: public json_cache<history_items_t>
+{
+public:
+    recent_releases(api_interface *api): json_cache<history_items_t>(L""), api_proxy(api) {}
+    ~recent_releases() { api_proxy = nullptr; }
+protected:
+    std::generator<int> sync()
+    {
+        auto time_treshold = utils::clock_t::now() - std::chrono::weeks{2};
+
+        auto artists = api_proxy->get_followed_artists();
+        if (artists->fetch())
+            for (const auto &a: *artists)
+            {
+                auto albums = api_proxy->get_artist_albums(a.id);
+                if (albums->fetch())
+                {
+                    std::vector<album_t> result;
+                    for (const auto &album: *albums)
+                    {
+                        auto s = album.get_release_date();
+                        auto tt = std::format("{:%F %T}", s);
+                        auto tt2 = std::format("{:%F %T}", time_treshold);
+                        if (s > time_treshold)
+                            co_yield 0;
+                    }
+                }
+            }
+    }
+
+    bool is_active() const override
+    {
+        return api_proxy->is_authenticated();
+    }
+
+    bool request_data(history_items_t &data) override
+    {
+        //for (const auto &r: sync());
+
+        return true;
+    }
+
+    auto get_sync_interval() const -> clock_t::duration override
+    {
+        return utils::events::has_observers<playback_observer>() ? 15s : 2s;
+    }
+
+    void on_data_synced(const history_items_t &data, const history_items_t &prev_data) override
+    {
+        log::global->debug("111111111");
+    }
+private:
+    api_interface *api_proxy;
+};
+
 //----------------------------------------------------------------------------------------------
 api::api(): pool(pool_size)
 {
@@ -45,7 +103,9 @@ api::api(): pool(pool_size)
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
 
-    caches.assign({ auth.get(), playback.get(), devices.get(), history.get() });
+    static auto rr = std::make_unique<recent_releases>(this);
+
+    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), rr.get() });
 }
 
 api::~api()
@@ -578,8 +638,6 @@ bool api::is_request_cached(const string &url) const
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 {
-    using namespace httplib;
-
     string cached_etag = "";
     string url = http::trim_domain(request_url);
 
