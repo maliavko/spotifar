@@ -180,16 +180,18 @@ struct playlist_t: public simplified_playlist_t
 // true - allowed, false - disallowed
 struct actions_t
 {
+    // default flags represent the state of the player's UI controls,
+    // when nothing is being played: we can resume playback and we can tranfer a device
     bool interrupting_playback = false;
     bool pausing = false;
-    bool resuming = false;
+    bool resuming = true;
     bool seeking = false;
     bool skipping_next = false;
     bool skipping_prev = false;
     bool toggling_repeat_context = false;
     bool toggling_repeat_track = false;
     bool toggling_shuffle = false;
-    bool trasferring_playback = false;
+    bool trasferring_playback = true;
 
     friend bool operator==(const actions_t &lhs, const actions_t &rhs);
     

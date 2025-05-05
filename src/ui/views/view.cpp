@@ -134,7 +134,7 @@ intptr_t view_abstract::request_extra_info(const PluginPanelItem *data)
 size_t view_abstract::get_item_idx(const string &item_id)
 {
     const auto &items = panels::get_items(PANEL_ACTIVE);
-    for (size_t idx = 1; idx <= items.size(); idx++)
+    for (size_t idx = 1; idx < items.size(); idx++) // zero index is ".." folder
     {
         auto user_data = unpack_user_data(items[idx]->UserData);
         if (user_data != nullptr && user_data->id == item_id)

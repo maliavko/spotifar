@@ -103,7 +103,7 @@
 "There is a problem launching Librespot process, see logs for the details."
 "Could not initialize a notifications library."
 "A worker thread caught an exception and stopped unexpectedly, closing plugin."
-"A command execution failed."
+"A playback error."
 "An error while fetching the collection."
 
 "Transferring playback"

@@ -785,7 +785,16 @@ namespace http
     {
         if (!res)
             return httplib::to_string(res.error());
-        return std::format("{}({})", httplib::status_message(res->status), res->status);
+    
+        string message = "";
+
+        // trying to get an additional error message in the API response body
+        Document doc;
+        if (!doc.Parse(res->body).HasParseError())
+            if (doc.HasMember("error") && doc["error"].HasMember("message"))
+                message = doc["error"]["message"].GetString();
+
+        return std::format("{}, Status {}, {}.", message, res->status, httplib::status_message(res->status));
     }
 
     string trim_params(const string &url)
