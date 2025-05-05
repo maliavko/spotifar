@@ -79,6 +79,7 @@ template<class T>
 class json_cache: public cached_data_abstract
 {
 public:
+    using data_t = T;
     using patch_handler_t = std::function<void(json::Document &)>;
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so

@@ -73,7 +73,7 @@ struct simplified_album_t: public data_item_t
     wstring name;
     size_t total_tracks;
     string album_type;
-    string release_date;
+    string release_date; // YYYY-MM-DD
     string href;
     std::vector<image_t> images;
     std::vector<simplified_artist_t> artists;
@@ -84,6 +84,7 @@ struct simplified_album_t: public data_item_t
     auto is_single() const -> bool { return album_type == single; }
     auto is_compilation() const -> bool { return album_type == compilation; }
     auto get_release_year() const -> string;
+    auto get_release_date() const -> utils::clock_t::time_point;
     auto get_type_abbrev() const -> wstring;
     
     friend void from_json(const json::Value &j, simplified_album_t &a);
