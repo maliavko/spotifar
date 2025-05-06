@@ -112,6 +112,9 @@ protected:
 
     /// @brief The amount of time the data is valid and will not be resynced
     virtual auto get_sync_interval() const -> clock_t::duration = 0;
+
+    /// @brief If the resync is finished with `false` it will be resync again after this interval
+    virtual auto get_retry_interval() const -> clock_t::duration { return 3s; }
     
     /// @brief Applies all the valid accumulated patches (right now it is 1500ms
     /// expiration time) to the given `item`. Helps to keep up the data valid,
@@ -197,7 +200,7 @@ void json_cache<T>::resync(bool force)
     }
     else
     {
-        expires_at.set(sync_time + 3s);
+        expires_at.set(sync_time + get_retry_interval());
     }
 }
 

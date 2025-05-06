@@ -38,12 +38,12 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
 }
 
 
-using releases_t = std::unordered_map<item_id_t, album_t>;
+using releases_t = std::vector<simplified_album_t>;
 
 class recent_releases: public json_cache<releases_t>
 {
 public:
-    recent_releases(api_interface *api): json_cache<releases_t>(L""), api_proxy(api), pool(1) // TODO: not persistent
+    recent_releases(api_interface *api): json_cache<releases_t>(L"RecentReleases"), api_proxy(api), pool(1)
     {
         artists = api_proxy->get_followed_artists();
     }
@@ -57,49 +57,48 @@ protected:
 
     bool request_data(releases_t &data) override
     {
-        log::global->debug("zzzzzzzzzzzzzzzzzzz {} {}", artists->is_populated(), artists->size() == releases.size());
-
-        if (artists->is_populated())
+        if (is_in_sync)
         {
-            if (artists->size() == releases.size())
+            if (pool.get_tasks_total() == 0)
             {
-                artists->clear();
-                return true;
+                data = interim_data;
+                is_in_sync = false;
             }
-            return false;
+            
+            return !is_in_sync; // `true` means a succesful end of sync
         }
 
-        auto time_treshold = utils::clock_t::now() - std::chrono::weeks{2};
-
-        releases.clear();
+        interim_data.clear();
 
         if (artists->fetch(false, false))
         {
-            artists->resize(5); // TODO: remove
+            auto time_treshold = utils::clock_t::now() - std::chrono::weeks{2};
+            artists->resize(15); // TODO: remove
+            
             pool.detach_sequence(0ULL, artists->size(),
-                [api = api_proxy, this](const std::size_t idx)
+                [this, time_treshold](const std::size_t idx)
                 {
-                    const auto &artist = (*this->artists)[idx];
-                    auto albums = api->get_artist_albums(artist.id);
+                    const auto &artist = (*artists)[idx];
+                    auto albums = api_proxy->get_artist_albums(artist.id);
                     bool is_cached = albums->is_cached();
                     if (albums->fetch(false, false))
                     {
                         log::api->debug("Searching for new releases, {} [{}]", utils::to_string(artist.name), artist.id);
                         {
-                            std::lock_guard lock(releases_guard);
-                            releases[artist.id] = {};
-                            
-                            // auto s = album.get_release_date();
-                            // auto tt = std::format("{:%F %T}", s);
-                            // auto tt2 = std::format("{:%F %T}", time_treshold);
-                            // if (s > time_treshold)
-                            //     co_yield 0;
+                            std::lock_guard lock(data_access);
+
+                            for (const auto &album: *albums)
+                                if (album.get_release_date() > time_treshold)
+                                    interim_data.push_back(album);
                         }
                     }
 
                     if (!is_cached)
-                        std::this_thread::sleep_for(2s);
+                        std::this_thread::sleep_for(
+                            utils::events::has_observers<playback_observer>() ? 15s : 5s);
                 });
+            
+            is_in_sync = true;
         }
 
         return false;
@@ -107,19 +106,24 @@ protected:
 
     auto get_sync_interval() const -> clock_t::duration override
     {
-        return 30s;
+        return 60s;
     }
 
     void on_data_synced(const releases_t &data, const releases_t &prev_data) override
     {
-        log::global->debug("111111111111111111111111111111111111111111111111");
+        log::global->debug("11111111111 new releases found:");
+
+        for (const auto &album: data)
+            log::global->debug("{} - {}", utils::to_string(album.artists[0].name), utils::to_string(album.name));
     }
 private:
     api_interface *api_proxy;
     BS::thread_pool pool;
+    
+    std::mutex data_access;
+    data_t interim_data{};
 
-    releases_t releases;
-    std::mutex releases_guard;
+    bool is_in_sync = false;
     followed_artists_ptr artists;
 };
 
@@ -142,7 +146,7 @@ bool api::start()
 
     static auto rr = std::make_unique<recent_releases>(this);
 
-    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), rr.get() });
+    caches.assign({ auth.get(), /*playback.get(), devices.get(),*/ history.get(), rr.get() });
 
     auto ctx = config::lock_settings();
 
@@ -226,7 +230,7 @@ artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
     return artist_albums_ptr(new artist_albums_t(
         get_ptr(),
         std::format("/v1/artists/{}/albums", artist_id), {
-            { "include_groups", "album" }
+            { "include_groups", "album,single" }
         }
     ));
 }
@@ -709,6 +713,14 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
             if (cache_for != clock_t::duration::zero())
                 api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
+    }
+    else
+    {
+        auto retry_after = std::stoi(res->get_header_value("retry-after", 0));
+
+        if (res->status == TooManyRequests_429)
+            throw std::runtime_error(std::format("The app has been rate limited, retry after {:%T}",
+                std::chrono::seconds(retry_after)));
     }
 
     return res;

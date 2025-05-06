@@ -16,16 +16,16 @@ template<class T, int N = 0, class C = utils::clock_t::duration> class item_requ
 template<class T, int N = 0, class C = utils::clock_t::duration> class sync_collection;
 template<class T, int N = 0, class C = utils::clock_t::duration> class async_collection;
 
-using followed_artists_t = sync_collection<artist_t>;
+using followed_artists_t = sync_collection<artist_t, -1>;
 using followed_artists_ptr = std::shared_ptr<followed_artists_t>;
 
-using saved_albums_t = async_collection<saved_album_t>;
+using saved_albums_t = async_collection<saved_album_t, 1, std::chrono::days>;
 using saved_albums_ptr = std::shared_ptr<saved_albums_t>;
 
-using saved_tracks_t = async_collection<saved_track_t>;
+using saved_tracks_t = async_collection<saved_track_t, 1, std::chrono::days>;
 using saved_tracks_ptr = std::shared_ptr<saved_tracks_t>;
 
-using saved_playlists_t = async_collection<simplified_playlist_t>;
+using saved_playlists_t = async_collection<simplified_playlist_t, -1>;
 using saved_playlists_ptr = std::shared_ptr<saved_playlists_t>;
 
 using artist_albums_t = async_collection<simplified_album_t, 1, std::chrono::days>;
@@ -34,7 +34,7 @@ using artist_albums_ptr = std::shared_ptr<artist_albums_t>;
 using new_releases_t = async_collection<simplified_album_t>;
 using new_releases_ptr = std::shared_ptr<new_releases_t>;
 
-using album_tracks_t = async_collection<simplified_track_t>;
+using album_tracks_t = async_collection<simplified_track_t, 1, std::chrono::weeks>;
 using album_tracks_ptr = std::shared_ptr<album_tracks_t>;
 
 struct api_interface

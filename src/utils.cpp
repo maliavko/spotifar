@@ -794,7 +794,7 @@ namespace http
             if (doc.HasMember("error") && doc["error"].HasMember("message"))
                 message = doc["error"]["message"].GetString();
 
-        return std::format("{}, Status {}, {}.", message, res->status, httplib::status_message(res->status));
+        return std::format("status {}, {}. {}", res->status, httplib::status_message(res->status), message);
     }
 
     string trim_params(const string &url)
