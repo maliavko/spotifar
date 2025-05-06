@@ -243,8 +243,8 @@ void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
                 {
                     if (!RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
                     {
-                        log::global->error("There is an error while registering a hotkey: {}",
-                            utils::get_last_system_error());
+                        log::global->error("There is an error while registering a hotkey `{}`: {}",
+                            utils::to_string(keys::vk_to_string(hotkey->first)), utils::get_last_system_error());
                         continue;
                     }
                     log::global->debug("A global hotkey is registered, {}, {}", hotkey->first, hotkey->second);

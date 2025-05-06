@@ -12,8 +12,9 @@ namespace spotifar { namespace spotify {
 using httplib::Result;
 using utils::far3::synchro_tasks::dispatch_event;
 
-template<class T> class sync_collection;
-template<class T> class async_collection;
+template<class T, int N = 0, class C = utils::clock_t::duration> class item_requester;
+template<class T, int N = 0, class C = utils::clock_t::duration> class sync_collection;
+template<class T, int N = 0, class C = utils::clock_t::duration> class async_collection;
 
 using followed_artists_t = sync_collection<artist_t>;
 using followed_artists_ptr = std::shared_ptr<followed_artists_t>;
@@ -27,7 +28,7 @@ using saved_tracks_ptr = std::shared_ptr<saved_tracks_t>;
 using saved_playlists_t = async_collection<simplified_playlist_t>;
 using saved_playlists_ptr = std::shared_ptr<saved_playlists_t>;
 
-using artist_albums_t = async_collection<simplified_album_t>;
+using artist_albums_t = async_collection<simplified_album_t, 1, std::chrono::days>;
 using artist_albums_ptr = std::shared_ptr<artist_albums_t>;
 
 using new_releases_t = async_collection<simplified_album_t>;
@@ -38,9 +39,9 @@ using album_tracks_ptr = std::shared_ptr<album_tracks_t>;
 
 struct api_interface
 {
-    template<class T> friend class item_requester;
-    template<class T> friend class sync_collection;
-    template<class T> friend class async_collection;
+    template<class T, int N, class C> friend class item_requester;
+    template<class T, int N, class C> friend class sync_collection;
+    template<class T, int N, class C> friend class async_collection;
 
     virtual ~api_interface() {}
 
@@ -231,29 +232,33 @@ struct api_requests_observer: public BaseObserverProtocol
 /// @brief A helper class to propagate multi-page requesters progress to the listeners
 struct [[nodiscard]] requester_progress_notifier
 {
-    requester_progress_notifier(const string &url): request_url(url)
+    requester_progress_notifier(const string &url, bool is_active = true): request_url(url), is_active(is_active)
     {
-        ObserverManager::notify(&api_requests_observer::on_request_started, request_url);
+        if (is_active)
+            ObserverManager::notify(&api_requests_observer::on_request_started, request_url);
     }
 
     ~requester_progress_notifier()
     {
-        ObserverManager::notify(&api_requests_observer::on_request_finished, request_url);
+        if (is_active)
+            ObserverManager::notify(&api_requests_observer::on_request_finished, request_url);
     }
 
     void send_progress(size_t progress, size_t total)
     {
-        ObserverManager::notify(&api_requests_observer::on_request_progress_changed,
-            request_url, progress, total);
+        if (is_active)
+            ObserverManager::notify(&api_requests_observer::on_request_progress_changed,
+                request_url, progress, total);
     }
 
     string request_url;
+    bool is_active;
 };
 
-/// @brief A helper-class for requesting data from spotify api. Incapsulated
+/// @brief A helper-class for requesting data from spotify api. Incapsulates
 /// a logic for performing a request, parsing and holding final result
 /// @tparam T a final result's type
-template<class T>
+template<class T, int N, class C>
 class item_requester
 {
 public:
@@ -296,7 +301,7 @@ public:
 
         if (api_proxy.expired()) return false;
 
-        response = api_proxy.lock()->get(url, utils::http::session);
+        response = api_proxy.lock()->get(url, cache_duration);
         if (!is_success(response))
         {
             log::api->error("There is an error while executing API fetching request: '{}', "
@@ -342,6 +347,7 @@ protected:
     string url;
     result_t result;
     Result response;
+    const C cache_duration{ N };
 };
 
 /// @brief A class-helper, used for requesting several items from Spotify. As their
@@ -367,14 +373,14 @@ public:
     /// @brief Returns a result. Valid only after a successful request
     auto get() const -> const result_t& { return result; }
 
-    bool execute(api_proxy_ptr api, bool only_cached = false)
+    bool execute(api_proxy_ptr api, bool only_cached = false, bool notify_watchers = true)
     {   
         result.clear();
 
         auto chunk_begin = ids.begin();
         auto chunk_end = ids.begin();
         
-        requester_progress_notifier notifier(url);
+        requester_progress_notifier notifier(url, notify_watchers);
         
         do
         {
@@ -411,11 +417,11 @@ private:
 
 /// @brief A requester specialization for getting collections page by page
 /// @tparam T a final result's type
-template<class T>
-class collection_requester: public item_requester<T>
+template<class T, int N, class C>
+class collection_requester: public item_requester<T, N, C>
 {
 public:
-    using item_requester<T>::item_requester;
+    using item_requester<T, N, C>::item_requester;
 
     /// @brief Return a valid `url` to the next page in case it exists
     /// @note works only a successful request
@@ -448,16 +454,18 @@ struct collection_interface
 {
     /// @brief Returns the total count of items in the collection, performs a single
     /// server request if needed silently
-    virtual auto get_total() const -> size_t = 0;
+    virtual size_t get_total() const = 0;
 
     /// @brief Returns the total count of items in the collection if available or zero,
     /// works only with cache, does not perform any request
-    virtual auto peek_total() const -> size_t = 0;
+    virtual size_t peek_total() const = 0;
+
+    virtual bool is_cached() const = 0;
 
     /// @brief A public interface method to populate the collection fully
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
-    virtual auto fetch(bool only_cached = false) -> bool = 0;
+    virtual bool fetch(bool only_cached = false, bool notify_watchers = true) = 0;
 
     /// @brief Returns whether the container is populated from server or not
     virtual bool is_populated() const = 0;
@@ -472,14 +480,15 @@ static const size_t max_limit = 50ULL;
 /// always empty after creation and has to be populated manually. Provides an interface
 /// to fetch collection from the server or to get total count of items held in collection
 /// without fetching all the data.
-template<class T>
+template<class T, int N, class C>
 class collection_abstract:
     public std::vector<T>,
     public collection_interface
 {
 public:
+    using base_t = std::vector<T>;
     using container_t = std::vector<T>;
-    using requester_t = collection_requester<container_t>;
+    using requester_t = collection_requester<container_t, N, C>;
     using requester_ptr = std::shared_ptr<requester_t>;
 public:
     /// @param url a url to request
@@ -517,14 +526,26 @@ public:
         return 0LL;
     }
 
+    bool is_cached() const override
+    {
+        // returns whether the first requester's results is cached or not, for most of the
+        // cases that means that all of the requesting sequence chain is cached too
+        return get_begin_requester()->is_cached(api_proxy);
+    }
+
     bool is_populated() const override { return populated; }
 
-    bool fetch(bool only_cached = false)
+    void clear()
     {
-        this->clear();
+        base_t::clear();
         populated = false;
+    }
 
-        if (!fetch_all(api_proxy, only_cached))
+    bool fetch(bool only_cached = false, bool notify_watchers = true)
+    {
+        clear();
+
+        if (!fetch_all(api_proxy, only_cached, notify_watchers))
             return false;
 
         populated = true;
@@ -539,7 +560,7 @@ protected:
     /// @brief A main requesting logic is implemented here
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
-    virtual auto fetch_all(api_proxy_ptr api, bool only_cached) -> bool = 0;
+    virtual bool fetch_all(api_proxy_ptr api, bool only_cached, bool notify_watchers = true) = 0;
 protected:
     api_proxy_ptr api_proxy;
     string url;
@@ -558,18 +579,19 @@ string get_fetching_error(const R &requester)
 /// @brief The items collection, which populates itself, requesting data
 /// from the server synchronously page by page
 /// @tparam T result data type
-template<class T>
-class sync_collection: public collection_abstract<T>
+template<class T, int N, class C>
+class sync_collection: public collection_abstract<T, N, C>
 {
 public:
-    using collection_abstract<T>::requester_t;
-    using collection_abstract<T>::requester_ptr;
-    using collection_abstract<T>::collection_abstract;
+    using base_t = collection_abstract<T, N, C>;
+    using base_t::requester_t;
+    using base_t::requester_ptr;
+    using base_t::collection_abstract;
 protected:
-    bool fetch_all(api_proxy_ptr api, bool only_cached) override
+    bool fetch_all(api_proxy_ptr api, bool only_cached, bool notify_watchers = true) override
     {       
         auto requester = get_begin_requester();
-        requester_progress_notifier notifier(requester->get_url());
+        requester_progress_notifier notifier(requester->get_url(), notify_watchers);
 
         while (requester != nullptr)
         {
@@ -610,15 +632,16 @@ protected:
 /// from the server asynchronously. Once all the responsed are received,
 /// accumulates them in the right order
 /// @tparam T result data type
-template<class T>
-class async_collection: public collection_abstract<T>
+template<class T, int N, class C>
+class async_collection: public collection_abstract<T, N, C>
 {
 public:
-    using collection_abstract<T>::requester_t;
-    using collection_abstract<T>::requester_ptr;
-    using collection_abstract<T>::collection_abstract;
+    using base_t = collection_abstract<T, N, C>;
+    using base_t::requester_t;
+    using base_t::requester_ptr;
+    using base_t::collection_abstract;
 protected:
-    bool fetch_all(api_proxy_ptr api_proxy, bool only_cached) override
+    bool fetch_all(api_proxy_ptr api_proxy, bool only_cached, bool notify_watchers = true) override
     {   
         if (api_proxy.expired()) return false;
 
@@ -633,9 +656,9 @@ protected:
 
         size_t total = requester->get_total();
         if (total == 0)
-            return false;
+            return true;
 
-        requester_progress_notifier notifier(requester->get_url());
+        requester_progress_notifier notifier(requester->get_url(), notify_watchers);
 
         // calculating the amount of pages
         size_t start = 1ULL, end = total / max_limit;
@@ -649,7 +672,8 @@ protected:
         /// So, I am passing real api pointer which works well
         auto api = api_proxy.lock();
         auto sequence_future = api->get_pool().submit_sequence(start, end,
-            [this, &result, api = api.get(), only_cached, &notifier, total](const size_t idx)
+            [this, &result, api = api.get(), only_cached, &notifier, total, notify_watchers]
+            (const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
 

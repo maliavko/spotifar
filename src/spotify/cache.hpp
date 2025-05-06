@@ -100,10 +100,9 @@ public:
     void patch(patch_handler_t handler);
 
     auto get() const -> const T& { return data.get(); }
-    auto get_last_sync_time() const -> const time_point& { return last_sync_time.get(); }
-    auto get_expires_at() const -> const time_point { return get_last_sync_time() + get_sync_interval(); }
+    auto get_expires_at() const -> const time_point& { return expires_at.get(); }
     bool is_valid() const { return get_expires_at() > clock_t::now(); }
-    void invalidate() { last_sync_time.set({}); }
+    void invalidate() { expires_at.set({}); }
 protected:
     /// @brief The class calls the method when the data should be resynced. An implementation
     /// should return true if the data was successfully resynced, and put the data to the 
@@ -126,7 +125,7 @@ protected:
     virtual void on_data_synced(const T &data, const T &prev_data) {}
 private:
     json_value<T> data;
-    timestamp_value last_sync_time;
+    timestamp_value expires_at;
     bool is_persistent;
 
     std::mutex patch_mutex;
@@ -137,7 +136,7 @@ template<typename T>
 json_cache<T>::json_cache(const wstring &storage_key):
     is_persistent(!storage_key.empty()),
     data(storage_key),
-    last_sync_time(storage_key + L"Time")
+    expires_at(storage_key + L"Time")
 {
 }
 
@@ -147,7 +146,7 @@ void json_cache<T>::read(settings_ctx &ctx)
     if (is_persistent)
     {
         data.read(ctx);
-        last_sync_time.read(ctx);
+        expires_at.read(ctx);
     }
 
     // if the data is still valid, we send notification as
@@ -162,7 +161,7 @@ void json_cache<T>::write(settings_ctx &ctx)
     if (is_persistent)
     {
         data.write(ctx);
-        last_sync_time.write(ctx);
+        expires_at.write(ctx);
     }
 }
 
@@ -172,7 +171,7 @@ void json_cache<T>::clear(settings_ctx &ctx)
     if (is_persistent)
     {
         data.clear(ctx);
-        last_sync_time.clear(ctx);
+        expires_at.clear(ctx);
     }
 }
 
@@ -193,13 +192,13 @@ void json_cache<T>::resync(bool force)
 
         data.set(new_data);
 
+        expires_at.set(sync_time + get_sync_interval());
         on_data_synced(new_data, old_data);
     }
-    
-    // initially the sync timestamp was updated only in case of successful response,
-    // over time it was moved here to be updated at any response, since in the case of an error
-    // the server gets overwhelmed with the reinitiated failed requests every tick
-    last_sync_time.set(sync_time);
+    else
+    {
+        expires_at.set(sync_time + 3s);
+    }
 }
 
 template<typename T>
