@@ -9,14 +9,14 @@
 #include "ui/panel.hpp"
 #include "ui/player.hpp"
 #include "ui/events.hpp"
+#include "ui/notifications.hpp"
 
 namespace spotifar {
 
 class plugin:
     public config::config_observer, // for catching chnging config settings
     public spotify::auth_observer,  // for launching librespot once credentials were acquaired
-    public ui::ui_events_observer,   // for showing up the player by request
-    public spotify::playback_observer   // for showing up the windows notification when track has changed
+    public ui::ui_events_observer   // for showing up the player by request
 {
 public:
     plugin();
@@ -40,7 +40,6 @@ protected:
     void shutdown_librespot_process();
     
     void process_win_messages_queue();
-    void show_now_playing_notification(const spotify::track_t &track, bool show_buttons = false);
 
     // config handlers
     void on_global_hotkeys_setting_changed(bool is_enabled) override;
@@ -51,9 +50,6 @@ protected:
 
     // auth handler
     void on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal) override;
-    
-    // playback handlers
-    void on_track_changed(const spotify::track_t &track) override;
     
     // panel events handlers
     void show_player() override;
@@ -66,6 +62,7 @@ private:
     utils::tasks_queue background_tasks;
 
     std::unique_ptr<librespot_handler> librespot;
+    std::unique_ptr<ui::notifications> notifications;
     std::unique_ptr<ui::panel> panel;
     std::unique_ptr<ui::player> player;
     

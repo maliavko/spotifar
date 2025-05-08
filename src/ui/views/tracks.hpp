@@ -48,11 +48,11 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // tracks_base_view interface
-    auto start_playback(const string &track_id) -> bool override;
+    bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const simplified_track_t&> override;
 
     // playback_observer handlers
-    void on_track_changed(const track_t &track) override;
+    void on_track_changed(const track_t &track, const track_t &prev_track) override;
 private:
     album_t album;
     album_tracks_ptr collection;
@@ -102,11 +102,11 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // tracks_base_view interface
-    auto start_playback(const string &track_id) -> bool override;
+    bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const simplified_track_t&> override;
 
     // playback_observer handlers
-    void on_track_changed(const track_t &track) override;
+    void on_track_changed(const track_t &track, const track_t &prev_track) override;
 private:
     saved_tracks_ptr collection;
 };
@@ -126,11 +126,11 @@ protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
 
     // tracks_base_view interface
-    auto start_playback(const string &track_id) -> bool override;
+    bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const simplified_track_t&> override;
 
     // playback_observer handlers
-    auto on_track_changed(const track_t &track) -> void override;
+    void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
 };
 
 } // namespace ui

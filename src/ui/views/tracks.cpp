@@ -192,7 +192,7 @@ std::generator<const simplified_track_t&> album_tracks_view::get_tracks()
             co_yield t;
 }
 
-void album_tracks_view::on_track_changed(const track_t &track)
+void album_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
     if (album.id == track.album.id) // the currently playing track is from this album
     {
@@ -318,7 +318,7 @@ std::generator<const simplified_track_t&> saved_tracks_view::get_tracks()
             co_yield t;
 }
 
-void saved_tracks_view::on_track_changed(const track_t &track)
+void saved_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
 }
 
@@ -368,7 +368,7 @@ const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const
     return modes;
 }
 
-void playing_queue_view::on_track_changed(const track_t &track)
+void playing_queue_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
     panels::update(PANEL_ACTIVE);
     panels::redraw(PANEL_ACTIVE);

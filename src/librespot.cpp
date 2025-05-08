@@ -10,7 +10,7 @@ using utils::far3::get_vtext;
 
 static const wstring device_name = L"librespot";
 
-bool librespot_handler::launch(const string &access_token)
+bool librespot_handler::start(const string &access_token)
 {
     if (is_running)
     {

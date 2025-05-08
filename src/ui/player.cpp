@@ -262,7 +262,7 @@ bool player::show()
             {
                 const auto &state = api->get_playback_state(true);
 
-                on_track_changed(state.item);
+                on_track_changed(state.item, track_t{});
                 on_track_progress_changed(state.item.duration, state.progress);
                 on_volume_changed(state.device.volume_percent);
                 on_state_changed(state.is_playing);
@@ -800,7 +800,7 @@ void player::on_devices_changed(const devices_t &devices)
     }
 }
 
-void player::on_track_changed(const track_t &track)
+void player::on_track_changed(const track_t &track, const track_t &prev_track)
 {
     no_redraw nr(hdlg);
 

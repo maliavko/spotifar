@@ -230,9 +230,13 @@ bool api::check_saved_track(const item_id_t &track_id)
 
 std::deque<bool> api::check_saved_tracks(const item_ids_t &ids)
 {
-    // bloody hell, damn vector specialization with bools is not a real vector,
+    // note: bloody hell, damn vector specialization with bools is not a real vector,
     // it cannot return ref to bools, so deque is used instead
-    return request_item(several_items_requester<bool, 0, std::chrono::seconds, std::deque<bool>>(
+
+    // note: player visual style methods are being called extremely often, the 'like` button,
+    // which represents a state of a track being part of saved collection as well. That's why
+    // the response here is cached for a session
+    return request_item(several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
         "/v1/me/tracks/contains", ids, 50), get_ptr());
 }
 
@@ -595,7 +599,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     // we have a cache for the requested url and it is still valid
     if (api_responses_cache.is_cached(url))
     {
-        auto cache = api_responses_cache.get(url);
+        const auto &cache = api_responses_cache.get(url);
         if (cache.is_valid())
         {
             Result res(std::make_unique<Response>(), Error::Success);
@@ -632,7 +636,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
                 api_responses_cache.store(url, cache.body, cache.etag, cache_for);
         }
     }
-    else
+    else if (res)
     {
         auto retry_after = std::stoi(res->get_header_value("retry-after", 0));
 

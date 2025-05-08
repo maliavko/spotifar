@@ -18,6 +18,7 @@ application ideas
     - console commands support
     - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
+    - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
 - if a current playback context is "artist", when hit artist name in the player ui, crush happens
@@ -27,7 +28,8 @@ bugs
 - if librespot crashes, the far with plugin opened does not close
 + after long idle: the player's controls are locked, using global hotkey for start playback raises an error 404, the message of the error is not shown, only status code
 - crash if start plugin when it is already started
-- skipping tracks quickly creates a queue of toasts
++ skipping tracks quickly creates a queue of toasts
+- toast like buttong should be unlike in case the track is saved
 
 to finish for alpha release
 + disabled shuffle plus, move it to some separate branch

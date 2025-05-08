@@ -6,51 +6,21 @@
 
 namespace spotifar {
 
-using namespace WinToastLib;
 using namespace utils;
 namespace hotkeys = config::hotkeys;
 namespace far3 = utils::far3;
-
-
-class win_toast_handler : public WinToastLib::IWinToastHandler
-{
-public:
-    win_toast_handler(spotify::api_proxy_ptr api, const spotify::item_id_t &item_id):
-        api_proxy(api), item_id(item_id)
-        {}
-protected:
-    // Public interfaces
-    void toastActivated() const override {}
-    void toastActivated(int actionIndex) const override
-    {
-        log::global->debug("Button clicked: {}", actionIndex);
-
-        if (auto api = api_proxy.lock())
-        {
-            if (actionIndex == 0) // like button clicked
-                api->save_tracks({ item_id });
-        }
-    }
-    void toastDismissed(WinToastDismissalReason state) const override {}
-    void toastFailed() const override {}
-private:
-    spotify::api_proxy_ptr api_proxy;
-    spotify::item_id_t item_id;
-};
 
 
 plugin::plugin(): api(new spotify::api())
 {
     panel = std::make_unique<ui::panel>(api);
     player = std::make_unique<ui::player>(api);
+    notifications = std::make_unique<ui::notifications>(api);
     librespot = std::make_unique<librespot_handler>(api);
 
     utils::events::start_listening<config::config_observer>(this);
     utils::events::start_listening<spotify::auth_observer>(this);
     utils::events::start_listening<ui::ui_events_observer>(this);
-
-    // we mark the listener as a weak one, as it does not require frequent updates
-    utils::events::start_listening<ui::playback_observer>(this, true);
 }
 
 plugin::~plugin()
@@ -58,12 +28,12 @@ plugin::~plugin()
     utils::events::stop_listening<spotify::auth_observer>(this);
     utils::events::stop_listening<config::config_observer>(this);
     utils::events::stop_listening<ui::ui_events_observer>(this);
-    utils::events::stop_listening<ui::playback_observer>(this, true);
 
     panel.reset();
     player.reset();
     api.reset();
     librespot.reset();
+    notifications.reset();
 }
 
 void plugin::start()
@@ -71,17 +41,9 @@ void plugin::start()
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
     
     api->start();
+    notifications->start();
 
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
-    
-    // initializing win toast notifications library
-    WinToast::instance()->setAppName(PLUGIN_NAME);
-    WinToast::instance()->setAppUserModelId(
-        WinToast::configureAUMI(PLUGIN_AUTHOR, PLUGIN_NAME));
-
-    WinToast::WinToastError error;
-    if (!WinToast::instance()->initialize(&error))
-        utils::far3::show_far_error_dlg(MErrorWinToastStartupUnexpected, WinToast::strerror(error));
     
     launch_sync_worker();
 }
@@ -90,16 +52,16 @@ void plugin::shutdown()
 {
     try
     {
-        WinToast::instance()->clear();
-
         player->hide();
 
         background_tasks.clear_tasks();
 
         api->shutdown();
+        notifications->shutdown();
 
         shutdown_sync_worker();
         shutdown_librespot_process();
+
     }
     catch (const std::exception &ex)
     {
@@ -209,7 +171,7 @@ void plugin::launch_librespot_process(const string &access_token)
 {
     if (!config::is_playback_backend_enabled()) return;
 
-    if (librespot != nullptr && !librespot->is_launched() && !librespot->launch(access_token))
+    if (librespot != nullptr && !librespot->is_started() && !librespot->start(access_token))
     {
         shutdown_librespot_process(); // cleaning up the allocated resources if any
         far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
@@ -220,7 +182,7 @@ void plugin::launch_librespot_process(const string &access_token)
 }
 void plugin::shutdown_librespot_process()
 {
-    if (librespot != nullptr && librespot->is_launched())
+    if (librespot != nullptr && librespot->is_started())
         librespot->shutdown();
 }
 
@@ -305,12 +267,6 @@ void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal
     }
 }
 
-void plugin::on_track_changed(const spotify::track_t &track)
-{
-    if (config::is_track_changed_notification_enabled() && track.is_valid())
-        show_now_playing_notification(track);
-}
-
 void plugin::show_player()
 {
     player->show();
@@ -340,8 +296,8 @@ void plugin::process_win_messages_queue()
                     case hotkeys::show_toast:
                     {
                         const auto &pstate = api->get_playback_state(true);
-                        if (!pstate.is_empty())
-                            return show_now_playing_notification(pstate.item, true);
+                        if (!pstate.is_empty() && notifications != nullptr)
+                            return notifications->show_now_playing(pstate.item, true);
                         return;
                     }
                 }
@@ -349,45 +305,6 @@ void plugin::process_win_messages_queue()
             }
         }
     }
-}
-
-void plugin::show_now_playing_notification(const spotify::track_t &track, bool show_buttons)
-{
-    auto img_path = api->get_image(track.album.images[1], track.album.id);
-    if (img_path.empty())
-        return;
- 
-    WinToastTemplate toast(WinToastTemplate::ImageAndText02);   
-
-    // image
-    auto crop_hint = WinToastTemplate::CropHint::Square;
-    if (config::is_notification_image_circled())
-        crop_hint = WinToastTemplate::CropHint::Circle;
-    toast.setImagePath(img_path, crop_hint);
-    
-    // if (WinToast::isWin10AnniversaryOrHigher())
-    //     toast.setHeroImagePath(L"D:\\tmp2.jpg", false);
-    
-    // text
-    toast.setTextField(track.name, WinToastTemplate::FirstLine);
-    toast.setTextField(track.get_artist_name(), WinToastTemplate::SecondLine);
-    toast.setAttributionText(L"Content is provided by Spotify service");
-    
-    // buttons
-    if (show_buttons)
-    {
-        toast.addAction(L"Like");
-    }
-    
-    // attributes
-    toast.setDuration(WinToastTemplate::Duration::Short);
-    toast.setAudioOption(WinToastTemplate::AudioOption::Silent);
-    toast.setAudioPath(WinToastTemplate::AudioSystemFile::DefaultSound);
-    
-    WinToast::WinToastError error;
-    if (WinToast::instance()->showToast(toast, new win_toast_handler(api->get_ptr(), track.id), &error) < 0)
-        log::global->error("There is an error showing windows notification, {}",
-            utils::to_string(WinToast::strerror(error)));
 }
 
 } // namespace spotifar

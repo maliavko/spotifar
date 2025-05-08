@@ -20,7 +20,7 @@ clock_t::duration playback_cache::get_sync_interval() const
 void playback_cache::on_data_synced(const playback_state_t &data, const playback_state_t &prev_data)
 {
     if (data.item != prev_data.item)
-        dispatch_event(&playback_observer::on_track_changed, data.item);
+        dispatch_event(&playback_observer::on_track_changed, data.item, prev_data.item);
 
     if (data.progress_ms != prev_data.progress_ms)
         dispatch_event(&playback_observer::on_track_progress_changed, data.item.duration, data.progress);

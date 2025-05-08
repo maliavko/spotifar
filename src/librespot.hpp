@@ -14,11 +14,11 @@ public:
     librespot_handler(spotify::api_proxy_ptr api): api_proxy(api) {}
     ~librespot_handler() { api_proxy.reset(); }
 
-    auto launch(const string &access_token) -> bool;
+    auto start(const string &access_token) -> bool;
     void shutdown();
 
     void tick();
-    auto is_launched() const -> bool { return is_running; }
+    auto is_started() const -> bool { return is_running; }
 protected:
     void on_devices_changed(const spotify::devices_t &devices) override;
 private:
