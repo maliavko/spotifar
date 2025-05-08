@@ -8,7 +8,11 @@ using namespace utils;
 using utils::far3::get_text;
 using utils::far3::get_vtext;
 
-static const wstring device_name = L"librespot";
+#ifdef _DEBUG
+    static const wstring device_name = L"librespot-debug";
+#else
+    static const wstring device_name = L"librespot";
+#endif
 
 bool librespot_handler::start(const string &access_token)
 {
