@@ -13,6 +13,7 @@ const size_t pool_size = 12;
 
 // a helper-function to avoid copy-pasting. Performs an execution of a given
 // requester, checks the result and returns it back
+// @tparam R item_requester type
 template<class R>
 auto request_item(R &&requester, api_proxy_ptr api) -> typename R::result_t
 {
@@ -37,96 +38,6 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
         &api_requests_observer::on_playback_command_failed, formatted);
 }
 
-
-using releases_t = std::vector<simplified_album_t>;
-
-class recent_releases: public json_cache<releases_t>
-{
-public:
-    recent_releases(api_interface *api): json_cache<releases_t>(L"RecentReleases"), api_proxy(api), pool(1)
-    {
-        artists = api_proxy->get_followed_artists();
-    }
-
-    ~recent_releases() { api_proxy = nullptr; pool.purge(); }
-protected:
-    bool is_active() const override
-    {
-        return api_proxy->is_authenticated();
-    }
-
-    bool request_data(releases_t &data) override
-    {
-        if (is_in_sync)
-        {
-            if (pool.get_tasks_total() == 0)
-            {
-                data = interim_data;
-                is_in_sync = false;
-            }
-            
-            return !is_in_sync; // `true` means a succesful end of sync
-        }
-
-        interim_data.clear();
-
-        if (artists->fetch(false, false))
-        {
-            auto time_treshold = utils::clock_t::now() - std::chrono::weeks{2};
-            artists->resize(15); // TODO: remove
-            
-            pool.detach_sequence(0ULL, artists->size(),
-                [this, time_treshold](const std::size_t idx)
-                {
-                    const auto &artist = (*artists)[idx];
-                    auto albums = api_proxy->get_artist_albums(artist.id);
-                    bool is_cached = albums->is_cached();
-                    if (albums->fetch(false, false))
-                    {
-                        log::api->debug("Searching for new releases, {} [{}]", utils::to_string(artist.name), artist.id);
-                        {
-                            std::lock_guard lock(data_access);
-
-                            for (const auto &album: *albums)
-                                if (album.get_release_date() > time_treshold)
-                                    interim_data.push_back(album);
-                        }
-                    }
-
-                    if (!is_cached)
-                        std::this_thread::sleep_for(
-                            utils::events::has_observers<playback_observer>() ? 15s : 5s);
-                });
-            
-            is_in_sync = true;
-        }
-
-        return false;
-    }
-
-    auto get_sync_interval() const -> clock_t::duration override
-    {
-        return 60s;
-    }
-
-    void on_data_synced(const releases_t &data, const releases_t &prev_data) override
-    {
-        log::global->debug("11111111111 new releases found:");
-
-        for (const auto &album: data)
-            log::global->debug("{} - {}", utils::to_string(album.artists[0].name), utils::to_string(album.name));
-    }
-private:
-    api_interface *api_proxy;
-    BS::thread_pool pool;
-    
-    std::mutex data_access;
-    data_t interim_data{};
-
-    bool is_in_sync = false;
-    followed_artists_ptr artists;
-};
-
 //----------------------------------------------------------------------------------------------
 api::api(): pool(pool_size)
 {
@@ -143,10 +54,10 @@ bool api::start()
     devices = std::make_unique<devices_cache>(this);
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
+    releases = std::make_unique<recent_releases>(this);
 
-    static auto rr = std::make_unique<recent_releases>(this);
-
-    caches.assign({ auth.get(), /*playback.get(), devices.get(),*/ history.get(), rr.get() });
+    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(),
+        releases.get() });
 
     auto ctx = config::lock_settings();
 
@@ -178,39 +89,45 @@ void api::tick()
     future.get();
 }
 
-const playback_state_t& api::get_playback_state(bool force_resync)
+const auth_cache::data_t& api::get_auth_data(bool force_resync)
 {
-    if (force_resync)
-        playback->resync(true);
-    
+    auth->resync(force_resync);
+    return auth->get();
+}
+
+const playback_cache::data_t& api::get_playback_state(bool force_resync)
+{
+    playback->resync(force_resync);
     return playback->get();
 }
 
-const devices_t& api::get_available_devices(bool force_resync)
+const recent_releases::data_t& api::get_recent_releases(bool force_resync)
 {
-    if (force_resync)
-        devices->resync(true);
-    
+    releases->resync(force_resync);
+    return releases->get();
+}
+
+const devices_cache::data_t& api::get_available_devices(bool force_resync)
+{
+    devices->resync(force_resync);
     return devices->get();
 }
 
-const history_items_t& api::get_play_history(bool force_resync)
+const play_history::data_t& api::get_play_history(bool force_resync)
 {
-    if (force_resync)
-        history->resync(true);
-    
+    history->resync(force_resync);
     return history->get();
 }
 
 artist_t api::get_artist(const item_id_t &artist_id)
 {
-    return request_item(item_requester<artist_t, 1, std::chrono::days>(
+    return request_item(item_requester<artist_t, 1, std::chrono::weeks>(
         std::format("/v1/artists/{}", artist_id)), get_ptr());
 }
 
 std::vector<artist_t> api::get_artists(const item_ids_t &ids)
 {
-    return request_item(several_items_requester<artist_t>(
+    return request_item(several_items_requester<artist_t, 1, std::chrono::weeks>(
         "/v1/artists", ids, 50, "artists"), get_ptr());
 }
 
@@ -248,19 +165,19 @@ new_releases_ptr api::get_new_releases()
 
 std::vector<track_t> api::get_artist_top_tracks(const item_id_t &artist_id)
 {
-    return request_item(item_requester<std::vector<track_t>, 1, std::chrono::days>(
+    return request_item(item_requester<std::vector<track_t>, 1, std::chrono::weeks>(
         std::format("/v1/artists/{}/top-tracks", artist_id), {}, "tracks"), get_ptr());
 }
     
 album_t api::get_album(const item_id_t &album_id)
 {
-    return request_item(item_requester<album_t, 1, std::chrono::days>(
+    return request_item(item_requester<album_t, 1, std::chrono::weeks>(
         std::format("/v1/albums/{}", album_id)), get_ptr());
 }
 
 std::vector<album_t> api::get_albums(const item_ids_t &ids)
 {
-    return request_item(several_items_requester<album_t>(
+    return request_item(several_items_requester<album_t, 1, std::chrono::weeks>(
         "/v1/albums", ids, 20, "albums"), get_ptr());
 }
 
@@ -301,7 +218,8 @@ saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 
 playing_queue_t api::get_playing_queue()
 {
-    return request_item(item_requester<playing_queue_t, 1, std::chrono::days>("/v1/me/player/queue"), get_ptr());
+    return request_item(item_requester<playing_queue_t, 1, std::chrono::minutes>(
+        "/v1/me/player/queue"), get_ptr());
 }
 
 bool api::check_saved_track(const item_id_t &track_id)
@@ -314,7 +232,7 @@ std::deque<bool> api::check_saved_tracks(const item_ids_t &ids)
 {
     // bloody hell, damn vector specialization with bools is not a real vector,
     // it cannot return ref to bools, so deque is used instead
-    return request_item(several_items_requester<bool, std::deque<bool>>(
+    return request_item(several_items_requester<bool, 0, std::chrono::seconds, std::deque<bool>>(
         "/v1/me/tracks/contains", ids, 50), get_ptr());
 }
 

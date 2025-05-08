@@ -9,19 +9,6 @@ namespace spotifar { namespace spotify {
 
 namespace json = utils::json;
 
-struct auth_t
-{
-    string access_token;
-    string scope;
-    int expires_in;
-    string refresh_token;
-    
-    bool is_valid() const { return !access_token.empty(); }
-    
-    friend void from_json(const json::Value &j, auth_t &a);
-    friend void to_json(json::Value &j, const auth_t &a, json::Allocator &allocator);
-};
-
 class auth_cache: public json_cache<auth_t>
 {
 public:

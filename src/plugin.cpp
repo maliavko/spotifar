@@ -271,9 +271,9 @@ void plugin::on_playback_backend_setting_changed(bool is_enabled)
 
     if (is_enabled)
     {
-        const auto &access_token = api->get_access_token();
-        if (!access_token.empty())
-            launch_librespot_process(access_token);
+        const auto &auth = api->get_auth_data();
+        if (auth.is_valid())
+            launch_librespot_process(auth.access_token);
     }
     else
         shutdown_librespot_process();
@@ -283,13 +283,13 @@ void plugin::on_playback_backend_configuration_changed()
 {
     log::global->debug("on_playback_backend_configuration_changed");
     
-    const auto &access_token = api->get_access_token();
-    if (librespot != nullptr && !access_token.empty())
+    const auto &auth = api->get_auth_data();
+    if (librespot != nullptr && auth.is_valid())
     {
         // restart external process routine: shutdown, wait for the better and start over
         shutdown_librespot_process();
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        launch_librespot_process(access_token);
+        launch_librespot_process(auth.access_token);
     }
 }
 

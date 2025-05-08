@@ -9,6 +9,7 @@
 #include "devices.hpp"
 #include "auth.hpp"
 #include "history.hpp"
+#include "releases.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -28,10 +29,11 @@ public:
     
     auto get_ptr() -> api_proxy_ptr override { return shared_from_this(); }
 
-    auto get_access_token() -> const string& override { return auth->get_access_token(); }
-    auto get_play_history(bool force_resync = false) -> const history_items_t& override;
-    auto get_available_devices(bool force_resync = false) -> const devices_t& override;
-    auto get_playback_state(bool force_resync = false) -> const playback_state_t& override;
+    auto get_auth_data(bool force_resync = false) -> const auth_cache::data_t& override;
+    auto get_play_history(bool force_resync = false) -> const play_history::data_t& override;
+    auto get_available_devices(bool force_resync = false) -> const devices_cache::data_t& override;
+    auto get_playback_state(bool force_resync = false) -> const playback_cache::data_t& override;
+    auto get_recent_releases(bool force_resync = false) -> const recent_releases::data_t& override;
     
     // library api interface
     auto get_followed_artists() -> followed_artists_ptr override;
@@ -95,6 +97,7 @@ private:
     std::unique_ptr<devices_cache> devices;
     std::unique_ptr<auth_cache> auth;
     std::unique_ptr<play_history> history;
+    std::unique_ptr<recent_releases> releases;
 
     std::vector<cached_data_abstract*> caches;
 };

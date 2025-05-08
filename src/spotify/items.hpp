@@ -285,10 +285,35 @@ struct playing_queue_t
     friend void to_json(json::Value &j, const playing_queue_t &i, json::Allocator &allocator);
 };
 
+struct auth_t
+{
+    string access_token;
+    string scope;
+    int expires_in;
+    string refresh_token;
+    
+    bool is_valid() const { return !access_token.empty(); }
+    
+    friend void from_json(const json::Value &j, auth_t &a);
+    friend void to_json(json::Value &j, const auth_t &a, json::Allocator &allocator);
+};
+
 using devices_t = std::vector<device_t>;
 using history_items_t = std::vector<history_item_t>;
+using recent_releases_t = std::vector<simplified_album_t>;
 
 } // namespace spotify
 } // namespace spotifar
+
+template<>
+struct std::hash<spotifar::spotify::simplified_album_t>
+{
+    std::size_t operator()(const spotifar::spotify::simplified_album_t &item) const
+    {
+        std::size_t res = 0;
+        spotifar::utils::combine(res, std::hash<string>{}(item.id));
+        return res;
+    }
+};
 
 #endif //ITEMS_HPP_55A04E12_800F_4468_BD38_54D0CC81EF641

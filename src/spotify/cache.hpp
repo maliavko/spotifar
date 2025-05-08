@@ -102,6 +102,9 @@ public:
     auto get() const -> const T& { return data.get(); }
     auto get_expires_at() const -> const time_point& { return expires_at.get(); }
     bool is_valid() const { return get_expires_at() > clock_t::now(); }
+
+    /// @brief Sets the cache's expiration time to zero, which leads for the forced
+    /// resync the next time the resync procedure is happening
     void invalidate() { expires_at.set({}); }
 protected:
     /// @brief The class calls the method when the data should be resynced. An implementation
@@ -131,7 +134,7 @@ private:
     timestamp_value expires_at;
     bool is_persistent;
 
-    std::mutex patch_mutex;
+    std::mutex patch_guard;
     std::vector<std::pair<time_point, patch_handler_t>> patches;
 };
 
@@ -208,7 +211,7 @@ template<typename T>
 void json_cache<T>::patch(json_cache<T>::patch_handler_t handler)
 {
     // patches are saved and applied next time data is resynced
-    std::lock_guard lock(patch_mutex);
+    std::lock_guard lock(patch_guard);
     patches.push_back(std::make_pair(clock_t::now(), handler));
 
     // instead of calling "resync", we invalidate the cache, so it is updated in

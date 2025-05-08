@@ -558,5 +558,27 @@ void from_json(const Value &j, playing_queue_t &p)
     from_json(j["queue"], p.queue);
 }
 
+void from_json(const Value &j, auth_t &a)
+{
+    a.access_token = j["access_token"].GetString();
+    a.scope = j["scope"].GetString();
+    a.expires_in = j["expires_in"].GetInt();
+    
+    if (j.HasMember("refresh_token") && !j["refresh_token"].IsNull())
+        a.refresh_token = j["refresh_token"].GetString();
+    else
+        a.refresh_token = "";
+}
+
+void to_json(Value &result, const auth_t &a, json::Allocator &allocator)
+{
+    result = Value(kObjectType);
+
+    result.AddMember("access_token", Value(a.access_token, allocator), allocator);
+    result.AddMember("scope", Value(a.scope, allocator), allocator);
+    result.AddMember("expires_in", Value(a.expires_in), allocator);
+    result.AddMember("refresh_token", Value(a.refresh_token, allocator), allocator);
+}
+
 } // namespace spotify
 } // namespace spotifar

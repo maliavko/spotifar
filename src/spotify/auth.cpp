@@ -226,27 +226,5 @@ string auth_cache::get_auth_callback_url() const
     return std::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
-void from_json(const json::Value &j, auth_t &a)
-{
-    a.access_token = j["access_token"].GetString();
-    a.scope = j["scope"].GetString();
-    a.expires_in = j["expires_in"].GetInt();
-    
-    if (j.HasMember("refresh_token") && !j["refresh_token"].IsNull())
-        a.refresh_token = j["refresh_token"].GetString();
-    else
-        a.refresh_token = "";
-}
-
-void to_json(json::Value &result, const auth_t &a, json::Allocator &allocator)
-{
-    result = json::Value(json::kObjectType);
-
-    result.AddMember("access_token", json::Value(a.access_token, allocator), allocator);
-    result.AddMember("scope", json::Value(a.scope, allocator), allocator);
-    result.AddMember("expires_in", json::Value(a.expires_in), allocator);
-    result.AddMember("refresh_token", json::Value(a.refresh_token, allocator), allocator);
-}
-
 } // namespace spotify
 } // namespace spotifar

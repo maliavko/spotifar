@@ -532,8 +532,14 @@ namespace http
     using namespace json;
     using namespace httplib;
 
-    /// @brief Returns whether the http request's result is successful (response code is 200, 204 or 304)
+    /// @brief Returns whether the http request's result is successful
+    /// (response code is 200, 204 or 304)
     bool is_success(const http::Result &res);
+
+    /// @brief Returns whether the http request's result is successful
+    /// (response code is 200, 204 or 304)
+    /// @param status_code httplib::Result->status
+    bool is_success(int status_code);
 
     /// @brief Returns a string message, representing a response result
     string get_status_message(const http::Result &res);

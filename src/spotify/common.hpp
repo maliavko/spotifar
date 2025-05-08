@@ -13,6 +13,7 @@ using httplib::Result;
 using utils::far3::synchro_tasks::dispatch_event;
 
 template<class T, int N = 0, class C = utils::clock_t::duration> class item_requester;
+template<class T, int N, class C, class ContainerT = std::vector<typename T>> class several_items_requester;
 template<class T, int N = 0, class C = utils::clock_t::duration> class sync_collection;
 template<class T, int N = 0, class C = utils::clock_t::duration> class async_collection;
 
@@ -28,13 +29,13 @@ using saved_tracks_ptr = std::shared_ptr<saved_tracks_t>;
 using saved_playlists_t = async_collection<simplified_playlist_t, -1>;
 using saved_playlists_ptr = std::shared_ptr<saved_playlists_t>;
 
-using artist_albums_t = async_collection<simplified_album_t, 1, std::chrono::days>;
+using artist_albums_t = async_collection<simplified_album_t, 3, std::chrono::days>;
 using artist_albums_ptr = std::shared_ptr<artist_albums_t>;
 
 using new_releases_t = async_collection<simplified_album_t>;
 using new_releases_ptr = std::shared_ptr<new_releases_t>;
 
-using album_tracks_t = async_collection<simplified_track_t, 1, std::chrono::weeks>;
+using album_tracks_t = async_collection<simplified_track_t, 1, std::chrono::months>;
 using album_tracks_ptr = std::shared_ptr<album_tracks_t>;
 
 struct api_interface
@@ -52,8 +53,8 @@ struct api_interface
     /// instance. Used in many helper classes, avoiding passing a direct pointer for safety reasons
     virtual auto get_ptr() -> std::weak_ptr<api_interface> = 0;
 
-    /// @brief Returns an access token
-    virtual auto get_access_token() -> const string& = 0;
+    /// @brief Returns an auth data
+    virtual auto get_auth_data(bool force_resync = false) -> const auth_t& = 0;
 
     /// @brief Returns a played history list of items. If `force_resync` is true, the data
     /// is forcibly resynced before it is returned
@@ -66,6 +67,9 @@ struct api_interface
     /// @brief Returns a currently playing state object. If `force_resync` is true, the data
     /// is forcibly resynced before it is returned
     virtual auto get_playback_state(bool force_resync = false) -> const playback_state_t& = 0;
+
+    /// @brief Returns a cache of the recently released albums of the followed artists
+    virtual auto get_recent_releases(bool force_resync = false) -> const recent_releases_t& = 0;
     
     // library & collections interface
 
@@ -197,7 +201,7 @@ protected:
     virtual auto get_pool() -> BS::thread_pool& = 0;
 
     /// @brief Whether the given url is cached
-    virtual auto is_request_cached(const string &url) const -> bool = 0;
+    virtual bool is_request_cached(const string &url) const = 0;
 };
 
 /// @brief A dedicated type used fo passing api interface to all the main plugin's
@@ -258,6 +262,8 @@ struct [[nodiscard]] requester_progress_notifier
 /// @brief A helper-class for requesting data from spotify api. Incapsulates
 /// a logic for performing a request, parsing and holding final result
 /// @tparam T a final result's type
+/// @tparam N a number of days/hours/mins etc. the request's result will be cached for
+/// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.
 template<class T, int N, class C>
 class item_requester
 {
@@ -293,7 +299,10 @@ public:
     /// @brief Launches a requester and retrieves a result over http. If `only_cache` is true,
     /// the request will be launched only in case the result is cached and valid to avoid
     /// long waiting delays.
-    /// @returns a flag whether the request has been finished without errors
+    /// @param only_cached returns a valid result only if it was cached previously and
+    /// the cache is still valid
+    /// @returns `true` in case of: no errors, 204 No Content response, `only_cached` is true, but
+    /// no cache exists
     bool execute(api_proxy_ptr api_proxy, bool only_cached = false)
     {
         if (only_cached && !is_cached(api_proxy))
@@ -301,7 +310,7 @@ public:
 
         if (api_proxy.expired()) return false;
 
-        response = api_proxy.lock()->get(url, cache_duration);
+        response = api_proxy.lock()->get(url, C{ N });
         if (!is_success(response))
         {
             log::api->error("There is an error while executing API fetching request: '{}', "
@@ -347,15 +356,16 @@ protected:
     string url;
     result_t result;
     Result response;
-    const C cache_duration{ N };
 };
 
 /// @brief A class-helper, used for requesting several items from Spotify. As their
 /// API allows requesting with a limited number of items, the requester implements
 /// an interface to get data by chunks, stores them in one container and the returns
 /// @tparam T a type of the data returned, iterable
+/// @tparam N a number of days/hours/mins etc. the request's result will be cached for
+/// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.
 /// @tparam ContainerT a type for the result's container-holder
-template<class T, class ContainerT = std::vector<typename T>>
+template<class T, int N, class C, class ContainerT>
 class several_items_requester
 {
 public:
@@ -373,6 +383,7 @@ public:
     /// @brief Returns a result. Valid only after a successful request
     auto get() const -> const result_t& { return result; }
 
+    /// @brief see `item_requester::execute` interface
     bool execute(api_proxy_ptr api, bool only_cached = false, bool notify_watchers = true)
     {   
         result.clear();
@@ -391,7 +402,7 @@ public:
 
             notifier.send_progress(result.size(), ids.size());
 
-            item_requester<result_t> requester(url, {
+            item_requester<result_t, N, C> requester(url, {
                 { "ids", utils::string_join(item_ids_t(chunk_begin, chunk_end), ",") },
             }, data_field);
 
@@ -417,6 +428,8 @@ private:
 
 /// @brief A requester specialization for getting collections page by page
 /// @tparam T a final result's type
+/// @tparam N a number of days/hours/mins etc. the request's result will be cached for
+/// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.
 template<class T, int N, class C>
 class collection_requester: public item_requester<T, N, C>
 {
@@ -460,11 +473,16 @@ struct collection_interface
     /// works only with cache, does not perform any request
     virtual size_t peek_total() const = 0;
 
+    /// @brief Tells whether the collection was requested before and successfully cached.
+    /// @note checks only the first request in the collection fetching sequence, possibly faulty
+    /// in case only some of them have been cached
     virtual bool is_cached() const = 0;
 
     /// @brief A public interface method to populate the collection fully
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
+    /// @param notify_watchers does not send changes to the requesting status observers like
+    /// showing request progress splashing screen and etc.
     virtual bool fetch(bool only_cached = false, bool notify_watchers = true) = 0;
 
     /// @brief Returns whether the container is populated from server or not
@@ -480,6 +498,9 @@ static const size_t max_limit = 50ULL;
 /// always empty after creation and has to be populated manually. Provides an interface
 /// to fetch collection from the server or to get total count of items held in collection
 /// without fetching all the data.
+/// @tparam T a final result's type
+/// @tparam N a number of days/hours/mins etc. the request's result will be cached for
+/// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.
 template<class T, int N, class C>
 class collection_abstract:
     public std::vector<T>,
@@ -541,6 +562,10 @@ public:
         populated = false;
     }
 
+    /// @param only_cached flag, telling the logic, that the method wa called
+    /// from some heavy environment and should not perform many http calls
+    /// @param notify_watchers does not send changes to the requesting status observers like
+    /// showing request progress splashing screen and etc.
     bool fetch(bool only_cached = false, bool notify_watchers = true)
     {
         clear();
@@ -560,6 +585,8 @@ protected:
     /// @brief A main requesting logic is implemented here
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
+    /// @param notify_watchers does not send changes to the requesting status observers like
+    /// showing request progress splashing screen and etc.
     virtual bool fetch_all(api_proxy_ptr api, bool only_cached, bool notify_watchers = true) = 0;
 protected:
     api_proxy_ptr api_proxy;
@@ -569,6 +596,7 @@ protected:
     bool populated = false;
 };
 
+/// @brief A helper-formatter to get an error message of a collection fetching requester
 template<class R>
 string get_fetching_error(const R &requester)
 {
@@ -578,7 +606,9 @@ string get_fetching_error(const R &requester)
 
 /// @brief The items collection, which populates itself, requesting data
 /// from the server synchronously page by page
-/// @tparam T result data type
+/// @tparam T a final result's type
+/// @tparam N a number of days/hours/mins etc. the request's result will be cached for
+/// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.
 template<class T, int N, class C>
 class sync_collection: public collection_abstract<T, N, C>
 {
@@ -631,7 +661,9 @@ protected:
 /// @brief The items collection, which populates itself, requesting data
 /// from the server asynchronously. Once all the responsed are received,
 /// accumulates them in the right order
-/// @tparam T result data type
+/// @tparam T a final result's type
+/// @tparam N a number of days/hours/mins etc. the request's result will be cached for
+/// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.
 template<class T, int N, class C>
 class async_collection: public collection_abstract<T, N, C>
 {
@@ -655,7 +687,7 @@ protected:
         }
 
         size_t total = requester->get_total();
-        if (total == 0)
+        if (total == 0) // if there is no entries, the results is still valid
             return true;
 
         requester_progress_notifier notifier(requester->get_url(), notify_watchers);
@@ -672,11 +704,13 @@ protected:
         /// So, I am passing real api pointer which works well
         auto api = api_proxy.lock();
         auto sequence_future = api->get_pool().submit_sequence(start, end,
-            [this, &result, api = api.get(), only_cached, &notifier, total, notify_watchers]
+            [this, &result, api = api.get(), &notifier, total, only_cached, notify_watchers]
             (const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
 
+                // all the exceptions are being accumulated and rethrown by thread-pool
+                // library later
                 if (!requester->execute(api->get_ptr(), only_cached))
                     throw std::runtime_error(get_fetching_error(requester));
                 
@@ -715,6 +749,7 @@ protected:
         return make_requester(0);
     }
 
+    // a collection's requester fabric
     requester_ptr make_requester(size_t offset) const
     {
         auto updated_params = this->params;

@@ -12,8 +12,8 @@ void http_logger(const Request &req, const Response &res)
         "/v1/me/player/devices",
         "/v1/me/player/recently-played",
     };
-
-    if (res.status == OK_200 || res.status == NoContent_204 || res.status == NotModified_304)
+    
+    if (utils::http::is_success(res.status))
     {
         if (!exclude.contains(http::trim_params(req.path)))
         {

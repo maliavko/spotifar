@@ -777,8 +777,13 @@ namespace http
 
     bool is_success(const http::Result &res)
     {
-        return res && (res->status == OK_200 || res->status == NoContent_204 ||
-            res->status == NotModified_304);
+        return res && is_success(res->status);
+    }
+
+    bool is_success(int status_code)
+    {
+        return status_code == OK_200 || status_code == NoContent_204 ||
+            status_code == NotModified_304;
     }
     
     string get_status_message(const http::Result &res)
