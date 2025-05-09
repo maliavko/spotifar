@@ -1,0 +1,24 @@
+name: test-workflow
+
+on:
+  push:
+  pull_request:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure dependencies
+      run: ${{ github.workspace }}/configure.bat
+
+    - name: Spotifar cmake configure
+      run: cmake --preset x64
+
+    - name: Spotifar cmake build
+      run: cmake --build --preset x64-Release
