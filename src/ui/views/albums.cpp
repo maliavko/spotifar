@@ -281,8 +281,12 @@ new_releases_view::new_releases_view(api_proxy_ptr api_proxy):
     albums_base_view(api_proxy, "new_releases_view", get_text(MPanelNewReleasesItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
-    if (auto api = api_proxy.lock())
-        collection = api->get_new_releases();
+    utils::events::start_listening<releases_observer>(this);
+}
+
+new_releases_view::~new_releases_view()
+{
+    utils::events::stop_listening<releases_observer>(this);
 }
 
 config::settings::view_t new_releases_view::get_default_settings() const
@@ -292,9 +296,11 @@ config::settings::view_t new_releases_view::get_default_settings() const
 
 std::generator<const simplified_album_t&> new_releases_view::get_albums()
 {
-    if (collection && collection->fetch())
-        for (const auto &a: *collection)
-            co_yield a;
+    if (auto api = api_proxy.lock())
+    {
+        for (const auto &album: api->get_recent_releases())
+            co_yield album;
+    }
 }
 
 void new_releases_view::show_tracks_view(const album_t &album) const
@@ -305,6 +311,12 @@ void new_releases_view::show_tracks_view(const album_t &album) const
         events::show_album_tracks(api_proxy, album,
             std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
     }
+}
+
+void new_releases_view::on_releases_sync_finished(const recent_releases_t releases)
+{
+    panels::update(PANEL_ACTIVE);
+    panels::redraw(PANEL_ACTIVE);
 }
 
 //-----------------------------------------------------------------------------------------------------------

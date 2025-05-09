@@ -32,9 +32,6 @@ using saved_playlists_ptr = std::shared_ptr<saved_playlists_t>;
 using artist_albums_t = async_collection<simplified_album_t, 3, std::chrono::days>;
 using artist_albums_ptr = std::shared_ptr<artist_albums_t>;
 
-using new_releases_t = async_collection<simplified_album_t>;
-using new_releases_ptr = std::shared_ptr<new_releases_t>;
-
 using album_tracks_t = async_collection<simplified_track_t, 1, std::chrono::months>;
 using album_tracks_ptr = std::shared_ptr<album_tracks_t>;
 
@@ -90,9 +87,6 @@ struct api_interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
     virtual auto get_saved_albums() -> saved_albums_ptr = 0;
-    
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-new-releases
-    virtual auto get_new_releases() -> new_releases_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
     virtual auto get_album(const item_id_t &album_id) -> album_t = 0;

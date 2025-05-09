@@ -6,7 +6,7 @@ namespace spotifar { namespace spotify {
 using utils::far3::synchro_tasks::dispatch_event;
 
 recent_releases::recent_releases(api_interface *api):
-    json_cache<data_t>(L"RecentReleases"), api_proxy(api), pool(1)
+    json_cache<data_t>(L""), api_proxy(api), pool(1)
 {
     artists = api_proxy->get_followed_artists();
 }
@@ -49,7 +49,6 @@ bool recent_releases::request_data(data_t &data)
     if (artists->fetch(false, false))
     {
         auto time_treshold = utils::clock_t::now() - release_age;
-        artists->resize(5); // TODO: remove
         
         pool.detach_sequence(0ULL, artists->size(),
             [this, time_treshold](const std::size_t idx)
@@ -60,19 +59,17 @@ bool recent_releases::request_data(data_t &data)
                 bool is_cached = albums->is_cached();
                 if (albums->fetch(false, false))
                 {
-                    {
-                        std::lock_guard lock(data_access);
+                    std::lock_guard lock(data_access);
 
-                        for (const auto &album: *albums)
-                            if (album.get_release_date() > time_treshold)
-                            {
-                                log::api->info("A new release was found for the artist {} [{}]: {} [{}], {}",
-                                    utils::to_string(artist.name), artist.id, utils::to_string(album.name),
-                                    album.id, album.get_release_year());
-                                
-                                interim_data.push_back(album);
-                            }
-                    }
+                    for (const auto &album: *albums)
+                        if (album.get_release_date() > time_treshold)
+                        {
+                            log::api->info("A new release was found for the artist {} [{}]: {} [{}], {}",
+                                utils::to_string(artist.name), artist.id, utils::to_string(album.name),
+                                album.id, album.get_release_year());
+                            
+                            interim_data.push_back(album);
+                        }
                 }
 
                 // we put the thread to sleep to avoid spamming spotify API, in case
@@ -95,6 +92,9 @@ clock_t::duration recent_releases::get_sync_interval() const
 
 void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data)
 {
+    log::global->info("A recent releases cache is found, next update in {}",
+        std::format("{:%T}", get_expires_at() - clock_t::now()));
+
     const std::unordered_set<simplified_album_t> prev_releases(prev_data.begin(), prev_data.end());
 
     recent_releases_t result;
@@ -102,7 +102,7 @@ void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data
         if (!prev_releases.contains(album))
             result.push_back(album);
 
-    dispatch_event(&recent_releases_observer::on_recent_releases_found, result);
+    dispatch_event(&releases_observer::on_releases_sync_finished, result);
 }
     
 } // namespace spotify

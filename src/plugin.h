@@ -2,13 +2,13 @@
 #define PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
 
 #include "stdafx.h"
-#include "utils.hpp"
+#include "utils.hpp" // utils::tasks_queue
 #include "librespot.hpp"
 #include "spotify/api.hpp"
 #include "spotify/auth.hpp"
 #include "ui/panel.hpp"
 #include "ui/player.hpp"
-#include "ui/events.hpp"
+#include "ui/events.hpp" // ui::ui_events_observer
 #include "ui/notifications.hpp"
 
 namespace spotifar {

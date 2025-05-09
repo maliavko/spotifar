@@ -176,6 +176,12 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         
         if (item.user_data != nullptr)
             panel_item[idx].UserData.Data = item.user_data;
+
+        // when any http request is being performed, panel shows a progress splash screen,
+        // which gets hidden once all the received panel items are set, but FAR redraws only
+        // plugin's planel, so half of the splash screen stays on the screen. I am not sure
+        // this is the right way to fix the bug, haven't found any better though
+        far3::panels::redraw(PANEL_PASSIVE);
     }
 
     view->on_items_updated();

@@ -43,10 +43,10 @@ private:
     followed_artists_ptr artists;
 };
 
-struct recent_releases_observer: public BaseObserverProtocol
+struct releases_observer: public BaseObserverProtocol
 {
-    /// @brief Sends the event of some newely found recent albums of the followed artists
-    virtual void on_recent_releases_found(const recent_releases_t releases) {}
+    /// @brief The event is thrown when the recent releases seach procedure is finished
+    virtual void on_releases_sync_finished(const recent_releases_t releases) {}
 };
 
 } // namespace spotify

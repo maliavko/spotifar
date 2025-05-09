@@ -6,6 +6,7 @@
 #include "view.hpp"
 #include "spotify/common.hpp"
 #include "spotify/history.hpp"
+#include "spotify/releases.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -77,21 +78,23 @@ private:
 
 /// @brief Showing the list of the newely released albums of the
 /// followed artists.
-/// TODO: not true, an API returns some trash of the all recently releases
-/// albums on the platform
-class new_releases_view: public albums_base_view
+class new_releases_view:
+    public albums_base_view,
+    public releases_observer // for updating the panel, when the new release is detected
 {
 public:
     new_releases_view(api_proxy_ptr api);
+    ~new_releases_view();
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const simplified_album_t&> override;
-    auto show_tracks_view(const album_t &album) const -> void override;
-private:
-    new_releases_ptr collection;
+    void show_tracks_view(const album_t &album) const override;
+
+    // releases_observer interface
+    void on_releases_sync_finished(const recent_releases_t releases) override;
 };
 
 /// @brief A class-view representing a recently played albums. A spotify

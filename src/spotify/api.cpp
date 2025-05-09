@@ -157,12 +157,6 @@ saved_albums_ptr api::get_saved_albums()
     return saved_albums_ptr(new saved_albums_t(get_ptr(), "/v1/me/albums"));
 }
 
-new_releases_ptr api::get_new_releases()
-{
-    return new_releases_ptr(new new_releases_t(
-        get_ptr(), "/v1/browse/new-releases", {}, "albums"));
-}
-
 std::vector<track_t> api::get_artist_top_tracks(const item_id_t &artist_id)
 {
     return request_item(item_requester<std::vector<track_t>, 1, std::chrono::weeks>(
