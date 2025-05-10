@@ -563,7 +563,7 @@ bool player::on_artist_label_input_received(void *input_record)
 
 bool player::on_track_label_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -586,7 +586,7 @@ bool player::on_track_label_input_received(void *input_record)
 
 bool player::on_playing_queue_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -605,7 +605,7 @@ bool player::on_playing_queue_input_received(void *input_record)
 
 bool player::on_source_label_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -621,11 +621,11 @@ bool player::on_track_bar_input_received(void *input_record)
     if (playback.is_empty())
         return false;
 
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    auto dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
+    const auto &dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
     
     auto track_bar_layout = dlg_items_layout[controls::track_bar];
     auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
@@ -646,7 +646,7 @@ bool player::on_inactive_control_style_applied(void *dialog_item_colors)
 
 bool player::on_like_btn_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
