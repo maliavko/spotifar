@@ -1,14 +1,17 @@
 {
-    "dependencies": [
-        {
-            "name": "cpp-httplib",
-            "default-features": false,
-            "features": ["openssl"]
-        },
-        "openssl",
-        "spdlog",
-        "bshoshany-thread-pool",
-        "rapidjson",
-        "wintoast"
-    ]
+  "dependencies": [
+    {
+      "name": "cpp-httplib",
+      "default-features": false,
+      "features": [
+        "openssl"
+      ]
+    },
+    "openssl",
+    "spdlog",
+    "bshoshany-thread-pool",
+    "rapidjson",
+    "wintoast"
+  ],
+  "builtin-baseline": "e109e2de620e50fa521f52748c47857ad2fbe350"
 }
