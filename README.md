@@ -6,6 +6,10 @@ Alternative Spotify client implementation via [Far Manager](https://github.com/F
 ![alt text](misc/readme-plugin-cover.png)
 
 # Rationale
+- simple minimalistic way to control your music
+- possibility to customize what you see in the app, on a contrary to the overloaded Spotify client
+- global hotkeys support
+- control and customize featuring releases and artists
 
 # Prerequisites
 ### Spotify
