@@ -1,9 +1,10 @@
-**WIP**, the project is slowly crawling to his first public release
+> [!WARNING]
+> the project is slowly crawling to his first public release
 
 # spotifar
 Alternative Spotify client implementation via [Far Manager](https://github.com/FarGroup/FarManager) [plugin](https://www.farmanager.com/plugins.php). The plugin itself is just a UI facade for the [Spotify Web API](https://developer.spotify.com/documentation/web-api), using [Far Manager API](https://api.farmanager.com/) to draw panels and dialogs for a user to perform some basic manipulations with the current playback and his spotify collection.
 
-![alt text](misc/readme-plugin-cover.png)
+<img src="misc/readme-plugin-cover.png" alt="Alt Text">
 
 # Rationale
 - simple minimalistic way to control your music
@@ -22,23 +23,9 @@ Starting from November 27, 2024 Spotify [blocked](https://developer.spotify.com/
 - all kind of recommendations and featurings: similar artists, freshly released albums, playlists created for you and etc.
 - audio analysis features
 
-# Quick start
-### Installing plugin
-1. Download plugin's [binaries](https://github.com/maliavko/spotifar/releases/)
-2. Unpack the archive into your %FARHOME%\Plugins\ folder
-3. If everything was right, you'll see a dedicated plugin's menu in the "Plugin Commands" dialogs in Far Manager (F11)
-### Obtaining Spotify API tokens
-1. Open a [Spotify developers dashboard](https://developer.spotify.com/dashboard)
-2. Click "Create App" button, input your information
-   - "App name" and "App description" are up to you
-   - "Redirect URIs" - http://127.0.0.1:5000/auth/callback
-   - "Which API/SDKs are you planning to use?" - pick "Web API" and "Web Playback SDK"
-   - Consent an agreement with Spotify's terms and save your data
-### Plugin configuration
-1. Open up plugin's configuration dialog in Far Manager (Shift+Alt+F9) and select corresponded Spotifar option
-2. In the dialog menu proceed with "General" option
-3. In the "Spotify API" settings block input your freshly obtained "Client ID" and "Client Secret"
-4. Leave "Port" data unchanged, or put the one you like, not forgetting to edit accordingly your callback url, used in the Spotify dashboard
+# Wiki
+- [quick start](https://github.com/maliavko/spotifar/wiki/Quick-start)
+- [compiling](https://github.com/maliavko/spotifar/wiki/Compiling)
 
 # Dependencies
 Plugin uses the following great 3rd-parties, without which it wouldn't be even possible to think of this implementation:
