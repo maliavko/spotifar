@@ -445,7 +445,7 @@ protected:
         from_json(body["items"], result);
 
         if (body.HasMember("total") && !body["total"].IsNull())
-            total = body["total"].GetUint64();
+            total = body["total"].GetUint();
 
         if (body.HasMember("next") && !body["next"].IsNull())
             next = body["next"].GetString();

@@ -21,7 +21,7 @@ config::settings::view_t* view_abstract::get_settings() const
 
 void view_abstract::select_sort_mode(int idx)
 {
-    if (idx > sort_modes.size())
+    if (idx > (int)sort_modes.size())
     {
         log::global->error("Given sort mode index is out of range, index {}, "
             "view uid {}, modes count {}", idx, uid, sort_modes.size());
@@ -51,7 +51,7 @@ void view_abstract::on_items_updated()
         sort_modes = get_sort_modes();
         
         // settings a stored sort mode
-        if (sort_modes.size() > settings->sort_mode_idx)
+        if ((int)sort_modes.size() > settings->sort_mode_idx)
             panels::set_sort_mode(PANEL_ACTIVE,
                 sort_modes[settings->sort_mode_idx].far_sort_mode, settings->is_descending);
 
@@ -69,7 +69,7 @@ const data_item_t* view_abstract::unpack_user_data(const UserDataItem &user_data
 
 intptr_t view_abstract::compare_items(const CompareInfo *info)
 {
-    if (sort_modes.size() > settings->sort_mode_idx)
+    if ((int)sort_modes.size() > settings->sort_mode_idx)
         return compare_items(
             sort_modes[settings->sort_mode_idx],
             unpack_user_data(info->Item1->UserData),
@@ -85,12 +85,12 @@ intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
     {
         int key = keys::make_combined(key_event);
         
-        for (int idx = 0; idx < sort_modes.size(); idx++)
+        for (size_t idx = 0; idx < sort_modes.size(); idx++)
         {
             const auto &smode = sort_modes[idx];
             if (key == smode.combined_key)
             {
-                select_sort_mode(idx);
+                select_sort_mode((int)idx);
                 return TRUE;
             }
         }

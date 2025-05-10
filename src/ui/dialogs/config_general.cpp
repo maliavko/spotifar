@@ -93,11 +93,11 @@ void config_general_dialog::init()
 
     // image shape combo box initialization
     auto is_circled = config::is_notification_image_circled();
-    for (int idx = 0; idx < items.size(); idx++)
+    for (size_t idx = 0; idx < items.size(); idx++)
     {
         const auto &item = items[idx];
-        dialogs::add_list_item(hdlg, image_shape_combo, utils::to_wstring(item), idx,
-            (void*)item.c_str(), item.size(), idx == int(is_circled));
+        dialogs::add_list_item(hdlg, image_shape_combo, utils::to_wstring(item), (int)idx,
+            (void*)item.c_str(), item.size(), idx == size_t(is_circled));
     }
 
     // labels

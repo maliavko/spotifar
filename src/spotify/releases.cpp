@@ -50,7 +50,7 @@ bool recent_releases::request_data(data_t &data)
     {
         auto time_treshold = utils::clock_t::now() - release_age;
         
-        pool.detach_sequence(0ULL, artists->size(),
+        pool.detach_sequence<size_t>(0, artists->size(),
             [this, time_treshold](const std::size_t idx)
             {
                 const auto &artist = (*artists)[idx];

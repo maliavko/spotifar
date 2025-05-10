@@ -70,10 +70,11 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 
 static void populate_combobox(HANDLE hdlg, int combo_id, std::vector<string> items, const string &current)
 {
-    for (int idx = 0; idx < items.size(); idx++)
+    for (size_t idx = 0; idx < items.size(); idx++)
     {
         const auto &item = items[idx];
-        dialogs::add_list_item(hdlg, combo_id, utils::to_wstring(item), idx, (void*)item.c_str(), item.size(), item == current);
+        dialogs::add_list_item(hdlg, combo_id, utils::to_wstring(item), (int)idx,
+            (void*)item.c_str(), item.size(), item == current);
     }
 }
 

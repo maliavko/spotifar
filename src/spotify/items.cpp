@@ -28,8 +28,8 @@ void to_json(Value &result, const image_t &i, json::Allocator &allocator)
 void from_json(const Value &j, image_t &i)
 {
     i.url = j["url"].GetString();
-    i.width = j["width"].GetUint64();
-    i.height = j["height"].GetUint64();
+    i.width = j["width"].GetUint();
+    i.height = j["height"].GetUint();
 }
 
 void to_json(Value &result, const simplified_artist_t &a, json::Allocator &allocator)
@@ -72,8 +72,8 @@ void from_json(const Value &j, artist_t &a)
 {
     from_json(j, dynamic_cast<simplified_artist_t&>(a));
 
-    a.popularity = j["popularity"].GetUint64();
-    a.followers_total = j["followers"]["total"].GetUint64();
+    a.popularity = j["popularity"].GetUint();
+    a.followers_total = j["followers"]["total"].GetUint();
     
     from_json(j["images"], a.images);
     from_json(j["genres"], a.genres);
@@ -111,7 +111,7 @@ void from_json(const Value &j, simplified_album_t &a)
 {
     a.id = j["id"].GetString();
     a.name = utils::utf8_decode(j["name"].GetString());
-    a.total_tracks = j["total_tracks"].GetUint64();
+    a.total_tracks = j["total_tracks"].GetUint();
     a.album_type = j["album_type"].GetString();
     a.release_date = j["release_date"].GetString();
     
@@ -203,8 +203,8 @@ void to_json(Value &result, const simplified_track_t &t, json::Allocator &alloca
 void from_json(const Value &j, simplified_track_t &t)
 {
     t.id = j["id"].GetString();
-    t.track_number = j["track_number"].GetUint64();
-    t.disc_number = j["disc_number"].GetUint64();
+    t.track_number = j["track_number"].GetUint();
+    t.disc_number = j["disc_number"].GetUint();
     t.duration_ms = j["duration_ms"].GetInt();
     t.is_explicit = j["explicit"].GetBool();
     
@@ -304,7 +304,7 @@ void from_json(const Value &j, simplified_playlist_t &p)
     p.href = j["href"].GetString();
     p.collaborative = j["collaborative"].GetBool();
     p.is_public = j["public"].GetBool();
-    p.tracks_total = j["tracks"]["total"].GetUint64();
+    p.tracks_total = j["tracks"]["total"].GetUint();
     
     p.name = utils::utf8_decode(j["name"].GetString());
     p.user_display_name = utils::utf8_decode(j["owner"]["display_name"].GetString());

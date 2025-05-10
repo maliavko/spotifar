@@ -87,7 +87,7 @@ struct cycled_set_descriptor: public descriptor_abstract<T>
     virtual void clear_offset() { offset_idx = value_idx; }
     virtual void set_value(const T &v)
     {
-        for (int idx = 0; idx < values.size(); idx++)
+        for (size_t idx = 0; idx < values.size(); idx++)
             if (values[idx] == v)
                 // if there is offset waiting to be applied, we do not changed it;
                 // otherwise we change both values: offset and value, to avoid creating

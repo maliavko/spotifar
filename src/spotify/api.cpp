@@ -82,7 +82,7 @@ void api::shutdown()
 
 void api::tick()
 {
-    auto future = pool.submit_loop(0ULL, caches.size(),
+    auto future = pool.submit_loop<size_t>(0, caches.size(),
         [&caches = this->caches](const std::size_t idx) {
             caches[idx]->resync();
         }, BS::pr::high);

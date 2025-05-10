@@ -792,10 +792,10 @@ void player::on_devices_changed(const devices_t &devices)
 
     far3::dialogs::clear_list(hdlg, controls::devices_combo);
 
-    for (int i = 0; i < devices.size(); i++)
+    for (size_t i = 0; i < devices.size(); i++)
     {
         auto &dev = devices[i];
-        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, i,
+        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, (int)i,
             (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
 }
@@ -947,11 +947,11 @@ void player::update_playing_queue(bool is_visible)
         if (auto api = api_proxy.lock())
         {
             const auto &items = api->get_playing_queue().queue;
-            for (int i = 0; i < items.size(); i++)
+            for (size_t i = 0; i < items.size(); i++)
             {
                 const auto &item = items[i];
                 const auto &long_name = std::format(L"{} - {}", item.get_artist_name(), item.name);
-                far3::dialogs::add_list_item(hdlg, controls::queue_list, long_name, i,
+                far3::dialogs::add_list_item(hdlg, controls::queue_list, long_name, (int)i,
                     (void*)item.get_uri().c_str(), item.get_uri().size());
             }
         }
