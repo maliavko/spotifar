@@ -233,7 +233,7 @@ namespace far3
     namespace dialogs
     {
         // dialog
-        auto flush_vbuffer() -> void;
+        void flush_vbuffer();
         auto send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2) -> intptr_t;
         auto get_dialog_rect(HANDLE hdlg) -> SMALL_RECT;
         auto enable_redraw(HANDLE hdlg, bool is_enable) -> intptr_t;

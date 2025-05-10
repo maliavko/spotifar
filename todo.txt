@@ -30,6 +30,7 @@ bugs
 - crash if start plugin when it is already started
 + skipping tracks quickly creates a queue of toasts
 - toast like buttong should be unlike in case the track is saved
+- recent releases thread bloks far from closing while sleeps
 
 to finish for alpha release
 + disabled shuffle plus, move it to some separate branch

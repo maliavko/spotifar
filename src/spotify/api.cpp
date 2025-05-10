@@ -605,7 +605,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
         cached_etag = cache.etag;
     }
 
-    auto res = get_client()->Get(request_url, {{ "If-None-Match", cached_etag }});
+    auto res = get_client()->Get(url, {{ "If-None-Match", cached_etag }});
     if (http::is_success(res))
     {
         if (res->status == OK_200)

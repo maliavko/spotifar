@@ -14,8 +14,7 @@ bool devices_cache::is_active() const
 
 clock_t::duration devices_cache::get_sync_interval() const
 {
-    // every second, minus some gap for smoother synching
-    return 950ms;
+    return 3s;
 }
 
 void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_data)

@@ -57,6 +57,10 @@ bool recent_releases::request_data(data_t &data)
 
                 auto albums = api_proxy->get_artist_albums(artist.id);
                 bool is_cached = albums->is_cached();
+
+                log::api->debug("Processing new artist's releases {} [{}]",
+                    utils::to_string(artist.name), artist.id);
+                
                 if (albums->fetch(false, false))
                 {
                     std::lock_guard lock(data_access);
@@ -64,9 +68,9 @@ bool recent_releases::request_data(data_t &data)
                     for (const auto &album: *albums)
                         if (album.get_release_date() > time_treshold)
                         {
-                            log::api->info("A new release was found for the artist {} [{}]: {} [{}], {}",
-                                utils::to_string(artist.name), artist.id, utils::to_string(album.name),
-                                album.id, album.get_release_year());
+                            log::api->info("A new release was found for the artist {} [{}]: {} [{}]",
+                                utils::to_string(artist.name), artist.id,
+                                utils::to_string(album.name), album.id);
                             
                             interim_data.push_back(album);
                         }
