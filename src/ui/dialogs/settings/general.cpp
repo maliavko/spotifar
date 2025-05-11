@@ -1,9 +1,9 @@
-#include "config_general.hpp"
+#include "general.hpp"
 #include "config.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
 
-namespace spotifar { namespace ui {
+namespace spotifar { namespace ui { namespace settings {
 
 using namespace utils::far3;
 
@@ -71,7 +71,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP, L"Cancel"),
 };
 
-config_general_dialog::config_general_dialog():
+general_dialog::general_dialog():
     modal_dialog(&ConfigGeneralDialogGuid, width, height, dlg_items_layout)
 {
     // general
@@ -87,7 +87,7 @@ config_general_dialog::config_general_dialog():
     dialogs::set_checked(hdlg, track_changed_notifications, config::is_track_changed_notification_enabled());
 }
 
-void config_general_dialog::init()
+void general_dialog::init()
 {
     static const std::vector<string> items{ "square", "circle" };
 
@@ -116,7 +116,7 @@ void config_general_dialog::init()
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
-intptr_t config_general_dialog::handle_result(intptr_t dialog_run_result)
+intptr_t general_dialog::handle_result(intptr_t dialog_run_result)
 {
     if (dialog_run_result == ok_button)
     {
@@ -144,5 +144,6 @@ intptr_t config_general_dialog::handle_result(intptr_t dialog_run_result)
     return FALSE;
 }
 
+} // namespace settings
 } // namespace ui
 } // namespace spotifar
