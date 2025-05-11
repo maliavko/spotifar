@@ -1,9 +1,9 @@
-#include "config_backend.hpp"
+#include "backend.hpp"
 #include "config.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
 
-namespace spotifar { namespace ui {
+namespace spotifar { namespace ui { namespace settings {
 
 using namespace utils::far3;
 namespace hotkeys = config::hotkeys;
@@ -78,7 +78,7 @@ static void populate_combobox(HANDLE hdlg, int combo_id, std::vector<string> ite
     }
 }
 
-config_backend_dialog::config_backend_dialog():
+backend_dialog::backend_dialog():
     modal_dialog(&ConfigBackendDialogGuid, width, height, dlg_items_layout)
 {
     dialogs::set_checked(hdlg, backend_checkbox, config::is_playback_backend_enabled());
@@ -88,7 +88,7 @@ config_backend_dialog::config_backend_dialog():
     dialogs::set_checked(hdlg, playback_cache_checkbox, config::is_playback_cache_enabled());
 }
 
-void config_backend_dialog::init()
+void backend_dialog::init()
 {
     // comboboxes initialization
     populate_combobox(hdlg, bitrate_combo, config::playback::bitrate::all, config::get_playback_bitrate());
@@ -109,7 +109,7 @@ void config_backend_dialog::init()
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
-intptr_t config_backend_dialog::handle_result(intptr_t dialog_run_result)
+intptr_t backend_dialog::handle_result(intptr_t dialog_run_result)
 {
     if (dialog_run_result == ok_button)
     {
@@ -136,5 +136,6 @@ intptr_t config_backend_dialog::handle_result(intptr_t dialog_run_result)
     return FALSE;
 }
 
+} // namespace settings
 } // namespace ui
 } // namespace spotifar

@@ -134,9 +134,8 @@ void plugin::launch_sync_worker()
 
             while (is_worker_listening)
             {
-                auto now = clock_t::now();
-                auto delta = now - last_tick;
-                last_tick = now;
+                const auto &now = clock_t::now();
+                const auto &delta = now - last_tick;
 
                 api->tick();
                 player->tick();
@@ -148,9 +147,8 @@ void plugin::launch_sync_worker()
 
                 log::tick(delta);
 
-                log::tick(delta);
-
                 std::this_thread::sleep_for(50ms);
+                last_tick = now;
             }
         }
         catch (const std::exception &ex)
