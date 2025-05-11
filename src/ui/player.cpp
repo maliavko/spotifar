@@ -458,10 +458,6 @@ bool player::on_input_received(void *input_record)
                     case keys::q + keys::mods::ctrl:
                         expand(!is_expanded());
                         return true;
-
-                    case keys::j + keys::mods::ctrl:
-                        far3::panels::quit(PANEL_ACTIVE);
-                        return true;
                 }
             }
             break;
