@@ -2,9 +2,9 @@
 #include "lng.hpp"
 #include "utils.hpp"
 #include "menus.hpp"
-#include "config_hotkeys.hpp"
-#include "config_general.hpp"
-#include "config_backend.hpp"
+#include "settings/hotkeys.hpp"
+#include "settings/general.hpp"
+#include "settings/backend.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -42,15 +42,15 @@ intptr_t show_config_menu()
 
         if (opt_idx == 0)
         {
-            config_general_dialog().run();
+            settings::general_dialog().run();
         }
         else if (opt_idx == 1)
         {
-            config_backend_dialog().run();
+            settings::backend_dialog().run();
         }
         else if (opt_idx == 2)
         {
-            config_hotkeys_dialog().run();
+            settings::hotkeys_dialog().run();
         }
     }
     return TRUE;

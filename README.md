@@ -42,7 +42,7 @@ Starting from November 27, 2024 Spotify [blocked](https://developer.spotify.com/
 4. Leave "Port" data unchanged, or put the one you like, not forgetting to edit accordingly your callback url, used in the Spotify dashboard
 
 # Compiling
-[Details instruction](/COMPILING.md)
+[A detailed instruction](/COMPILING.md)
 
 # Dependencies
 Plugin uses the following great 3rd-parties, without which it wouldn't be even possible to think of this implementation:

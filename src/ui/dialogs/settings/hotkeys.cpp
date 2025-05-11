@@ -1,9 +1,9 @@
-#include "config_hotkeys.hpp"
+#include "hotkeys.hpp"
 #include "config.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
 
-namespace spotifar { namespace ui {
+namespace spotifar { namespace ui { namespace settings {
 
 using namespace utils::far3;
 namespace hotkeys = config::hotkeys;
@@ -163,7 +163,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,        DIF_CENTERGROUP),
 };
 
-config_hotkeys_dialog::config_hotkeys_dialog():
+hotkeys_dialog::hotkeys_dialog():
     modal_dialog(&ConfigHotkeysDialogGuid, width, height, dlg_items_layout)
 {
     dialogs::set_checked(hdlg, hotkeys_checkbox, config::is_global_hotkeys_enabled());
@@ -182,7 +182,7 @@ config_hotkeys_dialog::config_hotkeys_dialog():
     }
 }
 
-void config_hotkeys_dialog::init()
+void hotkeys_dialog::init()
 {
     dialogs::set_text(hdlg, hotkeys_checkbox, get_text(MConfigHotkeysBoxLabel));
     dialogs::set_text(hdlg, hotkeys_table_label, get_text(MConfigHotkeysTableTitle));
@@ -199,7 +199,7 @@ void config_hotkeys_dialog::init()
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
-intptr_t config_hotkeys_dialog::handle_result(intptr_t dialog_run_result)
+intptr_t hotkeys_dialog::handle_result(intptr_t dialog_run_result)
 {
     if (dialog_run_result == ok_button)
     {
@@ -226,7 +226,7 @@ intptr_t config_hotkeys_dialog::handle_result(intptr_t dialog_run_result)
     return FALSE;
 }
 
-bool config_hotkeys_dialog::handle_key_pressed(int ctrl_id, int combined_key)
+bool hotkeys_dialog::handle_key_pressed(int ctrl_id, int combined_key)
 {
     // processing only key edit boxes
     if (!hotkey_edits.contains((controls)ctrl_id))
@@ -262,5 +262,6 @@ bool config_hotkeys_dialog::handle_key_pressed(int ctrl_id, int combined_key)
     return FALSE;
 }
 
+} // namespace settings
 } // namespace ui
 } // namespace spotifar
