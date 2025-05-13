@@ -56,6 +56,33 @@ namespace events {
 /// views.
 struct ui_events_observer: public BaseObserverProtocol
 {
+    struct view_filter_callbacks
+    {
+        using callback_t = std::function<void(api_proxy_ptr)>;
+
+        callback_t artists = nullptr;
+        callback_t albums = nullptr;
+        callback_t tracks = nullptr;
+        callback_t playlists = nullptr;
+
+        void clear()
+        {
+            artists = albums = tracks = playlists = nullptr;
+        }
+
+        callback_t get_callback(size_t idx)
+        {
+            switch (idx)
+            {
+                case 0: return artists;
+                case 1: return albums;
+                case 2: return tracks;
+                case 3: return playlists;
+            }
+            return artists;
+        }
+    };
+
     /// @brief Show playback player
     virtual void show_player() {}
 
@@ -65,9 +92,11 @@ struct ui_events_observer: public BaseObserverProtocol
     virtual void refresh_panels(const item_id_t &item_id) {}
 
     /// @brief Sends a `view` instance to the panel to show it
-    virtual void show_panel_view(view_ptr view) {}
+    virtual void show_view(view_ptr view) {}
 
-    virtual void on_show_filters_menu() {};
+    virtual void show_fildered_view(view_filter_callbacks callbacks) {}
+    
+    virtual void on_show_filters_menu() {}
 };
 
 } // namespace ui

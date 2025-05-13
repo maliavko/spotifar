@@ -9,13 +9,15 @@
 
 namespace spotifar { namespace ui {
 
+using utils::far3::synchro_tasks::dispatch_event;
+
 namespace events {
 
     template <class T, typename... MethodArgumentTypes>
     static void show_panel_view(MethodArgumentTypes... args)
     {
         return ObserverManager::notify(
-            &ui_events_observer::show_panel_view, std::make_shared<T>(args...));
+            &ui_events_observer::show_view, std::make_shared<T>(args...));
     }
 
     void show_root(api_proxy_ptr api)
@@ -25,7 +27,13 @@ namespace events {
 
     void show_collections(api_proxy_ptr api)
     {
-        return show_panel_view<collection_view>(api);
+        //return show_panel_view<collection_view>(api);
+        return ObserverManager::notify(
+            &ui_events_observer::show_fildered_view,
+            ui_events_observer::view_filter_callbacks{
+                .artists = show_followed_artists,
+                .albums = show_saved_albums,
+            });
     }
 
     void show_followed_artists(api_proxy_ptr api)
@@ -117,7 +125,7 @@ namespace events {
     
     void show_player()
     {
-        return utils::far3::synchro_tasks::dispatch_event(&ui_events_observer::show_player);
+        return dispatch_event(&ui_events_observer::show_player);
     }
     
     void show_config()
@@ -127,7 +135,7 @@ namespace events {
     
     void refresh_panels(const string &item_id)
     {
-        return utils::far3::synchro_tasks::dispatch_event(&ui_events_observer::refresh_panels, item_id);
+        return dispatch_event(&ui_events_observer::refresh_panels, item_id);
     }
 
 } // namespace events
