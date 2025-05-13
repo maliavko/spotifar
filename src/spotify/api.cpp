@@ -632,11 +632,12 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     }
     else if (res)
     {
-        auto retry_after = std::stoi(res->get_header_value("retry-after", 0));
-
         if (res->status == TooManyRequests_429)
+        {
+            auto retry_after = std::stoi(res->get_header_value("retry-after", 0));
             throw std::runtime_error(std::format("The app has been rate limited, retry after {:%T}",
                 std::chrono::seconds(retry_after)));
+        }
     }
 
     return res;

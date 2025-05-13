@@ -40,7 +40,7 @@ public:
 
     using sort_modes_t = std::vector<sort_mode_t>;
     using items_t = std::vector<item_t>;
-    using key_bar_info_t = std::unordered_map<FarKey, wstring>;
+    using key_bar_info_t = std::unordered_map<FarKey, const wchar_t*>;
     using info_lines_t = std::vector<InfoPanelLine>;
     using return_callback_t = std::function<void(void)>;
 public:

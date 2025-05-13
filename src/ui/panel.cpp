@@ -112,19 +112,34 @@ void panel::update_panel_info(OpenPanelInfo *info)
     static KeyBarTitles key_bar = { std::size(key_bar_labels), key_bar_labels };
     info->KeyBar = &key_bar;
 
-    const auto view_key_bar = view->get_key_bar_info();
+    view_abstract::key_bar_info_t panel_key_bar{};
+
+    if (filter_callbacks.artists)
+        panel_key_bar.insert({ { VK_F5, SHIFT_PRESSED }, far3::get_text(MPanelArtistsItemLabel) });
+
+    if (filter_callbacks.albums)
+        panel_key_bar.insert({ { VK_F6, SHIFT_PRESSED }, far3::get_text(MPanelAlbumsItemLabel) });
+
+    if (filter_callbacks.tracks)
+        panel_key_bar.insert({ { VK_F7, SHIFT_PRESSED }, far3::get_text(MPanelTracksItemLabel) });
+
+    if (filter_callbacks.playlists)
+        panel_key_bar.insert({ { VK_F8, SHIFT_PRESSED }, far3::get_text(MPanelPlaylistsItemLabel) });
+    
+    if (const auto &view_key_bar = view->get_key_bar_info())
+        panel_key_bar.insert(view_key_bar->begin(), view_key_bar->end());
 
     size_t idx = 0;
-    for (const auto key: refreshable_keys)
-        for (const auto mod: { 0, SHIFT_PRESSED, LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED })
+    for (const auto &key: refreshable_keys)
+        for (const auto &mod: { 0, SHIFT_PRESSED, LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED })
         {
             auto &kbl = key_bar_labels[idx++];
 
             kbl.Key.VirtualKeyCode = key;
             kbl.Key.ControlKeyState = mod;
 
-            if (view_key_bar && view_key_bar->contains(kbl.Key))
-                kbl.Text = kbl.LongText = view_key_bar->at(kbl.Key).c_str();
+            if (panel_key_bar.contains(kbl.Key))
+                kbl.Text = kbl.LongText = panel_key_bar.at(kbl.Key);
             else
                 kbl.Text = kbl.LongText = L"";
         }
@@ -233,7 +248,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 
                 if (should_refresh) // refreshing only in case anything has changed
                     refresh_panels();
-        
+
                 // blocking F3 panel processing in general, as we have a custom one
                 return TRUE;
             }
@@ -245,6 +260,27 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                     view->select_sort_mode(sort_modex_idx);
                 
                 return TRUE; // no need to show a standard sorting menu
+            }
+            case VK_F5 + keys::mods::shift:
+            case VK_F6 + keys::mods::shift:
+            case VK_F7 + keys::mods::shift:
+            case VK_F8 + keys::mods::shift:
+            {
+                auto idx = key - VK_F5 - keys::mods::shift;
+                if (idx != current_filter_idx)
+                {
+                    if (auto callback = filter_callbacks.get_callback(idx))
+                    {
+                        log::global->debug("Switching view's filter {}", idx);
+                        current_filter_idx = idx;
+                        auto f = filter_callbacks;
+                        callback(api_proxy);
+                        filter_callbacks = f;
+                        
+                        refresh_panels();
+                    }
+                }
+                return TRUE;
             }
         }
 
@@ -262,12 +298,23 @@ intptr_t panel::compare_items(const CompareInfo *info)
 
 void panel::show_stub_view()
 {
-    return show_panel_view(std::shared_ptr<stub_view>(new stub_view()));
+    return show_view(std::make_shared<stub_view>());
 }
 
-void panel::show_panel_view(view_ptr v)
+void panel::show_view(view_ptr v)
 {
+    // clearing previously set filter callbacks for the previous view
+    filter_callbacks.clear();
+
     view = v;
+}
+
+void panel::show_fildered_view(ui_events_observer::view_filter_callbacks callbacks)
+{
+    if (auto callback = callbacks.get_callback(current_filter_idx))
+        callback(api_proxy);
+
+    filter_callbacks = callbacks;
 }
 
 void panel::refresh_panels(const string &item_id)
