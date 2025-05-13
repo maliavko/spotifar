@@ -17,22 +17,23 @@ class panel:
 {
 public:
     panel(api_proxy_ptr api);
-    virtual ~panel();
+    ~panel();
 
     // Far API interface
     void update_panel_info(OpenPanelInfo *info);
-    auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
     void free_panel_items(const FreeFindDataInfo *info);
-    auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
-    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
-    auto compare_items(const CompareInfo *info) -> intptr_t;
+    intptr_t update_panel_items(GetFindDataInfo *info);
+    intptr_t select_directory(const SetDirectoryInfo *info);
+    intptr_t process_input(const ProcessPanelInputInfo *info);
+    intptr_t compare_items(const CompareInfo *info);
 protected:
     void show_stub_view();
     
     // global ui events
-    void show_panel_view(view_ptr view) override;
     void refresh_panels(const item_id_t &item_id = "") override;
     void on_show_filters_menu() override;
+    void show_view(view_ptr view) override;
+    void show_fildered_view(ui_events_observer::view_filter_callbacks callbacks) override;
 
     // requesters progress notifications
     void on_request_started(const string &url) override;
@@ -41,6 +42,9 @@ protected:
     void on_playback_command_failed(const string &message) override;
     void on_collection_fetching_failed(const string &message) override;
 private:
+    ui_events_observer::view_filter_callbacks filter_callbacks;
+    size_t current_filter_idx = 0;
+
     view_ptr view;
     api_proxy_ptr api_proxy;
 };

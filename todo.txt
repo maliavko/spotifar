@@ -5,7 +5,8 @@ refactor
 application ideas
 - small improvements
     - goto playlist from player UI
-    - showing some simple sorting's direction sign around the column name the sorting is applied to
+    - showing some simple sorting's direction sign around the column name the sorting is applied to\
+    - notify about new releases once they are found
 - new functional
     + splash screen with notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
