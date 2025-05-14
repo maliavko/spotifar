@@ -17,22 +17,12 @@ namespace events {
 
     void show_root(api_proxy_ptr api);
 
-    // collection menu events
-    void show_collections(api_proxy_ptr api);
-    void show_followed_artists(api_proxy_ptr api);
-    void show_saved_albums(api_proxy_ptr api);
-    void show_saved_tracks(api_proxy_ptr api);
-    void show_saved_playlists(api_proxy_ptr api);
+    void show_collection(api_proxy_ptr api);
 
-    // recent menu events
     void show_recents(api_proxy_ptr api);
-    void show_recent_tracks(api_proxy_ptr api);
-    void show_recent_albums(api_proxy_ptr api);
-    void show_recent_artists(api_proxy_ptr api);
-    void show_recent_playlists(api_proxy_ptr api);
 
-    // browse menu events
     void show_browse(api_proxy_ptr api);
+
     void show_new_releases(api_proxy_ptr api);
     void show_featuring_albums(api_proxy_ptr api);
     void show_featuring_artists(api_proxy_ptr api);
@@ -45,7 +35,7 @@ namespace events {
     
     void show_player();
     
-    void show_config();
+    void show_settings();
 
     void refresh_panels(const string &item_id = "");
 
@@ -58,7 +48,12 @@ struct ui_events_observer: public BaseObserverProtocol
 {
     struct view_filter_callbacks
     {
-        using callback_t = std::function<void(api_proxy_ptr)>;
+        using callback_t = std::function<view_ptr(api_proxy_ptr)>;
+
+        const static size_t artists_idx = 0;
+        const static size_t albums_idx = 1;
+        const static size_t tracks_idx = 2;
+        const static size_t playlists_idx = 3;
 
         callback_t artists = nullptr;
         callback_t albums = nullptr;
@@ -74,10 +69,10 @@ struct ui_events_observer: public BaseObserverProtocol
         {
             switch (idx)
             {
-                case 0: return artists;
-                case 1: return albums;
-                case 2: return tracks;
-                case 3: return playlists;
+                case artists_idx: return artists;
+                case albums_idx: return albums;
+                case tracks_idx: return tracks;
+                case playlists_idx: return playlists;
             }
             return artists;
         }
