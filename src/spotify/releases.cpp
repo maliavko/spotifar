@@ -80,7 +80,7 @@ bool recent_releases::request_data(data_t &data)
                 // the result was obtained from the cache, there is no need to do that
                 if (!is_cached)
                     std::this_thread::sleep_for(
-                        utils::events::has_observers<playback_observer>() ? 15s : 5s);
+                        utils::events::has_observers<playback_observer>() ? 30s : 10s);
             });
         
         is_in_sync = true;

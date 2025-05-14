@@ -13,7 +13,7 @@ using namespace utils::far3;
 
 using far3::get_text;
 
-intptr_t show_config_menu()
+intptr_t show_settings_menu()
 {
     static FarMenuItem items[] = {
         { MIF_NONE, get_text(MConfigDialogMenuGeneralOpt) },

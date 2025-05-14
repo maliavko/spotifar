@@ -166,7 +166,7 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 //-----------------------------------------------------------------------------------------------------------
 followed_artists_view::followed_artists_view(api_proxy_ptr api_proxy):
     artists_base_view(api_proxy, "followed_artists_view", get_text(MPanelArtistsItemLabel),
-                      std::bind(events::show_collections, api_proxy))
+                      std::bind(events::show_root, api_proxy))
     
 {
     if (auto api = api_proxy.lock())
@@ -188,7 +188,7 @@ std::generator<const artist_t&> followed_artists_view::get_artists()
 void followed_artists_view::show_albums_view(const artist_t &artist) const
 {
     events::show_artist_albums(api_proxy, artist,
-        std::bind(events::show_followed_artists, api_proxy));
+        std::bind(events::show_collection, api_proxy));
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ std::generator<const artist_t&> recent_artists_view::get_artists()
 void recent_artists_view::show_albums_view(const artist_t &artist) const
 {
     events::show_artist_albums(api_proxy, artist,
-        std::bind(events::show_recent_artists, api_proxy));
+        std::bind(events::show_recents, api_proxy));
 }
 
 void recent_artists_view::on_items_changed()

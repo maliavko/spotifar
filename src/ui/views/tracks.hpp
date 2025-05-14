@@ -111,6 +111,7 @@ private:
     saved_tracks_ptr collection;
 };
 
+/// TODO: unused
 /// @brief A class-view, to represent on the panels a list of
 /// the playing queue tracks
 class playing_queue_view:

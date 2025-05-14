@@ -158,7 +158,7 @@ bool playlists_base_view::request_extra_info(const data_item_t* data)
 //-----------------------------------------------------------------------------------------------------------
 saved_playlists_view::saved_playlists_view(api_proxy_ptr api_proxy):
     playlists_base_view(api_proxy, "saved_playlists_view", get_text(MPanelPlaylistsItemLabel),
-                        std::bind(events::show_collections, api_proxy)),
+                        std::bind(events::show_root, api_proxy)),
     api_proxy(api_proxy)
 {
     if (auto api = api_proxy.lock())
