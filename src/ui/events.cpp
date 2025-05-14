@@ -20,35 +20,27 @@ namespace events {
             &ui_events_observer::show_view, std::make_shared<T>(args...));
     }
 
+    template <class T, typename... MethodArgumentTypes>
+    static std::shared_ptr<T> view_factory(api_proxy_ptr api, MethodArgumentTypes... args)
+    {
+        return std::make_shared<T>(api, args...);
+    }
+
     void show_root(api_proxy_ptr api)
     {
         return show_panel_view<root_view>(api);
     }
 
-    void show_collections(api_proxy_ptr api)
+    void show_collection(api_proxy_ptr api)
     {
-        //return show_panel_view<collection_view>(api);
         return ObserverManager::notify(
             &ui_events_observer::show_fildered_view,
             ui_events_observer::view_filter_callbacks{
-                .artists = show_followed_artists,
-                .albums = show_saved_albums,
+                .artists = &view_factory<followed_artists_view>,
+                .albums = &view_factory<saved_albums_view>,
+                .tracks = &view_factory<saved_tracks_view>,
+                .playlists = &view_factory<saved_playlists_view>,
             });
-    }
-
-    void show_followed_artists(api_proxy_ptr api)
-    {
-        return show_panel_view<followed_artists_view>(api);
-    }
-
-    void show_saved_albums(api_proxy_ptr api)
-    {
-        return show_panel_view<saved_albums_view>(api);
-    }
-
-    void show_saved_tracks(api_proxy_ptr api)
-    {
-        return show_panel_view<saved_tracks_view>(api);
     }
 
     void show_browse(api_proxy_ptr api)
@@ -58,27 +50,14 @@ namespace events {
 
     void show_recents(api_proxy_ptr api)
     {
-        return show_panel_view<recents_view>(api);
-    }
-
-    void show_recent_tracks(api_proxy_ptr api)
-    {
-        return show_panel_view<recent_tracks_view>(api);
-    }
-
-    void show_recent_albums(api_proxy_ptr api)
-    {
-        return show_panel_view<recent_albums_view>(api);
-    }
-
-    void show_recent_artists(api_proxy_ptr api)
-    {
-        return show_panel_view<recent_artists_view>(api);
-    }
-
-    void show_recent_playlists(api_proxy_ptr api)
-    {
-        return show_panel_view<recent_playlists_view>(api);
+        return ObserverManager::notify(
+            &ui_events_observer::show_fildered_view,
+            ui_events_observer::view_filter_callbacks{
+                .artists = &view_factory<recent_artists_view>,
+                .albums = &view_factory<recent_albums_view>,
+                .tracks = &view_factory<recent_tracks_view>,
+                .playlists = &view_factory<recent_playlists_view>,
+            });
     }
     
     void show_new_releases(api_proxy_ptr api)
@@ -93,11 +72,6 @@ namespace events {
     
     void show_featuring_artists(api_proxy_ptr api)
     {
-    }
-
-    void show_saved_playlists(api_proxy_ptr api)
-    {
-        return show_panel_view<saved_playlists_view>(api);
     }
 
     void show_playlist(api_proxy_ptr api, const playlist_t &playlist)
@@ -128,9 +102,9 @@ namespace events {
         return dispatch_event(&ui_events_observer::show_player);
     }
     
-    void show_config()
+    void show_settings()
     {
-        show_config_menu();
+        show_settings_menu();
     }
     
     void refresh_panels(const string &item_id)

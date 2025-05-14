@@ -7,7 +7,7 @@
 
 namespace spotifar { namespace ui {
 
-intptr_t show_config_menu();
+intptr_t show_settings_menu();
 
 /// @brief Opens a sort dialog with the all available sort modes
 /// for the given `view`. If a new mode is picked, its index will

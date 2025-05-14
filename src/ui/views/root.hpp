@@ -53,32 +53,6 @@ public:
     root_view(api_proxy_ptr api);
 };
 
-class recents_view: public root_base_view
-{
-public:
-    inline static const item_id_t
-        tracks_id = "tracks",
-        artists_id = "artists",
-        albums_id = "albums",
-        playlists_id = "playlists";
-public:
-    recents_view(api_proxy_ptr api);
-};
-
-class collection_view: public root_base_view
-{
-public:
-    inline static const item_id_t
-        artists_id = "artists",
-        albums_id = "albums",
-        tracks_id = "tracks",
-        playlists_id = "playlists";
-public:
-    collection_view(api_proxy_ptr api);
-protected:
-    auto get_total(const item_id_t &menu_id, bool only_cached) -> size_t override;
-};
-
 class browse_view: public root_base_view
 {
 public:
