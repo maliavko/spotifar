@@ -135,7 +135,7 @@ root_view::root_view(api_proxy_ptr api):
         {
             { collection_id },
             MPanelCollectionItemLabel, MPanelCollectionItemDescr,
-            std::bind(show_collections, api),
+            std::bind(show_collection, api),
         },
         {
             { browse_id },
@@ -149,88 +149,6 @@ root_view::root_view(api_proxy_ptr api):
         },
     })
     {};
-
-recents_view::recents_view(api_proxy_ptr api):
-    root_base_view(
-        api, "recents_view", get_text(MPanelRecentsItemLabel),
-        std::bind(events::show_root, api), {
-        {
-            { tracks_id },
-            MPanelTracksItemLabel, MPanelTracksItemDescr,
-            std::bind(show_recent_tracks, api)
-        },
-        {
-            { artists_id },
-            MPanelArtistsItemLabel, MPanelArtistsItemDescr,
-            std::bind(show_recent_artists, api)
-        },
-        {
-            { albums_id },
-            MPanelAlbumsItemLabel, MPanelAlbumsItemDescr,
-            std::bind(show_recent_albums, api)
-        },
-        {
-            { playlists_id },
-            MPanelPlaylistsItemLabel, MPanelPlaylistsItemDescr,
-            std::bind(show_recent_playlists, api)
-        },
-    })
-    {}
-
-collection_view::collection_view(api_proxy_ptr api):
-    root_base_view(
-        api, "collection_view", L"Collection", std::bind(events::show_root, api), {
-        {
-            { artists_id },
-            MPanelArtistsItemLabel, MPanelArtistsItemDescr,
-            std::bind(show_followed_artists, api)
-        },
-        {
-            { albums_id },
-            MPanelAlbumsItemLabel, MPanelAlbumsItemDescr,
-            std::bind(show_saved_albums, api)
-        },
-        {
-            { tracks_id },
-            MPanelTracksItemLabel, MPanelTracksItemDescr,
-            std::bind(show_saved_tracks, api)
-        },
-        {
-            { playlists_id },
-            MPanelPlaylistsItemLabel, MPanelPlaylistsItemDescr,
-            std::bind(show_saved_playlists, api)
-        },
-    })
-    {}
-
-size_t collection_view::get_total(const string &menu_id, bool only_cached)
-{
-    if (api_proxy.expired()) return 0;
-
-    collection_interface_ptr collection;
-    
-    auto api = api_proxy.lock();
-    if (menu_id == artists_id)
-        collection = api->get_followed_artists();
-
-    if (menu_id == albums_id)
-        collection = api->get_saved_albums();
-
-    if (menu_id == tracks_id)
-        collection = api->get_saved_tracks();
-
-    if (menu_id == playlists_id)
-        collection = api->get_saved_playlists();
-
-    if (collection != nullptr)
-    {
-        if (only_cached)
-            return collection->peek_total();
-        else
-            return collection->get_total();
-    }
-    return 0;
-}
 
 browse_view::browse_view(api_proxy_ptr api):
     root_base_view(

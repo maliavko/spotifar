@@ -288,7 +288,7 @@ void recent_tracks_view::on_items_changed()
 //-----------------------------------------------------------------------------------------------------------
 saved_tracks_view::saved_tracks_view(api_proxy_ptr api_proxy):
     tracks_base_view(api_proxy, "saved_tracks_view", get_text(MPanelTracksItemLabel),
-                     std::bind(events::show_collections, api_proxy))
+                     std::bind(events::show_root, api_proxy))
 {
     utils::events::start_listening<playback_observer>(this);
     if (auto api = api_proxy.lock())
@@ -325,7 +325,7 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 //-----------------------------------------------------------------------------------------------------------
 playing_queue_view::playing_queue_view(api_proxy_ptr api):
     tracks_base_view(api, "playing_queue_view", get_text(MPanelTracksItemLabel),
-                     std::bind(events::show_collections, api))
+                     std::bind(events::show_root, api))
 {
     utils::events::start_listening<playback_observer>(this);
 }

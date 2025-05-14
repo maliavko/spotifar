@@ -225,7 +225,7 @@ void artist_view::show_tracks_view(const album_t &album) const
 //-----------------------------------------------------------------------------------------------------------
 saved_albums_view::saved_albums_view(api_proxy_ptr api_proxy):
     albums_base_view(api_proxy, "saved_albums_view", get_text(MPanelAlbumsItemLabel),
-        std::bind(events::show_collections, api_proxy))
+        std::bind(events::show_root, api_proxy))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
@@ -273,7 +273,7 @@ intptr_t saved_albums_view::compare_items(const sort_mode_t &sort_mode,
 void saved_albums_view::show_tracks_view(const album_t &album) const
 {
     events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_saved_albums, api_proxy));
+        std::bind(events::show_collection, api_proxy));
 }
 
 //-----------------------------------------------------------------------------------------------------------

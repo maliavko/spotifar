@@ -271,11 +271,8 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 {
                     if (auto callback = filter_callbacks.get_callback(idx))
                     {
-                        log::global->debug("Switching view's filter {}", idx);
                         current_filter_idx = idx;
-                        auto f = filter_callbacks;
-                        callback(api_proxy);
-                        filter_callbacks = f;
+                        view = callback(api_proxy);
                         
                         refresh_panels();
                     }
@@ -311,10 +308,10 @@ void panel::show_view(view_ptr v)
 
 void panel::show_fildered_view(ui_events_observer::view_filter_callbacks callbacks)
 {
-    if (auto callback = callbacks.get_callback(current_filter_idx))
-        callback(api_proxy);
-
     filter_callbacks = callbacks;
+
+    if (auto callback = callbacks.get_callback(current_filter_idx))
+        view = callback(api_proxy);
 }
 
 void panel::refresh_panels(const string &item_id)
