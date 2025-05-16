@@ -6,13 +6,16 @@ namespace spotifar { namespace spotify {
 using utils::far3::synchro_tasks::dispatch_event;
 
 recent_releases::recent_releases(api_interface *api):
-    json_cache<data_t>(L""), api_proxy(api), pool(1)
+    json_cache<data_t>(L"recent_releases"), api_proxy(api), pool(1)
 {
     artists = api_proxy->get_followed_artists();
 }
 
 recent_releases::~recent_releases()
 {
+    stop_flag = true;
+    cv.notify_all();
+    
     api_proxy = nullptr;
     pool.purge();
 }
@@ -53,6 +56,8 @@ bool recent_releases::request_data(data_t &data)
         pool.detach_sequence<size_t>(0, artists->size(),
             [this, time_treshold](const std::size_t idx)
             {
+                std::unique_lock<std::mutex> thread_lock(cv_m);
+
                 const auto &artist = (*artists)[idx];
 
                 auto albums = api_proxy->get_artist_albums(artist.id);
@@ -76,11 +81,14 @@ bool recent_releases::request_data(data_t &data)
                         }
                 }
 
-                // we put the thread to sleep to avoid spamming spotify API, in case
+                // we put the thread to sleep to avoid spamming spotify API; in case
                 // the result was obtained from the cache, there is no need to do that
                 if (!is_cached)
-                    std::this_thread::sleep_for(
-                        utils::events::has_observers<playback_observer>() ? 30s : 10s);
+                {
+                    auto delay_time = utils::events::has_observers<playback_observer>() ? 30s : 10s;
+                    // std::this_thread::sleep_for(delay_time);
+                    cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
+                }
             });
         
         is_in_sync = true;
@@ -91,6 +99,7 @@ bool recent_releases::request_data(data_t &data)
 
 clock_t::duration recent_releases::get_sync_interval() const
 {
+    // the finally created cache is saved for one day
     return 24h;
 }
 

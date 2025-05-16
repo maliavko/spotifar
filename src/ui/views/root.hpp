@@ -58,8 +58,7 @@ class browse_view: public root_base_view
 public:
     inline static const item_id_t
         new_releases_id = "new_releases",
-        artists_featuring_likes_id = "artists_featuring_likes",
-        albums_featuring_likes_id = "albums_featuring_likes";
+        featuring_likes_id = "featuring_likes";
 public:
     browse_view(api_proxy_ptr api);
 };

@@ -160,14 +160,9 @@ browse_view::browse_view(api_proxy_ptr api):
             std::bind(show_new_releases, api)
         },
         {
-            { albums_featuring_likes_id },
-            MPanelFeaturingAlbumsItemLabel, MPanelFeaturingAlbumsItemDescr,
-            std::bind(show_featuring_albums, api)
-        },
-        {
-            { artists_featuring_likes_id },
-            MPanelFeaturingArtistsItemLabel, MPanelFeaturingArtistsItemDescr,
-            std::bind(show_featuring_artists, api)
+            { featuring_likes_id },
+            MPanelFeaturingItemLabel, MPanelFeaturingItemDescr,
+            std::bind(show_featuring, api)
         },
     })
     {}
