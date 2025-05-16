@@ -35,12 +35,19 @@ protected:
 private:
     api_interface *api_proxy;
     BS::thread_pool pool;
+
+    // each request is slowed down to avoid API spamming by putting a thread into sleep;
+    // to make it controllable and avoid blociking of application during closing e.g.,
+    // the sleeping is done via conditional variable
+    std::condition_variable cv;
+    std::mutex cv_m;
+    bool stop_flag = false;
     
     std::mutex data_access;
-    data_t interim_data{}; // a container, accumulates the interimg requested data
+    data_t interim_data{}; // a container, accumulates the interim requested data
 
-    bool is_in_sync = false; // ongoing syncing flag
-    followed_artists_ptr artists;
+    bool is_in_sync = false; // a syncing procedure is in action
+    followed_artists_ptr artists; // collection of followed artists to go over
 };
 
 struct releases_observer: public BaseObserverProtocol

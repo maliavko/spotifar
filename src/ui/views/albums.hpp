@@ -29,8 +29,8 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto select_item(const data_item_t* data) -> intptr_t override;
-    auto request_extra_info(const data_item_t* data) -> bool override;
-    auto update_panel_info(OpenPanelInfo *info) -> void override;
+    bool request_extra_info(const data_item_t* data) override;
+    void update_panel_info(OpenPanelInfo *info) override;
     auto process_key_input(int combined_key) -> intptr_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 protected:
@@ -132,7 +132,7 @@ private:
 };
 
 /// @brief A view class representing list of albums, featuring tracks
-/// which user liked reecntly
+/// which user liked recently
 class featuring_albums_view: public albums_base_view
 {
 public:
@@ -143,7 +143,7 @@ protected:
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const simplified_album_t&> override;
-    auto show_tracks_view(const album_t &album) const -> void override;
+    void show_tracks_view(const album_t &album) const override;
 };
 
 } // namespace ui

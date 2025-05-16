@@ -24,8 +24,8 @@ namespace events {
     void show_browse(api_proxy_ptr api);
 
     void show_new_releases(api_proxy_ptr api);
-    void show_featuring_albums(api_proxy_ptr api);
-    void show_featuring_artists(api_proxy_ptr api);
+
+    void show_featuring(api_proxy_ptr api);
 
     void show_playlist(api_proxy_ptr api, const playlist_t &playlist);
 

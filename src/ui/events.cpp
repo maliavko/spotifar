@@ -65,13 +65,13 @@ namespace events {
         return show_panel_view<new_releases_view>(api);
     }
     
-    void show_featuring_albums(api_proxy_ptr api)
+    void show_featuring(api_proxy_ptr api)
     {
-        return show_panel_view<featuring_albums_view>(api);
-    }
-    
-    void show_featuring_artists(api_proxy_ptr api)
-    {
+        return ObserverManager::notify(
+            &ui_events_observer::show_fildered_view,
+            ui_events_observer::view_filter_callbacks{
+                .albums = &view_factory<featuring_albums_view>,
+            });
     }
 
     void show_playlist(api_proxy_ptr api, const playlist_t &playlist)

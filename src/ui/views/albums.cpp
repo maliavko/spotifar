@@ -417,7 +417,7 @@ void recent_albums_view::on_items_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 featuring_albums_view::featuring_albums_view(api_proxy_ptr api):
-    albums_base_view(api, "featuring_albums_view", get_text(MPanelFeaturingAlbumsItemLabel),
+    albums_base_view(api, "featuring_albums_view", get_text(MPanelFeaturingItemLabel),
         std::bind(events::show_browse, api))
     {}
 
