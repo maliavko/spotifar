@@ -101,7 +101,6 @@ namespace spotifar
 
         // warnings & errors
         MFarMessageErrorTitle,
-
         MErrorPluginStartupUnexpected,
         MErrorPluginStartupNoClientID,
         MErrorPluginStartupNoClientSecret,
@@ -110,6 +109,10 @@ namespace spotifar
         MErrorSyncThreadFailed,
         MErrorPlaybackCmdFailed,
         MErrorCollectionFetchFailed,
+
+        // notifications
+        MToastNewReleasesFoundTitle,
+        MToastNewReleasesFoundHaveALookBtn,
 
         // complimentary dialogs & menus
         MTransferPlaybackTitle,

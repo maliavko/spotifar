@@ -25,6 +25,12 @@ bool recent_releases::is_active() const
     return api_proxy->is_authenticated();
 }
 
+clock_t::duration recent_releases::get_sync_interval() const
+{
+    // the finally created cache is saved for one day
+    return 24h;
+}
+
 bool recent_releases::request_data(data_t &data)
 {
     // NOTE: a normal behaviour of this method is to return `false` in case of error and `true`,
@@ -63,17 +69,15 @@ bool recent_releases::request_data(data_t &data)
                 auto albums = api_proxy->get_artist_albums(artist.id);
                 bool is_cached = albums->is_cached();
 
-                log::api->debug("Processing new artist's releases {} [{}]",
+                log::api->debug("Processing new artist's releases '{}' [{}]",
                     utils::to_string(artist.name), artist.id);
                 
                 if (albums->fetch(false, false))
                 {
-                    std::lock_guard lock(data_access);
-
                     for (const auto &album: *albums)
                         if (album.get_release_date() > time_treshold)
                         {
-                            log::api->info("A new release was found for the artist {} [{}]: {} [{}]",
+                            log::api->info("A new release was found for the artist '{}' [{}]: {} [{}]",
                                 utils::to_string(artist.name), artist.id,
                                 utils::to_string(album.name), album.id);
                             
@@ -86,7 +90,6 @@ bool recent_releases::request_data(data_t &data)
                 if (!is_cached)
                 {
                     auto delay_time = utils::events::has_observers<playback_observer>() ? 30s : 10s;
-                    // std::this_thread::sleep_for(delay_time);
                     cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
                 }
             });
@@ -95,12 +98,6 @@ bool recent_releases::request_data(data_t &data)
     }
 
     return false;
-}
-
-clock_t::duration recent_releases::get_sync_interval() const
-{
-    // the finally created cache is saved for one day
-    return 24h;
 }
 
 void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data)
