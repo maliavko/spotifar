@@ -6,6 +6,7 @@
 #include "librespot.hpp"
 #include "spotify/api.hpp"
 #include "spotify/auth.hpp"
+#include "spotify/releases.hpp"
 #include "ui/panel.hpp"
 #include "ui/player.hpp"
 #include "ui/events.hpp" // ui::ui_events_observer
@@ -15,8 +16,9 @@ namespace spotifar {
 
 class plugin:
     public config::config_observer, // for catching chnging config settings
-    public spotify::auth_observer,  // for launching librespot once credentials were acquaired
-    public ui::ui_events_observer   // for showing up the player by request
+    public spotify::auth_observer, // for launching librespot once credentials were acquaired
+    public spotify::releases_observer, // for showing fresh-releases-found notification
+    public ui::ui_events_observer // for showing up the player by request
 {
 public:
     plugin();
@@ -50,6 +52,9 @@ protected:
 
     // auth handler
     void on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal) override;
+
+    // recent releases handler
+    void on_releases_sync_finished(const spotify::recent_releases_t releases) override;
     
     // panel events handlers
     void show_player() override;

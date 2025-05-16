@@ -79,6 +79,12 @@ struct simplified_album_t: public data_item_t
     std::vector<simplified_artist_t> artists;
 
     static string make_uri(const item_id_t &id) { return make_item_uri("album", id); }
+
+    /// @brief Takes a first available artists or returns a sturb string 
+    wstring get_artist_name() const;
+
+    /// @brief Returns a string, containing all the track's artists separated by comma 
+    wstring get_artists_full_name() const;
     
     auto get_uri() const -> string { return make_uri(id); }
     auto is_single() const -> bool { return album_type == single; }
@@ -129,12 +135,6 @@ struct track_t: public simplified_track_t
     album_t album;
 
     static const string& get_fields_filter();
-
-    /// @brief Takes a first available artists or returns a sturb string 
-    wstring get_artist_name() const;
-
-    /// @brief Returns a string, containing all the track's artists separated by comma 
-    wstring get_artists_full_name() const;
 
     friend void from_json(const json::Value &j, track_t &t);
     friend void to_json(json::Value &j, const track_t &t, json::Allocator &allocator);

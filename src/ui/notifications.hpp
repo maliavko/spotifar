@@ -20,6 +20,7 @@ public:
     bool shutdown();
     
     void show_now_playing(const spotify::track_t &track, bool show_buttons = false);
+    void show_recent_releases_found(const spotify::recent_releases_t &releases);
 protected:
     // playback handlers
     void on_track_changed(const spotify::track_t &track, const spotify::track_t &prev_track) override;

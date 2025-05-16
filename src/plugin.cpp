@@ -20,11 +20,13 @@ plugin::plugin(): api(new spotify::api())
 
     utils::events::start_listening<config::config_observer>(this);
     utils::events::start_listening<spotify::auth_observer>(this);
+    utils::events::start_listening<spotify::releases_observer>(this);
     utils::events::start_listening<ui::ui_events_observer>(this);
 }
 
 plugin::~plugin()
 {
+    utils::events::stop_listening<spotify::releases_observer>(this);
     utils::events::stop_listening<spotify::auth_observer>(this);
     utils::events::stop_listening<config::config_observer>(this);
     utils::events::stop_listening<ui::ui_events_observer>(this);
@@ -273,6 +275,11 @@ void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal
         ui::events::show_root(api);
         ui::events::refresh_panels();
     }
+}
+
+void plugin::on_releases_sync_finished(const spotify::recent_releases_t releases)
+{
+    notifications->show_recent_releases_found(releases);
 }
 
 void plugin::show_player()

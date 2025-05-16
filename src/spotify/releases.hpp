@@ -43,10 +43,9 @@ private:
     std::mutex cv_m;
     bool stop_flag = false;
     
-    std::mutex data_access;
     data_t interim_data{}; // a container, accumulates the interim requested data
 
-    bool is_in_sync = false; // a syncing procedure is in action
+    bool is_in_sync = false; // a syncing procedure is in action flag
     followed_artists_ptr artists; // collection of followed artists to go over
 };
 

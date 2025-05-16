@@ -107,6 +107,21 @@ wstring simplified_album_t::get_type_abbrev() const
     return L"??";
 }
 
+wstring simplified_album_t::get_artists_full_name() const
+{
+    std::vector<wstring> artists_names;
+    std::transform(artists.cbegin(), artists.cend(), back_inserter(artists_names),
+        [](const auto &a) { return a.name; });
+    return utils::string_join(artists_names, L", ");
+}
+
+wstring simplified_album_t::get_artist_name() const
+{
+    if (artists.size() > 0)
+        return artists[0].name;
+    return utils::far3::get_text(MArtistUnknown);
+}
+
 void from_json(const Value &j, simplified_album_t &a)
 {
     a.id = j["id"].GetString();
@@ -218,21 +233,6 @@ const string& track_t::get_fields_filter()
 {
     static string fields = std::format("{},album,artists", simplified_track_t::get_fields_filter());
     return fields;
-}
-
-wstring track_t::get_artists_full_name() const
-{
-    std::vector<wstring> artists_names;
-    std::transform(artists.cbegin(), artists.cend(), back_inserter(artists_names),
-        [](const auto &a) { return a.name; });
-    return utils::string_join(artists_names, L", ");
-}
-
-wstring track_t::get_artist_name() const
-{
-    if (artists.size() > 0)
-        return artists[0].name;
-    return utils::far3::get_text(MArtistUnknown);
 }
 
 void to_json(Value &result, const track_t &t, json::Allocator &allocator)
