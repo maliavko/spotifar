@@ -522,7 +522,7 @@ bool player::on_artist_label_input_received(void *input_record)
     // and check whether the clicking position happened within range of symbols
     // of this particular name
     const auto &playback = api->get_playback_state();
-    wstring ws = playback.item.get_artists_full_name();
+    wstring ws = playback.item.album.get_artists_full_name();
     static std::wregex pattern(L"[^,]+");
 
     auto begin = std::wsregex_iterator{ ws.begin(), ws.end(), pattern };
@@ -810,7 +810,7 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
     track_progress.set_higher_boundary(track.duration);
 
     set_control_text(controls::track_name, track.name);
-    set_control_text(controls::artist_name, track.get_artists_full_name());
+    set_control_text(controls::artist_name, track.album.get_artists_full_name());
     set_control_text(controls::track_total_time, track_total_time_str);
 
     if (auto api = api_proxy.lock())
@@ -950,7 +950,7 @@ void player::update_playing_queue(bool is_visible)
             for (size_t i = 0; i < items.size(); i++)
             {
                 const auto &item = items[i];
-                const auto &long_name = std::format(L"{} - {}", item.get_artist_name(), item.name);
+                const auto &long_name = std::format(L"{} - {}", item.album.get_artist_name(), item.name);
                 far3::dialogs::add_list_item(hdlg, controls::queue_list, long_name, (int)i,
                     (void*)item.get_uri().c_str(), item.get_uri().size());
             }

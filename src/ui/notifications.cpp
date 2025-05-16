@@ -2,28 +2,30 @@
 #include "spotify/common.hpp"
 #include "lng.hpp"
 #include "utils.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
 using namespace WinToastLib;
 using namespace spotify;
-using namespace utils;
 
-/// @brief Toasts notifications handler-class
-class win_toast_track_handler:
+/// @brief Toasts notifications handler-class, for handling actions
+/// performed on the track-changed toast notification
+class track_changed_handler:
     public WinToastLib::IWinToastHandler,
     public playback_observer
 {
 public:
-    win_toast_track_handler(api_proxy_ptr api, const item_id_t &track_id):
+    track_changed_handler(api_proxy_ptr api, const item_id_t &track_id):
         api_proxy(api), track_id(track_id)
     {
-        events::start_listening<spotify::playback_observer>(this, true);
+        utils::events::start_listening<spotify::playback_observer>(this, true);
     }
 
-    ~win_toast_track_handler()
+    ~track_changed_handler()
     {
-        events::stop_listening<spotify::playback_observer>(this, true);
+        api_proxy.reset();
+        utils::events::stop_listening<spotify::playback_observer>(this, true);
     }
 
     void set_toast_id(INT64 tid)
@@ -68,10 +70,34 @@ private:
     INT64 toast_id = -1;
 };
 
+class fresh_releases_handler: public WinToastLib::IWinToastHandler
+{
+public:
+    fresh_releases_handler(api_proxy_ptr api): api_proxy(api) {}
+    ~fresh_releases_handler()
+    {
+        api_proxy.reset();
+    }
+protected:
+    // WinToast interface
+    void toastActivated() const override {}
+    void toastActivated(int action_idx) const override
+    {
+        log::global->debug("Notification's button clicked: button idx {}", action_idx);
+
+        ui::events::show_new_releases(api_proxy);
+        ui::events::refresh_panels();
+    }
+    void toastDismissed(WinToastDismissalReason state) const override {}
+    void toastFailed() const override {}
+private:
+    api_proxy_ptr api_proxy;
+};
+
 bool notifications::start()
 {
     // we mark the listener as a weak one, as it does not require frequent updates
-    events::start_listening<spotify::playback_observer>(this, true);
+    utils::events::start_listening<spotify::playback_observer>(this, true);
 
     try
     {
@@ -83,7 +109,7 @@ bool notifications::start()
         WinToast::WinToastError error;
         if (!WinToast::instance()->initialize(&error))
         {
-            far3::show_far_error_dlg(MErrorWinToastStartupUnexpected, WinToast::strerror(error));
+            utils::far3::show_far_error_dlg(MErrorWinToastStartupUnexpected, WinToast::strerror(error));
             return false;
         }
     }
@@ -102,7 +128,7 @@ bool notifications::shutdown()
     {
         WinToast::instance()->clear();
 
-        events::stop_listening<spotify::playback_observer>(this, true);
+        utils::events::stop_listening<spotify::playback_observer>(this, true);
     }
     catch (const std::exception &ex)
     {
@@ -145,7 +171,7 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         
         // text
         toast.setTextField(track.name, WinToastTemplate::FirstLine);
-        toast.setTextField(track.get_artist_name(), WinToastTemplate::SecondLine);
+        toast.setTextField(track.album.get_artist_name(), WinToastTemplate::SecondLine);
         toast.setAttributionText(L"Content is provided by Spotify service");
         
         // buttons
@@ -161,14 +187,53 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         toast.setAudioPath(WinToastTemplate::AudioSystemFile::DefaultSound);
         
         WinToast::WinToastError error;
-        auto handler = new win_toast_track_handler(api->get_ptr(), track.id);
+        auto handler = new track_changed_handler(api->get_ptr(), track.id);
         auto toast_id = WinToast::instance()->showToast(toast, handler, &error);
     
         handler->set_toast_id(toast_id);
     
         if (toast_id < 0)
-            log::global->error("There is an error showing windows notification, {}",
-                to_string(WinToast::strerror(error)));
+            log::global->error("There is an error showing track changed notification, {}",
+                utils::to_string(WinToast::strerror(error)));
+    }
+}
+
+void notifications::show_recent_releases_found(const spotify::recent_releases_t &releases)
+{
+    using utils::far3::get_text;
+
+    if (!WinToast::instance()->initialize()) return;
+
+    if (auto api = api_proxy.lock())
+    {
+        WinToastTemplate toast(WinToastTemplate::Text02);
+        
+        // first line is Label
+        toast.setTextField(get_text(MToastNewReleasesFoundTitle), WinToastTemplate::FirstLine);
+
+        // the second line is the list of artists' names
+        std::vector<wstring> artists_names;
+        for (const auto &r: releases)
+            artists_names.push_back(r.get_artist_name());
+        toast.setTextField(utils::string_join(artists_names, L", "), WinToastTemplate::SecondLine);
+
+        toast.setAttributionText(L"Content is provided by Spotify service");
+        
+        // buttons
+        toast.addAction(get_text(MToastNewReleasesFoundHaveALookBtn));
+        
+        // attributes
+        toast.setDuration(WinToastTemplate::Duration::Short);
+        toast.setAudioOption(WinToastTemplate::AudioOption::Silent);
+        toast.setAudioPath(WinToastTemplate::AudioSystemFile::DefaultSound);
+        
+        WinToast::WinToastError error;
+        auto handler = new fresh_releases_handler(api->get_ptr());
+        auto toast_id = WinToast::instance()->showToast(toast, handler, &error);
+    
+        if (toast_id < 0)
+            log::global->error("There is an error showing fresh releases notification, {}",
+                utils::to_string(WinToast::strerror(error)));
     }
 }
 

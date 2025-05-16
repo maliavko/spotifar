@@ -94,7 +94,6 @@
 "Unknown"
 
 "Critical error"
-
 "An error has occured while initializing plugin."
 "An error has occured while initializing plugin: Spotify client ID is not specified."
 "An error has occured while initializing plugin: Spotify client secret is not specified."
@@ -103,6 +102,10 @@
 "A worker thread caught an exception and stopped unexpectedly, closing plugin."
 "A playback error."
 "An error while fetching the collection."
+
+// notifications
+"New releases found"
+"Have a look"
 
 "Transferring playback"
 "Some other device is active now '{0}', would you like to transfer playback to '{1}'?"
