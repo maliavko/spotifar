@@ -86,10 +86,8 @@ namespace spotifar
 		MPanelNewReleasesItemDescr,
 		MPanelBrowseItemLabel,
 		MPanelBrowseItemDescr,
-		MPanelFeaturingArtistsItemLabel,
-		MPanelFeaturingArtistsItemDescr,
-		MPanelFeaturingAlbumsItemLabel,
-		MPanelFeaturingAlbumsItemDescr,
+		MPanelFeaturingItemLabel,
+		MPanelFeaturingItemDescr,
 
         MPlayerSourceLabel,
         MPlayerSourceCollection,
