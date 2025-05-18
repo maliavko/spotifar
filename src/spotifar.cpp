@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "spotifar.hpp"
 #include "lng.hpp"
 #include "config.hpp"
 #include "plugin.h"
@@ -8,6 +8,13 @@
 namespace spotifar {
 
 namespace far3 = utils::far3;
+
+plugin_ptr plugin_instance = nullptr;
+
+plugin_ptr& get_plugin()
+{
+    return plugin_instance;
+}
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getglobalinfow.html
 void WINAPI GetGlobalInfoW(GlobalInfo *info)
@@ -68,9 +75,9 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
     }
 }
 
-/// @brief https://api.farmanager.com/ru/exported_functions/openw.html 
+/// @brief https://api.farmanager.com/ru/exported_functions/openw.html
 HANDLE WINAPI OpenW(const OpenInfo *info)
-{    
+{
     // initialize logging system
     log::init();
 
@@ -86,10 +93,21 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
         return NULL;
     }
 
-    auto p = std::make_unique<plugin>();
-    p->start();
+    plugin_instance = std::make_unique<plugin>();
+    plugin_instance->start();
 
-    return p.release();
+    return plugin_instance.get();
+}
+
+/// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html
+void WINAPI ClosePanelW(const ClosePanelInfo *info)
+{
+    log::global->debug("Plugin's panel is closed, cleaning resources");
+
+    plugin_instance.release();
+
+    config::cleanup();
+    log::fini();
 }
 
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html
@@ -165,18 +183,6 @@ intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 {
     return ui::show_settings_menu();
-}
-
-/// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html 
-void WINAPI ClosePanelW(const ClosePanelInfo *info)
-{
-    log::global->debug("Plugin's panel is closed, cleaning resources");
-
-    // after auto-variable is destroyed, the unique_ptr will be as well
-    std::unique_ptr<plugin>(static_cast<plugin*>(info->hPanel));
-
-    config::cleanup();
-    log::fini();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processsynchroeventw.html

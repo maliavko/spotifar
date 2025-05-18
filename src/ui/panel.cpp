@@ -9,15 +9,15 @@ namespace far3 = utils::far3;
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
-/// @brief Shows a splash loading screen in the middle of the Far. If the `message` is not provided,
-/// the default one is shown.
+/// @brief Shows a splash loading screen in the middle of the Far Manager's panels.
+/// If the `message` is not provided, the default one is shown.
 /// @note the message is closed automatically by the next panels redrawal
 static void show_loading_splash(const wstring &message = L"")
 {
     const wchar_t* msgs[] = { L"", L"" };
 
     if (message.empty())
-        msgs[1] = L" Requesting data... ";
+        msgs[1] = L" Requesting data... "; // TODO: localize
     else
         msgs[1] = message.c_str();
 
@@ -255,6 +255,10 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             // to show a sort menu for the currently opened view
             case VK_F12 + keys::mods::ctrl:
             {
+                const auto &modes = view->get_sort_modes();
+                if (modes.size() == 0)
+                    return TRUE;
+
                 auto sort_modex_idx = (int)show_sort_dialog(*view);
                 if (sort_modex_idx > -1)
                     view->select_sort_mode(sort_modex_idx);
@@ -309,6 +313,7 @@ void panel::show_view(view_ptr v)
 void panel::show_fildered_view(ui_events_observer::view_filter_callbacks callbacks)
 {
     filter_callbacks = callbacks;
+    current_filter_idx = filter_callbacks.default_view_idx;
 
     if (auto callback = callbacks.get_callback(current_filter_idx))
         view = callback(api_proxy);

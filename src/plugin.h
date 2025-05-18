@@ -1,7 +1,9 @@
 #ifndef PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
 #define PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
+#pragma
 
 #include "stdafx.h"
+#include "abstract.hpp"
 #include "utils.hpp" // utils::tasks_queue
 #include "librespot.hpp"
 #include "spotify/api.hpp"
@@ -15,6 +17,7 @@
 namespace spotifar {
 
 class plugin:
+    public plugin_interface,
     public config::config_observer, // for catching chnging config settings
     public spotify::auth_observer, // for launching librespot once credentials were acquaired
     public spotify::releases_observer, // for showing fresh-releases-found notification
@@ -24,8 +27,10 @@ public:
     plugin();
     ~plugin();
 
-    void start();
-    void shutdown();
+    void start() override;
+    void shutdown() override;
+    
+    const std::unique_ptr<ui::player>& get_player() const override { return player; }
 
     // Far API interface
     void update_panel_info(OpenPanelInfo *info);
@@ -56,7 +61,7 @@ protected:
     // recent releases handler
     void on_releases_sync_finished(const spotify::recent_releases_t releases) override;
     
-    // panel events handlers
+    // ui events handlers
     void show_player() override;
 private:
     std::mutex sync_worker_mutex; // is locked all the way until worker is active

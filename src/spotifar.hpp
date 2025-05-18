@@ -1,0 +1,16 @@
+#ifndef SPOTIFAR_HPP_6BEA4EDC_5C18_4DBA_BFD2_7CE57524C5CE
+#define SPOTIFAR_HPP_6BEA4EDC_5C18_4DBA_BFD2_7CE57524C5CE
+#pragma once
+
+#include "stdafx.h"
+#include "abstract.hpp"
+
+namespace spotifar {
+
+using plugin_ptr = std::unique_ptr<plugin_interface>;
+
+plugin_ptr& get_plugin();
+
+} // namespace spotifar
+
+#endif // SPOTIFAR_HPP_6BEA4EDC_5C18_4DBA_BFD2_7CE57524C5CE

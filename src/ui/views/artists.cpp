@@ -194,7 +194,7 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
 //-----------------------------------------------------------------------------------------------------------
 recent_artists_view::recent_artists_view(api_proxy_ptr api):
     artists_base_view(api, "recent_artists_view", get_text(MPanelArtistsItemLabel),
-                      std::bind(events::show_recents, api))
+                      std::bind(events::show_root, api))
 {
     utils::events::start_listening<play_history_observer>(this);
 
@@ -235,10 +235,12 @@ void recent_artists_view::rebuild_items()
     auto api = api_proxy.lock();
     std::unordered_map<string, history_item_t> recent_artists;
     
-    // collecting all the tracks' artists listened to
-    for (const auto &item: api->get_play_history())
-        if (item.track.artists.size() > 0)
-            recent_artists[item.track.artists[0].id] = item;
+    // we pick the earliest possible item among all the duplicates, for that
+    // the reverse order is used
+    auto play_history = api->get_play_history();
+    for (auto it = play_history.rbegin(); it != play_history.rend(); ++it)
+        if (it->track.artists.size() > 0)
+            recent_artists[it->track.artists[0].id] = *it;
 
     if (recent_artists.size() > 0)
     {
@@ -282,6 +284,160 @@ void recent_artists_view::on_items_changed()
     
     panels::update(PANEL_ACTIVE);
     panels::redraw(PANEL_ACTIVE);
+}
+
+//-----------------------------------------------------------------------------------------------------------
+recently_liked_tracks_artists_view::recently_liked_tracks_artists_view(api_proxy_ptr api):
+    artists_base_view(api, "recently_liked_tracks_artists_view", get_text(MPanelArtistsItemLabel),
+                      std::bind(events::show_root, api))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_tracks();
+
+    rebuild_items();
+}
+
+config::settings::view_t recently_liked_tracks_artists_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+const view_abstract::sort_modes_t& recently_liked_tracks_artists_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = artists_base_view::get_sort_modes();
+        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+void recently_liked_tracks_artists_view::rebuild_items()
+{
+    items.clear();
+    
+    if (collection && collection->fetch(false, true, 3))
+    {
+        std::set<item_id_t> used_ids{};
+
+        for (const auto &track: *collection)
+            if (track.artists.size() > 0)
+            {
+                const auto &artist = track.artists[0];
+                if (!used_ids.contains(artist.id))
+                {
+                    used_ids.insert(artist.id);
+                    items.push_back({ {artist}, track.added_at });
+                }
+            }
+    }
+}
+
+intptr_t recently_liked_tracks_artists_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const recent_artist_t*>(data1),
+            &item2 = static_cast<const recent_artist_t*>(data2);
+
+        return item1->played_at.compare(item2->played_at);
+    }
+    return artists_base_view::compare_items(sort_mode, data1, data2);
+}
+
+std::generator<const artist_t&> recently_liked_tracks_artists_view::get_artists()
+{
+    for (const auto &i: items)
+        co_yield i;
+}
+
+void recently_liked_tracks_artists_view::show_albums_view(const artist_t &artist) const
+{
+    events::show_artist_albums(api_proxy, artist,
+        std::bind(events::show_recently_liked_tracks, api_proxy));
+}
+
+//-----------------------------------------------------------------------------------------------------------
+recently_saved_album_artists_view::recently_saved_album_artists_view(api_proxy_ptr api):
+    artists_base_view(api, "recently_saved_album_artists_view", get_text(MPanelArtistsItemLabel),
+                      std::bind(events::show_browse, api))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_albums();
+
+    rebuild_items();
+}
+
+config::settings::view_t recently_saved_album_artists_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+const view_abstract::sort_modes_t& recently_saved_album_artists_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = artists_base_view::get_sort_modes();
+        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+void recently_saved_album_artists_view::rebuild_items()
+{
+    items.clear();
+    
+    if (collection && collection->fetch(false, true, 3))
+    {
+        std::set<item_id_t> used_ids{};
+
+        // we pick the earliest possible item among all the duplicates, for that
+        // the reverse order is used
+        for (auto it = collection->rbegin(); it != collection->rend(); ++it)
+            if (it->artists.size() > 0)
+            {
+                const auto &artist = it->artists[0];
+                if (!used_ids.contains(artist.id))
+                {
+                    used_ids.insert(artist.id);
+                    items.push_back({ {artist}, it->added_at });
+                }
+            }
+    }
+}
+
+intptr_t recently_saved_album_artists_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const recent_artist_t*>(data1),
+            &item2 = static_cast<const recent_artist_t*>(data2);
+
+        return item1->played_at.compare(item2->played_at);
+    }
+    return artists_base_view::compare_items(sort_mode, data1, data2);
+}
+
+std::generator<const artist_t&> recently_saved_album_artists_view::get_artists()
+{
+    for (const auto &i: items)
+        co_yield i;
+}
+
+void recently_saved_album_artists_view::show_albums_view(const artist_t &artist) const
+{
+    events::show_artist_albums(api_proxy, artist,
+        std::bind(events::show_recently_saved_albums, api_proxy));
 }
 
 } // namespace ui

@@ -3,6 +3,7 @@
 #include "lng.hpp"
 #include "utils.hpp"
 #include "ui/events.hpp"
+#include "spotifar.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -141,12 +142,22 @@ bool notifications::shutdown()
 
 void notifications::on_track_changed(const track_t &track, const track_t &prev_track)
 {
-    if (!WinToast::instance()->initialize()) return;
+    using utils::far3::actl::is_wnd_in_focus;
 
-    if (config::is_track_changed_notification_enabled() && track.is_valid())
-        show_now_playing(track, true);
+    if (WinToast::instance()->initialize())
+    {
+        if (const auto &plugin = get_plugin())
+        {
+            const auto &player_dialog = plugin->get_player();
+
+            // do not show a tray notification if the Far window is in focus and player is visible
+            bool already_seen = is_wnd_in_focus() && player_dialog && player_dialog->is_visible();
+            
+            if (config::is_track_changed_notification_enabled() && track.is_valid() && !already_seen)
+                show_now_playing(track, true);
+        }
+    }
 }
-
 
 void notifications::show_now_playing(const spotify::track_t &track, bool show_buttons)
 {
@@ -172,7 +183,7 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         // text
         toast.setTextField(track.name, WinToastTemplate::FirstLine);
         toast.setTextField(track.album.get_artist_name(), WinToastTemplate::SecondLine);
-        toast.setAttributionText(L"Content is provided by Spotify service");
+        toast.setAttributionText(L"Content is provided by Spotify service"); // TODO: localize
         
         // buttons
         if (show_buttons)

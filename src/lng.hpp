@@ -74,6 +74,8 @@ namespace spotifar
         MPanelPlaylistsItemDescr,
 		MPanelRecentsItemLabel,
 		MPanelRecentsItemDescr,
+		MPanelPlayingQueueItemLabel,
+		MPanelPlayingQueueItemDescr,
 		MPanelRecentTracksItemLabel,
 		MPanelRecentTracksItemDescr,
 		MPanelRecentAlbumsItemLabel,
@@ -86,8 +88,10 @@ namespace spotifar
 		MPanelNewReleasesItemDescr,
 		MPanelBrowseItemLabel,
 		MPanelBrowseItemDescr,
-		MPanelFeaturingItemLabel,
-		MPanelFeaturingItemDescr,
+		MPanelRecentlyLikedTracksLabel,
+		MPanelRecentlyLikedTracksDescr,
+		MPanelRecentlySavedAlbumsLabel,
+		MPanelRecentlySavedAlbumsDescr,
 
         MPlayerSourceLabel,
         MPlayerSourceCollection,
@@ -117,6 +121,8 @@ namespace spotifar
         // complimentary dialogs & menus
         MTransferPlaybackTitle,
         MTransferPlaybackMessage,
+        MTransferPlaybackInactiveMessage01,
+        MTransferPlaybackInactiveMessage02,
     };
 }
 

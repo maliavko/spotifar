@@ -210,7 +210,7 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 //-----------------------------------------------------------------------------------------------------------
 recent_tracks_view::recent_tracks_view(api_proxy_ptr api):
     tracks_base_view(api, "recent_tracks_view", get_text(MPanelTracksItemLabel),
-                     std::bind(events::show_recents, api))
+                     std::bind(events::show_root, api))
 {
     rebuild_items();
 
@@ -353,7 +353,11 @@ std::generator<const simplified_track_t&> playing_queue_view::get_tracks()
     if (auto api = api_proxy.lock())
     {
         playing_queue = api->get_playing_queue();
+
+        // currently playing item
+        co_yield playing_queue.currently_playing;
         
+        // queued items
         for (const auto &t: playing_queue.queue)
             co_yield t;
     }
@@ -361,10 +365,7 @@ std::generator<const simplified_track_t&> playing_queue_view::get_tracks()
 
 const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const
 {
-    using namespace utils::keys;
-    static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, VK_F7 + mods::ctrl },
-    };
+    static sort_modes_t modes = {}; // no sorting modes for the view
     return modes;
 }
 
@@ -372,6 +373,61 @@ void playing_queue_view::on_track_changed(const track_t &track, const track_t &p
 {
     panels::update(PANEL_ACTIVE);
     panels::redraw(PANEL_ACTIVE);
+}
+
+//-----------------------------------------------------------------------------------------------------------
+recently_liked_tracks_view::recently_liked_tracks_view(api_proxy_ptr api_proxy):
+    tracks_base_view(api_proxy, "recently_liked_tracks_view", get_text(MPanelRecentlyLikedTracksLabel),
+                     std::bind(events::show_browse, api_proxy))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_tracks();
+}
+
+config::settings::view_t recently_liked_tracks_view::get_default_settings() const
+{
+    return { 0, false, 3 };
+}
+
+bool recently_liked_tracks_view::start_playback(const string &track_id)
+{
+    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
+    return true;
+}
+
+const view_abstract::sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = tracks_base_view::get_sort_modes();
+        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+intptr_t recently_liked_tracks_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const saved_track_t*>(data1),
+            &item2 = static_cast<const saved_track_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return tracks_base_view::compare_items(sort_mode, data1, data2);
+}
+
+std::generator<const simplified_track_t&> recently_liked_tracks_view::get_tracks()
+{
+    // requesting only three pages of the data
+    if (collection->fetch(false, true, 3))
+        for (const auto &t: *collection)
+            co_yield t;
 }
 
 } // namespace ui
