@@ -67,7 +67,7 @@ public:
     recent_artists_view(api_proxy_ptr api);
     ~recent_artists_view();
 protected:
-    auto rebuild_items() -> void;
+    void rebuild_items();
 
     // view interface
     auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
@@ -81,6 +81,58 @@ protected:
     void on_items_changed();
 private:
     std::vector<history_artist_t> items;
+};
+
+/// @brief
+class recently_liked_tracks_artists_view: public artists_base_view
+{
+public:
+    struct recent_artist_t: public artist_t
+    {
+        string played_at;
+    };
+public:
+    recently_liked_tracks_artists_view(api_proxy_ptr api);
+protected:
+    void rebuild_items();
+
+    // view interface
+    auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    
+    // artists_base_view
+    auto get_artists() -> std::generator<const artist_t&> override;
+    auto show_albums_view(const artist_t &artist) const -> void override;
+private:
+    saved_tracks_ptr collection;
+    std::vector<recent_artist_t> items;
+};
+
+/// @brief
+class recently_saved_album_artists_view: public artists_base_view
+{
+public:
+    struct recent_artist_t: public artist_t
+    {
+        string played_at;
+    };
+public:
+    recently_saved_album_artists_view(api_proxy_ptr api);
+protected:
+    void rebuild_items();
+
+    // view interface
+    auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    
+    // artists_base_view
+    auto get_artists() -> std::generator<const artist_t&> override;
+    void show_albums_view(const artist_t &artist) const override;
+private:
+    saved_albums_ptr collection;
+    std::vector<recent_artist_t> items;
 };
 
 } // namespace ui

@@ -143,9 +143,14 @@ root_view::root_view(api_proxy_ptr api):
             std::bind(show_browse, api),
         },
         {
-            { recents_id },
+            { recently_played_id },
             MPanelRecentsItemLabel, MPanelRecentsItemDescr,
             std::bind(show_recents, api),
+        },
+        {
+            { playing_queue_id },
+            MPanelPlayingQueueItemLabel, MPanelPlayingQueueItemDescr,
+            std::bind(show_playing_queue, api),
         },
     })
     {};
@@ -160,9 +165,14 @@ browse_view::browse_view(api_proxy_ptr api):
             std::bind(show_new_releases, api)
         },
         {
-            { featuring_likes_id },
-            MPanelFeaturingItemLabel, MPanelFeaturingItemDescr,
-            std::bind(show_featuring, api)
+            { recently_liked_tracks_id },
+            MPanelRecentlyLikedTracksLabel, MPanelRecentlyLikedTracksDescr,
+            std::bind(show_recently_liked_tracks, api)
+        },
+        {
+            { recently_saved_albums_id },
+            MPanelRecentlySavedAlbumsLabel, MPanelRecentlySavedAlbumsDescr,
+            std::bind(show_recently_saved_albums, api)
         },
     })
     {}

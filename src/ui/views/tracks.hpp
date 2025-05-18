@@ -72,7 +72,7 @@ public:
     recent_tracks_view(api_proxy_ptr api);
     ~recent_tracks_view();
 protected:
-    auto rebuild_items() -> void;
+    void rebuild_items();
 
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -80,7 +80,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
-    auto start_playback(const string &track_id) -> bool override;
+    bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const simplified_track_t&> override;
     
     // playback_observer handlers
@@ -111,7 +111,6 @@ private:
     saved_tracks_ptr collection;
 };
 
-/// TODO: unused
 /// @brief A class-view, to represent on the panels a list of
 /// the playing queue tracks
 class playing_queue_view:
@@ -132,6 +131,24 @@ protected:
 
     // playback_observer handlers
     void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
+};
+
+/// @brief
+class recently_liked_tracks_view: public tracks_base_view
+{
+public:
+    recently_liked_tracks_view(api_proxy_ptr api);
+protected:
+    // view interface
+    auto get_default_settings() const -> config::settings::view_t override;
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+
+    // tracks_base_view interface
+    bool start_playback(const string &track_id) override;
+    auto get_tracks() -> std::generator<const simplified_track_t&> override;
+private:
+    saved_tracks_ptr collection;
 };
 
 } // namespace ui

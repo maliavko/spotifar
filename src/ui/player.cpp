@@ -456,7 +456,10 @@ bool player::on_input_received(void *input_record)
                         return true;
                     
                     case keys::q + keys::mods::ctrl:
-                        expand(!is_expanded());
+                        // expand(!is_expanded());
+                        events::show_playing_queue(api_proxy);
+                        events::refresh_panels();
+                        //hide();
                         return true;
                 }
             }
@@ -628,7 +631,7 @@ bool player::on_track_bar_input_received(void *input_record)
     auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + track_bar_layout.X1);
     auto progress_percent = (float)click_pos / track_bar_length;
 
-    api->seek_to_position((int)(playback.item.duration_ms * progress_percent));
+    api->seek_to_position((int)std::round(playback.item.duration_ms * progress_percent));
     return true;
 }
 
@@ -829,15 +832,15 @@ void player::update_track_bar(int duration, int progress)
 
     static wstring track_bar, track_time_str;
 
-    auto track_bar_layout = dlg_items_layout[controls::track_bar];
-    auto track_bar_size = track_bar_layout.X2 - track_bar_layout.X1;
-    track_bar = wstring(track_bar_size, track_bar_char_unfilled);
+    const auto &track_bar_layout = dlg_items_layout[controls::track_bar];
+    const auto &track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
+    track_bar = wstring(track_bar_length, track_bar_char_unfilled); // filling the bar with spare symbols first
     track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(progress));
 
     if (duration)
     {
         float progress_percent = (float)progress / duration;
-        int progress_chars_length = (int)(track_bar_size * progress_percent);
+        int progress_chars_length = (int)std::round(track_bar_length * progress_percent);
         fill(track_bar.begin(), track_bar.begin() + progress_chars_length, track_bar_char_filled);
     }
     

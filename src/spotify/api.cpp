@@ -212,7 +212,7 @@ saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 
 playing_queue_t api::get_playing_queue()
 {
-    return request_item(item_requester<playing_queue_t, 1, std::chrono::minutes>(
+    return request_item(item_requester<playing_queue_t, 1, std::chrono::seconds>(
         "/v1/me/player/queue"), get_ptr());
 }
 
@@ -323,6 +323,21 @@ void api::resume_playback(const item_id_t &device_id)
 
 void api::toggle_playback(const item_id_t &device_id)
 {
+    // if we're not transferring playback to a specific device, we need
+    // to make sure there are some already active one at least
+    if (device_id.empty())
+    {
+        devices->resync(true);
+        
+        const auto &available_devices = devices->get();
+        auto active_dev_it = std::find_if(available_devices.begin(), available_devices.end(),
+            [](const auto &d) { return d.is_active; });
+
+        if (active_dev_it == available_devices.end())
+            return playback_cmd_error("No playback device is currently active");
+    }
+
+    // making sure we have a last updates playback state
     playback->resync(true);
     const auto &state = playback->get();
     if (!state.is_playing)
