@@ -158,7 +158,7 @@ const view_abstract::items_t& albums_base_view::get_items()
         if (auto api = api_proxy.lock())
         {
             auto tracks = api->get_album_tracks(a.id);
-            if (tracks->fetch(true))
+            if (tracks->fetch(true, false))
             {
                 for (const auto &t: *tracks)
                     total_length_ms += t.duration_ms;
@@ -322,7 +322,7 @@ void new_releases_view::on_releases_sync_finished(const recent_releases_t releas
 //-----------------------------------------------------------------------------------------------------------
 recent_albums_view::recent_albums_view(api_proxy_ptr api):
     albums_base_view(api, "recent_albums_view", get_text(MPanelAlbumsItemLabel),
-        std::bind(events::show_recents, api))
+        std::bind(events::show_root, api))
 {
     utils::events::start_listening<play_history_observer>(this);
 
@@ -369,9 +369,11 @@ void recent_albums_view::rebuild_items()
     auto api = api_proxy.lock();
     std::unordered_map<string, history_item_t> recent_albums;
     
-    // collecting all the tracks' albums listened to
-    for (const auto &item: api->get_play_history())
-        recent_albums[item.track.album.id] = item;
+    // we pick the earliest possible item among all the duplicates, for that
+    // the reverse order is used
+    auto play_history = api->get_play_history();
+    for (auto it = play_history.rbegin(); it != play_history.rend(); ++it)
+        recent_albums[it->track.album.id] = *it;
 
     if (recent_albums.size() > 0)
     {
@@ -417,7 +419,7 @@ void recent_albums_view::on_items_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 featuring_albums_view::featuring_albums_view(api_proxy_ptr api):
-    albums_base_view(api, "featuring_albums_view", get_text(MPanelFeaturingItemLabel),
+    albums_base_view(api, "featuring_albums_view", get_text(MPanelRecentlyLikedTracksDescr),
         std::bind(events::show_browse, api))
     {}
 
@@ -444,6 +446,132 @@ void featuring_albums_view::show_tracks_view(const album_t &album) const
     }
 }
 
+//-----------------------------------------------------------------------------------------------------------
+recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(api_proxy_ptr api_proxy):
+    albums_base_view(api_proxy, "recently_liked_tracks_albums_view", get_text(MPanelAlbumsItemLabel),
+        std::bind(events::show_browse, api_proxy))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_tracks();
+
+    rebuild_items();
+}
+
+config::settings::view_t recently_liked_tracks_albums_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+const view_abstract::sort_modes_t& recently_liked_tracks_albums_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = albums_base_view::get_sort_modes();
+        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+intptr_t recently_liked_tracks_albums_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const saved_album_t*>(data1),
+            &item2 = static_cast<const saved_album_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return albums_base_view::compare_items(sort_mode, data1, data2);
+}
+
+void recently_liked_tracks_albums_view::show_tracks_view(const album_t &album) const
+{
+    events::show_album_tracks(api_proxy, album,
+        std::bind(events::show_recently_liked_tracks, api_proxy));
+}
+
+std::generator<const simplified_album_t&> recently_liked_tracks_albums_view::get_albums()
+{
+    for (const auto &i: items)
+        co_yield i;
+}
+
+void recently_liked_tracks_albums_view::rebuild_items()
+{
+    items.clear();
+    
+    if (collection && collection->fetch(false, true, 3))
+    {
+        std::set<item_id_t> used_ids{};
+
+        for (const auto &track: *collection)
+            if (!used_ids.contains(track.album.id))
+            {
+                used_ids.insert(track.album.id);
+                items.push_back({ {track.album}, track.added_at });
+            }
+    }
+}
+
+//-----------------------------------------------------------------------------------------------------------
+recently_saved_albums_view::recently_saved_albums_view(api_proxy_ptr api_proxy):
+    albums_base_view(api_proxy, "recently_saved_albums_view", get_text(MPanelAlbumsItemLabel),
+        std::bind(events::show_browse, api_proxy))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_saved_albums();
+}
+
+config::settings::view_t recently_saved_albums_view::get_default_settings() const
+{
+    return { 1, false, 6 };
+}
+
+const view_abstract::sort_modes_t& recently_saved_albums_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = albums_base_view::get_sort_modes();
+        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+    }
+    return modes;
+}
+
+intptr_t recently_saved_albums_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME)
+    {
+        const auto
+            &item1 = static_cast<const saved_album_t*>(data1),
+            &item2 = static_cast<const saved_album_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return albums_base_view::compare_items(sort_mode, data1, data2);
+}
+
+void recently_saved_albums_view::show_tracks_view(const album_t &album) const
+{
+    events::show_album_tracks(api_proxy, album,
+        std::bind(events::show_recently_saved_albums, api_proxy));
+}
+
+std::generator<const simplified_album_t&> recently_saved_albums_view::get_albums()
+{
+    // requesting only three pages of the data
+    if (collection->fetch(false, true, 3))
+        for (const auto &a: *collection)
+            co_yield a;
+}
 
 } // namespace ui
 } // namespace spotifar

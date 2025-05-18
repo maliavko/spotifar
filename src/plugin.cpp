@@ -18,18 +18,18 @@ plugin::plugin(): api(new spotify::api())
     notifications = std::make_unique<ui::notifications>(api);
     librespot = std::make_unique<librespot_handler>(api);
 
-    utils::events::start_listening<config::config_observer>(this);
-    utils::events::start_listening<spotify::auth_observer>(this);
-    utils::events::start_listening<spotify::releases_observer>(this);
-    utils::events::start_listening<ui::ui_events_observer>(this);
+    events::start_listening<config::config_observer>(this);
+    events::start_listening<spotify::auth_observer>(this);
+    events::start_listening<spotify::releases_observer>(this);
+    events::start_listening<ui::ui_events_observer>(this);
 }
 
 plugin::~plugin()
 {
-    utils::events::stop_listening<spotify::releases_observer>(this);
-    utils::events::stop_listening<spotify::auth_observer>(this);
-    utils::events::stop_listening<config::config_observer>(this);
-    utils::events::stop_listening<ui::ui_events_observer>(this);
+    events::stop_listening<spotify::releases_observer>(this);
+    events::stop_listening<spotify::auth_observer>(this);
+    events::stop_listening<config::config_observer>(this);
+    events::stop_listening<ui::ui_events_observer>(this);
 
     panel.reset();
     player.reset();

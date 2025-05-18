@@ -25,7 +25,9 @@ namespace events {
 
     void show_new_releases(api_proxy_ptr api);
 
-    void show_featuring(api_proxy_ptr api);
+    void show_recently_liked_tracks(api_proxy_ptr api);
+
+    void show_recently_saved_albums(api_proxy_ptr api);
 
     void show_playlist(api_proxy_ptr api, const playlist_t &playlist);
 
@@ -34,6 +36,8 @@ namespace events {
     void show_album_tracks(api_proxy_ptr api, const album_t &album, view_abstract::return_callback_t callback = {});
     
     void show_player();
+
+    void show_playing_queue(api_proxy_ptr api);
     
     void show_settings();
 
@@ -50,31 +54,38 @@ struct ui_events_observer: public BaseObserverProtocol
     {
         using callback_t = std::function<view_ptr(api_proxy_ptr)>;
 
-        const static size_t artists_idx = 0;
-        const static size_t albums_idx = 1;
-        const static size_t tracks_idx = 2;
-        const static size_t playlists_idx = 3;
+        const static size_t
+            artists_idx = 0,
+            albums_idx = 1,
+            tracks_idx = 2,
+            playlists_idx = 3;
 
-        callback_t artists = nullptr;
-        callback_t albums = nullptr;
-        callback_t tracks = nullptr;
-        callback_t playlists = nullptr;
+        callback_t artists, albums, tracks, playlists;
+        size_t default_view_idx = artists_idx;
 
         void clear()
         {
             artists = albums = tracks = playlists = nullptr;
         }
 
-        callback_t get_callback(size_t idx)
+        callback_t get_callback(size_t view_idx)
         {
-            switch (idx)
+            std::vector<callback_t> callbacks{ artists, albums, tracks, playlists };
+
+            // checking the callback of a given `view_idx` first;
+            // if it is invalid, checking then the default view callback
+            for (auto idx: { view_idx, default_view_idx })
             {
-                case artists_idx: return artists;
-                case albums_idx: return albums;
-                case tracks_idx: return tracks;
-                case playlists_idx: return playlists;
+                if (idx < callbacks.size() && callbacks[idx])
+                    return callbacks[idx];
             }
-            return artists;
+
+            // ...if none of the indecies worked, trying to return the first valid one
+            for (size_t idx = 0; idx < callbacks.size(); idx++)
+                if (callbacks[idx])
+                    return callbacks[idx];
+
+            return nullptr;
         }
     };
 

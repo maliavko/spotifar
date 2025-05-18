@@ -146,6 +146,47 @@ protected:
     void show_tracks_view(const album_t &album) const override;
 };
 
+/// @brief
+class recently_liked_tracks_albums_view: public albums_base_view
+{
+public:
+    recently_liked_tracks_albums_view(api_proxy_ptr api);
+protected:
+    void rebuild_items();
+
+    // view interface
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+
+    // albums_base_view interface
+    auto get_albums() -> std::generator<const simplified_album_t&> override;
+    void show_tracks_view(const album_t &album) const override;
+private:
+    saved_tracks_ptr collection;
+    std::vector<saved_album_t> items;
+};
+
+/// @brief
+class recently_saved_albums_view: public albums_base_view
+{
+public:
+    recently_saved_albums_view(api_proxy_ptr api);
+protected:
+    void rebuild_items();
+    
+    // view interface
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+
+    // albums_base_view interface
+    auto get_albums() -> std::generator<const simplified_album_t&> override;
+    void show_tracks_view(const album_t &album) const override;
+private:
+    saved_albums_ptr collection;
+};
+
 } // namespace ui
 } // namespace spotifar
 

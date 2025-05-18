@@ -69,8 +69,8 @@ bool recent_releases::request_data(data_t &data)
                 auto albums = api_proxy->get_artist_albums(artist.id);
                 bool is_cached = albums->is_cached();
 
-                log::api->debug("Processing new artist's releases '{}' [{}]",
-                    utils::to_string(artist.name), artist.id);
+                log::api->debug("Processing new artist's releases '{}' [{}], {} left",
+                    utils::to_string(artist.name), artist.id, pool.get_tasks_total());
                 
                 if (albums->fetch(false, false))
                 {
@@ -112,7 +112,8 @@ void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data
         if (!prev_releases.contains(album))
             result.push_back(album);
 
-    dispatch_event(&releases_observer::on_releases_sync_finished, result);
+    if (result.size() > 0)
+        dispatch_event(&releases_observer::on_releases_sync_finished, result);
 }
     
 } // namespace spotify

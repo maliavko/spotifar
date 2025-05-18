@@ -477,7 +477,9 @@ struct collection_interface
     /// from some heavy environment and should not perform many http calls
     /// @param notify_watchers does not send changes to the requesting status observers like
     /// showing request progress splashing screen and etc.
-    virtual bool fetch(bool only_cached = false, bool notify_watchers = true) = 0;
+    /// @param pages_to_request number of data pages to request; "0" means all
+    virtual bool fetch(bool only_cached = false, bool notify_watchers = true,
+        size_t pages_to_request = 0) = 0;
 
     /// @brief Returns whether the container is populated from server or not
     virtual bool is_populated() const = 0;
@@ -560,11 +562,12 @@ public:
     /// from some heavy environment and should not perform many http calls
     /// @param notify_watchers does not send changes to the requesting status observers like
     /// showing request progress splashing screen and etc.
-    bool fetch(bool only_cached = false, bool notify_watchers = true)
+    /// @param pages_to_request number of data pages to request; "0" means all
+    bool fetch(bool only_cached = false, bool notify_watchers = true, size_t pages_to_request = 0)
     {
         clear();
 
-        if (!fetch_all(api_proxy, only_cached, notify_watchers))
+        if (!fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
             return false;
 
         populated = true;
@@ -581,7 +584,9 @@ protected:
     /// from some heavy environment and should not perform many http calls
     /// @param notify_watchers does not send changes to the requesting status observers like
     /// showing request progress splashing screen and etc.
-    virtual bool fetch_all(api_proxy_ptr api, bool only_cached, bool notify_watchers = true) = 0;
+    /// @param pages_to_request number of data pages to request; "0" means all
+    virtual bool fetch_items(api_proxy_ptr api, bool only_cached, bool notify_watchers = true,
+        size_t pages_to_request = 0) = 0;
 protected:
     api_proxy_ptr api_proxy;
     string url;
@@ -612,7 +617,8 @@ public:
     using base_t::requester_ptr;
     using base_t::collection_abstract;
 protected:
-    bool fetch_all(api_proxy_ptr api, bool only_cached, bool notify_watchers = true) override
+    bool fetch_items(api_proxy_ptr api, bool only_cached, bool notify_watchers = true,
+        size_t pages_to_request = 0) override
     {       
         auto requester = get_begin_requester();
         requester_progress_notifier notifier(requester->get_url(), notify_watchers);
@@ -626,15 +632,22 @@ protected:
                     get_fetching_error(requester));
                 return false;
             }
+            
+            auto total = requester->get_total();
 
-            notifier.send_progress(this->size(), requester->get_total());
+            if (pages_to_request > 0)
+                total = std::min(total, pages_to_request * max_limit);
+
+            notifier.send_progress(this->size(), total);
 
             // reserving all the container length space at once
-            if (this->capacity() != requester->get_total())
-                this->reserve(requester->get_total());
+            if (this->capacity() != total)
+                this->reserve(total);
             
             const auto &items = requester->get();
             this->insert(this->end(), items.begin(), items.end());
+            
+            if (--pages_to_request <= 0) break;
     
             const auto &next_url = requester->get_next_url();
             if (!next_url.empty())
@@ -667,7 +680,8 @@ public:
     using base_t::requester_ptr;
     using base_t::collection_abstract;
 protected:
-    bool fetch_all(api_proxy_ptr api_proxy, bool only_cached, bool notify_watchers = true) override
+    bool fetch_items(api_proxy_ptr api_proxy, bool only_cached, bool notify_watchers = true,
+        size_t pages_to_request = 0) override
     {   
         if (api_proxy.expired()) return false;
 
@@ -688,8 +702,14 @@ protected:
 
         // calculating the amount of pages
         size_t start = 1ULL, end = total / max_limit;
-        if (total - end * max_limit > 0)
+        if (total - end * max_limit > 0) // if there are some entries left, adding extra page on top
             end += 1;
+
+        if (pages_to_request > 0)
+        {
+            end = std::min(pages_to_request, end);
+            total = std::min(total, pages_to_request * max_limit);
+        }
 
         std::vector<std::vector<T>> result(end);
         result[0] = requester->get();
