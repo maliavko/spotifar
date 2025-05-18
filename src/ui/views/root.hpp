@@ -32,8 +32,8 @@ public:
 protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto update_panel_info(OpenPanelInfo *info) -> void override;
-    auto request_extra_info(const data_item_t* data) -> bool override;
+    void update_panel_info(OpenPanelInfo *info) override;
+    bool request_extra_info(const data_item_t* data) override;
     auto select_item(const data_item_t *data) -> intptr_t override;
 
     virtual auto get_total(const item_id_t &menu_id, bool only_cached) -> size_t { return 0; }
@@ -48,7 +48,8 @@ public:
     inline static const item_id_t
         collection_id = "collection",
         browse_id = "browse",
-        recents_id = "recents";
+        recently_played_id = "recently_played",
+        playing_queue_id = "playing_queue";
 public:
     root_view(api_proxy_ptr api);
 };
@@ -58,7 +59,8 @@ class browse_view: public root_base_view
 public:
     inline static const item_id_t
         new_releases_id = "new_releases",
-        featuring_likes_id = "featuring_likes";
+        recently_liked_tracks_id = "recently_liked_tracks",
+        recently_saved_albums_id = "recently_saved_albums";
 public:
     browse_view(api_proxy_ptr api);
 };

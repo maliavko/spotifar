@@ -40,6 +40,7 @@ namespace events {
                 .albums = &view_factory<saved_albums_view>,
                 .tracks = &view_factory<saved_tracks_view>,
                 .playlists = &view_factory<saved_playlists_view>,
+                .default_view_idx = ui_events_observer::view_filter_callbacks::artists_idx
             });
     }
 
@@ -57,6 +58,7 @@ namespace events {
                 .albums = &view_factory<recent_albums_view>,
                 .tracks = &view_factory<recent_tracks_view>,
                 .playlists = &view_factory<recent_playlists_view>,
+                .default_view_idx = ui_events_observer::view_filter_callbacks::tracks_idx
             });
     }
     
@@ -65,12 +67,26 @@ namespace events {
         return show_panel_view<new_releases_view>(api);
     }
     
-    void show_featuring(api_proxy_ptr api)
+    void show_recently_liked_tracks(api_proxy_ptr api)
     {
         return ObserverManager::notify(
             &ui_events_observer::show_fildered_view,
             ui_events_observer::view_filter_callbacks{
-                .albums = &view_factory<featuring_albums_view>,
+                .artists = &view_factory<recently_liked_tracks_artists_view>,
+                .albums = &view_factory<recently_liked_tracks_albums_view>,
+                .tracks = &view_factory<recently_liked_tracks_view>,
+                .default_view_idx = ui_events_observer::view_filter_callbacks::tracks_idx
+            });
+    }
+    
+    void show_recently_saved_albums(api_proxy_ptr api)
+    {
+        return ObserverManager::notify(
+            &ui_events_observer::show_fildered_view,
+            ui_events_observer::view_filter_callbacks{
+                .artists = &view_factory<recently_saved_album_artists_view>,
+                .albums = &view_factory<recently_saved_albums_view>,
+                .default_view_idx = ui_events_observer::view_filter_callbacks::albums_idx
             });
     }
 
@@ -100,6 +116,11 @@ namespace events {
     void show_player()
     {
         return dispatch_event(&ui_events_observer::show_player);
+    }
+    
+    void show_playing_queue(api_proxy_ptr api)
+    {
+        return show_panel_view<playing_queue_view>(api);
     }
     
     void show_settings()

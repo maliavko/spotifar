@@ -180,7 +180,7 @@ std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists
 
 recent_playlists_view::recent_playlists_view(api_proxy_ptr api):
     playlists_base_view(api, "recent_playlists_view", get_text(MPanelPlaylistsItemLabel),
-                        std::bind(events::show_recents, api))
+                        std::bind(events::show_root, api))
 {
     rebuild_items();
 

@@ -14,6 +14,17 @@ using utils::far3::get_vtext;
     static const wstring device_name = L"librespot";
 #endif
 
+librespot_handler::librespot_handler(spotify::api_proxy_ptr api): api_proxy(api)
+{
+    utils::events::start_listening<devices_observer>(this);
+}
+
+librespot_handler::~librespot_handler()
+{
+    utils::events::stop_listening<devices_observer>(this);
+    api_proxy.reset();
+}
+
 bool librespot_handler::start(const string &access_token)
 {
     if (is_running)
@@ -111,8 +122,6 @@ bool librespot_handler::start(const string &access_token)
     SetNamedPipeHandleState(pipe_read, &dw_mode, NULL, NULL);
 
     is_running = true;
-    
-    utils::events::start_listening<devices_observer>(this);
 
     return true;
 }
@@ -124,8 +133,6 @@ void librespot_handler::shutdown()
         log::global->warn("The Librespot process is already shutdown");
         return;
     }
-    
-    utils::events::stop_listening<devices_observer>(this);
     
     // sending a control stop event to the librespot process
     GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
@@ -214,35 +221,82 @@ void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
     auto active_dev_it = std::find_if(
         devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
 
-    for (const auto &device: devices)
-        if (device.name == device_name)
-        {
-            // stop listening after a correct device is detected
-            utils::events::stop_listening<devices_observer>(this);
-
-            if (auto api = api_proxy.lock())
+    // a librespot process is supposed to be running; we're waiting for our `device_name` device
+    // and trying to pick it up and transfer playback to
+    if (is_running)
+    {
+        for (const auto &device: devices)
+            if (device.name == device_name)
             {
-                // some other device is already active
-                if (active_dev_it != devices.end() && active_dev_it->id != device.id)
+                // stop listening after a correct device is detected
+                utils::events::stop_listening<devices_observer>(this);
+
+                if (auto api = api_proxy.lock())
                 {
-                    // let's provide a choice for the user to pick it up or leave the active one untouched
-                    auto message = get_vtext(MTransferPlaybackMessage, active_dev_it->name, device_name);
-                    const wchar_t* msgs[] = {
-                        get_text(MTransferPlaybackTitle), message.c_str()
-                    };
+                    // some other device is already active
+                    if (active_dev_it != devices.end() && active_dev_it->id != device.id)
+                    {
+                        // let's provide a choice for the user to pick it up or leave the active one untouched
+                        const auto &message = get_vtext(MTransferPlaybackMessage, active_dev_it->name, device_name);
+                        const wchar_t* msgs[] = {
+                            get_text(MTransferPlaybackTitle), message.c_str()
+                        };
 
-                    bool need_to_transfer = config::ps_info.Message(
-                        &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
-                    ) == 0;
+                        bool need_to_transfer = config::ps_info.Message(
+                            &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+                        ) == 0;
 
-                    if (!need_to_transfer) return;
+                        if (!need_to_transfer) return;
+                    }
+
+                    log::librespot->info("A librespot process is found, trasferring playback...");
+                    api->transfer_playback(device.id, true);
+                    return;
                 }
-
-                log::librespot->info("A librespot process is found, trasferring playback...");
-                api->transfer_playback(device.id, true);
-                return;
             }
+    }
+
+    // ... a librespot process is not running, which means some error or disabled in settings;
+    // offering user to pick up some available device from the list if there are none active
+    else
+    {
+        // stop listening after a correct device is detected
+        utils::events::stop_listening<devices_observer>(this);
+
+        if (active_dev_it != devices.end())
+            return;
+
+        std::vector<FarMenuItem> items;
+        for (const auto &dev: devices)
+            items.push_back({ MIF_NONE, dev.name.c_str() });
+
+        const wchar_t* msgs[] = {
+            get_text(MTransferPlaybackTitle),
+            get_text(MTransferPlaybackInactiveMessage01),
+            get_text(MTransferPlaybackInactiveMessage02),
+        };
+
+        bool should_transfer = config::ps_info.Message(
+            &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+        ) == 0;
+
+        if (should_transfer)
+        {
+            auto dev_idx = config::ps_info.Menu(
+                &MainGuid, &FarMessageGuid, -1, -1, 0,
+                FMENU_AUTOHIGHLIGHT, NULL, NULL, NULL, NULL, NULL,
+                &items[0], items.size());
+            
+            if (auto api = api_proxy.lock())
+                if (dev_idx > -1)
+                {
+                    const auto &dev = devices[dev_idx];
+                    log::librespot->info("Transferring playback to the user picked device `{}`",
+                        utils::to_string(dev.name));
+                    api->transfer_playback(dev.id, true);
+                }
         }
+    }
 }
 
 } // namespace spotifar
