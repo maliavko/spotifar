@@ -9,8 +9,7 @@ namespace spotifar {
 
 struct plugin_interface
 {
-    virtual void start() = 0;
-    virtual void shutdown() = 0;
+    virtual ~plugin_interface() {}
     
     virtual const std::unique_ptr<ui::player>& get_player() const = 0;
 };

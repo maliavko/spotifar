@@ -50,8 +50,8 @@ protected:
     }
 };
 
-panel::panel(api_proxy_ptr api):
-    api_proxy(api)
+panel::panel(api_proxy_ptr api, std::shared_ptr<plugin_interface> p):
+    api_proxy(api), plugin_proxy(p)
 {
     utils::events::start_listening<ui_events_observer>(this);
     utils::events::start_listening<api_requests_observer>(this);
