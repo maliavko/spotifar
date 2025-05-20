@@ -3,6 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "abstract.hpp"
 #include "spotify/common.hpp"
 #include "ui/views/view.hpp" // view_abstract
 #include "ui/events.hpp" // ui_events_observer
@@ -16,7 +17,7 @@ class panel:
     public api_requests_observer // for showing splash screen during long httl requests
 {
 public:
-    panel(api_proxy_ptr api);
+    panel(api_proxy_ptr api, std::shared_ptr<plugin_interface> p);
     ~panel();
 
     // Far API interface
@@ -47,6 +48,7 @@ private:
 
     view_ptr view;
     api_proxy_ptr api_proxy;
+    std::shared_ptr<plugin_interface> plugin_proxy;
 };
 
 } // namespace ui

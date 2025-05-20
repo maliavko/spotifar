@@ -560,16 +560,25 @@ namespace log
         // a default sink to the file 
         auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
         
-        global = std::make_shared<spdlog::logger>("global", daily_sink);
-        spdlog::set_default_logger(global);
+        if (!spdlog::get("global"))
+        {
+            global = std::make_shared<spdlog::logger>("global", daily_sink);
+            spdlog::set_default_logger(global);
+        }
 
         // specific logger for spotify api communication
-        api = std::make_shared<spdlog::logger>("api", daily_sink);
-        spdlog::register_logger(api);
+        if (!spdlog::get("api"))
+        {
+            api = std::make_shared<spdlog::logger>("api", daily_sink);
+            spdlog::register_logger(api);
+        }
 
         // specific logger for librespot messages
-        librespot = std::make_shared<spdlog::logger>("librespot", daily_sink);
-        spdlog::register_logger(librespot);
+        if (!spdlog::get("librespot"))
+        {
+            librespot = std::make_shared<spdlog::logger>("librespot", daily_sink);
+            spdlog::register_logger(librespot);
+        }
 
         #ifdef _DEBUG
             // for debugging in VS Code this sink helps seeing the messages in the Debug Console view
