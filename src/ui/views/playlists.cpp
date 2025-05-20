@@ -262,9 +262,7 @@ std::generator<const simplified_playlist_t&> recent_playlists_view::get_playlist
 void recent_playlists_view::on_items_changed()
 {
     rebuild_items();
-    
-    panels::update(PANEL_ACTIVE);
-    panels::redraw(PANEL_ACTIVE);
+    force_redraw();
 }
 
 } // namespace ui
