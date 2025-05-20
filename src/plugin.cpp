@@ -13,7 +13,6 @@ namespace far3 = utils::far3;
 
 plugin::plugin(): api(new spotify::api())
 {
-    panel = std::make_unique<ui::panel>(api);
     player = std::make_unique<ui::player>(api);
     notifications = std::make_unique<ui::notifications>(api);
     librespot = std::make_unique<librespot_handler>(api);
@@ -22,24 +21,7 @@ plugin::plugin(): api(new spotify::api())
     events::start_listening<spotify::auth_observer>(this);
     events::start_listening<spotify::releases_observer>(this);
     events::start_listening<ui::ui_events_observer>(this);
-}
-
-plugin::~plugin()
-{
-    events::stop_listening<spotify::releases_observer>(this);
-    events::stop_listening<spotify::auth_observer>(this);
-    events::stop_listening<config::config_observer>(this);
-    events::stop_listening<ui::ui_events_observer>(this);
-
-    panel.reset();
-    player.reset();
-    api.reset();
-    librespot.reset();
-    notifications.reset();
-}
-
-void plugin::start()
-{
+    
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
     
     api->start();
@@ -50,7 +32,7 @@ void plugin::start()
     launch_sync_worker();
 }
 
-void plugin::shutdown()
+plugin::~plugin()
 {
     try
     {
@@ -63,7 +45,18 @@ void plugin::shutdown()
 
         shutdown_sync_worker();
         shutdown_librespot_process();
+    
+        events::stop_listening<spotify::releases_observer>(this);
+        events::stop_listening<spotify::auth_observer>(this);
+        events::stop_listening<config::config_observer>(this);
+        events::stop_listening<ui::ui_events_observer>(this);
+    
+        panels.clear();
 
+        player.reset();
+        api.reset();
+        librespot.reset();
+        notifications.reset();
     }
     catch (const std::exception &ex)
     {
@@ -74,7 +67,8 @@ void plugin::shutdown()
 
 void plugin::update_panel_info(OpenPanelInfo *info)
 {
-    panel->update_panel_info(info);
+    for (const auto &p: panels)
+        p->update_panel_info(info);
 }
 
 intptr_t plugin::update_panel_items(GetFindDataInfo *info)
@@ -82,13 +76,18 @@ intptr_t plugin::update_panel_items(GetFindDataInfo *info)
     // plugin does not use Far's traditional recursive search mechanism
     if (info->OpMode & OPM_FIND)
         return FALSE;
-        
-    return panel->update_panel_items(info);
+
+    for (const auto &p: panels)
+        if (p->update_panel_items(info))
+            return TRUE;
+    
+    return FALSE;
 }
 
 void plugin::free_panel_items(const FreeFindDataInfo *info)
 {
-    panel->free_panel_items(info);
+    for (const auto &p: panels)
+        p->free_panel_items(info);
 }
 
 intptr_t plugin::set_directory(const SetDirectoryInfo *info)
@@ -96,8 +95,12 @@ intptr_t plugin::set_directory(const SetDirectoryInfo *info)
     // plugins does not use Far's traditional recursive search mechanism
     if (info->OpMode & OPM_FIND)
         return FALSE;
+
+    for (const auto &p: panels)
+        if (p->select_directory(info))
+            return TRUE;
     
-    return panel->select_directory(info);
+    return FALSE;
 }
 
 intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
@@ -117,12 +120,21 @@ intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
             }
         }
     }
-    return panel->process_input(info);
+
+    for (const auto &p: panels)
+        if (p->process_input(info))
+            return TRUE;
+    
+    return FALSE;
 }
 
 intptr_t plugin::compare_items(const CompareInfo *info)
 {
-    return panel->compare_items(info);
+    for (const auto &p: panels)
+        if (p->compare_items(info))
+            return TRUE;
+    
+    return FALSE;
 }
 
 void plugin::launch_sync_worker()
