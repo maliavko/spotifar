@@ -281,9 +281,7 @@ void recent_artists_view::show_albums_view(const artist_t &artist) const
 void recent_artists_view::on_items_changed()
 {
     rebuild_items();
-    
-    panels::update(PANEL_ACTIVE);
-    panels::redraw(PANEL_ACTIVE);
+    force_redraw();
 }
 
 //-----------------------------------------------------------------------------------------------------------
