@@ -41,6 +41,14 @@ void view_abstract::select_sort_mode(int idx)
     panels::set_sort_mode(PANEL_ACTIVE, sm.far_sort_mode, settings->is_descending);
 }
 
+void view_abstract::force_redraw() const
+{
+    using namespace utils::far3;
+    
+    panels::update(PANEL_ACTIVE);
+    panels::redraw(PANEL_ACTIVE);
+}
+
 void view_abstract::on_items_updated()
 {
     if (is_first_init)

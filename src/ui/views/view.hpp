@@ -61,6 +61,9 @@ public:
     void select_sort_mode(int sort_mode_idx);
     auto get_return_callback() const -> const return_callback_t& { return return_callback; }
 
+    /// @brief A helper-function to force the panel to get updated and redrawn
+    void force_redraw() const;
+
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
     virtual auto get_items() -> const items_t& = 0;
     virtual auto get_dir_name() const -> const wstring& { return title; }

@@ -115,7 +115,7 @@ private:
 /// the playing queue tracks
 class playing_queue_view:
     public tracks_base_view,
-    public playback_observer // `on_items_changed`
+    public playback_observer // on_items_changed, on_shuffle_state_changed
 {
 public:
     playing_queue_view(api_proxy_ptr api);
@@ -124,6 +124,7 @@ protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
     auto get_sort_modes() const -> const sort_modes_t& override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
     bool start_playback(const string &track_id) override;
@@ -131,6 +132,7 @@ protected:
 
     // playback_observer handlers
     void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
+    void on_shuffle_state_changed(bool shuffle_state) override;
 };
 
 /// @brief
