@@ -196,8 +196,7 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 {
     if (album.id == track.album.id) // the currently playing track is from this album
     {
-        panels::update(PANEL_ACTIVE);
-        panels::redraw(PANEL_ACTIVE);
+        force_redraw();
 
         // experimental code to select the currently playing item on the panel
         // panels::clear_selection(PANEL_ACTIVE);
@@ -280,9 +279,7 @@ std::generator<const simplified_track_t&> recent_tracks_view::get_tracks()
 void recent_tracks_view::on_items_changed()
 {
     rebuild_items();
-    
-    panels::update(PANEL_ACTIVE);
-    panels::redraw(PANEL_ACTIVE);
+    force_redraw();
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -337,7 +334,7 @@ playing_queue_view::~playing_queue_view()
 
 config::settings::view_t playing_queue_view::get_default_settings() const
 {
-    return { 0, false, 3 };
+    return { 0, false, 6 };
 }
 
 bool playing_queue_view::start_playback(const string &track_id)
@@ -369,10 +366,24 @@ const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const
     return modes;
 }
 
+intptr_t playing_queue_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    const auto
+        &item1 = static_cast<const saved_track_t*>(data1),
+        &item2 = static_cast<const saved_track_t*>(data2);
+
+    return item1->added_at.compare(item2->added_at);
+}
+
 void playing_queue_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
-    panels::update(PANEL_ACTIVE);
-    panels::redraw(PANEL_ACTIVE);
+    force_redraw();
+}
+
+void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
+{
+    force_redraw();
 }
 
 //-----------------------------------------------------------------------------------------------------------

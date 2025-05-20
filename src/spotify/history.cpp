@@ -48,7 +48,7 @@ bool play_history::request_data(history_items_t &data)
     // we request only the new items after the last request timestamp, then we take
     // the old items list and extend it from the front
     auto new_items = get_recently_played(last_sync_time);
-    if (new_items->fetch() && new_items->size() > 0)
+    if (new_items->fetch(false, false) && new_items->size() > 0)
         data.insert(data.begin(), new_items->begin(), new_items->end());
 
     // truncating the history to the certain amount of entries
