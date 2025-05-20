@@ -9,9 +9,9 @@ namespace spotifar {
 
 namespace far3 = utils::far3;
 
-plugin_ptr plugin_instance = nullptr;
+std::weak_ptr<plugin> plugin_instance;
 
-plugin_ptr& get_plugin()
+plugin_ptr get_plugin()
 {
     return plugin_instance;
 }
@@ -78,25 +78,33 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/openw.html
 HANDLE WINAPI OpenW(const OpenInfo *info)
 {
-    // initialize logging system
-    log::init();
-
-    if (config::get_client_id().empty())
+    auto p = plugin_instance.lock();
+    if (!p)
     {
-        far3::show_far_error_dlg(MErrorPluginStartupNoClientID);
-        return NULL;
+        // initialize logging system
+        log::init();
+    
+        if (config::get_client_id().empty())
+        {
+            far3::show_far_error_dlg(MErrorPluginStartupNoClientID);
+            return NULL;
+        }
+    
+        if (config::get_client_secret().empty())
+        {
+            far3::show_far_error_dlg(MErrorPluginStartupNoClientSecret);
+            return NULL;
+        }
+
+        // auto ptr = new std::shared_ptr<plugin>(new plugin());
+        // plugin_instance = *ptr;
+        // return ptr;
+        auto p = std::make_shared<plugin>();
+        auto &panel = p->create_panel();
+        return &panel;
     }
 
-    if (config::get_client_secret().empty())
-    {
-        far3::show_far_error_dlg(MErrorPluginStartupNoClientSecret);
-        return NULL;
-    }
-
-    plugin_instance = std::make_unique<plugin>();
-    plugin_instance->start();
-
-    return plugin_instance.get();
+    return new std::shared_ptr<plugin>(p->get_ptr());
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html
@@ -104,34 +112,50 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
 {
     log::global->debug("Plugin's panel is closed, cleaning resources");
 
-    plugin_instance.release();
-
-    config::cleanup();
-    log::fini();
+    if (plugin_instance.expired())
+    {
+        config::cleanup();
+        log::fini();
+    }
 }
 
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html
 void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 {
-    return static_cast<plugin*>(info->hPanel)->update_panel_info(info);
+    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
+    if (auto plugin = p->lock())
+        plugin->update_panel_info(info);
+
+    //return static_cast<plugin*>(info->hPanel)->update_panel_info(info);
 }
 
 /// @brief https://api.farmanager.com/ru/structures/getfinddatainfo.html
 intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 {
-    return static_cast<plugin*>(info->hPanel)->update_panel_items(info);
+    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
+    if (auto plugin = p->lock())
+        return plugin->update_panel_items(info);
+    return NULL;
+    //return static_cast<plugin*>(info->hPanel)->update_panel_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/freefinddataw.html 
 void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 {
-    return static_cast<plugin*>(info->hPanel)->free_panel_items(info);
+    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
+    if (auto plugin = p->lock())
+        plugin->free_panel_items(info);
+    //return static_cast<plugin*>(info->hPanel)->free_panel_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
 intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
-{   
-    return static_cast<plugin*>(info->hPanel)->set_directory(info);
+{
+    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
+    if (auto plugin = p->lock())
+        return plugin->set_directory(info);
+    return NULL;
+    //return static_cast<plugin*>(info->hPanel)->set_directory(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processconsoleinputw.html
@@ -161,21 +185,35 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
 intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
-    return static_cast<plugin*>(info->hPanel)->process_input(info);
+    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
+    if (auto plugin = p->lock())
+        return plugin->process_input(info);
+    return FALSE;
+    //return static_cast<plugin*>(info->hPanel)->process_input(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpaneleventw.html
 intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 {
-    if (auto p = static_cast<plugin*>(info->hPanel))
+    auto p = static_cast<std::shared_ptr<plugin>*>(info->hPanel);
+    if (info->Event == FE_CLOSE)
     {
-        if (info->Event == FE_CLOSE)
-        {
-            log::global->debug("Plugin closing event is received, processing");
-            p->shutdown();
-            return FALSE; // return TRUE if the panel should not close
-        }
+        log::global->debug("Plugin closing event is received, processing");
+        p->reset();
+        delete p;
+
+        return FALSE; // return TRUE if the panel should not close
     }
+
+    // if (auto p = static_cast<plugin*>(info->hPanel))
+    // {
+    //     if (info->Event == FE_CLOSE)
+    //     {
+    //         log::global->debug("Plugin closing event is received, processing");
+    //         p->shutdown();
+    //         return FALSE; // return TRUE if the panel should not close
+    //     }
+    // }
     return FALSE;
 }
 
@@ -199,7 +237,11 @@ intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 /// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
 intptr_t WINAPI CompareW(const CompareInfo *info)
 {
-    return static_cast<plugin*>(info->hPanel)->compare_items(info);
+    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
+    if (auto plugin = p->lock())
+        return plugin->compare_items(info);
+    return FALSE;
+    //return static_cast<plugin*>(info->hPanel)->compare_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 

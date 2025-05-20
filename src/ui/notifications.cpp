@@ -146,16 +146,16 @@ void notifications::on_track_changed(const track_t &track, const track_t &prev_t
 
     if (WinToast::instance()->initialize())
     {
-        if (const auto &plugin = get_plugin())
-        {
-            const auto &player_dialog = plugin->get_player();
+        // if (const auto &plugin = get_plugin())
+        // {
+        //     const auto &player_dialog = plugin->get_player();
 
-            // do not show a tray notification if the Far window is in focus and player is visible
-            bool already_seen = is_wnd_in_focus() && player_dialog && player_dialog->is_visible();
+        //     // do not show a tray notification if the Far window is in focus and player is visible
+        //     bool already_seen = is_wnd_in_focus() && player_dialog && player_dialog->is_visible();
             
-            if (config::is_track_changed_notification_enabled() && track.is_valid() && !already_seen)
-                show_now_playing(track, true);
-        }
+        //     if (config::is_track_changed_notification_enabled() && track.is_valid() && !already_seen)
+        //         show_now_playing(track, true);
+        // }
     }
 }
 

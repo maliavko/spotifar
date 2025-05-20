@@ -17,18 +17,28 @@
 namespace spotifar {
 
 class plugin:
+    public std::enable_shared_from_this<plugin>,
     public plugin_interface,
     public config::config_observer, // for catching chnging config settings
     public spotify::auth_observer, // for launching librespot once credentials were acquaired
     public spotify::releases_observer, // for showing fresh-releases-found notification
     public ui::ui_events_observer // for showing up the player by request
 {
+    inline static std::shared_ptr<plugin> self_ = nullptr;
 public:
     plugin();
     ~plugin();
 
-    void start() override;
-    void shutdown() override;
+    std::shared_ptr<plugin> get_ptr()
+    {
+        return shared_from_this();
+    }
+
+    ui::panel& create_panel()
+    {
+        panels.push_back(std::make_unique<ui::panel>(api, get_ptr()));
+        return *panels.back();
+    }
     
     const std::unique_ptr<ui::player>& get_player() const override { return player; }
 
@@ -73,8 +83,8 @@ private:
 
     std::unique_ptr<librespot_handler> librespot;
     std::unique_ptr<ui::notifications> notifications;
-    std::unique_ptr<ui::panel> panel;
     std::unique_ptr<ui::player> player;
+    std::vector<std::unique_ptr<ui::panel>> panels;
     
     spotify::api_ptr api;
 };
