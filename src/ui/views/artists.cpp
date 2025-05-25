@@ -7,7 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 
 //-----------------------------------------------------------------------------------------------------------
-artists_base_view::artists_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback):
+artists_base_view::artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
     view_abstract(panel, title, callback), api_proxy(api)
     {}
 
@@ -162,7 +162,7 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 }
 
 //-----------------------------------------------------------------------------------------------------------
-followed_artists_view::followed_artists_view(HANDLE panel, api_proxy_ptr api_proxy):
+followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_proxy):
     artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel),
                       std::bind(events::show_root, api_proxy))
     
@@ -190,7 +190,7 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_artists_view::recent_artists_view(HANDLE panel, api_proxy_ptr api):
+recent_artists_view::recent_artists_view(HANDLE panel, api_weak_ptr_t api):
     artists_base_view(panel, api, get_text(MPanelArtistsItemLabel),
                       std::bind(events::show_root, api))
 {
@@ -283,7 +283,7 @@ void recent_artists_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_liked_tracks_artists_view::recently_liked_tracks_artists_view(HANDLE panel, api_proxy_ptr api):
+recently_liked_tracks_artists_view::recently_liked_tracks_artists_view(HANDLE panel, api_weak_ptr_t api):
     artists_base_view(panel, api, get_text(MPanelArtistsItemLabel),
                       std::bind(events::show_root, api))
 {
@@ -359,7 +359,7 @@ void recently_liked_tracks_artists_view::show_albums_view(const artist_t &artist
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_saved_album_artists_view::recently_saved_album_artists_view(HANDLE panel, api_proxy_ptr api):
+recently_saved_album_artists_view::recently_saved_album_artists_view(HANDLE panel, api_weak_ptr_t api):
     artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_browse, api))
 {
     if (auto api = api_proxy.lock())

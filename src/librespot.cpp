@@ -14,7 +14,7 @@ using utils::far3::get_vtext;
     static const wstring device_name = L"librespot";
 #endif
 
-librespot_handler::librespot_handler(spotify::api_proxy_ptr api): api_proxy(api)
+librespot_handler::librespot_handler(spotify::api_weak_ptr_t api): api_proxy(api)
 {
     utils::events::start_listening<devices_observer>(this);
 }

@@ -15,7 +15,7 @@ const size_t pool_size = 12;
 // requester, checks the result and returns it back
 // @tparam R item_requester type
 template<class R>
-auto request_item(R &&requester, api_proxy_ptr api) -> typename R::result_t
+auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::result_t
 {
     if (requester.execute(api))
         return requester.get();

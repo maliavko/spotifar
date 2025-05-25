@@ -13,11 +13,11 @@ namespace far3 = utils::far3;
 /// @brief A global pointer to the plugin instance. The plugin's lifecycle is bound to
 /// the opened panels, each of which holds a shared pointer to it. Once all the panels
 /// are closed, this pointer loses the ref and plugins gets destroyed
-static std::weak_ptr<plugin> plugin_instance;
+static plugin_weak_ptr_t plugin_weak_ptr;
 
-plugin_ptr get_plugin()
+plugin_ptr_t get_plugin()
 {
-    return plugin_instance;
+    return plugin_weak_ptr.lock();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getglobalinfow.html
@@ -82,7 +82,7 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/openw.html
 HANDLE WINAPI OpenW(const OpenInfo *info)
 {
-    if (auto plugin_ptr = plugin_instance.lock())
+    if (auto plugin_ptr = plugin_weak_ptr.lock())
         return new ui::panel(plugin_ptr->get_api(), plugin_ptr);
         
     // initialize logging system
@@ -101,13 +101,13 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
     }
 
     // create and initialize a first plugin's instance
-    auto p = std::make_shared<plugin>();
+    auto plugin_ptr = std::make_shared<plugin>();
 
     // saving only a weak pointer as a global one
-    plugin_instance = p;
+    plugin_weak_ptr = plugin_ptr;
 
     // ...and passing a shared pointer to the panel to keep plugin alive
-    return new ui::panel(p->get_api(), p->get_ptr());
+    return new ui::panel(plugin_ptr->get_api(), plugin_ptr);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html
@@ -117,7 +117,7 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
 
     delete static_cast<ui::panel*>(info->hPanel);
 
-    if (plugin_instance.expired())
+    if (plugin_weak_ptr.expired())
     {
         config::cleanup();
         log::fini();
@@ -177,7 +177,7 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
             case keys::i + keys::mods::ctrl:
             {
                 // process handlers only in case the plugin is loaded into panel
-                if (auto plugin = plugin_instance.lock())
+                if (auto plugin = plugin_weak_ptr.lock())
                 {
                     return TRUE;
                 }

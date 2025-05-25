@@ -8,7 +8,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-albums_base_view::albums_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback):
+albums_base_view::albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
     view_abstract(panel, title, callback), api_proxy(api)
     {}
 
@@ -192,7 +192,7 @@ const view_abstract::items_t& albums_base_view::get_items()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-artist_view::artist_view(HANDLE panel, api_proxy_ptr api, const artist_t &a, return_callback_t callback):
+artist_view::artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &a, return_callback_t callback):
     albums_base_view(panel, api, a.name, callback),
     artist(a)
 {
@@ -222,7 +222,7 @@ void artist_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_albums_view::saved_albums_view(HANDLE panel, api_proxy_ptr api_proxy):
+saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_root, api_proxy))
 {
@@ -276,7 +276,7 @@ void saved_albums_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-new_releases_view::new_releases_view(HANDLE panel, api_proxy_ptr api_proxy):
+new_releases_view::new_releases_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelNewReleasesItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
@@ -318,7 +318,7 @@ void new_releases_view::on_releases_sync_finished(const recent_releases_t releas
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_albums_view::recent_albums_view(HANDLE panel, api_proxy_ptr api):
+recent_albums_view::recent_albums_view(HANDLE panel, api_weak_ptr_t api):
     albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_root, api))
 {
@@ -414,7 +414,7 @@ void recent_albums_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-featuring_albums_view::featuring_albums_view(HANDLE panel, api_proxy_ptr api):
+featuring_albums_view::featuring_albums_view(HANDLE panel, api_weak_ptr_t api):
     albums_base_view(panel, api, get_text(MPanelRecentlyLikedTracksDescr),
         std::bind(events::show_browse, api))
     {}
@@ -443,7 +443,7 @@ void featuring_albums_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(HANDLE panel, api_proxy_ptr api_proxy):
+recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
@@ -515,7 +515,7 @@ void recently_liked_tracks_albums_view::rebuild_items()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_proxy_ptr api_proxy):
+recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
