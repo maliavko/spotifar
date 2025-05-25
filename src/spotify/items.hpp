@@ -24,8 +24,9 @@ string make_item_uri(const string &item_type_name, const string &id);
 struct data_item_t
 {
     item_id_t id = invalid_id;
-    
+
     bool is_valid() const { return id != invalid_id; }
+    operator bool() const { return is_valid(); }
 
     friend bool operator==(const data_item_t &lhs, const data_item_t &rhs);
 };
@@ -293,6 +294,7 @@ struct auth_t
     string refresh_token;
     
     bool is_valid() const { return !access_token.empty(); }
+    operator bool() const { return is_valid(); }
     
     friend void from_json(const json::Value &j, auth_t &a);
     friend void to_json(json::Value &j, const auth_t &a, json::Allocator &allocator);

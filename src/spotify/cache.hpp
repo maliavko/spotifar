@@ -257,6 +257,7 @@ public:
         
         /// @brief Is cached value still valid or expired
         inline bool is_valid() const { return clock_t::now() < cached_until; }
+        inline operator bool() const { return is_valid(); }
 
         /// @brief Is value cached only for the current session or persistent
         inline bool is_cached_for_session() const { return cached_until == clock_t::time_point::max(); }
