@@ -34,13 +34,6 @@ namespace spotifar
 
     // {8E7C2CB1-DE46-46B3-BD1D-6D93CA4AE430}
     DEFINE_GUID(SplashDialogGuid, 0x8e7c2cb1, 0xde46, 0x46b3, 0xbd, 0x1d, 0x6d, 0x93, 0xca, 0x4a, 0xe4, 0x30);
-
-
-
-    
-    // unused
-    // {36EB6307-2D39-43EA-810E-D5C5B51AD3CC}
-    DEFINE_GUID(ConfigSpotifyDialogGuid, 0x36eb6307, 0x2d39, 0x43ea, 0x81, 0x0e, 0xd5, 0xc5, 0xb5, 0x1a, 0xd3, 0xcc);
 }
 
 #endif //GUID_HPP_4AC00D1D_99C1_451C_BBB6_2F5BADA2D7DD

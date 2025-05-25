@@ -43,6 +43,8 @@ namespace events {
 
     void refresh_panels(const string &item_id = "");
 
+    void quit();
+
 } // namespace events
 
 /// @brief A panel class implements this interface to listen global
@@ -50,17 +52,17 @@ namespace events {
 /// views.
 struct ui_events_observer: public BaseObserverProtocol
 {
+    using view_builder_t = std::function<view_ptr_t(HANDLE)>;
+
     struct view_filter_callbacks
     {
-        using callback_t = std::function<view_ptr(api_proxy_ptr)>;
-
         const static size_t
             artists_idx = 0,
             albums_idx = 1,
             tracks_idx = 2,
             playlists_idx = 3;
 
-        callback_t artists, albums, tracks, playlists;
+        view_builder_t artists, albums, tracks, playlists;
         size_t default_view_idx = artists_idx;
 
         void clear()
@@ -68,9 +70,9 @@ struct ui_events_observer: public BaseObserverProtocol
             artists = albums = tracks = playlists = nullptr;
         }
 
-        callback_t get_callback(size_t view_idx)
+        view_builder_t get_callback(size_t view_idx)
         {
-            std::vector<callback_t> callbacks{ artists, albums, tracks, playlists };
+            std::vector<view_builder_t> callbacks{ artists, albums, tracks, playlists };
 
             // checking the callback of a given `view_idx` first;
             // if it is invalid, checking then the default view callback
@@ -97,12 +99,11 @@ struct ui_events_observer: public BaseObserverProtocol
     /// on the panel after operation is finished
     virtual void refresh_panels(const item_id_t &item_id) {}
 
-    /// @brief Sends a `view` instance to the panel to show it
-    virtual void show_view(view_ptr view) {}
+    virtual void switch_view(view_builder_t builder) {}
 
-    virtual void show_fildered_view(view_filter_callbacks callbacks) {}
-    
-    virtual void on_show_filters_menu() {}
+    virtual void switch_filtered_view(view_filter_callbacks callbacks) {}
+
+    virtual void quit() {}
 };
 
 } // namespace ui

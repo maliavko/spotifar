@@ -8,9 +8,8 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-playlists_base_view::playlists_base_view(api_proxy_ptr api, const string &view_uid,
-                                         const wstring &title, return_callback_t callback):
-    view_abstract(view_uid, title, callback),
+playlists_base_view::playlists_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback):
+    view_abstract(panel, title, callback),
     api_proxy(api)
 {
 }
@@ -119,7 +118,7 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
     {
         case VK_RETURN + utils::keys::mods::shift:
         {
-            auto item = panels::get_current_item(PANEL_ACTIVE);
+            auto item = panels::get_current_item(get_panel_handle());
             if (item != nullptr)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
@@ -156,8 +155,8 @@ bool playlists_base_view::request_extra_info(const data_item_t* data)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_playlists_view::saved_playlists_view(api_proxy_ptr api_proxy):
-    playlists_base_view(api_proxy, "saved_playlists_view", get_text(MPanelPlaylistsItemLabel),
+saved_playlists_view::saved_playlists_view(HANDLE panel, api_proxy_ptr api_proxy):
+    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylistsItemLabel),
                         std::bind(events::show_root, api_proxy)),
     api_proxy(api_proxy)
 {
@@ -177,9 +176,9 @@ std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists
             co_yield p;
 }
 
-
-recent_playlists_view::recent_playlists_view(api_proxy_ptr api):
-    playlists_base_view(api, "recent_playlists_view", get_text(MPanelPlaylistsItemLabel),
+//----------------------------------------------------------------------------------------------------------
+recent_playlists_view::recent_playlists_view(HANDLE panel, api_proxy_ptr api):
+    playlists_base_view(panel, api, get_text(MPanelPlaylistsItemLabel),
                         std::bind(events::show_root, api))
 {
     rebuild_items();

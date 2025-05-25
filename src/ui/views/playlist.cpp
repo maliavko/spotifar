@@ -6,8 +6,8 @@ namespace spotifar { namespace ui {
 using namespace utils::far3;
 using utils::far3::get_text;
 
-playlist_view::playlist_view(api_proxy_ptr api_proxy, const playlist_t &p):
-    view_abstract("playlist_view", p.name, std::bind(events::show_collection, api_proxy)),
+playlist_view::playlist_view(HANDLE panel, api_proxy_ptr api_proxy, const playlist_t &p):
+    view_abstract(panel, p.name, std::bind(events::show_collection, api_proxy)),
     playlist(p),
     api_proxy(api_proxy)
 {
@@ -139,7 +139,7 @@ intptr_t playlist_view::process_key_input(int combined_key)
     {
         case VK_RETURN + utils::keys::mods::shift:
         {
-            if (const auto &item = panels::get_current_item(PANEL_ACTIVE))
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
             {
                 if (const auto *user_data = unpack_user_data(item->UserData))
                 {

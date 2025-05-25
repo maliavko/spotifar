@@ -14,7 +14,7 @@ using namespace spotify;
 class playlist_view: public view_abstract
 {
 public:
-    playlist_view(api_proxy_ptr api, const playlist_t &p);
+    playlist_view(HANDLE panel, api_proxy_ptr api, const playlist_t &p);
     ~playlist_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;

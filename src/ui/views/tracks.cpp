@@ -8,9 +8,8 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-tracks_base_view::tracks_base_view(api_proxy_ptr api, const string &view_uid,
-                                   const wstring &title, return_callback_t callback):
-    view_abstract(view_uid, title, callback),
+tracks_base_view::tracks_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback):
+    view_abstract(panel, title, callback),
     api_proxy(api)
 {
 }
@@ -129,7 +128,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     {
         case VK_RETURN + utils::keys::mods::shift:
         {
-            auto item = panels::get_current_item(PANEL_ACTIVE);
+            auto item = panels::get_current_item(get_panel_handle());
             if (item != nullptr)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
@@ -154,9 +153,9 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-album_tracks_view::album_tracks_view(api_proxy_ptr api_proxy, const album_t &album,
+album_tracks_view::album_tracks_view(HANDLE panel, api_proxy_ptr api_proxy, const album_t &album,
                                      return_callback_t callback):
-    tracks_base_view(api_proxy, "album_tracks_view", album.name, callback),
+    tracks_base_view(panel, api_proxy, album.name, callback),
     album(album)
 {
     utils::events::start_listening<playback_observer>(this);
@@ -199,16 +198,16 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
         force_redraw();
 
         // experimental code to select the currently playing item on the panel
-        // panels::clear_selection(PANEL_ACTIVE);
+        // panels::clear_selection(get_panel_handle());
 
         // if (auto track_idx = get_item_idx(track.id))
-        //     panels::select_item(PANEL_ACTIVE, track_idx);
+        //     panels::select_item(get_panel_handle(), track_idx);
     }
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_tracks_view::recent_tracks_view(api_proxy_ptr api):
-    tracks_base_view(api, "recent_tracks_view", get_text(MPanelTracksItemLabel),
+recent_tracks_view::recent_tracks_view(HANDLE panel, api_proxy_ptr api):
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel),
                      std::bind(events::show_root, api))
 {
     rebuild_items();
@@ -283,8 +282,8 @@ void recent_tracks_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_tracks_view::saved_tracks_view(api_proxy_ptr api_proxy):
-    tracks_base_view(api_proxy, "saved_tracks_view", get_text(MPanelTracksItemLabel),
+saved_tracks_view::saved_tracks_view(HANDLE panel, api_proxy_ptr api_proxy):
+    tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel),
                      std::bind(events::show_root, api_proxy))
 {
     utils::events::start_listening<playback_observer>(this);
@@ -320,8 +319,8 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 }
 
 //-----------------------------------------------------------------------------------------------------------
-playing_queue_view::playing_queue_view(api_proxy_ptr api):
-    tracks_base_view(api, "playing_queue_view", get_text(MPanelTracksItemLabel),
+playing_queue_view::playing_queue_view(HANDLE panel, api_proxy_ptr api):
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel),
                      std::bind(events::show_root, api))
 {
     utils::events::start_listening<playback_observer>(this);
@@ -387,8 +386,8 @@ void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_liked_tracks_view::recently_liked_tracks_view(api_proxy_ptr api_proxy):
-    tracks_base_view(api_proxy, "recently_liked_tracks_view", get_text(MPanelRecentlyLikedTracksLabel),
+recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_proxy_ptr api_proxy):
+    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel),
                      std::bind(events::show_browse, api_proxy))
 {
     if (auto api = api_proxy.lock())
