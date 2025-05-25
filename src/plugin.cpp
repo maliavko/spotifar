@@ -13,7 +13,7 @@ namespace far3 = utils::far3;
 
 plugin::plugin(): api(new spotify::api())
 {
-    player = std::make_shared<ui::player>(api);
+    player = std::make_unique<ui::player>(api);
     notifications = std::make_unique<ui::notifications>(api);
     librespot = std::make_unique<librespot_handler>(api);
 
@@ -58,7 +58,7 @@ plugin::~plugin()
     }
     catch (const std::exception &ex)
     {
-        log::global->warn("There is an error, while shutting down the "
+        log::global->warn("There is an error while shutting down the "
             "plugin: {}", ex.what());
     }
 }
