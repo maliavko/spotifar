@@ -314,7 +314,7 @@ void new_releases_view::show_tracks_view(const album_t &album) const
 
 void new_releases_view::on_releases_sync_finished(const recent_releases_t releases)
 {
-    force_redraw();
+    events::refresh_panel(get_panel_handle());
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -410,7 +410,7 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
 void recent_albums_view::on_items_changed()
 {
     rebuild_items();
-    force_redraw();
+    events::refresh_panel(get_panel_handle());
 }
 
 //-----------------------------------------------------------------------------------------------------------

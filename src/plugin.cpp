@@ -211,7 +211,6 @@ void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal
         
         // after first valid authentication we show root view
         ui::events::show_root(api);
-        ui::events::refresh_panels();
     }
 }
 

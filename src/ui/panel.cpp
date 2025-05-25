@@ -25,7 +25,7 @@ static void show_loading_splash(const wstring &message = L"")
     config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
 }
 
-/// @brief A stub-view used for first panel initialization, before any other
+/// @brief A stub-view used for the first panel initialization, before any other
 /// view to be shown. Purposely visible when the user is not yet authorized
 class stub_view: public view_abstract
 {
@@ -59,9 +59,9 @@ panel::panel(api_proxy_ptr api, plugin_ptr_t p):
 
     auto a = api.lock();
     if (a && a->is_authenticated())
-        show_view(std::make_shared<root_view>(this, api_proxy));
+        set_view(std::make_shared<root_view>(this, api_proxy));
     else
-        show_view(std::make_shared<stub_view>(this));
+        set_view(std::make_shared<stub_view>(this));
 }
 
 panel::~panel()
@@ -78,8 +78,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
 {
     static wchar_t dir_name[64], title[64];
 
-    if (view == nullptr)
-        return;
+    if (view == nullptr) return;
     
     const auto &view_cur_dir = view->get_dir_name();
     if (!view_cur_dir.empty())
@@ -105,8 +104,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->StartSortMode = SM_NAME;
 
     // filling in the info lines on the Ctrl+L panel
-    const auto &info_lines = view->get_info_lines();
-    if (info_lines != nullptr)
+    if (const auto &info_lines = view->get_info_lines())
     {
         info->InfoLines = info_lines->data();
         info->InfoLinesNumber = info_lines->size();
@@ -120,16 +118,16 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     view_abstract::key_bar_info_t panel_key_bar{};
 
-    if (filter_callbacks.artists)
+    if (mview_builders.artists)
         panel_key_bar.insert({ { VK_F5, SHIFT_PRESSED }, far3::get_text(MPanelArtistsItemLabel) });
 
-    if (filter_callbacks.albums)
+    if (mview_builders.albums)
         panel_key_bar.insert({ { VK_F6, SHIFT_PRESSED }, far3::get_text(MPanelAlbumsItemLabel) });
 
-    if (filter_callbacks.tracks)
+    if (mview_builders.tracks)
         panel_key_bar.insert({ { VK_F7, SHIFT_PRESSED }, far3::get_text(MPanelTracksItemLabel) });
 
-    if (filter_callbacks.playlists)
+    if (mview_builders.playlists)
         panel_key_bar.insert({ { VK_F8, SHIFT_PRESSED }, far3::get_text(MPanelPlaylistsItemLabel) });
     
     if (const auto &view_key_bar = view->get_key_bar_info())
@@ -156,6 +154,8 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
+    skip_view_refresh = false;
+
     if (view == nullptr) return TRUE;
 
     const auto &items = view->get_items();
@@ -197,12 +197,6 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         
         if (item.user_data != nullptr)
             panel_item[idx].UserData.Data = item.user_data;
-
-        // when any http request is being performed, panel shows a progress splash screen,
-        // which gets hidden once all the received panel items are set, but FAR redraws only
-        // plugin's planel, so half of the splash screen stays on the screen. I am not sure
-        // this is the right way to fix the bug, haven't found any better though
-        far3::panels::redraw(this);
     }
 
     view->on_items_updated();
@@ -231,12 +225,8 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
 
 intptr_t panel::select_directory(const SetDirectoryInfo *info)
 {
-    if (view->select_item(info))
-    {
-        //refresh_panels();
-        return TRUE;
-    }
-    return FALSE;
+    skip_view_refresh = true;
+    return view->select_item(info);
 }
 
 intptr_t panel::process_input(const ProcessPanelInputInfo *info)
@@ -258,7 +248,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                         should_refresh = true;
 
                 if (should_refresh) // refreshing only in case anything has changed
-                    refresh_panels();
+                    refresh();
 
                 // blocking F3 panel processing in general, as we have a custom one
                 return TRUE;
@@ -282,14 +272,12 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             case VK_F8 + keys::mods::shift:
             {
                 auto idx = key - VK_F5 - keys::mods::shift;
-                if (idx != current_filter_idx)
+                if (idx != mview_current_idx)
                 {
-                    if (auto callback = filter_callbacks.get_callback(idx))
+                    if (auto builder = mview_builders.get_builder(idx))
                     {
-                        current_filter_idx = idx;
-                        view = callback(this);
-                        
-                        refresh_panels();
+                        mview_current_idx = idx;
+                        set_view(builder(this));
                     }
                 }
                 return TRUE;
@@ -308,52 +296,82 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
-void panel::show_view(view_ptr_t v)
+void panel::set_view(view_ptr_t v)
 {
-    filter_callbacks.clear();
-    view = v;
+    view = v; // setting up the new view
+
+    // forcing the panel to redraw only in cases when it will not do it itself:
+    //   - it is passive
+    //   - it was not selected via SetDirectoryW function, which will redraw panels itself
+    if (!is_active() || !skip_view_refresh)
+        refresh();
 }
 
-void panel::switch_view(view_builder_t builder)
+bool panel::is_active() const
 {
-    if (far3::panels::is_active(this))
-        show_view(builder(this));
+    return far3::panels::is_active((HANDLE)this);
 }
 
-void panel::switch_filtered_view(ui_events_observer::view_filter_callbacks callbacks)
+bool panel::is_this_panel(HANDLE panel) const
 {
-    if (far3::panels::is_active(this))
-    {
-        filter_callbacks = callbacks;
-        current_filter_idx = filter_callbacks.default_view_idx;
+    bool active = is_active();
 
-        if (auto callback = callbacks.get_callback(current_filter_idx))
-            view = callback(this);
-    }
+    if ((panel == PANEL_ACTIVE && active) || (panel == PANEL_PASSIVE && !active))
+        return true;
+
+    return panel == this;
 }
 
-void panel::quit()
+void panel::refresh(const string &item_id) const
 {
-    far3::panels::quit(this);
-}
-
-void panel::refresh_panels(const string &item_id)
-{
-    if (!far3::panels::is_active(this))
-        return;
-    
-    far3::panels::update(this);
-
+    // perform a redraw only in case there is an item to select
     if (!item_id.empty())
     {
         if (auto item_idx = view->get_item_idx(item_id))
         {
-            far3::panels::redraw(this, item_idx, -1);
+            far3::panels::redraw((HANDLE)this, item_idx, -1);
             return;
         }
     }
+    else
+    {
+        // ...or perform a whole panels rebuild and redraw
+        far3::panels::update((HANDLE)this);
+        far3::panels::redraw((HANDLE)this);
+    }
+}
 
-    far3::panels::redraw(this);
+void panel::show_view(HANDLE panel, view_builder_t builder)
+{
+    if (is_this_panel(panel))
+    {
+        mview_builders.clear(); // removing any previously set filters
+        set_view(builder(this));
+    }
+}
+
+void panel::show_multiview(HANDLE panel, multiview_builder_t builders)
+{
+    if (is_this_panel(panel))
+    {
+        mview_builders = builders;
+        mview_current_idx = builders.default_view_idx;
+
+        if (auto builder = builders.get_builder(mview_current_idx))
+            set_view(builder(this));
+    }
+}
+
+void panel::close_panel(HANDLE panel)
+{
+    if (panel == NULL || is_this_panel(panel))
+        far3::panels::quit(this);
+}
+
+void panel::refresh_panels(HANDLE panel, const string &item_id)
+{
+    if (panel == NULL || is_this_panel(panel))
+        refresh(item_id);
 }
 
 /// @brief The requests, which do not require showing splash screen, as they are processed
@@ -367,28 +385,29 @@ void panel::on_request_started(const string &url)
 {
     using namespace utils::http;
 
-    if (no_splash_requests.contains(trim_domain(trim_params(url))))
-        return;
-    
     // the handler is called only when complex http requests are being initiated, like
     // sync and async multipage collections fetching. In most of the cases it is done when
     // the new view is created and getting populated. So, we show a splash screen and it will
     // get closed automatically when the view initialization is done and the panel is redrawn
-    show_loading_splash();
+    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
+        show_loading_splash();
 }
 
 void panel::on_request_finished(const string &url)
 {
+    // when any http request is being performed, panel shows a progress splash screen,
+    // which gets hidden once all the received panel items are set, but FAR redraws only
+    // the active panel, so half of the splash screen stays on the screen. Forcing the
+    // passive panel to redraw as well
+    far3::panels::redraw(PANEL_PASSIVE);
 }
 
 void panel::on_request_progress_changed(const string &url, size_t progress, size_t total)
 {
     using namespace utils::http;
 
-    if (no_splash_requests.contains(trim_domain(trim_params(url))))
-        return;
-    
-    show_loading_splash(std::format(L"Fetching progress: {}/{}", progress, total));
+    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
+        show_loading_splash(std::format(L"Fetching progress: {}/{}", progress, total));
 }
 
 void panel::on_playback_command_failed(const string &message)

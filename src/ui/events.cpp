@@ -20,75 +20,75 @@ namespace spotifar { namespace ui { namespace events {
             };
     }
 
-    static void switch_view(ui_events_observer::view_builder_t &&builder)
+    static void show_view(ui_events_observer::view_builder_t &&builder)
     {
-        ObserverManager::notify(&ui_events_observer::switch_view, builder);
+        ObserverManager::notify(&ui_events_observer::show_view, PANEL_ACTIVE, builder);
     }
 
-    static void switch_filtered_view(ui_events_observer::view_filter_callbacks &&callbacks)
+    static void show_multiview(ui_events_observer::multiview_builder_t &&callbacks)
     {
-        ObserverManager::notify(&ui_events_observer::switch_filtered_view, callbacks);
+        ObserverManager::notify(&ui_events_observer::show_multiview, PANEL_ACTIVE, callbacks);
     }
 
     void show_root(api_proxy_ptr api)
     {
-        switch_view(get_builder<root_view>(api));
+        show_view(get_builder<root_view>(api));
     }
 
     void show_collection(api_proxy_ptr api)
     {
-        switch_filtered_view({
+        show_multiview({
             .artists = get_builder<followed_artists_view>(api),
             .albums = get_builder<saved_albums_view>(api),
             .tracks = get_builder<saved_tracks_view>(api),
             .playlists = get_builder<saved_playlists_view>(api),
-            .default_view_idx = ui_events_observer::view_filter_callbacks::artists_idx
+            .default_view_idx = ui_events_observer::multiview_builder_t::artists_idx
         });
     }
 
     void show_browse(api_proxy_ptr api)
     {
-        switch_view(get_builder<browse_view>(api));
+        show_view(get_builder<browse_view>(api));
     }
 
     void show_recents(api_proxy_ptr api)
     {
-        switch_filtered_view({
+        show_multiview({
             .artists = get_builder<recent_artists_view>(api),
             .albums = get_builder<recent_albums_view>(api),
             .tracks = get_builder<recent_tracks_view>(api),
             .playlists = get_builder<recent_playlists_view>(api),
-            .default_view_idx = ui_events_observer::view_filter_callbacks::tracks_idx
+            .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
         });
     }
     
     void show_new_releases(api_proxy_ptr api)
     {
-        switch_view(get_builder<new_releases_view>(api));
+        show_view(get_builder<new_releases_view>(api));
     }
     
     void show_recently_liked_tracks(api_proxy_ptr api)
     {
-        switch_filtered_view({
+        show_multiview({
             .artists = get_builder<recently_liked_tracks_artists_view>(api),
             .albums = get_builder<recently_liked_tracks_albums_view>(api),
             .tracks = get_builder<recently_liked_tracks_view>(api),
-            .default_view_idx = ui_events_observer::view_filter_callbacks::tracks_idx
+            .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
         });
     }
     
     void show_recently_saved_albums(api_proxy_ptr api)
     {
-        switch_filtered_view({
+        show_multiview({
             .artists = get_builder<recently_saved_album_artists_view>(api),
             .albums = get_builder<recently_saved_albums_view>(api),
-            .default_view_idx = ui_events_observer::view_filter_callbacks::albums_idx
+            .default_view_idx = ui_events_observer::multiview_builder_t::albums_idx
         });
     }
 
     void show_playlist(api_proxy_ptr api, const playlist_t &playlist)
     {
-        switch_view(get_builder<playlist_view>(api, playlist));
+        show_view(get_builder<playlist_view>(api, playlist));
     }
     
     void show_artist_albums(api_proxy_ptr api, const artist_t &artist,
@@ -97,7 +97,7 @@ namespace spotifar { namespace ui { namespace events {
         if (!callback)
             callback = std::bind(show_root, api);
         
-        switch_view(get_builder<artist_view>(api, artist, callback));
+        show_view(get_builder<artist_view>(api, artist, callback));
     }
     
     void show_album_tracks(api_proxy_ptr api, const album_t &album,
@@ -106,7 +106,7 @@ namespace spotifar { namespace ui { namespace events {
         if (!callback)
             callback = std::bind(show_root, api);
         
-        switch_view(get_builder<album_tracks_view>(api, album, callback));
+        show_view(get_builder<album_tracks_view>(api, album, callback));
     }
     
     void show_player()
@@ -116,22 +116,37 @@ namespace spotifar { namespace ui { namespace events {
     
     void show_playing_queue(api_proxy_ptr api)
     {
-        switch_view(get_builder<playing_queue_view>(api));
+        show_view(get_builder<playing_queue_view>(api));
     }
     
     void show_settings()
     {
         show_settings_menu();
     }
-    
-    void refresh_panels(const string &item_id)
+
+    void select_item(const string &item_id)
     {
-        dispatch_event(&ui_events_observer::refresh_panels, item_id);
+        dispatch_event(&ui_events_observer::refresh_panels, PANEL_ACTIVE, item_id);
+    }
+
+    void refresh_panel(HANDLE panel)
+    {
+        dispatch_event(&ui_events_observer::refresh_panels, panel, "");
+    }
+    
+    void refresh_panels()
+    {
+        dispatch_event(&ui_events_observer::refresh_panels, (HANDLE)NULL, "");
     }
     
     void quit()
     {
-        dispatch_event(&ui_events_observer::quit);
+        dispatch_event(&ui_events_observer::close_panel, (HANDLE)NULL);
+    }
+
+    void close_panel(HANDLE panel)
+    {
+        dispatch_event(&ui_events_observer::close_panel, panel);
     }
 
 } // namespace events
