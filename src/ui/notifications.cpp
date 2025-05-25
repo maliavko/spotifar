@@ -147,14 +147,11 @@ void notifications::on_track_changed(const track_t &track, const track_t &prev_t
     {
         if (const auto plugin_ptr = get_plugin())
         {
-            if (const auto player_ptr = plugin_ptr->get_player())
-            {
-                // do not show a tray notification if the Far window is in focus and player is visible
-                bool already_seen = is_wnd_in_focus() && player_ptr->is_visible();
-                
-                if (config::is_track_changed_notification_enabled() && track && !already_seen)
-                    show_now_playing(track, true);
-            }
+            // do not show a tray notification if the Far window is in focus and player is visible
+            bool already_seen = is_wnd_in_focus() && plugin_ptr->is_player_visible();
+            
+            if (config::is_track_changed_notification_enabled() && track && !already_seen)
+                show_now_playing(track, true);
         }
     }
 }
