@@ -39,7 +39,7 @@ protected:
     {
         // if the previous track is the one, the toasts was shown for, we request to
         // hide it, incase it is still visible and not needed anymore
-        if (prev_track.is_valid() && prev_track.id == track_id && toast_id > 0)
+        if (prev_track && prev_track.id == track_id && toast_id > 0)
             WinToast::instance()->hideToast(toast_id);
     }
 

@@ -125,8 +125,7 @@ intptr_t root_base_view::select_item(const data_item_t *data)
 bool root_base_view::request_extra_info(const data_item_t* data)
 {
     // forcing to request from server and cache
-    auto total = get_total(data->id, false);
-    return total > 0;
+    return get_total(data->id, false) > 0;
 }
 
 root_view::root_view(HANDLE panel, api_proxy_ptr api):
