@@ -16,7 +16,6 @@
 namespace spotifar {
 
 class plugin:
-    public std::enable_shared_from_this<plugin>,
     public plugin_interface,
     public config::config_observer, // for catching changing config settings events
     public spotify::auth_observer, // for launching librespot once credentials were acquaired
@@ -27,7 +26,6 @@ public:
     plugin();
     ~plugin();
 
-    plugin_ptr_t get_ptr() { return shared_from_this(); }
     spotify::api_ptr_t get_api() override { return api; }
     ui::player_ptr_t get_player() override { return player; }
 protected:
