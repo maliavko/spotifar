@@ -181,8 +181,7 @@ void plugin::on_playback_backend_setting_changed(bool is_enabled)
 
     if (is_enabled)
     {
-        const auto &auth = api->get_auth_data();
-        if (auth.is_valid())
+        if (const auto &auth = api->get_auth_data())
             launch_librespot_process(auth.access_token);
     }
     else
@@ -194,7 +193,7 @@ void plugin::on_playback_backend_configuration_changed()
     log::global->debug("on_playback_backend_configuration_changed");
     
     const auto &auth = api->get_auth_data();
-    if (librespot != nullptr && auth.is_valid())
+    if (librespot != nullptr && auth)
     {
         // restart external process routine: shutdown, wait for the better and start over
         shutdown_librespot_process();
@@ -205,7 +204,7 @@ void plugin::on_playback_backend_configuration_changed()
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
 {
-    if (auth.is_valid() && !is_renewal) // only if it is not token renewal
+    if (auth&& !is_renewal) // only if it is not token renewal
     {
         launch_librespot_process(auth.access_token);
         

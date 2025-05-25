@@ -59,7 +59,7 @@ const view_abstract::items_t& tracks_base_view::get_items()
         if (auto api = api_proxy.lock())
         {
             const auto &pstate = api->get_playback_state();
-            is_item_selected = pstate.item.is_valid() && pstate.item.id == track.id;
+            is_item_selected = pstate.item && pstate.item.id == track.id;
         }
 
         items.push_back({

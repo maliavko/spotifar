@@ -609,7 +609,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     if (api_responses_cache.is_cached(url))
     {
         const auto &cache = api_responses_cache.get(url);
-        if (cache.is_valid())
+        if (cache)
         {
             Result res(std::make_unique<Response>(), Error::Success);
             res->status = OK_200;
