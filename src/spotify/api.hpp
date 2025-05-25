@@ -27,7 +27,7 @@ public:
 
     bool is_authenticated() const  override { return auth->is_authenticated(); }
     
-    auto get_ptr() -> api_proxy_ptr override { return shared_from_this(); }
+    auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
 
     auto get_auth_data(bool force_resync = false) -> const auth_cache::data_t& override;
     auto get_play_history(bool force_resync = false) -> const play_history::data_t& override;
@@ -100,8 +100,6 @@ private:
 
     std::vector<cached_data_abstract*> caches;
 };
-
-using api_ptr = std::shared_ptr<api>;
 
 } // namespace spotify
 } // namespace spotifar

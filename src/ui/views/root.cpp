@@ -7,7 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 using namespace events;
 
-root_base_view::root_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback, menu_items_t items):
+root_base_view::root_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback, menu_items_t items):
     view_abstract(panel, title, callback),
     api_proxy(api),
     menu_items(items)
@@ -128,7 +128,7 @@ bool root_base_view::request_extra_info(const data_item_t* data)
     return get_total(data->id, false) > 0;
 }
 
-root_view::root_view(HANDLE panel, api_proxy_ptr api):
+root_view::root_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(panel, api, L"", {}, {
         {
             { collection_id },
@@ -153,7 +153,7 @@ root_view::root_view(HANDLE panel, api_proxy_ptr api):
     })
     {};
 
-browse_view::browse_view(HANDLE panel, api_proxy_ptr api):
+browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(
         panel, api, get_text(MPanelBrowseItemLabel),
         std::bind(events::show_root, api), {

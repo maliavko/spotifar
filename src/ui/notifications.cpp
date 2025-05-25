@@ -17,7 +17,7 @@ class track_changed_handler:
     public playback_observer
 {
 public:
-    track_changed_handler(api_proxy_ptr api, const item_id_t &track_id):
+    track_changed_handler(api_weak_ptr_t api, const item_id_t &track_id):
         api_proxy(api), track_id(track_id)
     {
         utils::events::start_listening<spotify::playback_observer>(this, true);
@@ -66,7 +66,7 @@ protected:
     void toastDismissed(WinToastDismissalReason state) const override {}
     void toastFailed() const override {}
 private:
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
     item_id_t track_id;
     INT64 toast_id = -1;
 };
@@ -74,7 +74,7 @@ private:
 class fresh_releases_handler: public WinToastLib::IWinToastHandler
 {
 public:
-    fresh_releases_handler(api_proxy_ptr api): api_proxy(api) {}
+    fresh_releases_handler(api_weak_ptr_t api): api_proxy(api) {}
     ~fresh_releases_handler()
     {
         api_proxy.reset();
@@ -91,7 +91,7 @@ protected:
     void toastDismissed(WinToastDismissalReason state) const override {}
     void toastFailed() const override {}
 private:
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
 };
 
 bool notifications::start()
@@ -145,16 +145,17 @@ void notifications::on_track_changed(const track_t &track, const track_t &prev_t
 
     if (WinToast::instance()->initialize())
     {
-        // if (const auto &plugin = get_plugin())
-        // {
-        //     const auto &player_dialog = plugin->get_player();
-
-        //     // do not show a tray notification if the Far window is in focus and player is visible
-        //     bool already_seen = is_wnd_in_focus() && player_dialog && player_dialog->is_visible();
-            
-        //     if (config::is_track_changed_notification_enabled() && track.is_valid() && !already_seen)
-        //         show_now_playing(track, true);
-        // }
+        if (const auto plugin_ptr = get_plugin())
+        {
+            if (const auto player_ptr = plugin_ptr->get_player())
+            {
+                // do not show a tray notification if the Far window is in focus and player is visible
+                bool already_seen = is_wnd_in_focus() && player_ptr->is_visible();
+                
+                if (config::is_track_changed_notification_enabled() && track && !already_seen)
+                    show_now_playing(track, true);
+            }
+        }
     }
 }
 
