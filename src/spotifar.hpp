@@ -7,9 +7,7 @@
 
 namespace spotifar {
 
-using plugin_ptr = std::weak_ptr<plugin_interface>;
-
-plugin_ptr get_plugin();
+plugin_ptr_t get_plugin();
 
 } // namespace spotifar
 

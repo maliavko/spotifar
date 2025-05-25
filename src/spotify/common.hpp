@@ -198,9 +198,8 @@ protected:
     virtual bool is_request_cached(const string &url) const = 0;
 };
 
-/// @brief A dedicated type used fo passing api interface to all the main plugin's
-/// structures as a proxy parameter for the further usage
-using api_proxy_ptr = std::weak_ptr<api_interface>;
+using api_ptr_t = std::shared_ptr<api_interface>;
+using api_weak_ptr_t = std::weak_ptr<api_interface>;
 
 struct api_requests_observer: public BaseObserverProtocol
 {
@@ -285,7 +284,7 @@ public:
 
     /// @brief Checks whether the requested result has already been cached and
     /// cab be obtained quickly without a delay
-    bool is_cached(api_proxy_ptr api) const
+    bool is_cached(api_weak_ptr_t api) const
     {
         return !api.expired() && api.lock()->is_request_cached(get_url());
     }
@@ -297,7 +296,7 @@ public:
     /// the cache is still valid
     /// @returns `true` in case of: no errors, 204 No Content response, `only_cached` is true, but
     /// no cache exists
-    bool execute(api_proxy_ptr api_proxy, bool only_cached = false)
+    bool execute(api_weak_ptr_t api_proxy, bool only_cached = false)
     {
         if (only_cached && !is_cached(api_proxy))
             return true;
@@ -378,7 +377,7 @@ public:
     auto get() const -> const result_t& { return result; }
 
     /// @brief see `item_requester::execute` interface
-    bool execute(api_proxy_ptr api, bool only_cached = false, bool notify_watchers = true)
+    bool execute(api_weak_ptr_t api, bool only_cached = false, bool notify_watchers = true)
     {   
         result.clear();
 
@@ -512,7 +511,7 @@ public:
     /// @param params get-request parameters to infuse into given `url`
     /// @param fieldname in case the data has a nested level, this is the field name
     /// to use on the parsed body
-    collection_abstract(api_proxy_ptr api, const string &request_url,
+    collection_abstract(api_weak_ptr_t api, const string &request_url,
                         httplib::Params params = {}, const string &fieldname = ""):
         api_proxy(api), url(request_url), params(params), fieldname(fieldname)
     {
@@ -585,10 +584,10 @@ protected:
     /// @param notify_watchers does not send changes to the requesting status observers like
     /// showing request progress splashing screen and etc.
     /// @param pages_to_request number of data pages to request; "0" means all
-    virtual bool fetch_items(api_proxy_ptr api, bool only_cached, bool notify_watchers = true,
+    virtual bool fetch_items(api_weak_ptr_t api, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) = 0;
 protected:
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
     string url;
     string fieldname;
     httplib::Params params;
@@ -617,7 +616,7 @@ public:
     using base_t::requester_ptr;
     using base_t::collection_abstract;
 protected:
-    bool fetch_items(api_proxy_ptr api, bool only_cached, bool notify_watchers = true,
+    bool fetch_items(api_weak_ptr_t api, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) override
     {       
         auto requester = get_begin_requester();
@@ -680,7 +679,7 @@ public:
     using base_t::requester_ptr;
     using base_t::collection_abstract;
 protected:
-    bool fetch_items(api_proxy_ptr api_proxy, bool only_cached, bool notify_watchers = true,
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) override
     {   
         if (api_proxy.expired()) return false;

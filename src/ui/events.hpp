@@ -9,33 +9,33 @@
 
 namespace spotifar { namespace ui {
 
-using spotify::api_proxy_ptr;
+using spotify::api_weak_ptr_t;
 
 /// @brief Global ui commands to show views or persome some operations on them,
 /// accessible without instances
 namespace events {
 
-    void show_root(api_proxy_ptr api);
+    void show_root(api_weak_ptr_t api);
 
-    void show_collection(api_proxy_ptr api);
+    void show_collection(api_weak_ptr_t api);
 
-    void show_recents(api_proxy_ptr api);
+    void show_recents(api_weak_ptr_t api);
 
-    void show_browse(api_proxy_ptr api);
+    void show_browse(api_weak_ptr_t api);
 
-    void show_new_releases(api_proxy_ptr api);
+    void show_new_releases(api_weak_ptr_t api);
 
-    void show_recently_liked_tracks(api_proxy_ptr api);
+    void show_recently_liked_tracks(api_weak_ptr_t api);
 
-    void show_recently_saved_albums(api_proxy_ptr api);
+    void show_recently_saved_albums(api_weak_ptr_t api);
 
-    void show_playlist(api_proxy_ptr api, const playlist_t &playlist);
+    void show_playlist(api_weak_ptr_t api, const playlist_t &playlist);
 
-    void show_artist_albums(api_proxy_ptr api, const artist_t &artist, view_abstract::return_callback_t callback = {});
+    void show_artist_albums(api_weak_ptr_t api, const artist_t &artist, view_abstract::return_callback_t callback = {});
 
-    void show_album_tracks(api_proxy_ptr api, const album_t &album, view_abstract::return_callback_t callback = {});
+    void show_album_tracks(api_weak_ptr_t api, const album_t &album, view_abstract::return_callback_t callback = {});
 
-    void show_playing_queue(api_proxy_ptr api);
+    void show_playing_queue(api_weak_ptr_t api);
     
     void show_player();
     

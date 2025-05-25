@@ -6,7 +6,7 @@ namespace spotifar { namespace ui {
 using namespace utils::far3;
 using utils::far3::get_text;
 
-playlist_view::playlist_view(HANDLE panel, api_proxy_ptr api_proxy, const playlist_t &p):
+playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playlist_t &p):
     view_abstract(panel, p.name, std::bind(events::show_collection, api_proxy)),
     playlist(p),
     api_proxy(api_proxy)

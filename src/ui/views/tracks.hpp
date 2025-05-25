@@ -15,7 +15,7 @@ using namespace spotify;
 class tracks_base_view: public view_abstract
 {
 public:
-    tracks_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback);
+    tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback);
     ~tracks_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
@@ -30,7 +30,7 @@ protected:
         const data_item_t *data2) -> intptr_t override;
     auto process_key_input(int combined_key) -> intptr_t override;
 protected:
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
 };
 
 /// @brief Showing the list of the given `album` tracks
@@ -40,7 +40,7 @@ class album_tracks_view:
                              // when playing tracks is being changed
 {
 public:
-    album_tracks_view(HANDLE panel, api_proxy_ptr api, const album_t &album,
+    album_tracks_view(HANDLE panel, api_weak_ptr_t api, const album_t &album,
         return_callback_t callback);
     ~album_tracks_view();
 protected:
@@ -69,7 +69,7 @@ public:
         string played_at;
     };
 public:
-    recent_tracks_view(HANDLE panel, api_proxy_ptr api);
+    recent_tracks_view(HANDLE panel, api_weak_ptr_t api);
     ~recent_tracks_view();
 protected:
     void rebuild_items();
@@ -95,7 +95,7 @@ class saved_tracks_view:
     public playback_observer // `on_items_changed`
 {
 public:
-    saved_tracks_view(HANDLE panel, api_proxy_ptr api);
+    saved_tracks_view(HANDLE panel, api_weak_ptr_t api);
     ~saved_tracks_view();
 protected:
     // view interface
@@ -118,7 +118,7 @@ class playing_queue_view:
     public playback_observer // on_items_changed, on_shuffle_state_changed
 {
 public:
-    playing_queue_view(HANDLE panel, api_proxy_ptr api);
+    playing_queue_view(HANDLE panel, api_weak_ptr_t api);
     ~playing_queue_view();
 protected:
     // view interface
@@ -139,7 +139,7 @@ protected:
 class recently_liked_tracks_view: public tracks_base_view
 {
 public:
-    recently_liked_tracks_view(HANDLE panel, api_proxy_ptr api);
+    recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;

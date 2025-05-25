@@ -13,7 +13,7 @@ class notifications:
     public spotify::playback_observer   // for showing up the windows notification when track has changed
 {
 public:
-    notifications(spotify::api_proxy_ptr api): api_proxy(api) {}
+    notifications(spotify::api_weak_ptr_t api): api_proxy(api) {}
     ~notifications() { api_proxy.reset(); }
 
     bool start();
@@ -25,7 +25,7 @@ protected:
     // playback handlers
     void on_track_changed(const spotify::track_t &track, const spotify::track_t &prev_track) override;
 private:
-    spotify::api_proxy_ptr api_proxy;
+    spotify::api_weak_ptr_t api_proxy;
 };
 
 } // namespace ui

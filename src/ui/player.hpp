@@ -18,7 +18,7 @@ class player:
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases
 public:
-    player(api_proxy_ptr api);
+    player(api_weak_ptr_t api);
     ~player();
 
     bool show();
@@ -88,7 +88,7 @@ protected:
     bool is_control_enabled(int control_id);
 
 private:
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
     HANDLE hdlg;
     std::atomic<bool> visible = false;
     bool are_dlg_events_suppressed = true;
@@ -98,6 +98,9 @@ private:
     cycled_bool_control shuffle_state;
     cycled_string_control repeat_state;
 };
+
+using player_ptr_t = std::shared_ptr<player>;
+using player_weak_ptr_t = std::weak_ptr<player>;
     
 } // namespace ui
 } // namespace spotifar

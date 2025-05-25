@@ -8,7 +8,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-tracks_base_view::tracks_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback):
+tracks_base_view::tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
     view_abstract(panel, title, callback),
     api_proxy(api)
 {
@@ -153,7 +153,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-album_tracks_view::album_tracks_view(HANDLE panel, api_proxy_ptr api_proxy, const album_t &album,
+album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const album_t &album,
                                      return_callback_t callback):
     tracks_base_view(panel, api_proxy, album.name, callback),
     album(album)
@@ -206,7 +206,7 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_tracks_view::recent_tracks_view(HANDLE panel, api_proxy_ptr api):
+recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
     tracks_base_view(panel, api, get_text(MPanelTracksItemLabel),
                      std::bind(events::show_root, api))
 {
@@ -282,7 +282,7 @@ void recent_tracks_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_tracks_view::saved_tracks_view(HANDLE panel, api_proxy_ptr api_proxy):
+saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
     tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel),
                      std::bind(events::show_root, api_proxy))
 {
@@ -319,7 +319,7 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 }
 
 //-----------------------------------------------------------------------------------------------------------
-playing_queue_view::playing_queue_view(HANDLE panel, api_proxy_ptr api):
+playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
     tracks_base_view(panel, api, get_text(MPanelTracksItemLabel),
                      std::bind(events::show_root, api))
 {
@@ -386,7 +386,7 @@ void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_proxy_ptr api_proxy):
+recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
     tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel),
                      std::bind(events::show_browse, api_proxy))
 {

@@ -17,7 +17,7 @@ using namespace spotify;
 class albums_base_view: public view_abstract
 {
 public:
-    albums_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback);
+    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback);
     ~albums_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
@@ -33,7 +33,7 @@ protected:
     auto process_key_input(int combined_key) -> intptr_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 protected:
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
 };
 
 /// @brief A class-view, representing the list of albums of a
@@ -41,7 +41,7 @@ protected:
 class artist_view: public albums_base_view
 {
 public:
-    artist_view(HANDLE panel, api_proxy_ptr api, const artist_t &artist,
+    artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist,
         return_callback_t callback);
 protected:
     // view interface
@@ -61,7 +61,7 @@ private:
 class saved_albums_view: public albums_base_view
 {
 public:
-    saved_albums_view(HANDLE panel, api_proxy_ptr api);
+    saved_albums_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
@@ -82,7 +82,7 @@ class new_releases_view:
     public releases_observer // for updating the panel, when the new release is detected
 {
 public:
-    new_releases_view(HANDLE panel, api_proxy_ptr api);
+    new_releases_view(HANDLE panel, api_weak_ptr_t api);
     ~new_releases_view();
 protected:
     // view interface
@@ -110,7 +110,7 @@ public:
         string played_at;
     };
 public:
-    recent_albums_view(HANDLE panel, api_proxy_ptr api);
+    recent_albums_view(HANDLE panel, api_weak_ptr_t api);
     ~recent_albums_view();
 protected:
     void rebuild_items();
@@ -135,7 +135,7 @@ private:
 class featuring_albums_view: public albums_base_view
 {
 public:
-    featuring_albums_view(HANDLE panel, api_proxy_ptr api);
+    featuring_albums_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -149,7 +149,7 @@ protected:
 class recently_liked_tracks_albums_view: public albums_base_view
 {
 public:
-    recently_liked_tracks_albums_view(HANDLE panel, api_proxy_ptr api);
+    recently_liked_tracks_albums_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     void rebuild_items();
 
@@ -170,7 +170,7 @@ private:
 class recently_saved_albums_view: public albums_base_view
 {
 public:
-    recently_saved_albums_view(HANDLE panel, api_proxy_ptr api);
+    recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     void rebuild_items();
     
