@@ -17,8 +17,7 @@ using namespace spotify;
 class playlists_base_view: public view_abstract
 {
 public:
-    playlists_base_view(api_proxy_ptr api, const string &view_uid,
-        const wstring &title, return_callback_t callback);
+    playlists_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback);
     ~playlists_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
@@ -40,7 +39,7 @@ protected:
 class saved_playlists_view: public playlists_base_view
 {
 public:
-    saved_playlists_view(api_proxy_ptr api);
+    saved_playlists_view(HANDLE panel, api_proxy_ptr api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -64,7 +63,7 @@ public:
         string played_at;
     };
 public:
-    recent_playlists_view(api_proxy_ptr api);
+    recent_playlists_view(HANDLE panel, api_proxy_ptr api);
     ~recent_playlists_view();
 protected:
     auto rebuild_items() -> void;

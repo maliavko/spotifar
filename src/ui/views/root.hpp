@@ -22,8 +22,7 @@ public:
 
     using menu_items_t = std::vector<root_data_t>;
 public:
-    root_base_view(api_proxy_ptr api, const string &uid, const wstring &title,
-        return_callback_t callback, menu_items_t items);
+    root_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback, menu_items_t items);
     ~root_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
@@ -51,7 +50,7 @@ public:
         recently_played_id = "recently_played",
         playing_queue_id = "playing_queue";
 public:
-    root_view(api_proxy_ptr api);
+    root_view(HANDLE panel, api_proxy_ptr api);
 };
 
 class browse_view: public root_base_view
@@ -62,7 +61,7 @@ public:
         recently_liked_tracks_id = "recently_liked_tracks",
         recently_saved_albums_id = "recently_saved_albums";
 public:
-    browse_view(api_proxy_ptr api);
+    browse_view(HANDLE panel, api_proxy_ptr api);
 };
 
 } // namespace ui

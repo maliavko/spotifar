@@ -7,9 +7,8 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 using namespace events;
 
-root_base_view::root_base_view(api_proxy_ptr api, const string &uid, const wstring &title,
-                               return_callback_t callback, menu_items_t items):
-    view_abstract(uid, title, callback),
+root_base_view::root_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback, menu_items_t items):
+    view_abstract(panel, title, callback),
     api_proxy(api),
     menu_items(items)
 {
@@ -130,8 +129,8 @@ bool root_base_view::request_extra_info(const data_item_t* data)
     return total > 0;
 }
 
-root_view::root_view(api_proxy_ptr api):
-    root_base_view(api, "root_view", L"", {}, {
+root_view::root_view(HANDLE panel, api_proxy_ptr api):
+    root_base_view(panel, api, L"", {}, {
         {
             { collection_id },
             MPanelCollectionItemLabel, MPanelCollectionItemDescr,
@@ -155,9 +154,9 @@ root_view::root_view(api_proxy_ptr api):
     })
     {};
 
-browse_view::browse_view(api_proxy_ptr api):
+browse_view::browse_view(HANDLE panel, api_proxy_ptr api):
     root_base_view(
-        api, "browse_view", get_text(MPanelBrowseItemLabel),
+        panel, api, get_text(MPanelBrowseItemLabel),
         std::bind(events::show_root, api), {
         {
             { new_releases_id },

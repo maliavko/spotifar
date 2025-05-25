@@ -50,8 +50,6 @@ plugin::~plugin()
         events::stop_listening<spotify::auth_observer>(this);
         events::stop_listening<config::config_observer>(this);
         events::stop_listening<ui::ui_events_observer>(this);
-    
-        panels.clear();
 
         player.reset();
         api.reset();
@@ -63,78 +61,6 @@ plugin::~plugin()
         log::global->warn("There is an error, while shutting down the "
             "plugin: {}", ex.what());
     }
-}
-
-void plugin::update_panel_info(OpenPanelInfo *info)
-{
-    for (const auto &p: panels)
-        p->update_panel_info(info);
-}
-
-intptr_t plugin::update_panel_items(GetFindDataInfo *info)
-{
-    // plugin does not use Far's traditional recursive search mechanism
-    if (info->OpMode & OPM_FIND)
-        return FALSE;
-
-    for (const auto &p: panels)
-        if (p->update_panel_items(info))
-            return TRUE;
-    
-    return FALSE;
-}
-
-void plugin::free_panel_items(const FreeFindDataInfo *info)
-{
-    for (const auto &p: panels)
-        p->free_panel_items(info);
-}
-
-intptr_t plugin::set_directory(const SetDirectoryInfo *info)
-{
-    // plugins does not use Far's traditional recursive search mechanism
-    if (info->OpMode & OPM_FIND)
-        return FALSE;
-
-    for (const auto &p: panels)
-        if (p->select_directory(info))
-            return TRUE;
-    
-    return FALSE;
-}
-
-intptr_t plugin::process_input(const ProcessPanelInputInfo *info)
-{
-    namespace keys = utils::keys;
-
-    const auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
-    {
-        switch (keys::make_combined(key_event))
-        {
-            case keys::q + keys::mods::alt:
-            {
-                if (!player->is_visible())
-                    player->show();
-                return TRUE;
-            }
-        }
-    }
-
-    for (const auto &p: panels)
-        if (p->process_input(info))
-            return TRUE;
-    
-    return FALSE;
-}
-
-intptr_t plugin::compare_items(const CompareInfo *info)
-{
-    for (const auto &p: panels)
-        if (p->compare_items(info))
-            return TRUE;
-    
-    return FALSE;
 }
 
 void plugin::launch_sync_worker()
@@ -169,7 +95,7 @@ void plugin::launch_sync_worker()
         {
             far3::synchro_tasks::push([ex] {
                 far3::show_far_error_dlg(MErrorSyncThreadFailed, to_wstring(ex.what()));
-                far3::panels::quit(PANEL_ACTIVE);
+                ui::events::quit();
             });
         }
     });
