@@ -51,8 +51,8 @@ protected:
     }
 };
 
-panel::panel(api_proxy_ptr api, plugin_ptr_t p):
-    api_proxy(api), plugin_proxy(p)
+panel::panel(api_weak_ptr_t api, plugin_ptr_t plugin):
+    api_proxy(api), plugin_proxy(plugin)
 {
     utils::events::start_listening<ui_events_observer>(this);
     utils::events::start_listening<api_requests_observer>(this);

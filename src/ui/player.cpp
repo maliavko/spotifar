@@ -182,7 +182,7 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
 };
 
-player::player(api_proxy_ptr api):
+player::player(api_weak_ptr_t api):
     api_proxy(api),
     volume(0, 100, 1),
     track_progress(0, 0, 5),

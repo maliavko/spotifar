@@ -16,9 +16,8 @@ class panel:
     public ui_events_observer, // for processing view opening requests
     public api_requests_observer // for showing splash screen during long httl requests
 {
-    using plugin_ptr_t = std::shared_ptr<plugin_interface>;
 public:
-    panel(api_proxy_ptr api, plugin_ptr_t p);
+    panel(api_weak_ptr_t api, plugin_ptr_t p);
     virtual ~panel();
 
     // Far API interface
@@ -52,7 +51,7 @@ private:
     bool skip_view_refresh = true;
 
     view_ptr_t view;
-    api_proxy_ptr api_proxy;
+    api_weak_ptr_t api_proxy;
     plugin_ptr_t plugin_proxy;
 };
 

@@ -25,10 +25,11 @@ class plugin:
 {
 public:
     plugin();
-    virtual ~plugin();
+    ~plugin();
 
-    std::shared_ptr<plugin> get_ptr() { return shared_from_this(); }
-    spotify::api_proxy_ptr get_api() { return api->get_ptr(); }
+    plugin_ptr_t get_ptr() { return shared_from_this(); }
+    spotify::api_ptr_t get_api() override { return api; }
+    ui::player_ptr_t get_player() override { return player; }
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
@@ -64,8 +65,8 @@ private:
     std::unique_ptr<librespot_handler> librespot;
     std::unique_ptr<ui::notifications> notifications;
     
-    std::unique_ptr<ui::player> player;
-    spotify::api_ptr api;
+    ui::player_ptr_t player;
+    std::shared_ptr<spotify::api> api;
 };
 
 } // namespace spotifar

@@ -13,7 +13,7 @@ namespace far3 = utils::far3;
 
 plugin::plugin(): api(new spotify::api())
 {
-    player = std::make_unique<ui::player>(api);
+    player = std::make_shared<ui::player>(api);
     notifications = std::make_unique<ui::notifications>(api);
     librespot = std::make_unique<librespot_handler>(api);
 
@@ -204,7 +204,7 @@ void plugin::on_playback_backend_configuration_changed()
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
 {
-    if (auth&& !is_renewal) // only if it is not token renewal
+    if (auth && !is_renewal) // only if it is not token renewal
     {
         launch_librespot_process(auth.access_token);
         
