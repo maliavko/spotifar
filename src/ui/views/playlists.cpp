@@ -58,8 +58,7 @@ intptr_t playlists_base_view::select_item(const data_item_t* data)
 {
     if (auto api = api_proxy.lock())
     {
-        const auto &playlist = api->get_playlist(data->id);
-        if (playlist.is_valid())
+        if (const auto &playlist = api->get_playlist(data->id))
         {
             events::show_playlist(api_proxy, playlist);
             return TRUE;
@@ -242,7 +241,7 @@ void recent_playlists_view::rebuild_items()
     for (const auto &[item_id, item]: unique_recent_playlists)
     {
         auto playlist = api->get_playlist(item_id);
-        if (!playlist.is_valid())
+        if (!playlist)
         {
             playlist.id = item_id;
             playlist.name = std::format(L"Forbidden_{}", utils::to_wstring(item_id));

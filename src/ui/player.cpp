@@ -545,8 +545,7 @@ bool player::on_artist_label_input_received(void *input_record)
         if (a.name == utils::trim(result))
             simplified_artist = a;
 
-    const auto &artist = api->get_artist(simplified_artist.id);
-    if (artist.is_valid())
+    if (const auto &artist = api->get_artist(simplified_artist.id))
     {
         hide();
 
@@ -568,8 +567,7 @@ bool player::on_track_label_input_received(void *input_record)
     auto api = api_proxy.lock();
     const auto &playback = api->get_playback_state();
 
-    const auto &artist = api->get_artist(playback.item.artists[0].id);
-    if (artist.is_valid())
+    if (const auto &artist = api->get_artist(playback.item.artists[0].id))
     {
         hide();
 
@@ -983,8 +981,7 @@ void player::on_context_changed(const context_t &ctx)
     }
     else if (ctx.is_album())
     {
-        auto album = api->get_album(ctx.get_item_id());
-        if (album.is_valid())
+        if (auto album = api->get_album(ctx.get_item_id()))
         {
             wstring full_name = std::format(L"[{}] {}", utils::to_wstring(album.get_release_year()), album.name);
             if (album.is_single() || album.is_compilation())
@@ -995,8 +992,7 @@ void player::on_context_changed(const context_t &ctx)
     }
     else if (ctx.is_playlist())
     {
-        auto playlist = api->get_playlist(ctx.get_item_id());
-        if (playlist.is_valid())
+        if (auto playlist = api->get_playlist(ctx.get_item_id()))
             source_label = std::format(L"Playlist: {}", playlist.name);
     }
     
