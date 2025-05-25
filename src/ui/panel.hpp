@@ -29,13 +29,16 @@ public:
     intptr_t process_input(const ProcessPanelInputInfo *info);
     intptr_t compare_items(const CompareInfo *info);
 protected:
-    void show_view(view_ptr_t view);
+    void set_view(view_ptr_t view);
+    bool is_active() const;
+    bool is_this_panel(HANDLE panel) const;
+    void refresh(const string &item_id = "") const;
     
     // global ui events
-    void refresh_panels(const item_id_t &item_id = "") override;
-    void switch_view(view_builder_t builder) override;
-    void switch_filtered_view(ui_events_observer::view_filter_callbacks callbacks) override;
-    void quit() override;
+    void refresh_panels(HANDLE panel, const item_id_t &item_id = "") override;
+    void show_view(HANDLE panel, view_builder_t builder) override;
+    void show_multiview(HANDLE panel, multiview_builder_t builders) override;
+    void close_panel(HANDLE panel) override;
 
     // requesters progress notifications
     void on_request_started(const string &url) override;
@@ -44,8 +47,9 @@ protected:
     void on_playback_command_failed(const string &message) override;
     void on_collection_fetching_failed(const string &message) override;
 private:
-    ui_events_observer::view_filter_callbacks filter_callbacks;
-    size_t current_filter_idx = 0;
+    multiview_builder_t mview_builders;
+    size_t mview_current_idx = 0;
+    bool skip_view_refresh = true;
 
     view_ptr_t view;
     api_proxy_ptr api_proxy;

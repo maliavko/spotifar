@@ -87,7 +87,6 @@ protected:
         log::global->debug("Notification's button clicked: button idx {}", action_idx);
 
         ui::events::show_new_releases(api_proxy);
-        ui::events::refresh_panels();
     }
     void toastDismissed(WinToastDismissalReason state) const override {}
     void toastFailed() const override {}

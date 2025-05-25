@@ -195,7 +195,7 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 {
     if (album.id == track.album.id) // the currently playing track is from this album
     {
-        force_redraw();
+        events::refresh_panel(get_panel_handle());
 
         // experimental code to select the currently playing item on the panel
         // panels::clear_selection(get_panel_handle());
@@ -278,7 +278,7 @@ std::generator<const simplified_track_t&> recent_tracks_view::get_tracks()
 void recent_tracks_view::on_items_changed()
 {
     rebuild_items();
-    force_redraw();
+    events::refresh_panel(get_panel_handle());
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -377,12 +377,12 @@ intptr_t playing_queue_view::compare_items(const sort_mode_t &sort_mode,
 
 void playing_queue_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
-    force_redraw();
+    events::refresh_panel(get_panel_handle());
 }
 
 void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
 {
-    force_redraw();
+    events::refresh_panel(get_panel_handle());
 }
 
 //-----------------------------------------------------------------------------------------------------------

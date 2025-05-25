@@ -34,27 +34,40 @@ namespace events {
     void show_artist_albums(api_proxy_ptr api, const artist_t &artist, view_abstract::return_callback_t callback = {});
 
     void show_album_tracks(api_proxy_ptr api, const album_t &album, view_abstract::return_callback_t callback = {});
-    
-    void show_player();
 
     void show_playing_queue(api_proxy_ptr api);
     
+    void show_player();
+    
     void show_settings();
 
-    void refresh_panels(const string &item_id = "");
+    /// @brief Forcing the active panel to redraw and to try to find and
+    /// set the given `item_id` under cursur
+    void select_item(const string &item_id);
 
+    /// @brief Forcing the given `panel` to redraw
+    /// @param panel could be a panel handle, PANEL_ACTIVE or PANEL_PASSIVE
+    void refresh_panel(HANDLE panel);
+
+    /// @brief Forcing all the plugin's opened panels to redraw
+    void refresh_panels();
+
+    /// @brief Forcing all the plugin's opened panels to close and quit plugin
     void quit();
+
+    /// @brief Forcing the given `panel` to close
+    /// @param panel could be a panel handle, PANEL_ACTIVE or PANEL_PASSIVE
+    void close_panel(HANDLE panel);
 
 } // namespace events
 
 /// @brief A panel class implements this interface to listen global
-/// commands from `events` namespace and show appropriate requested
-/// views.
+/// commands from `events` namespace and to show appropriate requested views
 struct ui_events_observer: public BaseObserverProtocol
 {
     using view_builder_t = std::function<view_ptr_t(HANDLE)>;
 
-    struct view_filter_callbacks
+    struct multiview_builder_t
     {
         const static size_t
             artists_idx = 0,
@@ -70,22 +83,22 @@ struct ui_events_observer: public BaseObserverProtocol
             artists = albums = tracks = playlists = nullptr;
         }
 
-        view_builder_t get_callback(size_t view_idx)
+        view_builder_t get_builder(size_t view_idx)
         {
-            std::vector<view_builder_t> callbacks{ artists, albums, tracks, playlists };
+            std::vector<view_builder_t> builders{ artists, albums, tracks, playlists };
 
-            // checking the callback of a given `view_idx` first;
-            // if it is invalid, checking then the default view callback
+            // checking the builder of a given `view_idx` first;
+            // if it is invalid, checking then the default view builder
             for (auto idx: { view_idx, default_view_idx })
             {
-                if (idx < callbacks.size() && callbacks[idx])
-                    return callbacks[idx];
+                if (idx < builders.size() && builders[idx])
+                    return builders[idx];
             }
 
-            // ...if none of the indecies worked, trying to return the first valid one
-            for (size_t idx = 0; idx < callbacks.size(); idx++)
-                if (callbacks[idx])
-                    return callbacks[idx];
+            // ...if none of the indicies worked, trying to return the first valid one
+            for (size_t idx = 0; idx < builders.size(); idx++)
+                if (builders[idx])
+                    return builders[idx];
 
             return nullptr;
         }
@@ -97,13 +110,13 @@ struct ui_events_observer: public BaseObserverProtocol
     /// @brief Refreshes the plugin's panel, forcing it to repopulate items
     /// and redraw it. If `item_id` is given, the one will be selected
     /// on the panel after operation is finished
-    virtual void refresh_panels(const item_id_t &item_id) {}
+    virtual void refresh_panels(HANDLE panel, const item_id_t &item_id) {}
 
-    virtual void switch_view(view_builder_t builder) {}
+    virtual void show_view(HANDLE panel, view_builder_t builder) {}
 
-    virtual void switch_filtered_view(view_filter_callbacks callbacks) {}
+    virtual void show_multiview(HANDLE panel, multiview_builder_t callbacks) {}
 
-    virtual void quit() {}
+    virtual void close_panel(HANDLE panel) {}
 };
 
 } // namespace ui
