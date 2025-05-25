@@ -98,9 +98,6 @@ private:
     cycled_bool_control shuffle_state;
     cycled_string_control repeat_state;
 };
-
-using player_ptr_t = std::shared_ptr<player>;
-using player_weak_ptr_t = std::weak_ptr<player>;
     
 } // namespace ui
 } // namespace spotifar

@@ -83,7 +83,7 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 HANDLE WINAPI OpenW(const OpenInfo *info)
 {
     if (auto plugin_ptr = plugin_weak_ptr.lock())
-        return new ui::panel(plugin_ptr->get_api(), plugin_ptr);
+        return new ui::panel(plugin_ptr);
         
     // initialize logging system
     log::init();
@@ -107,7 +107,7 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
     plugin_weak_ptr = plugin_ptr;
 
     // ...and passing a shared pointer to the panel to keep plugin alive
-    return new ui::panel(plugin_ptr->get_api(), plugin_ptr);
+    return new ui::panel(plugin_ptr);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html

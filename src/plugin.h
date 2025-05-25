@@ -26,8 +26,8 @@ public:
     plugin();
     ~plugin();
 
-    spotify::api_ptr_t get_api() override { return api; }
-    ui::player_ptr_t get_player() override { return player; }
+    bool is_player_visible() const override { return player->is_visible(); }
+    spotify::api_weak_ptr_t get_api() override { return api; }
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
@@ -62,8 +62,7 @@ private:
 
     std::unique_ptr<librespot_handler> librespot;
     std::unique_ptr<ui::notifications> notifications;
-    
-    ui::player_ptr_t player;
+    std::unique_ptr<ui::player> player;
     std::shared_ptr<spotify::api> api;
 };
 

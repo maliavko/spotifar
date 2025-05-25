@@ -17,7 +17,7 @@ class panel:
     public api_requests_observer // for showing splash screen during long httl requests
 {
 public:
-    panel(api_weak_ptr_t api, plugin_ptr_t p);
+    panel(plugin_ptr_t plugin_ptr);
     virtual ~panel();
 
     // Far API interface
@@ -51,7 +51,6 @@ private:
     bool skip_view_refresh = true;
 
     view_ptr_t view;
-    api_weak_ptr_t api_proxy;
     plugin_ptr_t plugin_proxy;
 };
 
