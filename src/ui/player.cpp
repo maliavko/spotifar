@@ -456,10 +456,7 @@ bool player::on_input_received(void *input_record)
                         return true;
                     
                     case keys::q + keys::mods::ctrl:
-                        // expand(!is_expanded());
                         events::show_playing_queue(api_proxy);
-                        events::refresh_panels();
-                        //hide();
                         return true;
                 }
             }
@@ -554,7 +551,7 @@ bool player::on_artist_label_input_received(void *input_record)
         hide();
 
         ui::events::show_artist_albums(api, artist);
-        ui::events::refresh_panels(playback.item.album.id);
+        ui::events::select_item(playback.item.album.id);
     }
 
     return true;
@@ -577,7 +574,7 @@ bool player::on_track_label_input_received(void *input_record)
         hide();
 
         ui::events::show_album_tracks(api, playback.item.album);
-        ui::events::refresh_panels(playback.item.id);
+        ui::events::select_item(playback.item.id);
     }
 
     return true;

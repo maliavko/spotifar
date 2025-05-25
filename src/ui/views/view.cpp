@@ -1,5 +1,6 @@
 #include "view.hpp"
 #include "utils.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -39,12 +40,6 @@ void view_abstract::select_sort_mode(int idx)
         settings->sort_mode_idx = idx;
     
     panels::set_sort_mode(get_panel_handle(), sm.far_sort_mode, settings->is_descending);
-}
-
-void view_abstract::force_redraw() const
-{
-    panels::update(get_panel_handle());
-    panels::redraw(get_panel_handle());
 }
 
 void view_abstract::on_items_updated()
