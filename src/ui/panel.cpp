@@ -51,15 +51,14 @@ protected:
     }
 };
 
-panel::panel(api_weak_ptr_t api, plugin_ptr_t plugin):
-    api_proxy(api), plugin_proxy(plugin)
+panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 {
     utils::events::start_listening<ui_events_observer>(this);
     utils::events::start_listening<api_requests_observer>(this);
 
-    auto a = api.lock();
-    if (a && a->is_authenticated())
-        set_view(std::make_shared<root_view>(this, api_proxy));
+    auto api_ptr = plugin_ptr->get_api().lock();
+    if (api_ptr && api_ptr->is_authenticated())
+        set_view(std::make_shared<root_view>(this, api_ptr));
     else
         set_view(std::make_shared<stub_view>(this));
 }
@@ -70,7 +69,6 @@ panel::~panel()
     utils::events::stop_listening<api_requests_observer>(this);
 
     view.reset();
-    api_proxy.reset();
     plugin_proxy.reset();
 }
 
