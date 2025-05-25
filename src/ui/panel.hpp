@@ -16,9 +16,10 @@ class panel:
     public ui_events_observer, // for processing view opening requests
     public api_requests_observer // for showing splash screen during long httl requests
 {
+    using plugin_ptr_t = std::shared_ptr<plugin_interface>;
 public:
-    panel(api_proxy_ptr api, std::shared_ptr<plugin_interface> p);
-    ~panel();
+    panel(api_proxy_ptr api, plugin_ptr_t p);
+    virtual ~panel();
 
     // Far API interface
     void update_panel_info(OpenPanelInfo *info);
@@ -28,13 +29,13 @@ public:
     intptr_t process_input(const ProcessPanelInputInfo *info);
     intptr_t compare_items(const CompareInfo *info);
 protected:
-    void show_stub_view();
+    void show_view(view_ptr_t view);
     
     // global ui events
     void refresh_panels(const item_id_t &item_id = "") override;
-    void on_show_filters_menu() override;
-    void show_view(view_ptr view) override;
-    void show_fildered_view(ui_events_observer::view_filter_callbacks callbacks) override;
+    void switch_view(view_builder_t builder) override;
+    void switch_filtered_view(ui_events_observer::view_filter_callbacks callbacks) override;
+    void quit() override;
 
     // requesters progress notifications
     void on_request_started(const string &url) override;
@@ -46,9 +47,9 @@ private:
     ui_events_observer::view_filter_callbacks filter_callbacks;
     size_t current_filter_idx = 0;
 
-    view_ptr view;
+    view_ptr_t view;
     api_proxy_ptr api_proxy;
-    std::shared_ptr<plugin_interface> plugin_proxy;
+    plugin_ptr_t plugin_proxy;
 };
 
 } // namespace ui

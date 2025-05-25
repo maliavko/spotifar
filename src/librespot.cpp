@@ -263,8 +263,7 @@ void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
         // stop listening after a correct device is detected
         utils::events::stop_listening<devices_observer>(this);
 
-        if (active_dev_it != devices.end())
-            return;
+        if (active_dev_it != devices.end()) return;
 
         std::vector<FarMenuItem> items;
         for (const auto &dev: devices)

@@ -7,8 +7,8 @@ namespace far3 = utils::far3;
 namespace panels = far3::panels;
 namespace keys = utils::keys;
 
-view_abstract::view_abstract(const string &uid, const wstring &title, return_callback_t callback):
-    uid(uid),
+view_abstract::view_abstract(HANDLE panel, const wstring &title, return_callback_t callback):
+    panel(panel),
     title(title),
     return_callback(callback)
 {
@@ -16,7 +16,7 @@ view_abstract::view_abstract(const string &uid, const wstring &title, return_cal
 
 config::settings::view_t* view_abstract::get_settings() const
 {
-    return config::get_panel_settings(uid, get_default_settings());
+    return config::get_panel_settings(get_uid(), get_default_settings());
 }
 
 void view_abstract::select_sort_mode(int idx)
@@ -24,7 +24,7 @@ void view_abstract::select_sort_mode(int idx)
     if (idx > (int)sort_modes.size())
     {
         log::global->error("Given sort mode index is out of range, index {}, "
-            "view uid {}, modes count {}", idx, uid, sort_modes.size());
+            "view uid {}, modes count {}", idx, get_uid(), sort_modes.size());
         return;
     }
 
@@ -38,15 +38,13 @@ void view_abstract::select_sort_mode(int idx)
         // otherwise, just change the sort mode
         settings->sort_mode_idx = idx;
     
-    panels::set_sort_mode(PANEL_ACTIVE, sm.far_sort_mode, settings->is_descending);
+    panels::set_sort_mode(get_panel_handle(), sm.far_sort_mode, settings->is_descending);
 }
 
 void view_abstract::force_redraw() const
 {
-    using namespace utils::far3;
-    
-    panels::update(PANEL_ACTIVE);
-    panels::redraw(PANEL_ACTIVE);
+    panels::update(get_panel_handle());
+    panels::redraw(get_panel_handle());
 }
 
 void view_abstract::on_items_updated()
@@ -60,11 +58,11 @@ void view_abstract::on_items_updated()
         
         // settings a stored sort mode
         if ((int)sort_modes.size() > settings->sort_mode_idx)
-            panels::set_sort_mode(PANEL_ACTIVE,
+            panels::set_sort_mode(get_panel_handle(),
                 sort_modes[settings->sort_mode_idx].far_sort_mode, settings->is_descending);
 
         // settings a stored view mode
-        panels::set_view_mode(PANEL_ACTIVE, settings->view_mode);
+        panels::set_view_mode(get_panel_handle(), settings->view_mode);
     }
 }
 
@@ -141,7 +139,7 @@ intptr_t view_abstract::request_extra_info(const PluginPanelItem *data)
 
 size_t view_abstract::get_item_idx(const string &item_id)
 {
-    const auto &items = panels::get_items(PANEL_ACTIVE);
+    const auto &items = panels::get_items(get_panel_handle());
     for (size_t idx = 1; idx < items.size(); idx++) // zero index is ".." folder
     {
         auto user_data = unpack_user_data(items[idx]->UserData);

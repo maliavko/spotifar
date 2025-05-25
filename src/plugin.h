@@ -4,14 +4,13 @@
 
 #include "stdafx.h"
 #include "abstract.hpp"
-#include "utils.hpp" // utils::tasks_queue
+#include "utils.hpp"
 #include "librespot.hpp"
 #include "spotify/api.hpp"
 #include "spotify/auth.hpp"
 #include "spotify/releases.hpp"
-#include "ui/panel.hpp"
 #include "ui/player.hpp"
-#include "ui/events.hpp" // ui::ui_events_observer
+#include "ui/events.hpp"
 #include "ui/notifications.hpp"
 
 namespace spotifar {
@@ -19,36 +18,17 @@ namespace spotifar {
 class plugin:
     public std::enable_shared_from_this<plugin>,
     public plugin_interface,
-    public config::config_observer, // for catching chnging config settings
+    public config::config_observer, // for catching changing config settings events
     public spotify::auth_observer, // for launching librespot once credentials were acquaired
     public spotify::releases_observer, // for showing fresh-releases-found notification
     public ui::ui_events_observer // for showing up the player by request
 {
-    inline static std::shared_ptr<plugin> self_ = nullptr;
 public:
     plugin();
-    ~plugin();
+    virtual ~plugin();
 
-    std::shared_ptr<plugin> get_ptr()
-    {
-        return shared_from_this();
-    }
-
-    ui::panel& create_panel()
-    {
-        panels.push_back(std::make_unique<ui::panel>(api, get_ptr()));
-        return *panels.back();
-    }
-    
-    const std::unique_ptr<ui::player>& get_player() const override { return player; }
-
-    // Far API interface
-    void update_panel_info(OpenPanelInfo *info);
-    auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
-    void free_panel_items(const FreeFindDataInfo *info);
-    auto set_directory(const SetDirectoryInfo *info) -> intptr_t;
-    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
-    auto compare_items(const CompareInfo *info) -> intptr_t;
+    std::shared_ptr<plugin> get_ptr() { return shared_from_this(); }
+    spotify::api_proxy_ptr get_api() { return api->get_ptr(); }
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
@@ -83,9 +63,8 @@ private:
 
     std::unique_ptr<librespot_handler> librespot;
     std::unique_ptr<ui::notifications> notifications;
-    std::unique_ptr<ui::player> player;
-    std::vector<std::unique_ptr<ui::panel>> panels;
     
+    std::unique_ptr<ui::player> player;
     spotify::api_ptr api;
 };
 

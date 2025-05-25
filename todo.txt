@@ -6,6 +6,7 @@ application ideas
 - small improvements
     - goto playlist from player UI
     - showing some simple sorting's direction sign around the column name the sorting is applied to
+    - make safer calls of the main artists from the album or tracks objects: "artists[0]"
 - new functional
     + splash screen with notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
@@ -25,7 +26,7 @@ bugs
 + if a current playback context is "artist", when hit artist name in the player ui, crush happens
 + to add lock_guard to the access API caches and especially to the resync method
 + if the playing queue is opened and 'shuffle' is clicked, the queue is not updated
-- if I open plugin through the disk menu on the passive panel all my PANEL_ACTIVE refreshings are faling miserably
++ if I open plugin through the disk menu on the passive panel all my PANEL_ACTIVE refreshings are faling miserably
 - if librespot crashes, the far with plugin opened does not close
 + after long idle: the player's controls are locked, using global hotkey for start playback raises an error 404, the message of the error is not shown, only status code
 - crash if start plugin when it is already started
