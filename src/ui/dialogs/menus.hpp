@@ -14,19 +14,6 @@ intptr_t show_settings_menu();
 /// be returned; if the dialog is closed via Esc - "-1"
 intptr_t show_sort_dialog(const view_abstract &v);
 
-namespace collections_filter
-{
-    enum : int
-    {
-        artists,
-        tracks,
-        albums,
-        playlists
-    };
-
-    intptr_t show();
-}
-
 } // namespace ui
 } // namespace spotifar
 

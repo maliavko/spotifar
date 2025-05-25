@@ -1,5 +1,6 @@
 #include "ui/panel.hpp"
 #include "ui/dialogs/menus.hpp"
+#include "ui/views/root.hpp"
 #include "lng.hpp"
 
 namespace spotifar { namespace ui {
@@ -29,7 +30,7 @@ static void show_loading_splash(const wstring &message = L"")
 class stub_view: public view_abstract
 {
 public:
-    stub_view(): view_abstract("stub_view", L"", nullptr) {}
+    stub_view(HANDLE panel): view_abstract(panel, L"", nullptr) {}
 protected:
     auto get_sort_modes() const -> const sort_modes_t& override
     {
@@ -50,13 +51,17 @@ protected:
     }
 };
 
-panel::panel(api_proxy_ptr api, std::shared_ptr<plugin_interface> p):
+panel::panel(api_proxy_ptr api, plugin_ptr_t p):
     api_proxy(api), plugin_proxy(p)
 {
     utils::events::start_listening<ui_events_observer>(this);
     utils::events::start_listening<api_requests_observer>(this);
 
-    show_stub_view();
+    auto a = api.lock();
+    if (a && a->is_authenticated())
+        show_view(std::make_shared<root_view>(this, api_proxy));
+    else
+        show_view(std::make_shared<stub_view>(this));
 }
 
 panel::~panel()
@@ -66,6 +71,7 @@ panel::~panel()
 
     view.reset();
     api_proxy.reset();
+    plugin_proxy.reset();
 }
 
 void panel::update_panel_info(OpenPanelInfo *info)
@@ -196,7 +202,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         // which gets hidden once all the received panel items are set, but FAR redraws only
         // plugin's planel, so half of the splash screen stays on the screen. I am not sure
         // this is the right way to fix the bug, haven't found any better though
-        far3::panels::redraw(PANEL_PASSIVE);
+        far3::panels::redraw(this);
     }
 
     view->on_items_updated();
@@ -225,7 +231,12 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
 
 intptr_t panel::select_directory(const SetDirectoryInfo *info)
 {
-    return view->select_item(info);
+    if (view->select_item(info))
+    {
+        //refresh_panels();
+        return TRUE;
+    }
+    return FALSE;
 }
 
 intptr_t panel::process_input(const ProcessPanelInputInfo *info)
@@ -242,7 +253,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             case VK_F3:
             {
                 bool should_refresh = false;
-                for (const auto &ppi: far3::panels::get_items(PANEL_ACTIVE, true))
+                for (const auto &ppi: far3::panels::get_items(this, true))
                     if (view->request_extra_info(ppi.get()))
                         should_refresh = true;
 
@@ -276,7 +287,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                     if (auto callback = filter_callbacks.get_callback(idx))
                     {
                         current_filter_idx = idx;
-                        view = callback(api_proxy);
+                        view = callback(this);
                         
                         refresh_panels();
                     }
@@ -297,42 +308,52 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
-void panel::show_stub_view()
+void panel::show_view(view_ptr_t v)
 {
-    return show_view(std::make_shared<stub_view>());
-}
-
-void panel::show_view(view_ptr v)
-{
-    // clearing previously set filter callbacks for the previous view
     filter_callbacks.clear();
-
     view = v;
 }
 
-void panel::show_fildered_view(ui_events_observer::view_filter_callbacks callbacks)
+void panel::switch_view(view_builder_t builder)
 {
-    filter_callbacks = callbacks;
-    current_filter_idx = filter_callbacks.default_view_idx;
+    if (far3::panels::is_active(this))
+        show_view(builder(this));
+}
 
-    if (auto callback = callbacks.get_callback(current_filter_idx))
-        view = callback(api_proxy);
+void panel::switch_filtered_view(ui_events_observer::view_filter_callbacks callbacks)
+{
+    if (far3::panels::is_active(this))
+    {
+        filter_callbacks = callbacks;
+        current_filter_idx = filter_callbacks.default_view_idx;
+
+        if (auto callback = callbacks.get_callback(current_filter_idx))
+            view = callback(this);
+    }
+}
+
+void panel::quit()
+{
+    far3::panels::quit(this);
 }
 
 void panel::refresh_panels(const string &item_id)
 {
-    far3::panels::update(PANEL_ACTIVE);
+    if (!far3::panels::is_active(this))
+        return;
+    
+    far3::panels::update(this);
 
     if (!item_id.empty())
     {
         if (auto item_idx = view->get_item_idx(item_id))
         {
-            far3::panels::redraw(PANEL_ACTIVE, item_idx, -1);
+            far3::panels::redraw(this, item_idx, -1);
             return;
         }
     }
 
-    far3::panels::redraw(PANEL_ACTIVE);
+    far3::panels::redraw(this);
 }
 
 /// @brief The requests, which do not require showing splash screen, as they are processed
@@ -378,13 +399,6 @@ void panel::on_playback_command_failed(const string &message)
 void panel::on_collection_fetching_failed(const string &message)
 {
     utils::far3::show_far_error_dlg(MErrorCollectionFetchFailed, utils::to_wstring(message));
-}
-
-void panel::on_show_filters_menu()
-{
-    auto r = collections_filter::show();
-
-    log::global->debug("dialog closed {} {}", r, r == collections_filter::albums);
 }
 
 } // namespace ui

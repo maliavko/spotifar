@@ -299,8 +299,8 @@ namespace far3
         auto redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx) -> intptr_t;
         auto redraw(HANDLE panel) -> intptr_t;
         auto update(HANDLE panel) -> intptr_t;
-        auto is_active(HANDLE panel) -> bool;
-        auto does_exist(HANDLE panel) -> bool;
+        bool is_active(HANDLE panel);
+        bool does_exist(HANDLE panel);
         auto set_active(HANDLE panel) -> intptr_t;
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;

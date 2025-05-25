@@ -8,9 +8,8 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-albums_base_view::albums_base_view(api_proxy_ptr api, const string &view_uid,
-                                   const wstring &title, return_callback_t callback):
-    view_abstract(view_uid, title, callback), api_proxy(api)
+albums_base_view::albums_base_view(HANDLE panel, api_proxy_ptr api, const wstring &title, return_callback_t callback):
+    view_abstract(panel, title, callback), api_proxy(api)
     {}
 
 const view_abstract::sort_modes_t& albums_base_view::get_sort_modes() const
@@ -115,7 +114,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
     {
         case VK_RETURN + utils::keys::mods::shift:
         {
-            auto item = utils::far3::panels::get_current_item(PANEL_ACTIVE);
+            auto item = utils::far3::panels::get_current_item(get_panel_handle());
             if (item != nullptr && !api_proxy.expired())
             {
                 auto *user_data = unpack_user_data(item->UserData);
@@ -193,8 +192,8 @@ const view_abstract::items_t& albums_base_view::get_items()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-artist_view::artist_view(api_proxy_ptr api, const artist_t &a, return_callback_t callback):
-    albums_base_view(api, "artist_view", a.name, callback),
+artist_view::artist_view(HANDLE panel, api_proxy_ptr api, const artist_t &a, return_callback_t callback):
+    albums_base_view(panel, api, a.name, callback),
     artist(a)
 {
     if (auto api = api_proxy.lock())
@@ -223,8 +222,8 @@ void artist_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-saved_albums_view::saved_albums_view(api_proxy_ptr api_proxy):
-    albums_base_view(api_proxy, "saved_albums_view", get_text(MPanelAlbumsItemLabel),
+saved_albums_view::saved_albums_view(HANDLE panel, api_proxy_ptr api_proxy):
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_root, api_proxy))
 {
     if (auto api = api_proxy.lock())
@@ -277,8 +276,8 @@ void saved_albums_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-new_releases_view::new_releases_view(api_proxy_ptr api_proxy):
-    albums_base_view(api_proxy, "new_releases_view", get_text(MPanelNewReleasesItemLabel),
+new_releases_view::new_releases_view(HANDLE panel, api_proxy_ptr api_proxy):
+    albums_base_view(panel, api_proxy, get_text(MPanelNewReleasesItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
     utils::events::start_listening<releases_observer>(this);
@@ -319,8 +318,8 @@ void new_releases_view::on_releases_sync_finished(const recent_releases_t releas
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recent_albums_view::recent_albums_view(api_proxy_ptr api):
-    albums_base_view(api, "recent_albums_view", get_text(MPanelAlbumsItemLabel),
+recent_albums_view::recent_albums_view(HANDLE panel, api_proxy_ptr api):
+    albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_root, api))
 {
     utils::events::start_listening<play_history_observer>(this);
@@ -415,8 +414,8 @@ void recent_albums_view::on_items_changed()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-featuring_albums_view::featuring_albums_view(api_proxy_ptr api):
-    albums_base_view(api, "featuring_albums_view", get_text(MPanelRecentlyLikedTracksDescr),
+featuring_albums_view::featuring_albums_view(HANDLE panel, api_proxy_ptr api):
+    albums_base_view(panel, api, get_text(MPanelRecentlyLikedTracksDescr),
         std::bind(events::show_browse, api))
     {}
 
@@ -444,8 +443,8 @@ void featuring_albums_view::show_tracks_view(const album_t &album) const
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(api_proxy_ptr api_proxy):
-    albums_base_view(api_proxy, "recently_liked_tracks_albums_view", get_text(MPanelAlbumsItemLabel),
+recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(HANDLE panel, api_proxy_ptr api_proxy):
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
     if (auto api = api_proxy.lock())
@@ -516,8 +515,8 @@ void recently_liked_tracks_albums_view::rebuild_items()
 }
 
 //-----------------------------------------------------------------------------------------------------------
-recently_saved_albums_view::recently_saved_albums_view(api_proxy_ptr api_proxy):
-    albums_base_view(api_proxy, "recently_saved_albums_view", get_text(MPanelAlbumsItemLabel),
+recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_proxy_ptr api_proxy):
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
         std::bind(events::show_browse, api_proxy))
 {
     if (auto api = api_proxy.lock())

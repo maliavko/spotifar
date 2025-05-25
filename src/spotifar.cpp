@@ -4,12 +4,16 @@
 #include "plugin.h"
 #include "ui/dialogs/menus.hpp"
 #include "ui/events.hpp"
+#include "ui/panel.hpp"
 
 namespace spotifar {
 
 namespace far3 = utils::far3;
 
-std::weak_ptr<plugin> plugin_instance;
+/// @brief A global pointer to the plugin instance. The plugin's lifecycle is bound to
+/// the opened panels, each of which holds a shared pointer to it. Once all the panels
+/// are closed, this pointer loses the ref and plugins gets destroyed
+static std::weak_ptr<plugin> plugin_instance;
 
 plugin_ptr get_plugin()
 {
@@ -32,7 +36,7 @@ void WINAPI GetGlobalInfoW(GlobalInfo *info)
 void WINAPI GetPluginInfoW(PluginInfo *info)
 {
     info->StructSize = sizeof(*info);
-    info->Flags = 0;
+    info->Flags = PF_NONE;
 
     if (config::is_added_to_disk_menu())
     {
@@ -78,39 +82,40 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/openw.html
 HANDLE WINAPI OpenW(const OpenInfo *info)
 {
-    auto p = plugin_instance.lock();
-    if (!p)
-    {
-        // initialize logging system
-        log::init();
-    
-        if (config::get_client_id().empty())
-        {
-            far3::show_far_error_dlg(MErrorPluginStartupNoClientID);
-            return NULL;
-        }
-    
-        if (config::get_client_secret().empty())
-        {
-            far3::show_far_error_dlg(MErrorPluginStartupNoClientSecret);
-            return NULL;
-        }
+    if (auto plugin_ptr = plugin_instance.lock())
+        return new ui::panel(plugin_ptr->get_api(), plugin_ptr);
+        
+    // initialize logging system
+    log::init();
 
-        // auto ptr = new std::shared_ptr<plugin>(new plugin());
-        // plugin_instance = *ptr;
-        // return ptr;
-        auto p = std::make_shared<plugin>();
-        auto &panel = p->create_panel();
-        return &panel;
+    if (config::get_client_id().empty())
+    {
+        far3::show_far_error_dlg(MErrorPluginStartupNoClientID);
+        return NULL;
     }
 
-    return new std::shared_ptr<plugin>(p->get_ptr());
+    if (config::get_client_secret().empty())
+    {
+        far3::show_far_error_dlg(MErrorPluginStartupNoClientSecret);
+        return NULL;
+    }
+
+    // create and initialize a first plugin's instance
+    auto p = std::make_shared<plugin>();
+
+    // saving only a weak pointer as a global one
+    plugin_instance = p;
+
+    // ...and passing a shared pointer to the panel to keep plugin alive
+    return new ui::panel(p->get_api(), p->get_ptr());
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html
 void WINAPI ClosePanelW(const ClosePanelInfo *info)
 {
     log::global->debug("Plugin's panel is closed, cleaning resources");
+
+    delete static_cast<ui::panel*>(info->hPanel);
 
     if (plugin_instance.expired())
     {
@@ -122,40 +127,41 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html
 void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 {
-    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
-    if (auto plugin = p->lock())
-        plugin->update_panel_info(info);
-
-    //return static_cast<plugin*>(info->hPanel)->update_panel_info(info);
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+        panel->update_panel_info(info);
 }
 
 /// @brief https://api.farmanager.com/ru/structures/getfinddatainfo.html
 intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 {
-    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
-    if (auto plugin = p->lock())
-        return plugin->update_panel_items(info);
-    return NULL;
-    //return static_cast<plugin*>(info->hPanel)->update_panel_items(info);
+    // plugin does not use Far's traditional recursive search mechanism
+    if (info->OpMode & OPM_FIND)
+        return FALSE;
+
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+        return panel->update_panel_items(info);
+    
+    return FALSE;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/freefinddataw.html 
 void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 {
-    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
-    if (auto plugin = p->lock())
-        plugin->free_panel_items(info);
-    //return static_cast<plugin*>(info->hPanel)->free_panel_items(info);
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+        panel->free_panel_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
 intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 {
-    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
-    if (auto plugin = p->lock())
-        return plugin->set_directory(info);
-    return NULL;
-    //return static_cast<plugin*>(info->hPanel)->set_directory(info);
+    // plugins does not use Far's traditional recursive search mechanism
+    if (info->OpMode & OPM_FIND)
+        return FALSE;
+    
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+        return panel->select_directory(info);
+    
+    return FALSE;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processconsoleinputw.html
@@ -163,57 +169,59 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 {
     namespace keys = utils::keys;
 
-    auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE);
-    if (pinfo.OwnerGuid != MainGuid) // process handlers only in case the plugin is loaded into panel
-        return FALSE;
-
-    auto &key_event = info->Rec.Event.KeyEvent;
+    const auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
         switch (keys::make_combined(key_event))
         {
             case keys::i + keys::mods::ctrl:
             {
-                //ObserverManager::notify(&ui::ui_events_observer::on_show_filters_menu);
+                // process handlers only in case the plugin is loaded into panel
+                if (auto plugin = plugin_instance.lock())
+                {
+                    return TRUE;
+                }
+            }
+        }
+    }
+    return FALSE;
+}
+
+/// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
+intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
+{
+    namespace keys = utils::keys;
+
+    const auto &key_event = info->Rec.Event.KeyEvent;
+    if (key_event.bKeyDown)
+    {
+        switch (keys::make_combined(key_event))
+        {
+            case keys::q + keys::mods::alt:
+            {
+                ui::events::show_player();
                 return TRUE;
             }
         }
     }
-    return 0;
+
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+        return panel->process_input(info);
+    
+    return FALSE;
 }
 
-/// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html 
-intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
+/// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
+intptr_t WINAPI CompareW(const CompareInfo *info)
 {
-    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
-    if (auto plugin = p->lock())
-        return plugin->process_input(info);
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+        return panel->compare_items(info);
     return FALSE;
-    //return static_cast<plugin*>(info->hPanel)->process_input(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpaneleventw.html
 intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 {
-    auto p = static_cast<std::shared_ptr<plugin>*>(info->hPanel);
-    if (info->Event == FE_CLOSE)
-    {
-        log::global->debug("Plugin closing event is received, processing");
-        p->reset();
-        delete p;
-
-        return FALSE; // return TRUE if the panel should not close
-    }
-
-    // if (auto p = static_cast<plugin*>(info->hPanel))
-    // {
-    //     if (info->Event == FE_CLOSE)
-    //     {
-    //         log::global->debug("Plugin closing event is received, processing");
-    //         p->shutdown();
-    //         return FALSE; // return TRUE if the panel should not close
-    //     }
-    // }
     return FALSE;
 }
 
@@ -232,16 +240,6 @@ intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
         return NULL;
     }
     return NULL;
-}
-
-/// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
-intptr_t WINAPI CompareW(const CompareInfo *info)
-{
-    auto p = static_cast<std::weak_ptr<plugin>*>(info->hPanel);
-    if (auto plugin = p->lock())
-        return plugin->compare_items(info);
-    return FALSE;
-    //return static_cast<plugin*>(info->hPanel)->compare_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 

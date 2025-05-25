@@ -44,10 +44,10 @@ public:
     using info_lines_t = std::vector<InfoPanelLine>;
     using return_callback_t = std::function<void(void)>;
 public:
-    view_abstract(const string &uid, const wstring &title, return_callback_t callback);
+    view_abstract(HANDLE panel, const wstring &title, return_callback_t callback);
     virtual ~view_abstract() {}
 
-    // a public interface for a panel operations on the view
+    // a public interface, exposed to the panel class
 
     /// @brief a helper event from outside, its called right after the items
     /// are populated on the panel
@@ -74,11 +74,14 @@ protected:
     /// @brief A helper function to unpack user data from the far items
     static auto unpack_user_data(const UserDataItem &user_data) -> const data_item_t*;
 
+    string get_uid() const { return typeid(*this).name(); }
+    HANDLE get_panel_handle() const { return panel; }
+
     // derived classes' interface to the internal view mechanisms
-    virtual auto request_extra_info(const data_item_t *data) -> bool { return false; }
+    virtual auto get_default_settings() const -> config::settings::view_t = 0;
+    virtual bool request_extra_info(const data_item_t *data) { return false; }
     virtual auto select_item(const data_item_t *data) -> intptr_t { return FALSE; }
     virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
-    virtual auto get_default_settings() const -> config::settings::view_t = 0;
     virtual auto compare_items(const sort_mode_t &modes, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t { return -2; }
 private:
@@ -86,11 +89,11 @@ private:
     bool is_first_init = true; // data-is-set flag
     sort_modes_t sort_modes;
     config::settings::view_t *settings;
-    string uid;
     wstring title;
+    HANDLE panel;
 };
 
-using view_ptr = std::shared_ptr<view_abstract>;
+using view_ptr_t = std::shared_ptr<view_abstract>;
 
 } // namespace ui
 } // namespace spotifar
