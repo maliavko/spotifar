@@ -366,6 +366,12 @@ void panel::close_panel(HANDLE panel)
         far3::panels::quit(this);
 }
 
+void panel::show_filters_menu()
+{
+    if (is_active() && view != nullptr)
+        view->show_filters_dialog();
+}
+
 void panel::refresh_panels(HANDLE panel, const string &item_id)
 {
     if (panel == NULL || is_this_panel(panel))

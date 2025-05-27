@@ -179,6 +179,7 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
                 // process handlers only in case the plugin is loaded into panel
                 if (auto plugin = plugin_weak_ptr.lock())
                 {
+                    ui::events::show_filters_menu();
                     return TRUE;
                 }
             }
