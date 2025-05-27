@@ -9,8 +9,6 @@
 
 namespace spotifar { namespace ui {
 
-using namespace spotify;
-
 /// @brief An abstract class for holding a currently viewable panel's data and
 /// business logic. By design, a user can travers through diffrent kind of 
 /// Spotify collections, each of them has a different key-features inside.
@@ -34,7 +32,7 @@ public:
         wstring description;
         uintptr_t file_attrs;
         std::vector<wstring> columns_data;
-        data_item_t *user_data;
+        spotify::data_item_t *user_data;
         bool is_selected = false;
     };
 
@@ -67,20 +65,21 @@ public:
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual void update_panel_info(OpenPanelInfo *info) {}
+    virtual void show_filters_dialog() {}
 protected:
     /// @brief A helper function to unpack user data from the far items
-    static auto unpack_user_data(const UserDataItem &user_data) -> const data_item_t*;
+    static auto unpack_user_data(const UserDataItem &user_data) -> const spotify::data_item_t*;
 
     string get_uid() const { return typeid(*this).name(); }
     HANDLE get_panel_handle() const { return panel; }
 
     // derived classes' interface to the internal view mechanisms
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
-    virtual bool request_extra_info(const data_item_t *data) { return false; }
-    virtual auto select_item(const data_item_t *data) -> intptr_t { return FALSE; }
+    virtual bool request_extra_info(const spotify::data_item_t *data) { return false; }
+    virtual auto select_item(const spotify::data_item_t *data) -> intptr_t { return FALSE; }
     virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
-    virtual auto compare_items(const sort_mode_t &modes, const data_item_t *data1,
-        const data_item_t *data2) -> intptr_t { return -2; }
+    virtual auto compare_items(const sort_mode_t &modes, const spotify::data_item_t *data1,
+        const spotify::data_item_t *data2) -> intptr_t { return -2; }
 private:
     return_callback_t return_callback;
     bool is_first_init = true; // data-is-set flag

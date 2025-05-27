@@ -34,10 +34,11 @@ protected:
     void refresh(const string &item_id = "") const;
     
     // global ui events
-    void refresh_panels(HANDLE panel, const item_id_t &item_id = "") override;
+    void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id = "") override;
     void show_view(HANDLE panel, view_builder_t builder) override;
     void show_multiview(HANDLE panel, multiview_builder_t builders) override;
     void close_panel(HANDLE panel) override;
+    void show_filters_menu() override;
 
     // requesters progress notifications
     void on_request_started(const string &url) override;
