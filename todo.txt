@@ -29,7 +29,7 @@ bugs
 + if I open plugin through the disk menu on the passive panel all my PANEL_ACTIVE refreshings are faling miserably
 - if librespot crashes, the far with plugin opened does not close
 + after long idle: the player's controls are locked, using global hotkey for start playback raises an error 404, the message of the error is not shown, only status code
-- crash if start plugin when it is already started
++ crash if start plugin when it is already started
 + skipping tracks quickly creates a queue of toasts
 - toast like-button should be unlike in case the track is saved
 + recent releases thread bloks far from closing while sleeps

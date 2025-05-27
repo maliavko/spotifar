@@ -4,6 +4,7 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
 namespace far3 = utils::far3;
 namespace panels = far3::panels;
 namespace keys = utils::keys;
