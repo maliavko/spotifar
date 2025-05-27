@@ -29,11 +29,13 @@ namespace events {
 
     void show_recently_saved_albums(api_weak_ptr_t api);
 
-    void show_playlist(api_weak_ptr_t api, const playlist_t &playlist);
+    void show_playlist(api_weak_ptr_t api, const spotify::playlist_t &playlist);
 
-    void show_artist_albums(api_weak_ptr_t api, const artist_t &artist, view_abstract::return_callback_t callback = {});
+    void show_artist_albums(api_weak_ptr_t api, const spotify::artist_t &artist,
+        view_abstract::return_callback_t callback = {});
 
-    void show_album_tracks(api_weak_ptr_t api, const album_t &album, view_abstract::return_callback_t callback = {});
+    void show_album_tracks(api_weak_ptr_t api, const spotify::album_t &album,
+        view_abstract::return_callback_t callback = {});
 
     void show_playing_queue(api_weak_ptr_t api);
     
@@ -58,6 +60,10 @@ namespace events {
     /// @brief Forcing the given `panel` to close
     /// @param panel could be a panel handle, PANEL_ACTIVE or PANEL_PASSIVE
     void close_panel(HANDLE panel);
+
+    /// @brief Sending an event to the active panel to show it's current view
+    /// filters menu dialog
+    void show_filters_menu();
 
 } // namespace events
 
@@ -110,13 +116,15 @@ struct ui_events_observer: public BaseObserverProtocol
     /// @brief Refreshes the plugin's panel, forcing it to repopulate items
     /// and redraw it. If `item_id` is given, the one will be selected
     /// on the panel after operation is finished
-    virtual void refresh_panels(HANDLE panel, const item_id_t &item_id) {}
+    virtual void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id) {}
 
     virtual void show_view(HANDLE panel, view_builder_t builder) {}
 
     virtual void show_multiview(HANDLE panel, multiview_builder_t callbacks) {}
 
     virtual void close_panel(HANDLE panel) {}
+
+    virtual void show_filters_menu() {}
 };
 
 } // namespace ui

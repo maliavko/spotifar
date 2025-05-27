@@ -4,6 +4,7 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
 using utils::far3::get_text;
 
 //-----------------------------------------------------------------------------------------------------------
@@ -15,11 +16,7 @@ void artists_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
-    static wstring column_name;
-    
-    column_name = L"Name";
-
-    static const wchar_t* titles_3[] = { column_name.c_str(), L"Albums", L"Followers", L"Pop %" };
+    static const wchar_t* titles_3[] = { L"Name", L"Albums", L"Followers", L"Pop %" };
     modes[3].ColumnTypes = L"NON,C3,C0,C1";
     modes[3].ColumnWidths = L"0,6,9,5";
     modes[3].ColumnTitles = titles_3;
@@ -32,7 +29,7 @@ void artists_base_view::update_panel_info(OpenPanelInfo *info)
     modes[4].StatusColumnTypes = NULL;
     modes[4].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_5[] = { column_name.c_str(), L"Albums", L"Followers", L"Pop %", L"Genre" };
+    static const wchar_t* titles_5[] = { L"Name", L"Albums", L"Followers", L"Pop %", L"Genre" };
     modes[5].ColumnTypes = L"NON,C3,C0,C1,C2";
     modes[5].ColumnWidths = L"0,6,9,5,25";
     modes[5].ColumnTitles = titles_5;
@@ -40,15 +37,18 @@ void artists_base_view::update_panel_info(OpenPanelInfo *info)
     modes[5].StatusColumnWidths = NULL;
     modes[5].Flags = PMFLAGS_FULLSCREEN;
 
-    static const wchar_t* titles_6[] = { column_name.c_str(), L"Genres" };
+    static const wchar_t* titles_6[] = { L"Name", L"Genres" };
     modes[6].ColumnTitles = titles_6;
     modes[6].StatusColumnTypes = NULL;
     modes[6].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_7[] = { column_name.c_str(), L"Albums", L"Genres" };
+    static const wchar_t* titles_7[] = { L"Name", L"Albums1", L"Genres" };
     modes[7].ColumnTitles = titles_7;
+    modes[7].ColumnTypes = L"NON,C3,Z";
+    modes[7].ColumnWidths = L"30,6,0";
     modes[7].StatusColumnTypes = NULL;
     modes[7].StatusColumnWidths = NULL;
+    modes[7].Flags = PMFLAGS_FULLSCREEN;
 
     modes[8] = modes[5]; // the same as 5th, but not fullscreen
     modes[8].Flags &= ~PMFLAGS_FULLSCREEN;
@@ -161,6 +161,7 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
     return -2;
 }
 
+
 //-----------------------------------------------------------------------------------------------------------
 followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_proxy):
     artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel),
@@ -188,6 +189,33 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
     events::show_artist_albums(api_proxy, artist,
         std::bind(events::show_collection, api_proxy));
 }
+
+void followed_artists_view::show_filters_dialog()
+{
+    PluginDialogBuilder builder(config::ps_info, MainGuid, FarMessageGuid, L"Test Dialog", NULL);
+
+    std::unordered_set<string> genres;
+
+    for (const auto &artist: *collection)
+        genres.insert(artist.genres.begin(), artist.genres.end());
+
+    std::vector<const wchar_t*> items;
+    for (const auto &genre: genres)
+        items.push_back(_wcsdup(utils::to_wstring(genre).c_str()));
+
+    std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return wcscmp(a, b) < 0; });
+        
+    int selected_item;
+    builder.AddListBox(&selected_item, 40, 10, &items[0], items.size(), DIF_LISTNOBOX);
+
+    builder.AddOKCancel(MOk, MCancel);
+
+    auto result = builder.ShowDialogEx();
+    
+    for (const auto &item: items)
+        free(const_cast<wchar_t*>(item));
+}
+
 
 //-----------------------------------------------------------------------------------------------------------
 recent_artists_view::recent_artists_view(HANDLE panel, api_weak_ptr_t api):

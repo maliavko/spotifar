@@ -148,6 +148,11 @@ namespace spotifar { namespace ui { namespace events {
     {
         dispatch_event(&ui_events_observer::close_panel, panel);
     }
+    
+    void show_filters_menu()
+    {
+        dispatch_event(&ui_events_observer::show_filters_menu);
+    }
 
 } // namespace events
 } // namespace ui
