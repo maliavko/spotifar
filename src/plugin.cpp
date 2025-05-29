@@ -96,7 +96,7 @@ void plugin::launch_sync_worker()
             far3::synchro_tasks::push([ex] {
                 far3::show_far_error_dlg(MErrorSyncThreadFailed, to_wstring(ex.what()));
                 ui::events::quit();
-            });
+            }, "synch thread, show error dialog task");
         }
     });
 

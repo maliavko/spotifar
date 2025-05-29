@@ -83,14 +83,15 @@ class tasks_queue
 public:
     using task_t = std::function<void(void)>;
 
-    auto push_task(task_t task) -> intptr_t;
+    auto push_task(task_t task, const string &task_descr = "") -> intptr_t;
     void process_one(intptr_t task_id);
     void process_all();
     void clear_tasks();
 protected:
     void execute_task(task_t &task);
 private:
-    std::unordered_map<intptr_t, task_t> tasks{};
+    // task_id -> pair<task_handler, task_str_description>
+    std::unordered_map<intptr_t, std::pair<task_t, string>> tasks{};
     std::mutex guard;
 };
 
@@ -199,7 +200,10 @@ namespace events
         ObserverManager::unsubscribe<P>(o);
 
         if (!is_weak)
+        {
+            assert(observers_number[typeid(P)] > 0);
             observers_number[typeid(P)]--;
+        }
     }
 }
 
@@ -353,7 +357,7 @@ namespace far3
     namespace synchro_tasks
     {
         /// @brief Push a task, to be executed in the plugin's main thread
-        void push(tasks_queue::task_t task);
+        void push(tasks_queue::task_t task, const string &task_descr = "");
 
         /// @brief Execute a task with a given id
         void process(intptr_t task_id);
@@ -368,9 +372,10 @@ namespace far3
         template <class P, typename... MethodArgumentTypes, typename... ActualArgumentTypes>
         static void dispatch_event(void (P::*method)(MethodArgumentTypes...), ActualArgumentTypes... args)
         {
+            const auto &task_descr = std::format("dispatch event task, {}", typeid(P).name());
             far3::synchro_tasks::push([method, args...] {
                 ObserverManager::notify(method, args...);
-            });
+            }, task_descr);
         }
     }
 
