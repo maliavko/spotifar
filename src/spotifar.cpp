@@ -279,4 +279,9 @@ intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
     return FALSE;
 }
 
+/// @brief https://api.farmanager.com/ru/exported_functions/exitfarw.html
+void WINAPI ExitFARW(const ExitInfo *info)
+{
+}
+
 } // namespace spotifar
