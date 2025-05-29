@@ -10,21 +10,6 @@ namespace far3 = utils::far3;
 // the `F` keys, which can be overriden by the nested views
 static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
 
-/// @brief Shows a splash loading screen in the middle of the Far Manager's panels.
-/// If the `message` is not provided, the default one is shown.
-/// @note the message is closed automatically by the next panels redrawal
-static void show_loading_splash(const wstring &message = L"")
-{
-    const wchar_t* msgs[] = { L"", L"" };
-
-    if (message.empty())
-        msgs[1] = L" Requesting data... "; // TODO: localize
-    else
-        msgs[1] = message.c_str();
-
-    config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
-}
-
 /// @brief A stub-view used for the first panel initialization, before any other
 /// view to be shown. Purposely visible when the user is not yet authorized
 class stub_view: public view_abstract
@@ -54,7 +39,6 @@ protected:
 panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 {
     utils::events::start_listening<ui_events_observer>(this);
-    utils::events::start_listening<api_requests_observer>(this);
 
     auto api_ptr = plugin_ptr->get_api().lock();
     if (api_ptr && api_ptr->is_authenticated())
@@ -66,7 +50,6 @@ panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 panel::~panel()
 {
     utils::events::stop_listening<ui_events_observer>(this);
-    utils::events::stop_listening<api_requests_observer>(this);
 
     view.reset();
     plugin_proxy.reset();
@@ -376,52 +359,6 @@ void panel::refresh_panels(HANDLE panel, const string &item_id)
 {
     if (panel == NULL || is_this_panel(panel))
         refresh(item_id);
-}
-
-/// @brief The requests, which do not require showing splash screen, as they are processed
-/// in the background, hidden from user
-static const std::set<string> no_splash_requests{
-    "/v1/me/player/recently-played",
-    "/v1/me/tracks/contains",
-};
-
-void panel::on_request_started(const string &url)
-{
-    using namespace utils::http;
-
-    // the handler is called only when complex http requests are being initiated, like
-    // sync and async multipage collections fetching. In most of the cases it is done when
-    // the new view is created and getting populated. So, we show a splash screen and it will
-    // get closed automatically when the view initialization is done and the panel is redrawn
-    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
-        show_loading_splash();
-}
-
-void panel::on_request_finished(const string &url)
-{
-    // when any http request is being performed, panel shows a progress splash screen,
-    // which gets hidden once all the received panel items are set, but FAR redraws only
-    // the active panel, so half of the splash screen stays on the screen. Forcing the
-    // passive panel to redraw as well
-    far3::panels::redraw(PANEL_PASSIVE);
-}
-
-void panel::on_request_progress_changed(const string &url, size_t progress, size_t total)
-{
-    using namespace utils::http;
-
-    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
-        show_loading_splash(std::format(L"Fetching progress: {}/{}", progress, total));
-}
-
-void panel::on_playback_command_failed(const string &message)
-{
-    utils::far3::show_far_error_dlg(MErrorPlaybackCmdFailed, utils::to_wstring(message));
-}
-
-void panel::on_collection_fetching_failed(const string &message)
-{
-    utils::far3::show_far_error_dlg(MErrorCollectionFetchFailed, utils::to_wstring(message));
 }
 
 } // namespace ui

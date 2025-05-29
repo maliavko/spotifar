@@ -3,13 +3,20 @@
 #include "utils.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
+#include "ui/dialogs/menus.hpp"
 
 namespace spotifar {
 
-using namespace utils;
 namespace hotkeys = config::hotkeys;
 namespace far3 = utils::far3;
+using namespace utils;
 
+/// @brief The requests, which do not require showing splash screen, as they are processed
+/// in the background, hidden from user
+static const std::set<string> no_splash_requests{
+    "/v1/me/player/recently-played",
+    "/v1/me/tracks/contains",
+};
 
 plugin::plugin(): api(new spotify::api())
 {
@@ -20,12 +27,16 @@ plugin::plugin(): api(new spotify::api())
     events::start_listening<config::config_observer>(this);
     events::start_listening<spotify::auth_observer>(this);
     events::start_listening<spotify::releases_observer>(this);
+    events::start_listening<spotify::api_requests_observer>(this);
     events::start_listening<ui::ui_events_observer>(this);
     
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
     
-    api->start();
-    notifications->start();
+    ui::show_waiting(MWaitingInitSpotify);
+    {
+        api->start();
+        notifications->start();
+    }
 
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
     
@@ -40,14 +51,19 @@ plugin::~plugin()
 
         background_tasks.clear_tasks();
 
-        api->shutdown();
-        notifications->shutdown();
+        ui::show_waiting(MWaitingFiniSpotify);
+        {
+            api->shutdown();
+            notifications->shutdown();   
+        }
 
         shutdown_sync_worker();
+        
         shutdown_librespot_process();
     
         events::stop_listening<spotify::releases_observer>(this);
         events::stop_listening<spotify::auth_observer>(this);
+        events::stop_listening<spotify::api_requests_observer>(this);
         events::stop_listening<config::config_observer>(this);
         events::stop_listening<ui::ui_events_observer>(this);
 
@@ -65,6 +81,8 @@ plugin::~plugin()
 
 void plugin::launch_sync_worker()
 {
+    ui::show_waiting(MWaitingInitSyncWorker);
+
     std::packaged_task<void()> task([this]
     {
         try
@@ -107,6 +125,8 @@ void plugin::launch_sync_worker()
 
 void plugin::shutdown_sync_worker()
 {
+    ui::show_waiting(MWaitingFiniSyncWorker);
+
     is_worker_listening = false;
     
     // trying to acquare a sync worker mutex, giving worker time to clean up
@@ -256,6 +276,45 @@ void plugin::process_win_messages_queue()
             }
         }
     }
+}
+
+void plugin::on_request_started(const string &url)
+{
+    using namespace utils::http;
+
+    // the handler is called only when complex http requests are being initiated, like
+    // sync and async multipage collections fetching. In most of the cases it is done when
+    // the new view is created and getting populated. So, we show a splash screen and it will
+    // get closed automatically when the view initialization is done and the panel is redrawn
+    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
+        ui::show_waiting(MWaitingRequest);
+}
+
+void plugin::on_request_finished(const string &url)
+{
+    // when any http request is being performed, panel shows a progress splash screen,
+    // which gets hidden once all the received panel items are set, but FAR redraws only
+    // the active panel, so half of the splash screen stays on the screen. Forcing the
+    // passive panel to redraw as well
+    far3::panels::redraw(PANEL_PASSIVE);
+}
+
+void plugin::on_request_progress_changed(const string &url, size_t progress, size_t total)
+{
+    using namespace utils::http;
+
+    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
+        ui::show_waiting(MWaitingItemsProgress, progress, total);
+}
+
+void plugin::on_playback_command_failed(const string &message)
+{
+    utils::far3::show_far_error_dlg(MErrorPlaybackCmdFailed, utils::to_wstring(message));
+}
+
+void plugin::on_collection_fetching_failed(const string &message)
+{
+    utils::far3::show_far_error_dlg(MErrorCollectionFetchFailed, utils::to_wstring(message));
 }
 
 } // namespace spotifar
