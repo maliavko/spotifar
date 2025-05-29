@@ -119,6 +119,10 @@ namespace spotifar
         // notifications
         MToastNewReleasesFoundTitle,
         MToastNewReleasesFoundHaveALookBtn,
+        MToastSpotifyAttibution,
+        MToastTrackChangedLikeBtn,
+        MToastTrackChangedUnlikeBtn,
+        MToastTrackChangedNextBtn,
 
         // complimentary dialogs & menus
         MTransferPlaybackTitle,

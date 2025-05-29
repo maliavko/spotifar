@@ -7,10 +7,11 @@ application ideas
     - goto playlist from player UI
     - showing some simple sorting's direction sign around the column name the sorting is applied to
     - make safer calls of the main artists from the album or tracks objects: "artists[0]"
-    - to add a description to all the async tasks and log it additionally with errors
+    + to add a description to all the async tasks and log it additionally with errors
     - close plugin if another librespot device is being detected
+    - to save multiview current tab between sessions
 - new functional
-    + splash screen with notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
+    + win toast notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
     - grab lyrics from here? https://lrclib.net/
     + fresh releases through musicbrainz: https://musicbrainz.org/doc/MusicBrainz_API/Search, https://github.com/metabrainz/libmusicbrainz/tree/master/examples
@@ -33,7 +34,7 @@ bugs
 + after long idle: the player's controls are locked, using global hotkey for start playback raises an error 404, the message of the error is not shown, only status code
 + crash if start plugin when it is already started
 + skipping tracks quickly creates a queue of toasts
-- toast like-button should be unlike in case the track is saved
++ toast like-button should be unlike in case the track is saved
 + recent releases thread bloks far from closing while sleeps
 
 to finish for alpha release
