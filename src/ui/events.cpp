@@ -136,7 +136,8 @@ namespace spotifar { namespace ui { namespace events {
     
     void refresh_panels()
     {
-        dispatch_event(&ui_events_observer::refresh_panels, (HANDLE)NULL, "");
+        for (const auto &panel: { PANEL_ACTIVE, PANEL_PASSIVE })
+            utils::far3::panels::redraw(panel);
     }
     
     void quit()

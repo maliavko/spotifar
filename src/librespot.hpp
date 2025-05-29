@@ -26,7 +26,7 @@ protected:
     void on_devices_changed(const spotify::devices_t &devices) override;
 private:
     spotify::api_weak_ptr_t api_proxy;
-    bool is_running = false;
+    std::atomic<bool> is_running = false;
     bool is_listening_devices = false;
 
     STARTUPINFO si;

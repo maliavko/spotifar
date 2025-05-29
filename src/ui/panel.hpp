@@ -13,8 +13,7 @@ namespace spotifar { namespace ui {
 using namespace spotify;
 
 class panel:
-    public ui_events_observer, // for processing view opening requests
-    public api_requests_observer // for showing splash screen during long httl requests
+    public ui_events_observer
 {
 public:
     panel(plugin_ptr_t plugin_ptr);
@@ -39,13 +38,6 @@ protected:
     void show_multiview(HANDLE panel, multiview_builder_t builders) override;
     void close_panel(HANDLE panel) override;
     void show_filters_menu() override;
-
-    // requesters progress notifications
-    void on_request_started(const string &url) override;
-    void on_request_finished(const string &url) override;
-    void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
-    void on_playback_command_failed(const string &message) override;
-    void on_collection_fetching_failed(const string &message) override;
 private:
     multiview_builder_t mview_builders;
     size_t mview_current_idx = 0;
