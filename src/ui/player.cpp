@@ -250,6 +250,7 @@ bool player::show()
         
         utils::events::start_listening<playback_observer>(this);
         utils::events::start_listening<devices_observer>(this);
+        utils::events::start_listening<librespot_observer>(this);
 
         if (hdlg != NULL)
         {
@@ -298,6 +299,7 @@ void player::cleanup()
 {
     utils::events::stop_listening<playback_observer>(this);
     utils::events::stop_listening<devices_observer>(this);
+    utils::events::stop_listening<librespot_observer>(this);
     
     hdlg = NULL;
     visible = false;
@@ -316,19 +318,28 @@ void player::tick()
         synchro_tasks::push([api = api_proxy.lock(), p] {
             const auto &state = api->get_playback_state();
             api->seek_to_position(p * 1000, state.device.id);
-        });
+        }, "seek-to-position task");
     });
 
     volume.check([this](int v) {
-        synchro_tasks::push([api = api_proxy.lock(), v] { api->set_playback_volume(v); });
+        synchro_tasks::push(
+            [api = api_proxy.lock(), v] { api->set_playback_volume(v); },
+            "set-playback-volume task"
+        );
     });
 
     shuffle_state.check([this](bool v) {
-        synchro_tasks::push([api = api_proxy.lock(), v] { api->toggle_shuffle(v); });
+        synchro_tasks::push(
+            [api = api_proxy.lock(), v] { api->toggle_shuffle(v); },
+            "toggle-shuffle task"
+        );
     });
 
     repeat_state.check([this](const string &s) {
-        synchro_tasks::push([api = api_proxy.lock(), s] { api->set_repeat_state(s); });
+        synchro_tasks::push(
+            [api = api_proxy.lock(), s] { api->set_repeat_state(s); },
+            "set-repeat-state task"
+        );
     });
 }
 
@@ -791,10 +802,16 @@ void player::on_devices_changed(const devices_t &devices)
 
     for (size_t i = 0; i < devices.size(); i++)
     {
-        auto &dev = devices[i];
+        const auto &dev = devices[i];
         far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, (int)i,
             (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
+}
+
+void player::on_running_state_changed(bool is_running)
+{
+    if (!is_running)
+        hide();
 }
 
 void player::on_track_changed(const track_t &track, const track_t &prev_track)

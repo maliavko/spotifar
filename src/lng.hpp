@@ -12,6 +12,7 @@ namespace spotifar
         MCancel,
         MYes,
         MShowLogs,
+        MRelaunch,
 
         MSortDialogTitle,
 
@@ -109,6 +110,7 @@ namespace spotifar
         MErrorPluginStartupNoClientID,
         MErrorPluginStartupNoClientSecret,
         MErrorLibrespotStartupUnexpected,
+        MErrorLibrespotStoppedUnexpectedly,
         MErrorWinToastStartupUnexpected,
         MErrorSyncThreadFailed,
         MErrorPlaybackCmdFailed,

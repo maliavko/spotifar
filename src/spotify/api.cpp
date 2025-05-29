@@ -525,7 +525,10 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
             });
 
             auto res = put("/v1/me/player", body.str());
-            if (!http::is_success(res))
+            if (http::is_success(res))
+                // if the transfer was performed successfully, we resync the list of available devices
+                this->devices->resync(true);
+            else
                 playback_cmd_error(http::get_status_message(res));
         });
 }
