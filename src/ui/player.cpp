@@ -591,7 +591,8 @@ bool player::on_track_label_input_received(void *input_record)
 
 bool player::on_playing_queue_input_received(void *input_record)
 {
-    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    // for now the expandable queue is disabled
+    /*const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -600,10 +601,11 @@ bool player::on_playing_queue_input_received(void *input_record)
         auto track_uri = far3::dialogs::get_list_current_item_data<string>(
             hdlg, controls::queue_list);
 
-        // TODO: unclear how to skip several tracks in the playing queue
+        // there is no API to skip several tracks or pick the particular
+        // one in the playing queue
         // auto &state = api_proxy->get_playback_state();
         // api_proxy->start_playback(state.context.uri, track_uri);
-    }
+    }*/
 
     return true;
 }

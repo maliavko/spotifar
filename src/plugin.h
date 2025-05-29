@@ -17,10 +17,11 @@ namespace spotifar {
 
 class plugin:
     public plugin_interface,
-    public config::config_observer, // for catching changing config settings events
-    public spotify::auth_observer, // for launching librespot once credentials were acquaired
-    public spotify::releases_observer, // for showing fresh-releases-found notification
-    public ui::ui_events_observer // for showing up the player by request
+    public config::config_observer,
+    public spotify::auth_observer,
+    public spotify::releases_observer,
+    public spotify::api_requests_observer,
+    public ui::ui_events_observer
 {
 public:
     plugin();
@@ -52,6 +53,11 @@ protected:
     
     // ui events handlers
     void show_player() override;
+    void on_request_started(const string &url) override;
+    void on_request_finished(const string &url) override;
+    void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
+    void on_playback_command_failed(const string &message) override;
+    void on_collection_fetching_failed(const string &message) override;
 private:
     std::mutex sync_worker_mutex; // is locked all the way until worker is active
     std::atomic<bool> is_worker_listening = false;

@@ -1,6 +1,8 @@
 #include "librespot.hpp"
 #include "config.hpp"
 #include "lng.hpp"
+#include "ui/dialogs/menus.hpp"
+#include "ui/events.hpp"
 
 namespace spotifar {
 
@@ -31,6 +33,8 @@ bool librespot_handler::start(const string &access_token)
         log::global->warn("The Librespot process is already running");
         return false;
     }
+    
+    ui::show_waiting(MWaitingInitLibrespot);
 
     subscribe();
 
@@ -136,11 +140,15 @@ void librespot_handler::shutdown()
         log::global->warn("The Librespot process is already shutdown");
         return;
     }
+
+    is_running = false;
     
+    ui::show_waiting(MWaitingFiniLibrespot);
+
     unsubscribe();
     
     // sending a control stop event to the librespot process
-    GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
+    //GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
     
     // closing all the used handles
     if (pipe_read != NULL)
@@ -164,8 +172,6 @@ void librespot_handler::shutdown()
         CloseHandle(pi.hThread);
         pi.hThread = NULL;
     }
-
-    is_running = false;
 
     dispatch_event(&librespot_observer::on_running_state_changed, false);
 }
@@ -225,7 +231,7 @@ void librespot_handler::tick()
     DWORD exit_code;
     GetExitCodeProcess(pi.hProcess, &exit_code);
 
-    if (exit_code != STILL_ACTIVE)
+    if (exit_code != STILL_ACTIVE && exit_code != STATUS_CONTROL_C_EXIT)
     {
         // the process is shut down unexpectedly, cleaning up the resources and
         // preparing for a relaunch
@@ -238,7 +244,6 @@ void librespot_handler::tick()
                     start(api->get_auth_data().access_token);
             });
         }, "librespot-unexpected-stop, show error dialog task");
-        
     }
 }
 
@@ -257,6 +262,8 @@ void librespot_handler::unsubscribe()
     {
         is_listening_devices = false;
         utils::events::stop_listening<devices_observer>(this);
+        
+        ui::events::refresh_panels(); // closing waiting splash screen if any
     }
 }
 

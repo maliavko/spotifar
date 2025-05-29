@@ -129,6 +129,14 @@ namespace spotifar
         MTransferPlaybackMessage,
         MTransferPlaybackInactiveMessage01,
         MTransferPlaybackInactiveMessage02,
+        MWaitingRequest,
+        MWaitingItemsProgress,
+        MWaitingInitSpotify,
+        MWaitingInitSyncWorker,
+        MWaitingInitLibrespot,
+        MWaitingFiniSpotify,
+        MWaitingFiniSyncWorker,
+        MWaitingFiniLibrespot,
     };
 }
 
