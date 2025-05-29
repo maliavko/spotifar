@@ -6,6 +6,7 @@
 "&Cancel"
 "&Yes"
 "&Show logs"
+"&Relaunch"
 
 "Sort by"
 
@@ -102,6 +103,7 @@
 "An error has occured while initializing plugin: Spotify client ID is not specified."
 "An error has occured while initializing plugin: Spotify client secret is not specified."
 "There is a problem launching Librespot process, see logs for the details."
+"A Librespot process has stopped unexpectedly."
 "Could not initialize a notifications library."
 "A worker thread caught an exception and stopped unexpectedly, closing plugin."
 "A playback error."

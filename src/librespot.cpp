@@ -7,6 +7,7 @@ namespace spotifar {
 using namespace utils;
 using utils::far3::get_text;
 using utils::far3::get_vtext;
+using utils::far3::synchro_tasks::dispatch_event;
 
 #ifdef _DEBUG
     static const wstring device_name = L"librespot-debug";
@@ -16,12 +17,10 @@ using utils::far3::get_vtext;
 
 librespot_handler::librespot_handler(spotify::api_weak_ptr_t api): api_proxy(api)
 {
-    utils::events::start_listening<devices_observer>(this);
 }
 
 librespot_handler::~librespot_handler()
 {
-    utils::events::stop_listening<devices_observer>(this);
     api_proxy.reset();
 }
 
@@ -32,6 +31,8 @@ bool librespot_handler::start(const string &access_token)
         log::global->warn("The Librespot process is already running");
         return false;
     }
+
+    subscribe();
 
     SECURITY_ATTRIBUTES sa_attrs;
     ZeroMemory(&sa_attrs, sizeof(sa_attrs));
@@ -123,6 +124,8 @@ bool librespot_handler::start(const string &access_token)
 
     is_running = true;
 
+    dispatch_event(&librespot_observer::on_running_state_changed, true);
+
     return true;
 }
 
@@ -133,6 +136,8 @@ void librespot_handler::shutdown()
         log::global->warn("The Librespot process is already shutdown");
         return;
     }
+    
+    unsubscribe();
     
     // sending a control stop event to the librespot process
     GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);
@@ -150,6 +155,7 @@ void librespot_handler::shutdown()
     }
     if (pi.hProcess != NULL)
     {
+        TerminateProcess(pi.hProcess, 1);
         CloseHandle(pi.hProcess);
         pi.hProcess = NULL;
     }
@@ -160,6 +166,8 @@ void librespot_handler::shutdown()
     }
 
     is_running = false;
+
+    dispatch_event(&librespot_observer::on_running_state_changed, false);
 }
 
 void librespot_handler::tick()
@@ -213,6 +221,43 @@ void librespot_handler::tick()
             ss.str(sline);
         }
     }
+
+    DWORD exit_code;
+    GetExitCodeProcess(pi.hProcess, &exit_code);
+
+    if (exit_code != STILL_ACTIVE)
+    {
+        // the process is shut down unexpectedly, cleaning up the resources and
+        // preparing for a relaunch
+        shutdown();
+
+        far3::synchro_tasks::push([this] {
+            far3::show_far_error_dlg(MErrorLibrespotStoppedUnexpectedly, L"", MRelaunch, [this]
+            {
+                if (auto api = api_proxy.lock())
+                    start(api->get_auth_data().access_token);
+            });
+        }, "librespot-unexpected-stop, show error dialog task");
+        
+    }
+}
+
+void librespot_handler::subscribe()
+{
+    if (!is_listening_devices)
+    {
+        is_listening_devices = true;
+        utils::events::start_listening<devices_observer>(this);
+    }
+}
+
+void librespot_handler::unsubscribe()
+{
+    if (is_listening_devices)
+    {
+        is_listening_devices = false;
+        utils::events::stop_listening<devices_observer>(this);
+    }
 }
 
 void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
@@ -229,7 +274,7 @@ void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
             if (device.name == device_name)
             {
                 // stop listening after a correct device is detected
-                utils::events::stop_listening<devices_observer>(this);
+                unsubscribe();
 
                 if (auto api = api_proxy.lock())
                 {
@@ -261,7 +306,7 @@ void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
     else
     {
         // stop listening after a correct device is detected
-        utils::events::stop_listening<devices_observer>(this);
+        unsubscribe();
 
         if (active_dev_it != devices.end()) return;
 

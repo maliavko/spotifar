@@ -506,9 +506,9 @@ namespace far3
     {
         static tasks_queue queue;
         
-        void push(tasks_queue::task_t task)
+        void push(tasks_queue::task_t task, const string &task_descr)
         {
-            auto task_id = queue.push_task(task);
+            auto task_id = queue.push_task(task, task_descr);
             actl::synchro((void*)task_id);
         }
         
@@ -734,13 +734,13 @@ wstring trim(const wstring &s)
 }
 
 
-intptr_t tasks_queue::push_task(task_t task)
+intptr_t tasks_queue::push_task(task_t task, const string &task_descr)
 {
     static intptr_t task_id = 0;
 
     {
         std::lock_guard lock(guard);
-        tasks[++task_id] = task;
+        tasks[++task_id] = std::make_pair(task, task_descr);
     }
 
     return task_id;
@@ -752,7 +752,7 @@ void tasks_queue::process_one(intptr_t task_id)
     if (it == tasks.end())
         return log::global->error("There is no task registered with the given id, {}", task_id);
 
-    execute_task(it->second);
+    execute_task(it->second.first);
     
     {
         std::lock_guard lock(guard);
@@ -763,7 +763,7 @@ void tasks_queue::process_one(intptr_t task_id)
 void tasks_queue::process_all()
 {
     for (auto &[task_id, task]: tasks)
-        execute_task(task);
+        execute_task(task.first);
     
     {
         std::lock_guard lock(guard);
@@ -774,7 +774,11 @@ void tasks_queue::process_all()
 void tasks_queue::clear_tasks()
 {
     if (tasks.size() > 0)
+    {
         log::global->error("Unfinished tasks are stuck in the queue, {}", tasks.size());
+        for (const auto &[task_id, task]: tasks)
+            log::global->error(task.second);
+    }
     
     {
         std::lock_guard lock(guard);

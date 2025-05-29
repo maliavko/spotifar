@@ -192,7 +192,8 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
 
 void followed_artists_view::show_filters_dialog()
 {
-    PluginDialogBuilder builder(config::ps_info, MainGuid, FarMessageGuid, L"Test Dialog", NULL);
+    // TODO: unfinished, not for the aplha release
+    /*PluginDialogBuilder builder(config::ps_info, MainGuid, FarMessageGuid, L"Test Dialog", NULL);
 
     std::unordered_set<string> genres;
 
@@ -213,7 +214,7 @@ void followed_artists_view::show_filters_dialog()
     auto result = builder.ShowDialogEx();
     
     for (const auto &item: items)
-        free(const_cast<wchar_t*>(item));
+        free(const_cast<wchar_t*>(item));*/
 }
 
 

@@ -23,7 +23,7 @@
             "command": "cargo",
             "args": [
                 "build",
-                "--release",
+                //"--release",
                 //"--no-default-features",
                 "--manifest-path=${workspaceFolder}\\thirdparty\\librespot\\Cargo.toml\""
             ],
@@ -36,7 +36,6 @@
                 "focus": true,
                 "clear": true
             },
-            "dependsOn": ["Download librespot"],
             "dependsOrder": "sequence",
             "problemMatcher": "$msCompile"
         },
@@ -119,7 +118,7 @@
             "type": "shell",
             "command": "xcopy",
             "args": [
-                "${workspaceFolder}\\thirdparty\\librespot\\target\\release\\librespot.exe",
+                "${workspaceFolder}\\thirdparty\\librespot\\target\\debug\\librespot.exe",
                 "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\librespot.exe*",
             ],
             "presentation": {
