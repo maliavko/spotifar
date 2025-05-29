@@ -6,6 +6,7 @@
 #include "spotify/playback.hpp"
 #include "spotify/devices.hpp"
 #include "controls.hpp"
+#include "librespot.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -13,7 +14,8 @@ using namespace spotify;
 
 class player:
     public playback_observer, // represent timely playback changes in UI
-    public devices_observer // to keep up to date the list of available devices
+    public devices_observer, // to keep up to date the list of available devices
+    public librespot_observer // to update the player visual when playback state is changed
 {
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases
@@ -71,16 +73,19 @@ protected:
     void update_like_btn(bool is_saved);
     void update_playing_queue(bool is_visible);
 
+    // librespot handlers
+    void on_running_state_changed(bool is_running) override;
+
     // api even handlers
-    void on_devices_changed(const devices_t &devices);
-    void on_track_changed(const track_t &track, const track_t &prev_track);
-    void on_track_progress_changed(int duration, int progress);
-    void on_volume_changed(int volume);
-    void on_shuffle_state_changed(bool state);
-    void on_repeat_state_changed(const string &state);
-    void on_state_changed(bool is_playing);
-    void on_context_changed(const context_t &ctx);
-    void on_permissions_changed(const actions_t &actions);
+    void on_devices_changed(const devices_t &devices) override;
+    void on_track_changed(const track_t &track, const track_t &prev_track) override;
+    void on_track_progress_changed(int duration, int progress) override;
+    void on_volume_changed(int volume) override;
+    void on_shuffle_state_changed(bool state) override;
+    void on_repeat_state_changed(const string &state) override;
+    void on_state_changed(bool is_playing) override;
+    void on_context_changed(const context_t &ctx) override;
+    void on_permissions_changed(const actions_t &actions) override;
 
     // helpers
     intptr_t set_control_text(int control_id, const wstring &text);

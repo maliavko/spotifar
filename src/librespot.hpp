@@ -20,15 +20,24 @@ public:
     void tick();
     auto is_started() const -> bool { return is_running; }
 protected:
+    void subscribe();
+    void unsubscribe();
+
     void on_devices_changed(const spotify::devices_t &devices) override;
 private:
     spotify::api_weak_ptr_t api_proxy;
     bool is_running = false;
+    bool is_listening_devices = false;
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     HANDLE pipe_read = NULL;
     HANDLE pipe_write = NULL;
+};
+
+struct librespot_observer: public BaseObserverProtocol
+{
+    virtual void on_running_state_changed(bool is_running) {}
 };
 
 } // namespace spotifar
