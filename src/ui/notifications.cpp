@@ -9,6 +9,7 @@ namespace spotifar { namespace ui {
 
 using namespace WinToastLib;
 using namespace spotify;
+using utils::far3::get_text;
 
 /// @brief Toasts notifications handler-class, for handling actions
 /// performed on the track-changed toast notification
@@ -165,6 +166,8 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         auto img_path = api->get_image(track.album.images[1], track.album.id);
         if (img_path.empty())
             return;
+
+        auto is_saved = api->check_saved_track(track.id);
      
         WinToastTemplate toast(WinToastTemplate::ImageAndText02);   
     
@@ -180,13 +183,14 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         // text
         toast.setTextField(track.name, WinToastTemplate::FirstLine);
         toast.setTextField(track.album.get_artist_name(), WinToastTemplate::SecondLine);
-        toast.setAttributionText(L"Content is provided by Spotify service"); // TODO: localize
+        toast.setAttributionText(get_text(MToastSpotifyAttibution));
         
         // buttons
         if (show_buttons)
         {
-            toast.addAction(L"Like");
-            toast.addAction(L"Next");
+            toast.addAction(get_text(
+                is_saved ? MToastTrackChangedUnlikeBtn : MToastTrackChangedLikeBtn));
+            toast.addAction(get_text(MToastTrackChangedNextBtn));
         }
         
         // attributes
@@ -208,8 +212,6 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
 
 void notifications::show_recent_releases_found(const spotify::recent_releases_t &releases)
 {
-    using utils::far3::get_text;
-
     if (!WinToast::instance()->initialize()) return;
 
     if (auto api = api_proxy.lock())
@@ -225,7 +227,7 @@ void notifications::show_recent_releases_found(const spotify::recent_releases_t 
             artists_names.push_back(r.get_artist_name());
         toast.setTextField(utils::string_join(artists_names, L", "), WinToastTemplate::SecondLine);
 
-        toast.setAttributionText(L"Content is provided by Spotify service");
+        toast.setAttributionText(get_text(MToastSpotifyAttibution));
         
         // buttons
         toast.addAction(get_text(MToastNewReleasesFoundHaveALookBtn));
