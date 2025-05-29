@@ -118,7 +118,7 @@
             "type": "shell",
             "command": "xcopy",
             "args": [
-                "${workspaceFolder}\\thirdparty\\librespot\\target\\debug\\librespot.exe",
+                "${workspaceFolder}\\thirdparty\\librespot\\target\\${input:buildType}\\librespot.exe",
                 "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\librespot.exe*",
             ],
             "presentation": {
