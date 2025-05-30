@@ -1,5 +1,6 @@
 #include "config.hpp"
 #include "utils.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace config {
 
@@ -46,6 +47,7 @@ namespace playback
 }
 
 static const wchar_t
+    *version_opt = L"ConfigVersion",
     *add_to_disk_menu_opt = L"AddToDisksMenu",
     *activate_global_hotkeys_opt = L"ActivateGlobalHotkeys",
     *verbose_logging_enabled_opt = L"EnableVerboseLogging",
@@ -65,6 +67,15 @@ static const wchar_t
     *playback_initial_volume_opt = L"PlaybackInitialVolume",
     *track_changed_notification_enabled_opt = L"TrackChangedNotificationEnabled",
     *is_circled_notification_image_opt = L"IsNotificationImageCircled";
+
+// vector index is the migration version, values are the list of the config
+// keys to be removed from it
+static const std::vector<std::vector<const wchar_t*>> migrations =
+{
+    {}, // #0 - initial config version
+    { L"AccessToken", L"AccessTokenTime" },
+    { L"AccessToken", L"AccessTokenTime" },
+};
 
 PluginStartupInfo ps_info;
 FarStandardFunctions fsf;
@@ -259,6 +270,31 @@ static wstring get_hotkey_node_name(int key)
     return std::format(L"hotkey_{}", key);
 }
 
+void migrate(settings_context &ctx)
+{
+    try
+    {
+        const auto config_version = (size_t)ctx.get_int64(version_opt, 0);
+
+        std::unordered_set<const wchar_t*> config_keys_to_remove;
+        for (size_t version = 0; version < migrations.size(); version++)
+            if (config_version < version)
+            {
+                const auto &exclusions = migrations[version];
+                config_keys_to_remove.insert(exclusions.begin(), exclusions.end());
+            }
+
+        for (const auto &key_name: config_keys_to_remove)
+            ctx.delete_value(key_name);
+
+        ctx.set_int64(version_opt, migrations.size() - 1); // storing the last migrated version
+    }
+    catch (const std::exception &ex)
+    {
+        utils::far3::show_far_error_dlg(MErrorConfigMigrationError, utils::to_wstring(ex.what()));
+    }
+}
+
 void read(const PluginStartupInfo *info)
 {
     ps_info = *info;
@@ -266,6 +302,8 @@ void read(const PluginStartupInfo *info)
     ps_info.FSF = &fsf;
 
     auto ctx = lock_settings();
+
+    migrate(*ctx);
 
     // general
     _settings.add_to_disk_menu = ctx->get_bool(add_to_disk_menu_opt, true);

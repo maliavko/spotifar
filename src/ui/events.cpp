@@ -85,6 +85,15 @@ namespace spotifar { namespace ui { namespace events {
             .default_view_idx = ui_events_observer::multiview_builder_t::albums_idx
         });
     }
+    
+    void show_user_top_items(api_weak_ptr_t api)
+    {
+        show_multiview({
+            .artists = get_builder<user_top_artists_view>(api),
+            .tracks = get_builder<user_top_tracks_view>(api),
+            .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
+        });
+    }
 
     void show_playlist(api_weak_ptr_t api, const playlist_t &playlist)
     {

@@ -35,6 +35,12 @@ using artist_albums_ptr = std::shared_ptr<artist_albums_t>;
 using album_tracks_t = async_collection<simplified_track_t, 1, std::chrono::months>;
 using album_tracks_ptr = std::shared_ptr<album_tracks_t>;
 
+using user_top_tracks_t = async_collection<track_t, 1, std::chrono::weeks>;
+using user_top_tracks_ptr = std::shared_ptr<user_top_tracks_t>;
+
+using user_top_artists_t = async_collection<artist_t, 1, std::chrono::weeks>;
+using user_top_artists_ptr = std::shared_ptr<user_top_artists_t>;
+
 struct api_interface
 {
     template<class T, int N, class C> friend class item_requester;
@@ -108,6 +114,12 @@ struct api_interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-playlist
     virtual auto get_playlist(const item_id_t &playlist_id) -> playlist_t = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+    virtual auto get_user_top_tracks() -> user_top_tracks_ptr = 0;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+    virtual auto get_user_top_artists() -> user_top_artists_ptr = 0;
     
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-queue
     virtual auto get_playing_queue() -> playing_queue_t = 0;
@@ -665,8 +677,8 @@ protected:
 };
 
 /// @brief The items collection, which populates itself, requesting data
-/// from the server asynchronously. Once all the responsed are received,
-/// accumulates them in the right order
+/// from the server asynchronously. Once all the responseы are received,
+/// accumulates them in the right order.
 /// @tparam T a final result's type
 /// @tparam N a number of days/hours/mins etc. the request's result will be cached for
 /// @tparam C a caching class type: std::chrono::seconds, *::milliseconds, *::weeks etc.

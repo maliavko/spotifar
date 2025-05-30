@@ -387,6 +387,7 @@ void recently_liked_tracks_artists_view::show_albums_view(const artist_t &artist
         std::bind(events::show_recently_liked_tracks, api_proxy));
 }
 
+
 //-----------------------------------------------------------------------------------------------------------
 recently_saved_album_artists_view::recently_saved_album_artists_view(HANDLE panel, api_weak_ptr_t api):
     artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_browse, api))
@@ -463,6 +464,43 @@ void recently_saved_album_artists_view::show_albums_view(const artist_t &artist)
     events::show_artist_albums(api_proxy, artist,
         std::bind(events::show_recently_saved_albums, api_proxy));
 }
+
+
+//-----------------------------------------------------------------------------------------------------------
+user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
+    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_browse, api))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_user_top_artists();
+}
+
+config::settings::view_t user_top_artists_view::get_default_settings() const
+{
+    return { 1, false, 1 };
+}
+
+const view_abstract::sort_modes_t& user_top_artists_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+    static sort_modes_t modes = {
+        { L"Unsorted", SM_UNSORTED, VK_F7 + mods::ctrl },
+    };
+    return modes;
+}
+
+std::generator<const artist_t&> user_top_artists_view::get_artists()
+{
+    if (collection && collection->fetch(false, true, 4))
+        for (const auto &a: *collection)
+            co_yield a;
+}
+
+void user_top_artists_view::show_albums_view(const artist_t &artist) const
+{
+    events::show_artist_albums(api_proxy, artist,
+        std::bind(events::show_user_top_items, api_proxy));
+}
+
 
 } // namespace ui
 } // namespace spotifar

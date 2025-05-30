@@ -385,6 +385,7 @@ void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
     events::refresh_panel(get_panel_handle());
 }
 
+
 //-----------------------------------------------------------------------------------------------------------
 recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
     tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel),
@@ -436,6 +437,43 @@ std::generator<const simplified_track_t&> recently_liked_tracks_view::get_tracks
 {
     // requesting only three pages of the data
     if (collection->fetch(false, true, 3))
+        for (const auto &t: *collection)
+            co_yield t;
+}
+
+
+//-----------------------------------------------------------------------------------------------------------
+user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
+    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel),
+                     std::bind(events::show_browse, api_proxy))
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_user_top_tracks();
+}
+
+config::settings::view_t user_top_tracks_view::get_default_settings() const
+{
+    return { 0, false, 1 };
+}
+
+const view_abstract::sort_modes_t& user_top_tracks_view::get_sort_modes() const
+{
+    using namespace utils::keys;
+    static sort_modes_t modes = {
+        { L"Unsorted", SM_UNSORTED, VK_F7 + mods::ctrl },
+    };
+    return modes;
+}
+
+bool user_top_tracks_view::start_playback(const string &track_id)
+{
+    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
+    return true;
+}
+
+std::generator<const simplified_track_t&> user_top_tracks_view::get_tracks()
+{
+    if (collection && collection->fetch(false, true, 4))
         for (const auto &t: *collection)
             co_yield t;
 }

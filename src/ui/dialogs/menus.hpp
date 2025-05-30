@@ -20,11 +20,10 @@ intptr_t show_sort_dialog(const view_abstract &v);
 template<typename... Args>
 void show_waiting(int msg_id, Args&&... args)
 {
-    static const wchar_t* msgs[] = { L"", L"" };
-    static wstring msg;
+    static wchar_t msg[64];
+    static const wchar_t* msgs[] = { L"", msg };
     
-    msg = utils::far3::get_vtext(msg_id, args...);
-    msgs[1] = msg.c_str();
+    config::fsf.snprintf(msg, std::size(msg), L"%s", utils::far3::get_vtext(msg_id, args...).c_str());
     
     config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
 }
