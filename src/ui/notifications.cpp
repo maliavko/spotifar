@@ -46,6 +46,7 @@ protected:
 
     // WinToast interface
     void toastActivated() const override {}
+    void toastActivated(const char* response) const override {}
     void toastActivated(int action_idx) const override
     {
         log::global->debug("Notification's button clicked: toast id {}, button idx {}",
@@ -83,6 +84,7 @@ public:
 protected:
     // WinToast interface
     void toastActivated() const override {}
+    void toastActivated(const char* response) const override {}
     void toastActivated(int action_idx) const override
     {
         log::global->debug("Notification's button clicked: button idx {}", action_idx);

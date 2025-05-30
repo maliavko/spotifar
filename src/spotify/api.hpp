@@ -87,10 +87,10 @@ protected:
     Result del(const string &url, const string &body = "") override;
     Result post(const string &url, const string &body = "") override;
     
-    auto get_pool() -> BS::thread_pool& override { return pool; };
+    auto get_pool() -> BS::priority_thread_pool& override { return pool; };
     bool is_request_cached(const string &url) const override;
 private:
-    BS::thread_pool pool;
+    BS::priority_thread_pool pool;
     http_cache api_responses_cache;
 
     // caches
