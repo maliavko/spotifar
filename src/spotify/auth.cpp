@@ -5,7 +5,7 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
-static string
+static const string
     spotify_auth_url = "https://accounts.spotify.com",
     scope =
         "streaming "
@@ -13,6 +13,7 @@ static string
         "playlist-read-collaborative "
         "playlist-modify-private "
         "playlist-modify-public "
+        "user-top-read "
         "user-read-email "
         "user-read-private "
         "user-read-playback-state "
@@ -22,7 +23,7 @@ static string
         "user-follow-read "
         "user-follow-modify "
         "user-library-read "
-        "user-library-modify ";
+        "user-library-modify";
 
 /// @brief Randomg string generator function, stolen from Spotify API documentation examples. Used
 /// for additional security step 
@@ -67,11 +68,11 @@ void auth_cache::on_data_synced(const auth_t &data, const auth_t &prev_data)
     log::api->info("A valid access token is found, expires in {}",
         std::format("{:%T}", get_expires_at() - clock_t::now()));
     
-    // utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data, is_logged_in);
+    utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data, is_logged_in);
 
     // calling through synchro event postpones the event for a quite some time, hope this call in
     // the sync-thread will not bring me troubles
-    ObserverManager::notify(&auth_observer::on_auth_status_changed, data, is_logged_in);
+    //ObserverManager::notify(&auth_observer::on_auth_status_changed, data, is_logged_in);
 
     is_logged_in = true;
 }
