@@ -87,6 +87,10 @@
 ""
 "Albums, saved recently"
 ""
+"Your top tracks"
+""
+"Your top artists"
+""
 
 "Source"
 "saved tracks"
@@ -107,7 +111,8 @@
 "Could not initialize a notifications library."
 "A worker thread caught an exception and stopped unexpectedly, closing plugin."
 "A playback error."
-"An error while fetching the collection."
+"An error occured while fetching the collection."
+"There is an error occured while migrating Spotifar config"
 
 // notifications
 "New releases found"

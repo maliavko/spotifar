@@ -29,6 +29,8 @@ namespace events {
 
     void show_recently_saved_albums(api_weak_ptr_t api);
 
+    void show_user_top_items(api_weak_ptr_t api);
+
     void show_playlist(api_weak_ptr_t api, const spotify::playlist_t &playlist);
 
     void show_artist_albums(api_weak_ptr_t api, const spotify::artist_t &artist,

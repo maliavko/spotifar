@@ -135,6 +135,7 @@ protected:
     void on_shuffle_state_changed(bool shuffle_state) override;
 };
 
+
 /// @brief
 class recently_liked_tracks_view: public tracks_base_view
 {
@@ -151,6 +152,24 @@ protected:
     auto get_tracks() -> std::generator<const simplified_track_t&> override;
 private:
     saved_tracks_ptr collection;
+};
+
+
+/// @brief
+class user_top_tracks_view: public tracks_base_view
+{
+public:
+    user_top_tracks_view(HANDLE panel, api_weak_ptr_t api);
+protected:
+    // view interface
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+
+    // tracks_base_view interface
+    bool start_playback(const string &track_id) override;
+    auto get_tracks() -> std::generator<const simplified_track_t&> override;
+private:
+    user_top_tracks_ptr collection;
 };
 
 } // namespace ui

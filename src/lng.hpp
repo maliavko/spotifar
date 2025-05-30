@@ -93,6 +93,10 @@ namespace spotifar
 		MPanelRecentlyLikedTracksDescr,
 		MPanelRecentlySavedAlbumsLabel,
 		MPanelRecentlySavedAlbumsDescr,
+		MPanelUserTopTracksLabel,
+		MPanelUserTopTracksDescr,
+		MPanelUserTopArtistsLabel,
+		MPanelUserTopArtistsDescr,
 
         MPlayerSourceLabel,
         MPlayerSourceCollection,
@@ -115,6 +119,7 @@ namespace spotifar
         MErrorSyncThreadFailed,
         MErrorPlaybackCmdFailed,
         MErrorCollectionFetchFailed,
+        MErrorConfigMigrationError,
 
         // notifications
         MToastNewReleasesFoundTitle,

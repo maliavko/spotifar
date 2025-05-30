@@ -25,18 +25,6 @@ application ideas
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
-bugs
-+ if a current playback context is "artist", when hit artist name in the player ui, crush happens
-+ to add lock_guard to the access API caches and especially to the resync method
-+ if the playing queue is opened and 'shuffle' is clicked, the queue is not updated
-+ if I open plugin through the disk menu on the passive panel all my PANEL_ACTIVE refreshings are faling miserably
-+ if librespot crashes, the far with plugin opened does not close
-+ after long idle: the player's controls are locked, using global hotkey for start playback raises an error 404, the message of the error is not shown, only status code
-+ crash if start plugin when it is already started
-+ skipping tracks quickly creates a queue of toasts
-+ toast like-button should be unlike in case the track is saved
-+ recent releases thread bloks far from closing while sleeps
-
 to finish for alpha release
 + disabled shuffle plus, move it to some separate branch
 - help window
@@ -52,6 +40,6 @@ to finish for alpha release
     + audio backend view with options
     + propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
 - to review the panels views and clean up the view and sort modes
-    - to show saved albums, artists and tracks
+    + to show saved albums, artists and tracks
     - to launch playback from all the possible views
-    - track number/dosci number is shown weird
+    - track number/disc number is shown weird
