@@ -34,7 +34,7 @@ protected:
     void on_data_synced(const data_t &data, const data_t &prev_data) override;
 private:
     api_interface *api_proxy;
-    BS::thread_pool pool;
+    BS::light_thread_pool pool;
 
     // each request is slowed down to avoid API spamming by putting a thread into sleep;
     // to make it controllable and avoid blociking of application during closing e.g.,

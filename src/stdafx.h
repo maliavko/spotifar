@@ -11,6 +11,7 @@
 // replacing asserts with runtime exceptions, while working with rapidson for proper error handling
 #define RAPIDJSON_ASSERT(x) if (!(x)) throw std::runtime_error("json error, " #x);
 
+#include <fstream>
 #include <string>
 #include <map>
 #include <vector>
