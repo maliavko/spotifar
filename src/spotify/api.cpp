@@ -200,6 +200,24 @@ playlist_t api::get_playlist(const item_id_t &playlist_id)
         }), get_ptr());
 }
 
+user_top_tracks_ptr api::get_user_top_tracks()
+{
+    return user_top_tracks_ptr(new user_top_tracks_t(
+        get_ptr(), "/v1/me/top/tracks", {
+            { "time_range", "long_term" } // long_term ~1year, medium_term ~6m, short_term - 4w
+        }
+    ));
+}
+
+user_top_artists_ptr api::get_user_top_artists()
+{
+    return user_top_artists_ptr(new user_top_artists_t(
+        get_ptr(), "/v1/me/top/artists", {
+            { "time_range", "long_term" } // long_term ~1year, medium_term ~6m, short_term - 4w
+        }
+    ));
+}
+
 saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 {
     return saved_tracks_ptr(new saved_tracks_t(

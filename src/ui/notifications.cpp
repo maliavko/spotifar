@@ -163,6 +163,7 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
 
     if (auto api = api_proxy.lock())
     {
+        // TODO remove raw indexing
         auto img_path = api->get_image(track.album.images[1], track.album.id);
         if (img_path.empty())
             return;

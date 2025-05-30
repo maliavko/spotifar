@@ -141,6 +141,24 @@ private:
     std::vector<recent_artist_t> items;
 };
 
+
+/// @brief
+class user_top_artists_view: public artists_base_view
+{
+public:
+    user_top_artists_view(HANDLE panel, spotify::api_weak_ptr_t api);
+protected:
+    // view interface
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    
+    // artists_base_view
+    auto get_artists() -> std::generator<const spotify::artist_t&> override;
+    void show_albums_view(const spotify::artist_t &artist) const override;
+private:
+    spotify::user_top_artists_ptr collection;
+};
+
 } // namespace ui
 } // namespace spotifar
 

@@ -46,6 +46,8 @@ public:
     auto get_albums(const item_ids_t &ids) -> std::vector<album_t> override;
     auto get_album_tracks(const item_id_t &album_id) -> album_tracks_ptr override;
     auto get_playlist(const item_id_t &playlist_id) -> playlist_t override;
+    auto get_user_top_tracks() -> user_top_tracks_ptr override;
+    auto get_user_top_artists() -> user_top_artists_ptr override;
     auto get_saved_playlists() -> saved_playlists_ptr override;
     auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr override;
     auto check_saved_track(const item_id_t &track_id) -> bool override;
