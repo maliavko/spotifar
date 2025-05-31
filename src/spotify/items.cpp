@@ -16,6 +16,13 @@ bool operator==(const data_item_t &lhs, const data_item_t &rhs)
     return lhs.id == rhs.id;
 }
 
+void from_json(const Value &j, image_t &i)
+{
+    i.url = j["url"].GetString();
+    i.width = j["width"].GetUint();
+    i.height = j["height"].GetUint();
+}
+
 void to_json(Value &result, const image_t &i, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
@@ -25,11 +32,24 @@ void to_json(Value &result, const image_t &i, json::Allocator &allocator)
     result.AddMember("height", Value(i.height), allocator);
 }
 
-void from_json(const Value &j, image_t &i)
+void from_json(const json::Value &j, copyrights_t &c)
 {
-    i.url = j["url"].GetString();
-    i.width = j["width"].GetUint();
-    i.height = j["height"].GetUint();
+    c.type = j["type"].GetString();
+    c.text = utils::utf8_decode(j["text"].GetString());
+}
+
+void to_json(json::Value &result, const copyrights_t &c, json::Allocator &allocator)
+{
+    result = Value(json::kObjectType);
+
+    result.AddMember("type", Value(c.type, allocator), allocator);
+    result.AddMember("text", Value(utils::utf8_encode(c.text), allocator), allocator);
+}
+
+void from_json(const Value &j, simplified_artist_t &a)
+{
+    a.id = j["id"].GetString();
+    a.name = utils::utf8_decode(j["name"].GetString());
 }
 
 void to_json(Value &result, const simplified_artist_t &a, json::Allocator &allocator)
@@ -38,12 +58,6 @@ void to_json(Value &result, const simplified_artist_t &a, json::Allocator &alloc
 
     result.AddMember("id", Value(a.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(a.name), allocator), allocator);
-}
-
-void from_json(const Value &j, simplified_artist_t &a)
-{
-    a.id = j["id"].GetString();
-    a.name = utils::utf8_decode(j["name"].GetString());
 }
 
 void to_json(Value &result, const artist_t &a, json::Allocator &allocator)
@@ -66,6 +80,14 @@ void to_json(Value &result, const artist_t &a, json::Allocator &allocator)
     result.AddMember("followers", followers, allocator);
     result.AddMember("images", images, allocator);
     result.AddMember("genres", genres, allocator);
+}
+
+
+wstring artist_t::get_main_genre() const
+{
+    if (genres.size() > 0)
+        return utils::to_wstring(genres[0]);
+    return utils::far3::get_text(MGenreUnknown);
 }
 
 void from_json(const Value &j, artist_t &a)
@@ -165,15 +187,35 @@ void to_json(Value &result, const simplified_album_t &a, json::Allocator &alloca
     result.AddMember("artists", artists, allocator);
 }
 
-void to_json(Value &result, const album_t &a, json::Allocator &allocator)
+copyrights_t album_t::get_main_copyright() const
 {
-    result = Value(json::kObjectType);
-    to_json(result, dynamic_cast<const simplified_album_t&>(a), allocator);
+    if (copyrights.size() > 0)
+        return copyrights[0];
+    return { "C", utils::far3::get_text(MCopyrightUnknown) };
 }
 
 void from_json(const Value &j, album_t &a)
 {
     from_json(j, dynamic_cast<simplified_album_t&>(a));
+    from_json(j["copyrights"], a.copyrights);
+    
+    if (j.HasMember("popularity"))
+        a.popularity = j["popularity"].GetUint();
+    
+    a.recording_label = j["label"].GetString();
+}
+
+void to_json(Value &result, const album_t &a, json::Allocator &allocator)
+{
+    result = Value(json::kObjectType);
+    to_json(result, dynamic_cast<const simplified_album_t&>(a), allocator);
+    
+    Value copyrights;
+    to_json(copyrights, a.copyrights, allocator);
+    
+    result.AddMember("copyrights", copyrights, allocator);
+    result.AddMember("popularity", Value(a.popularity), allocator);
+    result.AddMember("label", Value(a.recording_label, allocator), allocator);
 }
 
 void to_json(Value &result, saved_album_t &a, json::Allocator &allocator)

@@ -22,16 +22,26 @@ namespace keys
         return GetKeyState(virtual_key) < 0;
     }
 
-    int make_combined(const KEY_EVENT_RECORD &kir)
+    static int make_combined(WORD virtual_key_code, DWORD control_key_state)
     {
-        int key = static_cast<int>(kir.wVirtualKeyCode);
-        const auto state = kir.dwControlKeyState;
+        int key = static_cast<int>(virtual_key_code);
+        const auto &state = control_key_state;
         
         if (state & RIGHT_CTRL_PRESSED || state & LEFT_CTRL_PRESSED) key |= keys::mods::ctrl;
         if (state & RIGHT_ALT_PRESSED || state & LEFT_ALT_PRESSED) key |= keys::mods::alt;
         if (state & SHIFT_PRESSED) key |= keys::mods::shift;
 
         return key;
+    }
+
+    int make_combined(const KEY_EVENT_RECORD &kir)
+    {
+        return make_combined(kir.wVirtualKeyCode, kir.dwControlKeyState);
+    }
+    
+    int make_combined(const FarKey &fkey)
+    {
+        return make_combined(fkey.VirtualKeyCode, fkey.ControlKeyState);
     }
     
     wstring combined_to_string(int combined_key)

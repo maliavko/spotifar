@@ -39,8 +39,8 @@ const view_abstract::sort_modes_t& root_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name",      SM_NAME,        VK_F3 + mods::ctrl },
-        { L"Unsorted",  SM_UNSORTED,    VK_F7 + mods::ctrl },
+        { L"Name",      SM_NAME,        { VK_F3, LEFT_CTRL_PRESSED } },
+        { L"Unsorted",  SM_UNSORTED,    { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }

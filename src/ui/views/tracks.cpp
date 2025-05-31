@@ -18,9 +18,9 @@ const view_abstract::sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
-        { L"Track Number",  SM_EXT,     VK_F4 + mods::ctrl },
-        { L"Duration",      SM_SIZE,    VK_F5 + mods::ctrl },
+        { L"Name",          SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
+        { L"Track Number",  SM_EXT,     { VK_F4, LEFT_CTRL_PRESSED } },
+        { L"Duration",      SM_SIZE,    { VK_F5, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -153,7 +153,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 }
 
 //-----------------------------------------------------------------------------------------------------------
-album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const album_t &album,
+album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const simplified_album_t &album,
                                      return_callback_t callback):
     tracks_base_view(panel, api_proxy, album.name, callback),
     album(album)
@@ -235,7 +235,7 @@ const view_abstract::sort_modes_t& recent_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Played", SM_MTIME, VK_F6 + mods::ctrl });
+        modes.push_back({ L"Played", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -414,7 +414,7 @@ const view_abstract::sort_modes_t& recently_liked_tracks_view::get_sort_modes() 
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+        modes.push_back({ L"Saved at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -460,7 +460,7 @@ const view_abstract::sort_modes_t& user_top_tracks_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, VK_F7 + mods::ctrl },
+        { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }

@@ -96,10 +96,10 @@ const view_abstract::sort_modes_t& playlist_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name",      SM_NAME,    VK_F3 + mods::ctrl },
-        { L"Year",      SM_ATIME,   VK_F4 + mods::ctrl },
-        { L"Length",    SM_SIZE,    VK_F5 + mods::ctrl },
-        { L"Added",     SM_MTIME,   VK_F6 + mods::ctrl },
+        { L"Name",      SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
+        { L"Year",      SM_ATIME,   { VK_F4, LEFT_CTRL_PRESSED } },
+        { L"Length",    SM_SIZE,    { VK_F5, LEFT_CTRL_PRESSED } },
+        { L"Added",     SM_MTIME,   { VK_F6, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }

@@ -1,20 +1,10 @@
 #include "view.hpp"
-#include "utils.hpp"
 #include "ui/events.hpp"
 
 namespace spotifar { namespace ui {
 
 using namespace spotify;
-namespace far3 = utils::far3;
-namespace panels = far3::panels;
-namespace keys = utils::keys;
-
-view_abstract::view_abstract(HANDLE panel, const wstring &title, return_callback_t callback):
-    panel(panel),
-    title(title),
-    return_callback(callback)
-{
-}
+namespace panels = utils::far3::panels;
 
 config::settings::view_t* view_abstract::get_settings() const
 {
@@ -77,20 +67,22 @@ intptr_t view_abstract::compare_items(const CompareInfo *info)
             unpack_user_data(info->Item1->UserData),
             unpack_user_data(info->Item2->UserData)
         );
-    return -2;
+    return -2; // fallback solution - delegate sorting to Far
 }
 
 intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
 {
+    namespace keys = utils::keys;
+
     const auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        int key = keys::make_combined(key_event);
+        auto key = keys::make_combined(key_event);
         
         for (size_t idx = 0; idx < sort_modes.size(); idx++)
         {
             const auto &smode = sort_modes[idx];
-            if (key == smode.combined_key)
+            if (key == smode.get_combined_key())
             {
                 select_sort_mode((int)idx);
                 return TRUE;
@@ -121,8 +113,13 @@ intptr_t view_abstract::select_item(const SetDirectoryInfo *info)
     if (info->UserData.Data == nullptr)
     {
         if (return_callback)
+        {
             return_callback();
-        return TRUE;
+            return TRUE;
+        }
+
+        // we should've change view, but didn't. No panel update is required
+        return FALSE;
     }
 
     return select_item(unpack_user_data(info->UserData));
