@@ -36,14 +36,12 @@ namespace events {
     void show_artist_albums(api_weak_ptr_t api, const spotify::artist_t &artist,
         view_abstract::return_callback_t callback = {});
 
-    void show_album_tracks(api_weak_ptr_t api, const spotify::album_t &album,
+    void show_album_tracks(api_weak_ptr_t api, const spotify::simplified_album_t &album,
         view_abstract::return_callback_t callback = {});
 
     void show_playing_queue(api_weak_ptr_t api);
     
     void show_player();
-    
-    void show_settings();
 
     /// @brief Forcing the active panel to redraw and to try to find and
     /// set the given `item_id` under cursur

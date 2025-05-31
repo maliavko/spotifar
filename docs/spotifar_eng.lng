@@ -51,8 +51,6 @@
 "volume down"
 "show toast"
 
-"Root Menu"
-""
 "Collection"
 ""
 "Artists"
@@ -101,7 +99,10 @@
 
 // spotify specifics
 "Unknown"
+"Unknown genre"
+"Unknown label"
 
+// warnings & errors
 "Critical error"
 "An error has occured while initializing plugin."
 "An error has occured while initializing plugin: Spotify client ID is not specified."
@@ -122,6 +123,7 @@
 "Unlike"
 "Next"
 
+// complimentary dialogs & menus
 "Transferring playback"
 "Some other device is active now '{0}', would you like to transfer playback to '{1}'?"
 "The Librespot device is not active"

@@ -40,7 +40,7 @@ class album_tracks_view:
                              // when playing tracks is being changed
 {
 public:
-    album_tracks_view(HANDLE panel, api_weak_ptr_t api, const album_t &album,
+    album_tracks_view(HANDLE panel, api_weak_ptr_t api, const simplified_album_t &album,
         return_callback_t callback);
     ~album_tracks_view();
 protected:

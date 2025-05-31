@@ -97,8 +97,10 @@ void panel::update_panel_info(OpenPanelInfo *info)
     static KeyBarTitles key_bar = { std::size(key_bar_labels), key_bar_labels };
     info->KeyBar = &key_bar;
 
+    // first, we collect all the key bindings into intermediate container
     view_abstract::key_bar_info_t panel_key_bar{};
 
+    // adding multiviews bar keys
     if (mview_builders.artists)
         panel_key_bar.insert({ { VK_F5, SHIFT_PRESSED }, far3::get_text(MPanelArtistsItemLabel) });
 
@@ -111,8 +113,13 @@ void panel::update_panel_info(OpenPanelInfo *info)
     if (mview_builders.playlists)
         panel_key_bar.insert({ { VK_F8, SHIFT_PRESSED }, far3::get_text(MPanelPlaylistsItemLabel) });
     
+    // adding bar keys from the nested view
     if (const auto &view_key_bar = view->get_key_bar_info())
         panel_key_bar.insert(view_key_bar->begin(), view_key_bar->end());
+
+    // adding sort bindings to the key bar
+    for (const auto &sort_mode: view->get_sort_modes())
+        panel_key_bar[sort_mode.far_key] = sort_mode.name.c_str();
 
     size_t idx = 0;
     for (const auto &key: refreshable_keys)

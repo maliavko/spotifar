@@ -153,20 +153,24 @@ namespace keys
     }
 
     /// @brief Whether the given virtual key is pressed at the moment
-    auto is_pressed(int virtual_key) -> bool;
+    bool is_pressed(int virtual_key);
 
-    /// @brief Converts the given input record to the combined int, including a pressed
+    /// @brief Converts the given `input record` to the combined int, including a pressed
     /// key + all the modifiers, so it can be used later as key_a + mods::ctrl + mods::shift e.g.
-    auto make_combined(const KEY_EVENT_RECORD &kir) -> int;
+    int make_combined(const KEY_EVENT_RECORD &kir);
+
+    /// @brief Converts the given `FarKey` to the combined int, including a pressed
+    /// key + all the modifiers, so it can be used later as key_a + mods::ctrl + mods::shift e.g.
+    int make_combined(const FarKey &fkey);
 
     /// @brief Returns a beautiful user readable string of the key plus modifiers
-    auto combined_to_string(int combined_key) -> wstring;
+    wstring combined_to_string(int combined_key);
 
     /// @brief The function `GetKeyNameTextW` works no great, for some corner cases
     /// it returns empty or error translation. Plus the text will depend on the 
     /// locale language selected by user in OS. The function tries to be not
     /// dependent on these problems
-    auto vk_to_string(WORD virtual_key_code) -> wstring;
+    wstring vk_to_string(WORD virtual_key_code);
 }
 
 namespace events
