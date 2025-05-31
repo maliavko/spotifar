@@ -109,7 +109,7 @@ namespace spotifar { namespace ui { namespace events {
         show_view(get_builder<artist_view>(api, artist, callback));
     }
     
-    void show_album_tracks(api_weak_ptr_t api, const album_t &album,
+    void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album,
         view_abstract::return_callback_t callback)
     {
         if (!callback)
@@ -126,11 +126,6 @@ namespace spotifar { namespace ui { namespace events {
     void show_playing_queue(api_weak_ptr_t api)
     {
         show_view(get_builder<playing_queue_view>(api));
-    }
-    
-    void show_settings()
-    {
-        show_settings_menu();
     }
 
     void select_item(const string &item_id)

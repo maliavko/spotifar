@@ -64,12 +64,12 @@ intptr_t show_sort_dialog(const view_abstract &v)
     std::vector<FarMenuItem> result;
     for (size_t idx = 0; idx < modes.size(); idx++)
     {
-        auto &sm = modes[idx];
+        const auto &sm = modes[idx];
 
         // the width of the dialog is 28, the sort mode name is aligned to the left,
         // while the hotkey name - to the right
         wstring label = std::format(L"{: <18}{: >10}", sm.name,
-            keys::combined_to_string(sm.combined_key));
+            keys::combined_to_string(sm.get_combined_key()));
 
         MENUITEMFLAGS flags = MIF_NONE;
         if (idx == settings->sort_mode_idx)

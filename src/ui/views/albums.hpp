@@ -17,13 +17,17 @@ using namespace spotify;
 class albums_base_view: public view_abstract
 {
 public:
-    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback);
+    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
+        view_abstract(panel, title, callback), api_proxy(api)
+        {}
+    
     ~albums_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
 protected:
-    virtual auto get_albums() -> std::generator<const simplified_album_t&> = 0;
+    virtual auto get_albums() -> std::generator<const album_t&> = 0;
     virtual void show_tracks_view(const album_t &album) const = 0;
+    virtual std::vector<wstring> get_extra_columns(const album_t&) const { return {}; }
 
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
@@ -31,13 +35,14 @@ protected:
     bool request_extra_info(const data_item_t* data) override;
     void update_panel_info(OpenPanelInfo *info) override;
     auto process_key_input(int combined_key) -> intptr_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
 protected:
     api_weak_ptr_t api_proxy;
 };
 
-/// @brief A class-view, representing the list of albums of a
-/// given `artist`
+
+/// @brief A class-view, representing the list of albums of a given `artist`
 class artist_view: public albums_base_view
 {
 public:
@@ -48,16 +53,18 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
-    auto show_tracks_view(const album_t &album) const -> void override;
+    auto get_albums() -> std::generator<const album_t&> override;
+    void show_tracks_view(const album_t &album) const override;
 private:
     artist_t artist;
     artist_albums_ptr collection;
 };
 
+
 /// @brief Showing the list of the user's saved albums. Differes
-/// from the standard one with the additional implementatino of the
-/// `added_at` data, extending custom columns and sorting modes respectively
+/// from the standard one with the additional implementation of the
+/// `added_at` data field, extending custom columns and sorting modes
+/// respectively
 class saved_albums_view: public albums_base_view
 {
 public:
@@ -66,14 +73,18 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
+    void update_panel_info(OpenPanelInfo *info) override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
-    auto show_tracks_view(const album_t &album) const -> void override;
+    auto get_albums() -> std::generator<const album_t&> override;
+    void show_tracks_view(const album_t &album) const override;
+    std::vector<wstring> get_extra_columns(const album_t&) const override;
 private:
     saved_albums_ptr collection;
 };
+
 
 /// @brief Showing the list of the newely released albums of the
 /// followed artists.
@@ -89,12 +100,13 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
+    auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
 
     // releases_observer interface
     void on_releases_sync_finished(const recent_releases_t releases) override;
 };
+
 
 /// @brief A class-view representing a recently played albums. A spotify
 /// API does not have anything suitable, so in basic we use a list of recently
@@ -118,17 +130,19 @@ protected:
     // view interface
     auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
-    auto show_tracks_view(const album_t &album) const -> void override;
+    auto get_albums() -> std::generator<const album_t&> override;
+    void show_tracks_view(const album_t &album) const override;
 
     // play_history_observer interface
     void on_items_changed() override;
 private:
     std::vector<history_album_t> items;
 };
+
 
 /// @brief A view class representing list of albums, featuring tracks
 /// which user liked recently
@@ -141,9 +155,10 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
+    auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
 };
+
 
 /// @brief
 class recently_liked_tracks_albums_view: public albums_base_view
@@ -156,15 +171,17 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
+    auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
 private:
     saved_tracks_ptr collection;
     std::vector<saved_album_t> items;
 };
+
 
 /// @brief
 class recently_saved_albums_view: public albums_base_view
@@ -177,10 +194,11 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
 
     // albums_base_view interface
-    auto get_albums() -> std::generator<const simplified_album_t&> override;
+    auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
 private:
     saved_albums_ptr collection;

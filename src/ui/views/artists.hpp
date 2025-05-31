@@ -10,7 +10,7 @@
 namespace spotifar { namespace ui {
 
 /// @brief A base class for all the views, representing a list
-/// of artist in either way
+/// of artists in either way
 class artists_base_view: public view_abstract
 {
 public:
@@ -43,7 +43,7 @@ protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
     
-    // artists_base_view
+    // artists_base_view interface
     auto get_artists() -> std::generator<const spotify::artist_t&> override;
     void show_albums_view(const spotify::artist_t &artist) const override;
     void show_filters_dialog() override;

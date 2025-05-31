@@ -10,6 +10,8 @@ application ideas
     + to add a description to all the async tasks and log it additionally with errors
     - close plugin if another librespot device is being detected
     - to save multiview current tab between sessions
+    - folow/unfollow artists
+    - to save the last used view on the multiview
 - new functional
     + win toast notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
@@ -24,6 +26,10 @@ application ideas
     - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
+
+bugs
+    - shutting down librespot from config leaves a splash screen message visible
+    - returning back does not select a proper item on the panel for multiviews
 
 to finish for alpha release
 + disabled shuffle plus, move it to some separate branch

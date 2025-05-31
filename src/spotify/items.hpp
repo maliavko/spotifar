@@ -36,8 +36,21 @@ struct image_t
     string url;
     size_t width, height;
 
+    bool is_valid() const { return !url.empty(); }
+
     friend void from_json(const json::Value &j, image_t &i);
     friend void to_json(json::Value &j, const image_t &i, json::Allocator &allocator);
+};
+
+struct copyrights_t
+{
+    string type;
+    wstring text;
+
+    bool is_copyright() const { return type == "C"; }
+
+    friend void from_json(const json::Value &j, copyrights_t &c);
+    friend void to_json(json::Value &j, const copyrights_t &c, json::Allocator &allocator);
 };
 
 struct simplified_artist_t: public data_item_t
@@ -58,6 +71,8 @@ struct artist_t: public simplified_artist_t
     size_t popularity;
     std::vector<string> genres;
     std::vector<image_t> images;
+
+    wstring get_main_genre() const;
 
     friend void from_json(const json::Value &j, artist_t &a);
     friend void to_json(json::Value &j, const artist_t &a, json::Allocator &allocator);
@@ -88,8 +103,8 @@ struct simplified_album_t: public data_item_t
     wstring get_artists_full_name() const;
     
     auto get_uri() const -> string { return make_uri(id); }
-    auto is_single() const -> bool { return album_type == single; }
-    auto is_compilation() const -> bool { return album_type == compilation; }
+    bool is_single() const { return album_type == single; }
+    bool is_compilation() const { return album_type == compilation; }
     auto get_release_year() const -> string;
     auto get_release_date() const -> utils::clock_t::time_point;
     auto get_type_abbrev() const -> wstring;
@@ -100,6 +115,12 @@ struct simplified_album_t: public data_item_t
 
 struct album_t: public simplified_album_t
 {
+    size_t popularity = 0;
+    std::vector<copyrights_t> copyrights{};
+    string recording_label = "";
+
+    copyrights_t get_main_copyright() const;
+
     friend void from_json(const json::Value &j, album_t &a);
     friend void to_json(json::Value &j, const album_t &a, json::Allocator &allocator);
 };
@@ -133,7 +154,7 @@ struct simplified_track_t: public data_item_t
 
 struct track_t: public simplified_track_t
 {
-    album_t album;
+    simplified_album_t album;
 
     static const string& get_fields_filter();
 

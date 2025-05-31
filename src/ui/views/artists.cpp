@@ -42,7 +42,7 @@ void artists_base_view::update_panel_info(OpenPanelInfo *info)
     modes[6].StatusColumnTypes = NULL;
     modes[6].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_7[] = { L"Name", L"Albums1", L"Genres" };
+    static const wchar_t* titles_7[] = { L"Name", L"Albums", L"Genres" };
     modes[7].ColumnTitles = titles_7;
     modes[7].ColumnTypes = L"NON,C3,Z";
     modes[7].ColumnWidths = L"30,6,0";
@@ -65,43 +65,44 @@ const view_abstract::items_t& artists_base_view::get_items()
 {
     static view_abstract::items_t items; items.clear();
 
-    for (const auto &a: get_artists())
+    for (const auto &artist: get_artists())
     {
-        std::vector<wstring> column_data;
+        std::vector<wstring> columns;
 
         // column C0 - followers count
-        if (a.followers_total < 1000000)
-            column_data.push_back(std::format(L"{:9}", a.followers_total));
-        else if (a.followers_total < 1000000000)
-            column_data.push_back(std::format(L"{:7.2f} M", a.followers_total / 1000000.0));
-        else if (a.followers_total < 1000000000000)
-            column_data.push_back(std::format(L"{:7.2f} B", a.followers_total / 1000000000.0));
+        auto followers = artist.followers_total;
+        if (followers < 1000000)
+            columns.push_back(std::format(L"{:9}", followers));
+        else if (followers < 1000000000)
+            columns.push_back(std::format(L"{:7.2f} M", followers / 1000000.0));
+        else if (followers < 1000000000000)
+            columns.push_back(std::format(L"{:7.2f} B", followers / 1000000000.0));
 
         // column C1 - popularity
-        column_data.push_back(std::format(L"{:5}", a.popularity));
+        columns.push_back(std::format(L"{:5}", artist.popularity));
 
-        // column C2 - first (main?) genre
-        column_data.push_back(a.genres.size() > 0 ? utils::to_wstring(a.genres[0]) : L"");
+        // column C2 - main genre
+        columns.push_back(artist.get_main_genre());
         
         // column C3 - total albums
         wstring albums_count = L"";
         if (auto api = api_proxy.lock())
         {
-            auto albums = api->get_artist_albums(a.id);
-            auto total_albums = albums->peek_total();
+            auto albums = api->get_artist_albums(artist.id);
         
-            if (total_albums > 0)
+            if (auto total_albums = albums->peek_total())
                 albums_count = std::format(L"{: >6}", total_albums);
         }
-        column_data.push_back(albums_count);
+        columns.push_back(albums_count);
 
         items.push_back({
-            a.id,
-            a.name,
-            utils::to_wstring(utils::string_join(a.genres, ", ")),
+            artist.id,
+            artist.name,
+            // here were use all artist's genres as a description field
+            utils::to_wstring(utils::string_join(artist.genres, ", ")),
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
-            column_data,
-            const_cast<artist_t*>(&a)
+            columns,
+            const_cast<artist_t*>(&artist)
         });
     }
 
@@ -110,8 +111,7 @@ const view_abstract::items_t& artists_base_view::get_items()
 
 intptr_t artists_base_view::select_item(const data_item_t *data)
 {
-    const auto *artist = static_cast<const artist_t*>(data);
-    if (artist != nullptr)
+    if (const auto *artist = static_cast<const artist_t*>(data))
     {
         show_albums_view(*artist);
         return TRUE;
@@ -133,9 +133,9 @@ const view_abstract::sort_modes_t& artists_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name",          SM_NAME,    VK_F3 + mods::ctrl },
-        { L"Followers",     SM_SIZE,    VK_F4 + mods::ctrl },
-        { L"Popularity",    SM_OWNER,   VK_F5 + mods::ctrl },
+        { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
+        { L"Followers",     SM_SIZE,            { VK_F4, LEFT_CTRL_PRESSED } },
+        { L"Popularity",    SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -152,7 +152,7 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
         case SM_NAME:
             return item1->name.compare(item2->name);
 
-        case SM_OWNER:
+        case SM_COMPRESSEDSIZE:
             return item1->popularity - item2->popularity;
 
         case SM_SIZE:
@@ -164,9 +164,7 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 
 //-----------------------------------------------------------------------------------------------------------
 followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel),
-                      std::bind(events::show_root, api_proxy))
-    
+    artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel), std::bind(events::show_root, api_proxy))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_followed_artists();
@@ -174,6 +172,7 @@ followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_pr
 
 config::settings::view_t followed_artists_view::get_default_settings() const
 {
+    // sort mode - by Name; ascending; view mode - F3
     return { 0, false, 3 };
 }
 
@@ -220,8 +219,7 @@ void followed_artists_view::show_filters_dialog()
 
 //-----------------------------------------------------------------------------------------------------------
 recent_artists_view::recent_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel),
-                      std::bind(events::show_root, api))
+    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_root, api))
 {
     utils::events::start_listening<play_history_observer>(this);
 
@@ -248,7 +246,7 @@ const view_abstract::sort_modes_t& recent_artists_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = artists_base_view::get_sort_modes();
-        modes.push_back({ L"Played at", SM_MTIME, VK_F6 + mods::ctrl });
+        modes.push_back({ L"Played at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -335,7 +333,7 @@ const view_abstract::sort_modes_t& recently_liked_tracks_artists_view::get_sort_
     if (!modes.size())
     {
         modes = artists_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+        modes.push_back({ L"Saved at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -411,7 +409,7 @@ const view_abstract::sort_modes_t& recently_saved_album_artists_view::get_sort_m
     if (!modes.size())
     {
         modes = artists_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, VK_F6 + mods::ctrl });
+        modes.push_back({ L"Saved at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -483,7 +481,7 @@ const view_abstract::sort_modes_t& user_top_artists_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, VK_F7 + mods::ctrl },
+        { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
