@@ -18,7 +18,7 @@ const view_abstract::sort_modes_t& playlists_base_view::get_sort_modes() const
 {
     using namespace utils::keys;
     static sort_modes_t modes = {
-        { L"Name", SM_NAME, VK_F3 + mods::ctrl },
+        { L"Name", SM_NAME, { VK_F3, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -205,7 +205,7 @@ const view_abstract::sort_modes_t& recent_playlists_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = playlists_base_view::get_sort_modes();
-        modes.push_back({ L"Played", SM_MTIME, VK_F6 + mods::ctrl });
+        modes.push_back({ L"Played", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }

@@ -57,8 +57,6 @@ namespace spotifar
         MConfigVolumeDownSetting,
         MConfigShowToastSetting,
 
-        MPanelRootItemLabel,
-        MPanelRootItemDescr,
         MPanelCollectionItemLabel,
         MPanelCollectionItemDescr,
         MPanelArtistsItemLabel,
@@ -107,6 +105,8 @@ namespace spotifar
 
         // spotify specifics
         MArtistUnknown,
+        MGenreUnknown,
+        MCopyrightUnknown,
 
         // warnings & errors
         MFarMessageErrorTitle,
