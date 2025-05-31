@@ -179,7 +179,7 @@ bool albums_base_view::request_extra_info(const data_item_t* data)
     // if the album's track list is cached, next time the panel
     // is updated, it will show album's total-length field
     if (auto api = api_proxy.lock(); api && data)
-        return api->get_album_tracks(data->id)->fetch();
+        return api->get_album_tracks(data->id)->fetch(false, false, 1);
 
     return false;
 }
@@ -259,7 +259,7 @@ config::settings::view_t saved_albums_view::get_default_settings() const
 
 std::generator<const album_t&> saved_albums_view::get_albums()
 {
-    if (collection && collection->fetch(false, true, 1))
+    if (collection && collection->fetch())
         for (const auto &a: *collection)
             co_yield a;
 }
