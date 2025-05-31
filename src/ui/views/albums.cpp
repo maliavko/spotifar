@@ -179,7 +179,7 @@ bool albums_base_view::request_extra_info(const data_item_t* data)
     // if the album's track list is cached, next time the panel
     // is updated, it will show album's total-length field
     if (auto api = api_proxy.lock(); api && data)
-        return api->get_album_tracks(data->id)->fetch(false, false, 1);
+        return api->get_album_tracks(data->id)->fetch();
 
     return false;
 }
