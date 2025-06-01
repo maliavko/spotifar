@@ -8,10 +8,6 @@ using namespace spotify;
 using utils::far3::get_text;
 
 //-----------------------------------------------------------------------------------------------------------
-artists_base_view::artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
-    view_abstract(panel, title, callback), api_proxy(api)
-    {}
-
 void artists_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
@@ -131,7 +127,6 @@ bool artists_base_view::request_extra_info(const data_item_t *data)
 
 const view_abstract::sort_modes_t& artists_base_view::get_sort_modes() const
 {
-    using namespace utils::keys;
     static sort_modes_t modes = {
         { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
         { L"Followers",     SM_SIZE,            { VK_F4, LEFT_CTRL_PRESSED } },
@@ -240,8 +235,6 @@ config::settings::view_t recent_artists_view::get_default_settings() const
 
 const view_abstract::sort_modes_t& recent_artists_view::get_sort_modes() const
 {
-    using namespace utils::keys;
-
     static sort_modes_t modes;
     if (!modes.size())
     {
@@ -327,8 +320,6 @@ config::settings::view_t recently_liked_tracks_artists_view::get_default_setting
 
 const view_abstract::sort_modes_t& recently_liked_tracks_artists_view::get_sort_modes() const
 {
-    using namespace utils::keys;
-
     static sort_modes_t modes;
     if (!modes.size())
     {
@@ -403,8 +394,6 @@ config::settings::view_t recently_saved_album_artists_view::get_default_settings
 
 const view_abstract::sort_modes_t& recently_saved_album_artists_view::get_sort_modes() const
 {
-    using namespace utils::keys;
-
     static sort_modes_t modes;
     if (!modes.size())
     {
@@ -479,7 +468,6 @@ config::settings::view_t user_top_artists_view::get_default_settings() const
 
 const view_abstract::sort_modes_t& user_top_artists_view::get_sort_modes() const
 {
-    using namespace utils::keys;
     static sort_modes_t modes = {
         { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
     };
