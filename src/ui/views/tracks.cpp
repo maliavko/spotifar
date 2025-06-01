@@ -421,7 +421,7 @@ const view_abstract::sort_modes_t& recent_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Played at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ L"Played at", SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -438,6 +438,49 @@ intptr_t recent_tracks_view::compare_items(const sort_mode_t &sort_mode,
         return item1->played_at.compare(item2->played_at);
     }
     return tracks_base_view::compare_items(sort_mode, data1, data2);
+}
+
+void recent_tracks_view::update_panel_info(OpenPanelInfo *info)
+{
+    tracks_base_view::update_panel_info(info);
+    
+    auto *modes = const_cast<PanelMode*>(info->PanelModesArray);
+
+    // adding `Played at` column to some of the view modes
+
+    static const wchar_t* titles_3[] = { L"Played at", L"Name", L"[E]", L"Length", L"Pop %", };
+    modes[3].ColumnTypes = L"C7,NON,C0,C1,C4";
+    modes[3].ColumnWidths = L"13,0,3,7,5";
+    modes[3].ColumnTitles = titles_3;
+
+    static const wchar_t* titles_4[] = { L"Played at", L"Name", L"Artist", L"Length" };
+    modes[4].ColumnTypes = L"C7,NON,C3,C1";
+    modes[4].ColumnWidths = L"13,0,30,7";
+    modes[4].ColumnTitles = titles_4;
+
+    static const wchar_t* titles_5[] = { L"Played at", L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
+    modes[5].ColumnTypes = L"C7,NON,C3,C5,C6,C2,C0,C1,C4";
+    modes[5].ColumnWidths = L"13,0,35,35,6,6,3,7,5";
+    modes[5].ColumnTitles = titles_5;
+
+    static const wchar_t* titles_6[] = { L"Played at", L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
+    modes[6].ColumnTypes = L"C7,NON,C3,C0,C1,C4";
+    modes[6].ColumnWidths = L"13,0,30,3,7,5";
+    modes[6].ColumnTitles = titles_6;
+
+    static const wchar_t* titles_7[] = { L"Played at", L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
+    modes[7].ColumnTypes = L"C7,NON,C5,C2,C0,C1,C4";
+    modes[7].ColumnWidths = L"13,0,30,6,3,7,5";
+    modes[7].ColumnTitles = titles_7;
+
+    static const wchar_t* titles_8[] = { L"Played at", L"Name", L"Artist", L"Album", L"Yr", };
+    modes[8].ColumnTypes = L"C7,NON,C3,C5,C2";
+    modes[8].ColumnWidths = L"13,0,30,30,6";
+    modes[8].ColumnTitles = titles_8;
+
+    modes[9] = modes[8];
+
+    modes[0] = modes[8];
 }
 
 void recent_tracks_view::rebuild_items()
@@ -464,6 +507,19 @@ void recent_tracks_view::on_items_changed()
 {
     rebuild_items();
     events::refresh_panel(get_panel_handle());
+}
+
+std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track) const
+{
+    const auto &played_track = static_cast<const history_track_t&>(track);
+    
+    std::istringstream in{ played_track.played_at };
+    utils::clock_t::time_point tp;
+    in >> parse("%FT%T", tp); // e.g. 2025-06-01T21:57:59.793Z
+
+    return {
+        utils::to_wstring(std::format("{:%d %b, %H:%M}", tp)), // C7 - `played at` date
+    };
 }
 
 
@@ -518,34 +574,34 @@ void saved_tracks_view::update_panel_info(OpenPanelInfo *info)
     
     auto *modes = const_cast<PanelMode*>(info->PanelModesArray);
 
-    // adding track number column to some of the view modes
+    // adding `Saved at` column to some of the view modes
 
     static const wchar_t* titles_3[] = { L"Saved at", L"Name", L"[E]", L"Length", L"Pop %", };
     modes[3].ColumnTypes = L"C7,NON,C0,C1,C4";
     modes[3].ColumnWidths = L"12,0,3,7,5";
     modes[3].ColumnTitles = titles_3;
 
-    static const wchar_t* titles_4[] = { L"#", L"Name", L"Artist", L"Length" };
+    static const wchar_t* titles_4[] = { L"Saved at", L"Name", L"Artist", L"Length" };
     modes[4].ColumnTypes = L"C7,NON,C3,C1";
     modes[4].ColumnWidths = L"12,0,30,7";
     modes[4].ColumnTitles = titles_4;
 
-    static const wchar_t* titles_5[] = { L"#", L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
+    static const wchar_t* titles_5[] = { L"Saved at", L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
     modes[5].ColumnTypes = L"C7,NON,C3,C5,C6,C2,C0,C1,C4";
     modes[5].ColumnWidths = L"12,0,35,35,6,6,3,7,5";
     modes[5].ColumnTitles = titles_5;
 
-    static const wchar_t* titles_6[] = { L"#", L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
+    static const wchar_t* titles_6[] = { L"Saved at", L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
     modes[6].ColumnTypes = L"C7,NON,C3,C0,C1,C4";
     modes[6].ColumnWidths = L"12,0,30,3,7,5";
     modes[6].ColumnTitles = titles_6;
 
-    static const wchar_t* titles_7[] = { L"#", L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
+    static const wchar_t* titles_7[] = { L"Saved at", L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
     modes[7].ColumnTypes = L"C7,NON,C5,C2,C0,C1,C4";
     modes[7].ColumnWidths = L"12,0,30,6,3,7,5";
     modes[7].ColumnTitles = titles_7;
 
-    static const wchar_t* titles_8[] = { L"#", L"Name", L"Artist", L"Album", L"Yr", };
+    static const wchar_t* titles_8[] = { L"Saved at", L"Name", L"Artist", L"Album", L"Yr", };
     modes[8].ColumnTypes = L"C7,NON,C3,C5,C2";
     modes[8].ColumnWidths = L"12,0,30,30,6";
     modes[8].ColumnTitles = titles_8;
