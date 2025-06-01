@@ -7,13 +7,7 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 using namespace events;
 
-root_base_view::root_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback, menu_items_t items):
-    view_abstract(panel, title, callback),
-    api_proxy(api),
-    menu_items(items)
-{
-}
-
+//-------------------------------------------------------------------------------------------------------------
 const view_abstract::key_bar_info_t* root_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{
@@ -51,30 +45,30 @@ config::settings::view_t root_base_view::get_default_settings() const
 
 void root_base_view::update_panel_info(OpenPanelInfo *info)
 {
-    static const wchar_t* titles[] = { L"Name", L"Count" };
 
     static PanelMode modes[10];
 
-    modes[3].ColumnTypes = L"NON,C0";
-    modes[3].ColumnWidths = L"0,6";
-    modes[3].ColumnTitles = titles;
+    static const wchar_t* titles_3[] = { L"Name" };
+    modes[3].ColumnTypes = L"NON";
+    modes[3].ColumnWidths = L"0";
+    modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
 
-    modes[4] = modes[3];
+    static const wchar_t* titles_4[] = { L"Name", L"Description" };
+    modes[4].ColumnTypes = L"NON,Z";
+    modes[4].ColumnWidths = L"30,0";
+    modes[4].ColumnTitles = titles_4;
+    modes[4].StatusColumnTypes = NULL;
+    modes[4].StatusColumnWidths = NULL;
 
-    modes[5] = modes[3];
+    modes[5] = modes[4];
     modes[5].Flags = PMFLAGS_FULLSCREEN;
     
+    modes[6] = modes[3];
+    modes[7] = modes[3];
     modes[8] = modes[3];
-
     modes[9] = modes[3];
-
-    modes[0].ColumnTypes = L"NON,C0";
-    modes[0].ColumnWidths = L"0,6";
-    modes[0].ColumnTitles = titles;
-    modes[0].StatusColumnTypes = NULL;
-    modes[0].StatusColumnWidths = NULL;
 
     info->PanelModesArray = modes;
     info->PanelModesNumber = std::size(modes);
@@ -127,6 +121,8 @@ bool root_base_view::request_extra_info(const data_item_t* data)
     return get_total(data->id, false) > 0;
 }
 
+
+//-------------------------------------------------------------------------------------------------------------
 root_view::root_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(panel, api, L"", {}, {
         {
@@ -152,6 +148,8 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
     })
     {};
 
+
+//-------------------------------------------------------------------------------------------------------------
 browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(
         panel, api, get_text(MPanelBrowseItemLabel),

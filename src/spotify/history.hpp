@@ -8,7 +8,7 @@
 
 namespace spotifar { namespace spotify {
 
-using recently_played_tracks_t = sync_collection<history_item_t>;
+using recently_played_tracks_t = sync_collection<history_item_t, 5, std::chrono::seconds>;
 using recently_played_tracks_ptr = std::shared_ptr<recently_played_tracks_t>;
 
 class play_history: public json_cache<history_items_t>
@@ -20,7 +20,7 @@ protected:
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-recently-played
     auto get_recently_played(std::int64_t after) -> recently_played_tracks_ptr;
 
-    // `json_cache` class overloads
+    // json_cache interface
     bool is_active() const override;
     bool request_data(history_items_t &data) override;
     auto get_sync_interval() const -> clock_t::duration override;
