@@ -129,19 +129,17 @@ wstring simplified_album_t::get_type_abbrev() const
     return L"??";
 }
 
+simplified_artist_t simplified_album_t::get_artist() const
+{
+    return artists.size() > 0 ? artists[0] : simplified_artist_t();
+}
+
 wstring simplified_album_t::get_artists_full_name() const
 {
     std::vector<wstring> artists_names;
     std::transform(artists.cbegin(), artists.cend(), back_inserter(artists_names),
         [](const auto &a) { return a.name; });
     return utils::string_join(artists_names, L", ");
-}
-
-wstring simplified_album_t::get_artist_name() const
-{
-    if (artists.size() > 0)
-        return artists[0].name;
-    return utils::far3::get_text(MArtistUnknown);
 }
 
 void from_json(const Value &j, simplified_album_t &a)
@@ -199,9 +197,7 @@ void from_json(const Value &j, album_t &a)
     from_json(j, dynamic_cast<simplified_album_t&>(a));
     from_json(j["copyrights"], a.copyrights);
     
-    if (j.HasMember("popularity"))
-        a.popularity = j["popularity"].GetUint();
-    
+    a.popularity = j["popularity"].GetUint();
     a.recording_label = j["label"].GetString();
 }
 
@@ -241,20 +237,17 @@ const string& simplified_track_t::get_fields_filter()
     return fields;
 }
 
-void to_json(Value &result, const simplified_track_t &t, json::Allocator &allocator)
+simplified_artist_t simplified_track_t::get_artist() const
 {
-    result = Value(json::kObjectType);
+    return artists.size() > 0 ? artists[0] : simplified_artist_t();
+}
 
-    Value artists;
-    to_json(artists, t.artists, allocator);
-
-    result.AddMember("id", Value(t.id, allocator), allocator);
-    result.AddMember("name", Value(utils::utf8_encode(t.name), allocator), allocator);
-    result.AddMember("duration_ms", Value(t.duration_ms), allocator);
-    result.AddMember("track_number", Value(t.track_number), allocator);
-    result.AddMember("disc_number", Value(t.disc_number), allocator);
-    result.AddMember("explicit", Value(t.is_explicit), allocator);
-    result.AddMember("artists", artists, allocator);
+wstring simplified_track_t::get_artists_full_name() const
+{
+    std::vector<wstring> artists_names;
+    std::transform(artists.cbegin(), artists.cend(), back_inserter(artists_names),
+        [](const auto &a) { return a.name; });
+    return utils::string_join(artists_names, L", ");
 }
 
 void from_json(const Value &j, simplified_track_t &t)
@@ -271,10 +264,34 @@ void from_json(const Value &j, simplified_track_t &t)
     from_json(j["artists"], t.artists);
 }
 
+void to_json(Value &result, const simplified_track_t &t, json::Allocator &allocator)
+{
+    result = Value(json::kObjectType);
+
+    Value artists;
+    to_json(artists, t.artists, allocator);
+
+    result.AddMember("id", Value(t.id, allocator), allocator);
+    result.AddMember("name", Value(utils::utf8_encode(t.name), allocator), allocator);
+    result.AddMember("duration_ms", Value(t.duration_ms), allocator);
+    result.AddMember("track_number", Value(t.track_number), allocator);
+    result.AddMember("disc_number", Value(t.disc_number), allocator);
+    result.AddMember("explicit", Value(t.is_explicit), allocator);
+    result.AddMember("artists", artists, allocator);
+}
+
 const string& track_t::get_fields_filter()
 {
-    static string fields = std::format("{},album,artists", simplified_track_t::get_fields_filter());
+    static string fields = std::format("{},album,popularity", simplified_track_t::get_fields_filter());
     return fields;
+}
+
+void from_json(const Value &j, track_t &t)
+{
+    from_json(j, dynamic_cast<simplified_track_t&>(t));
+    from_json(j["album"], t.album);
+    
+    t.popularity = j["popularity"].GetUint();
 }
 
 void to_json(Value &result, const track_t &t, json::Allocator &allocator)
@@ -287,12 +304,7 @@ void to_json(Value &result, const track_t &t, json::Allocator &allocator)
     to_json(album, t.album, allocator);
 
     result.AddMember("album", album, allocator);
-}
-
-void from_json(const Value &j, track_t &t)
-{
-    from_json(j, dynamic_cast<simplified_track_t&>(t));
-    from_json(j["album"], t.album);
+    result.AddMember("popularity", Value(t.popularity), allocator);
 }
 
 const string& saved_track_t::get_fields_filter()
@@ -333,7 +345,7 @@ void to_json(Value &result, const simplified_playlist_t &p, json::Allocator &all
     result.AddMember("name", Value(utils::utf8_encode(p.name), allocator), allocator);
     result.AddMember("description", Value(utils::utf8_encode(p.description), allocator), allocator);
     result.AddMember("href", Value(p.href, allocator), allocator);
-    result.AddMember("collaborative", Value(p.collaborative), allocator);
+    result.AddMember("collaborative", Value(p.is_collaborative), allocator);
     result.AddMember("public", Value(p.is_public), allocator);
     result.AddMember("tracks", tracks, allocator);
     result.AddMember("actions", owner, allocator);
@@ -344,7 +356,7 @@ void from_json(const Value &j, simplified_playlist_t &p)
     p.id = j["id"].GetString();
     p.snapshot_id = j["snapshot_id"].GetString();
     p.href = j["href"].GetString();
-    p.collaborative = j["collaborative"].GetBool();
+    p.is_collaborative = j["collaborative"].GetBool();
     p.is_public = j["public"].GetBool();
     p.tracks_total = j["tracks"]["total"].GetUint();
     

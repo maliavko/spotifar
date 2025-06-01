@@ -185,7 +185,7 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         
         // text
         toast.setTextField(track.name, WinToastTemplate::FirstLine);
-        toast.setTextField(track.album.get_artist_name(), WinToastTemplate::SecondLine);
+        toast.setTextField(track.album.get_artist().name, WinToastTemplate::SecondLine);
         toast.setAttributionText(get_text(MToastSpotifyAttibution));
         
         // buttons
@@ -227,7 +227,7 @@ void notifications::show_recent_releases_found(const spotify::recent_releases_t 
         // the second line is the list of artists' names
         std::vector<wstring> artists_names;
         for (const auto &r: releases)
-            artists_names.push_back(r.get_artist_name());
+            artists_names.push_back(r.get_artist().name);
         toast.setTextField(utils::string_join(artists_names, L", "), WinToastTemplate::SecondLine);
 
         toast.setAttributionText(get_text(MToastSpotifyAttibution));

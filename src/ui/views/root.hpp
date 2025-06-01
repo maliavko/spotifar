@@ -15,15 +15,13 @@ class root_base_view: public view_abstract
 public:
     struct root_data_t: public data_item_t
     {
-        int name_key;
-        int descr_key;
+        int name_key, descr_key;
         return_callback_t callback{};
     };
 
     using menu_items_t = std::vector<root_data_t>;
 public:
     root_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback, menu_items_t items);
-    ~root_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
     auto get_key_bar_info() -> const key_bar_info_t* override;
@@ -41,6 +39,7 @@ protected:
     api_weak_ptr_t api_proxy;
 };
 
+
 class root_view: public root_base_view
 {
 public:
@@ -52,6 +51,7 @@ public:
 public:
     root_view(HANDLE panel, api_weak_ptr_t api);
 };
+
 
 class browse_view: public root_base_view
 {

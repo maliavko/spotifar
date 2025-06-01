@@ -9,28 +9,33 @@
 
 namespace spotifar { namespace ui {
 
+using namespace spotify;
+
 /// @brief A base class for all the views, representing a list
 /// of artists in either way
 class artists_base_view: public view_abstract
 {
 public:
-    artists_base_view(HANDLE panel, spotify::api_weak_ptr_t api, const wstring &title, return_callback_t callback);
+    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
+        view_abstract(panel, title, callback), api_proxy(api)
+        {}
+    
     ~artists_base_view() { api_proxy.reset(); }
 
     auto get_items() -> const items_t& override;
 protected:
-    virtual auto get_artists() -> std::generator<const spotify::artist_t&> = 0;
-    virtual void show_albums_view(const spotify::artist_t &artist) const = 0;
+    virtual auto get_artists() -> std::generator<const artist_t&> = 0;
+    virtual void show_albums_view(const artist_t &artist) const = 0;
 
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
-    auto select_item(const spotify::data_item_t *data) -> intptr_t override;
+    auto select_item(const data_item_t *data) -> intptr_t override;
     void update_panel_info(OpenPanelInfo *info) override;
-    bool request_extra_info(const spotify::data_item_t *data) override;
-    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item_t *data1,
-        const spotify::data_item_t *data2) -> intptr_t override;
+    bool request_extra_info(const data_item_t *data) override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
 protected:
-    spotify::api_weak_ptr_t api_proxy;
+    api_weak_ptr_t api_proxy;
 };
 
 
@@ -38,17 +43,17 @@ protected:
 class followed_artists_view: public artists_base_view
 {
 public:
-    followed_artists_view(HANDLE panel, spotify::api_weak_ptr_t api);
+    followed_artists_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
     
     // artists_base_view interface
-    auto get_artists() -> std::generator<const spotify::artist_t&> override;
-    void show_albums_view(const spotify::artist_t &artist) const override;
+    auto get_artists() -> std::generator<const artist_t&> override;
+    void show_albums_view(const artist_t &artist) const override;
     void show_filters_dialog() override;
 private:
-    spotify::followed_artists_ptr collection;
+    followed_artists_ptr collection;
 };
 
 
@@ -57,15 +62,15 @@ private:
 /// takes a list of recently listened tracks and calculate their artists
 class recent_artists_view:
     public artists_base_view,
-    public spotify::play_history_observer
+    public play_history_observer
 {
 public:
-    struct history_artist_t: public spotify::artist_t
+    struct history_artist_t: public artist_t
     {
         string played_at;
     };
 public:
-    recent_artists_view(HANDLE panel, spotify::api_weak_ptr_t api);
+    recent_artists_view(HANDLE panel, api_weak_ptr_t api);
     ~recent_artists_view();
 protected:
     void rebuild_items();
@@ -73,12 +78,12 @@ protected:
     // view interface
     auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item_t *data1,
-        const spotify::data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
     
     // artists_base_view
-    auto get_artists() -> std::generator<const spotify::artist_t&> override;
-    auto show_albums_view(const spotify::artist_t &artist) const -> void override;
+    auto get_artists() -> std::generator<const artist_t&> override;
+    auto show_albums_view(const artist_t &artist) const -> void override;
     
     void on_items_changed();
 private:
@@ -90,26 +95,26 @@ private:
 class recently_liked_tracks_artists_view: public artists_base_view
 {
 public:
-    struct recent_artist_t: public spotify::artist_t
+    struct recent_artist_t: public artist_t
     {
         string played_at;
     };
 public:
-    recently_liked_tracks_artists_view(HANDLE panel, spotify::api_weak_ptr_t api);
+    recently_liked_tracks_artists_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     void rebuild_items();
 
     // view interface
     auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item_t *data1,
-        const spotify::data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
     
     // artists_base_view
-    auto get_artists() -> std::generator<const spotify::artist_t&> override;
-    auto show_albums_view(const spotify::artist_t &artist) const -> void override;
+    auto get_artists() -> std::generator<const artist_t&> override;
+    auto show_albums_view(const artist_t &artist) const -> void override;
 private:
-    spotify::saved_tracks_ptr collection;
+    saved_tracks_ptr collection;
     std::vector<recent_artist_t> items;
 };
 
@@ -118,26 +123,26 @@ private:
 class recently_saved_album_artists_view: public artists_base_view
 {
 public:
-    struct recent_artist_t: public spotify::artist_t
+    struct recent_artist_t: public artist_t
     {
         string played_at;
     };
 public:
-    recently_saved_album_artists_view(HANDLE panel, spotify::api_weak_ptr_t api);
+    recently_saved_album_artists_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     void rebuild_items();
 
     // view interface
     auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const spotify::data_item_t *data1,
-        const spotify::data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
+        const data_item_t *data2) -> intptr_t override;
     
     // artists_base_view
-    auto get_artists() -> std::generator<const spotify::artist_t&> override;
-    void show_albums_view(const spotify::artist_t &artist) const override;
+    auto get_artists() -> std::generator<const artist_t&> override;
+    void show_albums_view(const artist_t &artist) const override;
 private:
-    spotify::saved_albums_ptr collection;
+    saved_albums_ptr collection;
     std::vector<recent_artist_t> items;
 };
 
@@ -146,17 +151,17 @@ private:
 class user_top_artists_view: public artists_base_view
 {
 public:
-    user_top_artists_view(HANDLE panel, spotify::api_weak_ptr_t api);
+    user_top_artists_view(HANDLE panel, api_weak_ptr_t api);
 protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     
     // artists_base_view
-    auto get_artists() -> std::generator<const spotify::artist_t&> override;
-    void show_albums_view(const spotify::artist_t &artist) const override;
+    auto get_artists() -> std::generator<const artist_t&> override;
+    void show_albums_view(const artist_t &artist) const override;
 private:
-    spotify::user_top_artists_ptr collection;
+    user_top_artists_ptr collection;
 };
 
 } // namespace ui
