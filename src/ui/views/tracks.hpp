@@ -66,12 +66,13 @@ private:
 };
 
 
-/// @brief A class-view, representing a list of recently played tracks
+/// @brief Recently played tracks view
 class recent_tracks_view:
     public tracks_base_view,
     public play_history_observer
 {
-public:
+    // extending a track_t class with `played_at` field, used only
+    // locally in the view class
     struct history_track_t: public track_t
     {
         string played_at;
@@ -91,7 +92,7 @@ protected:
     bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     
-    // playback_observer handlers
+    // play_history_observer handlers
     void on_items_changed();
 private:
     std::vector<history_track_t> items;
@@ -125,11 +126,10 @@ private:
 };
 
 
-/// @brief A class-view, to represent on the panels a list of
-/// the playing queue tracks
+/// @brief A currently playing queue view
 class playing_queue_view:
     public tracks_base_view,
-    public playback_observer // on_items_changed, on_shuffle_state_changed
+    public playback_observer
 {
 public:
     playing_queue_view(HANDLE panel, api_weak_ptr_t api);
@@ -138,7 +138,6 @@ protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
     auto get_sort_modes() const -> const sort_modes_t& override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
     bool start_playback(const string &track_id) override;

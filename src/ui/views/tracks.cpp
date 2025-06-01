@@ -261,29 +261,47 @@ void album_tracks_view::update_panel_info(OpenPanelInfo *info)
         wstring width, types;
     } columns[9];
 
-    columns[3].titles = { n_label, L"Name", L"[E]", L"Length", L"Pop %", };
-    columns[3].width = std::format(L"{},0,3,7,5", n_width);
-    columns[3].types = L"C7,NON,C0,C1,C4";
+    columns[3] =
+    {
+        { n_label, L"Name", L"[E]", L"Length", L"Pop %", },
+        std::format(L"{},0,3,7,5", n_width),
+        L"C7,NON,C0,C1,C4"
+    };
 
-    columns[4].titles = { n_label, L"Name", L"Artist", L"Length", };
-    columns[4].width = std::format(L"{},0,30,7", n_width);
-    columns[4].types = L"C7,NON,C3,C1";
+    columns[4] =
+    {
+        { n_label, L"Name", L"Artist", L"Length", },
+        std::format(L"{},0,30,7", n_width),
+        L"C7,NON,C3,C1"
+    };
 
-    columns[5].titles = { n_label, L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
-    columns[5].width = std::format(L"{},0,35,35,6,6,3,7,5", n_width);
-    columns[5].types = L"C7,NON,C3,C5,C6,C2,C0,C1,C4";
+    columns[5] =
+    {
+        { n_label, L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", },
+        std::format(L"{},0,35,35,6,6,3,7,5", n_width),
+        L"C7,NON,C3,C5,C6,C2,C0,C1,C4"
+    };
 
-    columns[6].titles = { n_label, L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
-    columns[6].width = std::format(L"{},0,30,3,7,5", n_width);
-    columns[6].types = L"C7,NON,C3,C0,C1,C4";
+    columns[6] =
+    {
+        { n_label, L"Name", L"Artist", L"[E]", L"Length", L"Pop %", },
+        std::format(L"{},0,30,3,7,5", n_width),
+        L"C7,NON,C3,C0,C1,C4"
+    };
 
-    columns[7].titles = { n_label, L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
-    columns[7].width = std::format(L"{},0,30,6,3,7,5", n_width);
-    columns[7].types = L"C7,NON,C5,C2,C0,C1,C4";
+    columns[7] =
+    {
+        { n_label, L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", },
+        std::format(L"{},0,30,6,3,7,5", n_width),
+        L"C7,NON,C5,C2,C0,C1,C4"
+    };
 
-    columns[8].titles = { n_label, L"Name", L"Artist", L"Album", L"Yr", };
-    columns[8].width = std::format(L"{},0,30,30,6", n_width);
-    columns[8].types = L"C7,NON,C3,C5,C2";
+    columns[8] =
+    {
+        { n_label, L"Name", L"Artist", L"Album", L"Yr", },
+        std::format(L"{},0,30,30,6", n_width),
+        L"C7,NON,C3,C5,C2"
+    };
 
     modes[9] = modes[8];
 
@@ -380,19 +398,16 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel),
-                     std::bind(events::show_root, api))
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel), std::bind(events::show_root, api))
 {
-    rebuild_items();
-
     utils::events::start_listening<play_history_observer>(this);
+    rebuild_items();
 }
 
 recent_tracks_view::~recent_tracks_view()
 {
-    items.clear();
-
     utils::events::stop_listening<play_history_observer>(this);
+    items.clear();
 }
 
 config::settings::view_t recent_tracks_view::get_default_settings() const
@@ -406,7 +421,7 @@ const view_abstract::sort_modes_t& recent_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Played", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ L"Played at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -442,8 +457,7 @@ bool recent_tracks_view::start_playback(const string &track_id)
 
 std::generator<const track_t&> recent_tracks_view::get_tracks()
 {
-    for (const auto &i: items)
-        co_yield i;
+    for (const auto &track: items) co_yield track;
 }
 
 void recent_tracks_view::on_items_changed()
@@ -573,8 +587,7 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel),
-                     std::bind(events::show_root, api))
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel), std::bind(events::show_root, api))
 {
     utils::events::start_listening<playback_observer>(this);
 }
@@ -586,7 +599,8 @@ playing_queue_view::~playing_queue_view()
 
 config::settings::view_t playing_queue_view::get_default_settings() const
 {
-    return { 0, false, 6 };
+    // sort mode - Unsorted; ascending; view mode - F7
+    return { 1, false, 7 };
 }
 
 bool playing_queue_view::start_playback(const string &track_id)
@@ -604,7 +618,8 @@ std::generator<const track_t&> playing_queue_view::get_tracks()
         playing_queue = api->get_playing_queue();
 
         // currently playing item
-        co_yield playing_queue.currently_playing;
+        if (playing_queue.currently_playing)
+            co_yield playing_queue.currently_playing;
         
         // queued items
         for (const auto &t: playing_queue.queue)
@@ -614,18 +629,10 @@ std::generator<const track_t&> playing_queue_view::get_tracks()
 
 const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const
 {
-    static sort_modes_t modes = {}; // no sorting modes for the view
+    static sort_modes_t modes = {
+        { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
+    };
     return modes;
-}
-
-intptr_t playing_queue_view::compare_items(const sort_mode_t &sort_mode,
-    const data_item_t *data1, const data_item_t *data2)
-{
-    const auto
-        &item1 = static_cast<const saved_track_t*>(data1),
-        &item2 = static_cast<const saved_track_t*>(data2);
-
-    return item1->added_at.compare(item2->added_at);
 }
 
 void playing_queue_view::on_track_changed(const track_t &track, const track_t &prev_track)

@@ -52,7 +52,7 @@
 "show toast"
 
 "Collection"
-""
+"Your followed artists, saved albums, tracks and playlists"
 "Artists"
 ""
 "Albums"
@@ -68,7 +68,7 @@
 "Recently Played"
 ""
 "Playing Queue"
-""
+"A currently playing queue of next songs"
 "Recent tracks"
 ""
 "Recent albums"
