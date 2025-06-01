@@ -16,12 +16,14 @@ public:
     struct root_data_t: public data_item_t
     {
         int name_key, descr_key;
-        return_callback_t callback{};
+        return_callback_t callback;
     };
 
     using menu_items_t = std::vector<root_data_t>;
 public:
-    root_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback, menu_items_t items);
+    root_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback, menu_items_t items):
+        view_abstract(panel, title, callback), api_proxy(api), menu_items(items)
+        {}
 
     auto get_items() -> const items_t& override;
     auto get_key_bar_info() -> const key_bar_info_t* override;

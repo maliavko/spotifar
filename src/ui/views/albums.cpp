@@ -358,7 +358,8 @@ new_releases_view::~new_releases_view()
 
 config::settings::view_t new_releases_view::get_default_settings() const
 {
-    return { 1, false, 6 };
+    // sort mode - by Name; ascending; view mode - F8
+    return { 1, false, 8 };
 }
 
 std::generator<const album_t&> new_releases_view::get_albums()
