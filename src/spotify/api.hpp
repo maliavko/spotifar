@@ -44,6 +44,7 @@ public:
     auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> override;
     auto get_album(const item_id_t &album_id) -> album_t override;
     auto get_albums(const item_ids_t &ids) -> std::vector<album_t> override;
+    auto get_tracks(const item_ids_t &ids) -> std::vector<track_t> override;
     auto get_album_tracks(const item_id_t &album_id) -> album_tracks_ptr override;
     auto get_playlist(const item_id_t &playlist_id) -> playlist_t override;
     auto get_user_top_tracks() -> user_top_tracks_ptr override;

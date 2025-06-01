@@ -100,6 +100,9 @@ struct api_interface
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-multiple-albums
     virtual auto get_albums(const item_ids_t &ids) -> std::vector<album_t> = 0;
 
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-several-tracks
+    virtual auto get_tracks(const item_ids_t &ids) -> std::vector<track_t> = 0;
+
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks
     virtual auto get_album_tracks(const item_id_t &album_id) -> album_tracks_ptr = 0;
 

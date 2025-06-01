@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "utils.hpp"
+#include "lng.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -55,11 +56,11 @@ struct copyrights_t
 
 struct simplified_artist_t: public data_item_t
 {
-    wstring name;
+    wstring name = utils::far3::get_text(MArtistUnknown);
 
-    auto get_uri() const -> string { return make_uri(id); }
+    string get_uri() const { return make_uri(id); }
     
-    static auto make_uri(const item_id_t &id) -> string { return make_item_uri("artist", id); }
+    static string make_uri(const item_id_t &id) { return make_item_uri("artist", id); }
     
     friend void from_json(const json::Value &j, simplified_artist_t &a);
     friend void to_json(json::Value &j, const simplified_artist_t &a, json::Allocator &allocator);
@@ -67,8 +68,8 @@ struct simplified_artist_t: public data_item_t
 
 struct artist_t: public simplified_artist_t
 {
-    size_t followers_total;
-    size_t popularity;
+    size_t followers_total = 0;
+    size_t popularity = 0;
     std::vector<string> genres;
     std::vector<image_t> images;
 
@@ -96,8 +97,9 @@ struct simplified_album_t: public data_item_t
 
     static string make_uri(const item_id_t &id) { return make_item_uri("album", id); }
 
-    /// @brief Takes a first available artists or returns a sturb string 
-    wstring get_artist_name() const;
+    /// @brief Takes a first available artists or returns. Returns
+    /// empty artist object in case of error
+    simplified_artist_t get_artist() const;
 
     /// @brief Returns a string, containing all the track's artists separated by comma 
     wstring get_artists_full_name() const;
@@ -146,6 +148,13 @@ struct simplified_track_t: public data_item_t
     static string make_uri(const item_id_t &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();
 
+    /// @brief Takes a first available artists or returns. Returns
+    /// empty artist object in case of error
+    simplified_artist_t get_artist() const;
+
+    /// @brief Returns a string, containing all the track's artists separated by comma 
+    wstring get_artists_full_name() const;
+
     inline string get_uri() const { return make_uri(id); }
     
     friend void from_json(const json::Value &j, simplified_track_t &t);
@@ -155,6 +164,7 @@ struct simplified_track_t: public data_item_t
 struct track_t: public simplified_track_t
 {
     simplified_album_t album;
+    size_t popularity = 0;
 
     static const string& get_fields_filter();
 
@@ -178,7 +188,7 @@ struct simplified_playlist_t: public data_item_t
     string snapshot_id;
     wstring name;
     wstring user_display_name;
-    bool collaborative;
+    bool is_collaborative;
     bool is_public;
     wstring description;
     size_t tracks_total;

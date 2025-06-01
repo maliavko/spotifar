@@ -7,8 +7,22 @@ namespace spotifar { namespace ui {
 
 namespace far3 = utils::far3;
 
-// the `F` keys, which can be overriden by the nested views
-static const std::array<int, 6> refreshable_keys = { VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8 };
+// Macro-helper to define all possible key bar key binding combinations
+#define ALL_COMBINATIONS(far_key) { far_key, 0 }, { far_key, SHIFT_PRESSED }, { far_key, LEFT_ALT_PRESSED }, { far_key, LEFT_CTRL_PRESSED }
+
+// All the keys, used by plugin's views. If a current view does not define
+// any bindings, all the keys below will be cleared from the panel
+static const FarKey overriden_bindings[] = {
+    ALL_COMBINATIONS(VK_F3),
+    ALL_COMBINATIONS(VK_F4),
+    ALL_COMBINATIONS(VK_F5),
+    ALL_COMBINATIONS(VK_F6),
+    ALL_COMBINATIONS(VK_F7),
+    ALL_COMBINATIONS(VK_F8),
+    { VK_F9, LEFT_CTRL_PRESSED },
+    { VK_F10, LEFT_CTRL_PRESSED },
+    { VK_F11, LEFT_CTRL_PRESSED },
+};
 
 /// @brief A stub-view used for the first panel initialization, before any other
 /// view to be shown. Purposely visible when the user is not yet authorized
@@ -91,9 +105,9 @@ void panel::update_panel_info(OpenPanelInfo *info)
         info->InfoLinesNumber = info_lines->size();
     }
 
-    // every update we clear out all the refreshable `F` keys and fill them up
-    // by demand with the overriding info from the nested view
-    static KeyBarLabel key_bar_labels[refreshable_keys.size() * 4];
+    // every update we clear out all the overriden `F` key bindings and fill them up
+    // using the current presented view and its binding configuration
+    static KeyBarLabel key_bar_labels[std::size(overriden_bindings)];
     static KeyBarTitles key_bar = { std::size(key_bar_labels), key_bar_labels };
     info->KeyBar = &key_bar;
 
@@ -102,16 +116,16 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     // adding multiviews bar keys
     if (mview_builders.artists)
-        panel_key_bar.insert({ { VK_F5, SHIFT_PRESSED }, far3::get_text(MPanelArtistsItemLabel) });
+        panel_key_bar[{ VK_F5, SHIFT_PRESSED }] = far3::get_text(MPanelArtistsItemLabel);
 
     if (mview_builders.albums)
-        panel_key_bar.insert({ { VK_F6, SHIFT_PRESSED }, far3::get_text(MPanelAlbumsItemLabel) });
+        panel_key_bar[{ VK_F6, SHIFT_PRESSED }] = far3::get_text(MPanelAlbumsItemLabel);
 
     if (mview_builders.tracks)
-        panel_key_bar.insert({ { VK_F7, SHIFT_PRESSED }, far3::get_text(MPanelTracksItemLabel) });
+        panel_key_bar[{ VK_F7, SHIFT_PRESSED }] = far3::get_text(MPanelTracksItemLabel);
 
     if (mview_builders.playlists)
-        panel_key_bar.insert({ { VK_F8, SHIFT_PRESSED }, far3::get_text(MPanelPlaylistsItemLabel) });
+        panel_key_bar[{ VK_F8, SHIFT_PRESSED }] = far3::get_text(MPanelPlaylistsItemLabel);
     
     // adding bar keys from the nested view
     if (const auto &view_key_bar = view->get_key_bar_info())
@@ -121,20 +135,19 @@ void panel::update_panel_info(OpenPanelInfo *info)
     for (const auto &sort_mode: view->get_sort_modes())
         panel_key_bar[sort_mode.far_key] = sort_mode.name.c_str();
 
-    size_t idx = 0;
-    for (const auto &key: refreshable_keys)
-        for (const auto &mod: { 0, SHIFT_PRESSED, LEFT_ALT_PRESSED, LEFT_CTRL_PRESSED })
-        {
-            auto &kbl = key_bar_labels[idx++];
+    for (size_t idx = 0; idx < std::size(overriden_bindings); idx++)
+    {
+        auto &kbl = key_bar_labels[idx];
 
-            kbl.Key.VirtualKeyCode = key;
-            kbl.Key.ControlKeyState = mod;
+        kbl.Key = overriden_bindings[idx];
 
-            if (panel_key_bar.contains(kbl.Key))
-                kbl.Text = kbl.LongText = panel_key_bar.at(kbl.Key);
-            else
-                kbl.Text = kbl.LongText = L"";
-        }
+        // if the key is overriden right now, we show it on the bar;
+        // otherwise we wipte it out from the panel
+        if (panel_key_bar.contains(kbl.Key))
+            kbl.Text = kbl.LongText = panel_key_bar.at(kbl.Key);
+        else
+            kbl.Text = kbl.LongText = L"";
+    }
 
     // allowing view to customize OpenPanelInfo struct
     view->update_panel_info(info);

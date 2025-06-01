@@ -966,7 +966,7 @@ void player::update_playing_queue(bool is_visible)
             for (size_t i = 0; i < items.size(); i++)
             {
                 const auto &item = items[i];
-                const auto &long_name = std::format(L"{} - {}", item.album.get_artist_name(), item.name);
+                const auto &long_name = std::format(L"{} - {}", item.album.get_artist().name, item.name);
                 far3::dialogs::add_list_item(hdlg, controls::queue_list, long_name, (int)i,
                     (void*)item.get_uri().c_str(), item.get_uri().size());
             }

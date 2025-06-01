@@ -94,7 +94,6 @@ const view_abstract::items_t& playlist_view::get_items()
 
 const view_abstract::sort_modes_t& playlist_view::get_sort_modes() const
 {
-    using namespace utils::keys;
     static sort_modes_t modes = {
         { L"Name",      SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
         { L"Year",      SM_ATIME,   { VK_F4, LEFT_CTRL_PRESSED } },

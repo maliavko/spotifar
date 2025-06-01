@@ -27,7 +27,7 @@ public:
 protected:
     virtual auto get_albums() -> std::generator<const album_t&> = 0;
     virtual void show_tracks_view(const album_t &album) const = 0;
-    virtual std::vector<wstring> get_extra_columns(const album_t&) const { return {}; }
+    virtual auto get_extra_columns(const album_t&) const -> std::vector<wstring> { return {}; }
 
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
@@ -46,9 +46,11 @@ protected:
 class artist_view: public albums_base_view
 {
 public:
-    artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist,
-        return_callback_t callback);
+    artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist, return_callback_t callback);
+    ~artist_view() { albums.clear(); }
 protected:
+    void rebuild_items();
+
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
 
@@ -57,7 +59,7 @@ protected:
     void show_tracks_view(const album_t &album) const override;
 private:
     artist_t artist;
-    artist_albums_ptr collection;
+    std::vector<album_t> albums;
 };
 
 
@@ -73,14 +75,13 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
-        const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     void update_panel_info(OpenPanelInfo *info) override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
-    std::vector<wstring> get_extra_columns(const album_t&) const override;
+    auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
 private:
     saved_albums_ptr collection;
 };
@@ -90,12 +91,14 @@ private:
 /// followed artists.
 class new_releases_view:
     public albums_base_view,
-    public releases_observer // for updating the panel, when the new release is detected
+    public releases_observer
 {
 public:
     new_releases_view(HANDLE panel, api_weak_ptr_t api);
     ~new_releases_view();
 protected:
+    void rebuild_items();
+
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
 
@@ -105,6 +108,8 @@ protected:
 
     // releases_observer interface
     void on_releases_sync_finished(const recent_releases_t releases) override;
+private:
+    std::vector<album_t> recent_releases;
 };
 
 
@@ -114,7 +119,7 @@ protected:
 /// by `played_at` attribute by default
 class recent_albums_view:
     public albums_base_view,
-    public play_history_observer // for updating the view each time the currently played tracks is changed
+    public play_history_observer
 {
 public:
     struct history_album_t: public album_t
@@ -141,22 +146,6 @@ protected:
     void on_items_changed() override;
 private:
     std::vector<history_album_t> items;
-};
-
-
-/// @brief A view class representing list of albums, featuring tracks
-/// which user liked recently
-class featuring_albums_view: public albums_base_view
-{
-public:
-    featuring_albums_view(HANDLE panel, api_weak_ptr_t api);
-protected:
-    // view interface
-    auto get_default_settings() const -> config::settings::view_t override;
-
-    // albums_base_view interface
-    auto get_albums() -> std::generator<const album_t&> override;
-    void show_tracks_view(const album_t &album) const override;
 };
 
 

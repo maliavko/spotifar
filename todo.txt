@@ -30,13 +30,16 @@ application ideas
 bugs
     - shutting down librespot from config leaves a splash screen message visible
     - returning back does not select a proper item on the panel for multiviews
+    - sorting works 95%: open albums view and sort by tracks number e.g.
 
 to finish for alpha release
+- check all the default view settings and sort modes
+- to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch
 - help window
 - remove unfinished menus
 - to review TODOs
-- to finalize "featuring" menus, user top items menu
++ to finalize "featuring" menus, user top items menu
 + to implement filter menu on each view
 + to add a proper github support: license, automations? binaries
 + to add a proper errors handling

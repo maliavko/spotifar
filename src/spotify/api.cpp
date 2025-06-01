@@ -175,6 +175,12 @@ std::vector<album_t> api::get_albums(const item_ids_t &ids)
         "/v1/albums", ids, 20, "albums"), get_ptr());
 }
 
+std::vector<track_t> api::get_tracks(const item_ids_t &ids)
+{
+    return request_item(several_items_requester<track_t, 1, std::chrono::weeks>(
+        "/v1/tracks", ids, 20, "tracks"), get_ptr());
+}
+
 album_tracks_ptr api::get_album_tracks(const item_id_t &album_id)
 {
     return album_tracks_ptr(new album_tracks_t(
