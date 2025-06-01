@@ -11,8 +11,7 @@ class librespot_handler:
     public spotify::devices_observer // to wait for the Librespot device get available and pick it up
 {
 public:
-    librespot_handler(spotify::api_weak_ptr_t api);
-    ~librespot_handler();
+    librespot_handler(spotify::api_weak_ptr_t api):  api_proxy(api) {}
 
     auto start(const string &access_token) -> bool;
     void shutdown();

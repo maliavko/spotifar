@@ -17,14 +17,6 @@ using utils::far3::synchro_tasks::dispatch_event;
     static const wstring device_name = L"librespot";
 #endif
 
-librespot_handler::librespot_handler(spotify::api_weak_ptr_t api): api_proxy(api)
-{
-}
-
-librespot_handler::~librespot_handler()
-{
-    api_proxy.reset();
-}
 
 bool librespot_handler::start(const string &access_token)
 {
@@ -315,6 +307,7 @@ void librespot_handler::on_devices_changed(const spotify::devices_t &devices)
         // stop listening after a correct device is detected
         unsubscribe();
 
+        // TODO: bug, the code does not come here when the librespot is turned off
         if (active_dev_it != devices.end()) return;
 
         std::vector<FarMenuItem> items;
