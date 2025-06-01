@@ -7,7 +7,7 @@ using utils::far3::synchro_tasks::dispatch_event;
 static const size_t max_history_size = 250;
 
 play_history::play_history(api_interface *api):
-    json_cache<history_items_t>(L"play_history"),
+    json_cache<history_items_t>(L"PlayHistory"),
     api_proxy(api)
 {
 };
@@ -27,6 +27,8 @@ bool play_history::is_active() const
 
 clock_t::duration play_history::get_sync_interval() const
 {
+    // if there is no active history listeners (like views e.g.) we perform
+    // a sync only once per two minutes
     return utils::events::has_observers<play_history_observer>() ? 5s : 2min;
 }
 
