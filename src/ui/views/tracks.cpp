@@ -510,13 +510,25 @@ void recent_tracks_view::on_items_changed()
 std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track) const
 {
     const auto &played_track = static_cast<const history_track_t&>(track);
-    
-    std::istringstream in{ played_track.played_at };
-    utils::clock_t::time_point tp;
-    in >> parse("%FT%T", tp); // e.g. 2025-06-01T21:57:59.793Z
+    wstring formatted_time = utils::to_wstring(played_track.played_at);
 
+    try
+    {
+        // parsing datetime string, to be able to reformat it
+        std::istringstream in{ played_track.played_at };
+        utils::clock_t::time_point tp;
+        in >> parse("%FT%T", tp); // e.g. 2025-06-01T21:57:59.793Z
+
+        formatted_time = std::format(L"{:%d %b, %H:%M}", std::chrono::current_zone()->to_local(tp));
+    }
+    catch (const std::runtime_error &ex)
+    {
+        log::global->warn("Couldn't convert track last played time into "
+            "local time: {}. {}", played_track.played_at, ex.what());
+    }
+    
     return {
-        utils::to_wstring(std::format("{:%d %b, %H:%M}", tp)), // C7 - `played at` date
+        formatted_time, // C7 - `played at` date
     };
 }
 
