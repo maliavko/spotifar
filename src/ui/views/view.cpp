@@ -12,7 +12,7 @@ view::view(HANDLE panel, const wstring &title, const wstring &dir_name): panel(p
 
 config::settings::view_t* view::get_settings() const
 {
-    return config::get_panel_settings(get_uid(), get_default_settings());
+    return config::get_view_settings(get_uid(), get_default_settings());
 }
 
 void view::select_sort_mode(int idx)

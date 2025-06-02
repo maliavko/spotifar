@@ -65,49 +65,52 @@ namespace events {
 
 } // namespace events
 
+using view_builder_t = std::function<view_ptr_t(HANDLE)>;
+
+struct multiview_builder_t
+{
+    enum : size_t
+    {
+        artists_idx,
+        albums_idx,
+        tracks_idx,
+        playlists_idx,
+    };
+
+    view_builder_t artists, albums, tracks, playlists;
+    config::settings::multiview_t *settings;
+
+    void clear()
+    {
+        artists = albums = tracks = playlists = nullptr;
+    }
+
+    view_builder_t switch_builder(size_t idx)
+    {
+        settings->idx = idx;
+        return get_builder();
+    }
+
+    view_builder_t get_builder()
+    {
+        std::vector<view_builder_t> builders{ artists, albums, tracks, playlists };
+
+        auto idx = settings->idx;
+        if (idx < builders.size() && builders[idx])
+            return builders[idx];
+
+        for (size_t idx = 0; idx < builders.size(); idx++)
+            if (builders[idx])
+                return builders[idx];
+
+        return nullptr;
+    }
+};
+
 /// @brief A panel class implements this interface to listen global
 /// commands from `events` namespace and to show appropriate requested views
 struct ui_events_observer: public BaseObserverProtocol
 {
-    using view_builder_t = std::function<view_ptr_t(HANDLE)>;
-
-    struct multiview_builder_t
-    {
-        const static size_t
-            artists_idx = 0,
-            albums_idx = 1,
-            tracks_idx = 2,
-            playlists_idx = 3;
-
-        view_builder_t artists, albums, tracks, playlists;
-        size_t default_view_idx = artists_idx;
-
-        void clear()
-        {
-            artists = albums = tracks = playlists = nullptr;
-        }
-
-        view_builder_t get_builder(size_t view_idx)
-        {
-            std::vector<view_builder_t> builders{ artists, albums, tracks, playlists };
-
-            // checking the builder of a given `view_idx` first;
-            // if it is invalid, checking then the default view builder
-            for (auto idx: { view_idx, default_view_idx })
-            {
-                if (idx < builders.size() && builders[idx])
-                    return builders[idx];
-            }
-
-            // ...if none of the indicies worked, trying to return the first valid one
-            for (size_t idx = 0; idx < builders.size(); idx++)
-                if (builders[idx])
-                    return builders[idx];
-
-            return nullptr;
-        }
-    };
-
     /// @brief Show playback player
     virtual void show_player() {}
 

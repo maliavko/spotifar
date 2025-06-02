@@ -40,7 +40,6 @@ protected:
     void show_filters_menu() override;
 private:
     multiview_builder_t mview_builders;
-    size_t mview_current_idx = 0;
     bool skip_view_refresh = true;
 
     view_ptr_t view;

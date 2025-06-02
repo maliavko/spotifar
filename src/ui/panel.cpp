@@ -236,8 +236,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
     const auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
-        auto key = keys::make_combined(key_event);
-        switch (key)
+        switch (auto key = keys::make_combined(key_event))
         {
             // to request and show extra info on the panel for the item under cursor
             case VK_F3:
@@ -273,13 +272,10 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             {
                 // switch multiview
                 auto idx = key - VK_F5 - keys::mods::shift;
-                if (idx != mview_current_idx)
+                if (idx != mview_builders.settings->idx)
                 {
-                    if (auto builder = mview_builders.get_builder(idx))
-                    {
-                        mview_current_idx = idx;
+                    if (auto builder = mview_builders.switch_builder(idx))
                         set_view(builder(this), view->get_return_callback());
-                    }
                 }
                 return TRUE;
             }
@@ -359,9 +355,8 @@ void panel::show_multiview(HANDLE panel, multiview_builder_t builders, view::ret
     if (is_this_panel(panel))
     {
         mview_builders = builders;
-        mview_current_idx = builders.default_view_idx;
 
-        if (auto builder = builders.get_builder(mview_current_idx))
+        if (auto builder = builders.get_builder())
             set_view(builder(this), callback);
     }
 }
