@@ -954,6 +954,17 @@ namespace json
         j.SetInt(result);
     }
 
+    // size_t
+    void from_json(const Value &j, size_t &result)
+    {
+        result = j.GetUint64();
+    }
+
+    void to_json(Value &j, const size_t &result, Allocator &allocator)
+    {
+        j.SetUint64(result);
+    }
+
     // bool
     void from_json(const Value &j, bool &result)
     {
