@@ -415,6 +415,10 @@ namespace json
     void from_json(const Value &j, int &result);
     void to_json(Value &j, const int &result, Allocator &allocator);
     
+    /// @brief size_t support for rapidjson parse/pack
+    void from_json(const Value &j, size_t &result);
+    void to_json(Value &j, const size_t &result, Allocator &allocator);
+    
     /// @brief bool support for json parse/pack
     void from_json(const Value &j, bool &result);
     void to_json(Value &j, const bool &result, Allocator &allocator);

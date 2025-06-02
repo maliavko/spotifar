@@ -91,21 +91,35 @@ namespace playback
 
 struct settings
 {
+    /// @brief A struct for holding view's persistent settings, stored
+    /// and recovered from Far config file
     struct view_t
     {
-        int sort_mode_idx;
-        bool is_descending;
-        int view_mode;
+        int sort_mode_idx; // views last selected sort mode (Ctrl+F1, F2 etc.)
+        bool is_descending; // is sorting oder descending
+        int view_mode; // view's view mode (Ctrl+1,2 etc.)
         
         friend void from_json(const json::Value &j, view_t &v);
         friend void to_json(json::Value &j, const view_t &v, json::Allocator &allocator);
     };
-
-    /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }
-    using hotkeys_t = std::unordered_map<int, std::pair<WORD, WORD>>;
     
     /// @brief { view_uid, { sort mode idx, is order descending, panel view mode } }
     using views_t = std::unordered_map<string, view_t>;
+
+    /// @brief { hotkey_id, std::pair(virtual key code, key modifiers) }
+    using hotkeys_t = std::unordered_map<int, std::pair<WORD, WORD>>;
+
+    /// @brief A struct for holding multiview's persistent settings, stored
+    /// and recovered from Far config file
+    struct multiview_t
+    {
+        size_t idx; // last selected view from the multiview's range
+        
+        friend void from_json(const json::Value &j, multiview_t &v);
+        friend void to_json(json::Value &j, const multiview_t &v, json::Allocator &allocator);
+    };
+
+    using multiviews_t = std::unordered_map<string, multiview_t>;
 
     // general settings
     bool add_to_disk_menu;
@@ -138,6 +152,7 @@ struct settings
 
     // complimentary data
     views_t views;
+    multiviews_t mviews;
     wstring plugin_startup_folder;
     wstring plugin_data_folder;
 };
@@ -244,9 +259,12 @@ auto get_plugin_data_folder() -> const wstring&;
 /// @brief Returning a pair(virtual key code, modifiers) pointer or nullptr
 auto get_hotkey(int hotkey_id) -> const std::pair<WORD, WORD>*;
 
-/// @brief Returns persistend view settings by its `view_uid`. In case there is no view
+/// @brief Returns persistent view settings by its `view_uid`. In case there is no view
 /// settings cached, returns `def` value
-auto get_panel_settings(const string &view_uid, const settings::view_t &def) -> settings::view_t*;
+auto get_view_settings(const string &view_uid, const settings::view_t &def) -> settings::view_t*;
+
+/// @brief Returns a pointer to multiview's settings object by given `mview_id`
+auto get_multiview_settings(const string &mview_id, const settings::multiview_t &def) -> settings::multiview_t*;
 
 /// @brief A flag whether a librespot playback is active and should
 /// be launched while starting the plugin
