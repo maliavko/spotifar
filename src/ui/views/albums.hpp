@@ -17,8 +17,8 @@ using namespace spotify;
 class albums_base_view: public view_abstract
 {
 public:
-    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
-        view_abstract(panel, title, callback), api_proxy(api)
+    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
+        view_abstract(panel, title), api_proxy(api)
         {}
     
     ~albums_base_view() { api_proxy.reset(); }
@@ -46,7 +46,7 @@ protected:
 class artist_view: public albums_base_view
 {
 public:
-    artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist, return_callback_t callback);
+    artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist);
     ~artist_view() { albums.clear(); }
 protected:
     void rebuild_items();

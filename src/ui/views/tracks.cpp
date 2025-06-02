@@ -202,10 +202,8 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 
 
 //-----------------------------------------------------------------------------------------------------------
-album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const simplified_album_t &album,
-                                     return_callback_t callback):
-    tracks_base_view(panel, api_proxy, album.name, callback),
-    album(album)
+album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const simplified_album_t &album):
+    tracks_base_view(panel, api_proxy, album.name), album(album)
 {
     utils::events::start_listening<playback_observer>(this);
     rebuild_items();
@@ -398,7 +396,7 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel), std::bind(events::show_root, api))
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel))
 {
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
@@ -525,7 +523,7 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
 
 //-----------------------------------------------------------------------------------------------------------
 saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel), std::bind(events::show_root, api_proxy))
+    tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel))
 {
     utils::events::start_listening<playback_observer>(this);
     if (auto api = api_proxy.lock())
@@ -649,7 +647,7 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel), std::bind(events::show_root, api))
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel))
 {
     utils::events::start_listening<playback_observer>(this);
 }
@@ -710,8 +708,7 @@ void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
 
 //-----------------------------------------------------------------------------------------------------------
 recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel),
-                     std::bind(events::show_browse, api_proxy))
+    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_tracks();
@@ -764,8 +761,7 @@ std::generator<const track_t&> recently_liked_tracks_view::get_tracks()
 
 //-----------------------------------------------------------------------------------------------------------
 user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel),
-                     std::bind(events::show_browse, api_proxy))
+    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_user_top_tracks();

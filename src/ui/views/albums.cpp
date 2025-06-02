@@ -210,8 +210,8 @@ intptr_t albums_base_view::process_key_input(int combined_key)
 
 
 //-----------------------------------------------------------------------------------------------------------
-artist_view::artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &a, return_callback_t callback):
-    albums_base_view(panel, api, a.name, callback), artist(a)
+artist_view::artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &a):
+    albums_base_view(panel, api, a.name), artist(a)
 {
     rebuild_items();
 }
@@ -254,7 +254,7 @@ void artist_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), std::bind(events::show_root, api_proxy))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
@@ -349,8 +349,7 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
 
 //-----------------------------------------------------------------------------------------------------------
 new_releases_view::new_releases_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelNewReleasesItemLabel),
-        std::bind(events::show_browse, api_proxy))
+    albums_base_view(panel, api_proxy, get_text(MPanelNewReleasesItemLabel))
 {
     utils::events::start_listening<releases_observer>(this);
     rebuild_items();
@@ -407,8 +406,7 @@ void new_releases_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 recent_albums_view::recent_albums_view(HANDLE panel, api_weak_ptr_t api):
-    albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel),
-        std::bind(events::show_root, api))
+    albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel))
 {
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
@@ -501,8 +499,7 @@ void recent_albums_view::on_items_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
-        std::bind(events::show_browse, api_proxy))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_tracks();
@@ -571,8 +568,7 @@ void recently_liked_tracks_albums_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel),
-        std::bind(events::show_browse, api_proxy))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();

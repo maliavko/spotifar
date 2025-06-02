@@ -49,9 +49,8 @@ public:
 public:
     /// @param panel a real param handle, PANEL_PASSIVE dose not work
     /// @param title a label used to be shown on top of the panel
-    /// @param callback a handler, which is being called when ".." is hit on the panel
-    view_abstract(HANDLE panel, const wstring &title, return_callback_t callback):
-        panel(panel), title(title), return_callback(callback)
+    view_abstract(HANDLE panel, const wstring &title):
+        panel(panel), title(title)
         {}
     
     virtual ~view_abstract() {}
@@ -74,6 +73,11 @@ public:
     auto get_item_idx(const string &item_id) -> size_t;
     auto get_settings() const -> config::settings::view_t*;
     void select_sort_mode(int sort_mode_idx);
+
+    /// @param callback a handler, which is being called when ".." is hit on the panel
+    auto set_return_callback(return_callback_t callback) { return_callback = callback; }
+    
+    /// @return A handler which is being called when ".." is hit on the panel
     auto get_return_callback() const -> const return_callback_t& { return return_callback; }
 
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;

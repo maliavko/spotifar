@@ -118,9 +118,9 @@ struct ui_events_observer: public BaseObserverProtocol
     /// on the panel after operation is finished
     virtual void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id) {}
 
-    virtual void show_view(HANDLE panel, view_builder_t builder) {}
+    virtual void show_view(HANDLE panel, view_builder_t builder, view_abstract::return_callback_t callback = {}) {}
 
-    virtual void show_multiview(HANDLE panel, multiview_builder_t callbacks) {}
+    virtual void show_multiview(HANDLE panel, multiview_builder_t callbacks, view_abstract::return_callback_t callback = {}) {}
 
     virtual void close_panel(HANDLE panel) {}
 
