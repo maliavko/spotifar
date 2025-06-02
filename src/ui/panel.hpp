@@ -27,15 +27,15 @@ public:
     intptr_t process_input(const ProcessPanelInputInfo *info);
     intptr_t compare_items(const CompareInfo *info);
 protected:
-    void set_view(view_ptr_t view);
+    void set_view(view_ptr_t, view::return_callback_t = {});
     bool is_active() const;
     bool is_this_panel(HANDLE panel) const;
     void refresh(const string &item_id = "") const;
     
     // global ui events
     void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id = "") override;
-    void show_view(HANDLE panel, view_builder_t builder, view::return_callback_t callback = nullptr) override;
-    void show_multiview(HANDLE panel, multiview_builder_t builders, view::return_callback_t callback = nullptr) override;
+    void show_view(HANDLE panel, view_builder_t, view::return_callback_t = nullptr) override;
+    void show_multiview(HANDLE panel, multiview_builder_t, view::return_callback_t = nullptr) override;
     void close_panel(HANDLE panel) override;
     void show_filters_menu() override;
 private:

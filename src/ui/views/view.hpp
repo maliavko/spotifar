@@ -49,13 +49,13 @@ public:
 public:
     /// @param panel a real param handle, PANEL_PASSIVE dose not work
     /// @param title a label used to be shown on top of the panel
-    view(HANDLE panel, const wstring &title):
-        panel(panel), title(title)
-        {}
-    
+    /// @param dir_name a directory name used by Far to uniquely identify the view
+    /// and match it respectively to the items on the panels, e.g. while returning back
+    /// from the view
+    view(HANDLE panel, const wstring &title, const wstring &dir_name = L"");
     virtual ~view() {}
 
-    // a public interface, exposed to the panel class
+    // a public interface, used by ui::panel class
 
     /// @brief a helper event from outside, its called right after the items
     /// are populated on the panel
@@ -63,6 +63,8 @@ public:
     auto compare_items(const CompareInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
+    auto get_title() const -> const wstring& { return title; }
+    auto get_dir_name() const -> const wstring& { return dir_name; }
 
     /// @brief Called when user hits F3 key on the panel, returns an
     /// additional info for the panel item under cursor
@@ -82,8 +84,6 @@ public:
 
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
     virtual auto get_items() -> const items_t& = 0;
-    virtual auto get_title() const -> const wstring& { return title; }
-    virtual auto get_dir_name() const -> const wstring& { return get_title(); }
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual void update_panel_info(OpenPanelInfo *info) {}

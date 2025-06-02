@@ -16,8 +16,8 @@ using namespace spotify;
 class playlists_base_view: public view
 {
 public:
-    playlists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
-        view(panel, title), api_proxy(api)
+    playlists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L""):
+        view(panel, title, dir_name), api_proxy(api)
         {}
 
     auto get_items() -> const items_t& override;
@@ -44,12 +44,10 @@ public:
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
-    auto get_dir_name() const -> const wstring& override;
 
     // playlists_base_view
     auto get_playlists() -> std::generator<const simplified_playlist_t&> override;
 private:
-    api_weak_ptr_t api_proxy;
     saved_playlists_ptr collection;
 };
 

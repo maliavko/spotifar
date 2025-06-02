@@ -15,8 +15,8 @@ using namespace spotify;
 class tracks_base_view: public view
 {
 public:
-    tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
-        view(panel, title), api_proxy(api)
+    tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L""):
+        view(panel, title, dir_name), api_proxy(api)
         {}
 
     auto get_items() -> const items_t& override;
@@ -115,7 +115,6 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     void update_panel_info(OpenPanelInfo *info) override;
-    auto get_dir_name() const -> const wstring& override;
 
     // tracks_base_view interface
     bool start_playback(const string &track_id) override;
