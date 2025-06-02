@@ -88,8 +88,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
         config::fsf.snprintf(title, std::size(title), far3::get_text(MPluginUserName));
     }
     
-    config::fsf.snprintf(dir_name, std::size(dir_name),
-        utils::strip_invalid_filename_chars(view->get_dir_name()).c_str());
+    config::fsf.snprintf(dir_name, std::size(dir_name), view->get_dir_name().c_str());
 
     info->StructSize = sizeof(*info);
     info->CurDir = dir_name;
@@ -272,13 +271,14 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             case VK_F7 + keys::mods::shift:
             case VK_F8 + keys::mods::shift:
             {
+                // switch multiview
                 auto idx = key - VK_F5 - keys::mods::shift;
                 if (idx != mview_current_idx)
                 {
                     if (auto builder = mview_builders.get_builder(idx))
                     {
                         mview_current_idx = idx;
-                        set_view(builder(this));
+                        set_view(builder(this), view->get_return_callback());
                     }
                 }
                 return TRUE;
@@ -297,9 +297,12 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
-void panel::set_view(view_ptr_t v)
+void panel::set_view(view_ptr_t v, view::return_callback_t callback)
 {
     view = v; // setting up the new view
+
+    if (callback)
+        view->set_return_callback(callback);
 
     // forcing the panel to redraw only in cases when it will not do it itself:
     //   - it is passive
@@ -347,11 +350,7 @@ void panel::show_view(HANDLE panel, view_builder_t builder, view::return_callbac
     if (is_this_panel(panel))
     {
         mview_builders.clear(); // removing any previously set filters
-
-        auto v = builder(this);
-        v->set_return_callback(callback);
-
-        set_view(v);
+        set_view(builder(this), callback);
     }
 }
 
@@ -363,12 +362,7 @@ void panel::show_multiview(HANDLE panel, multiview_builder_t builders, view::ret
         mview_current_idx = builders.default_view_idx;
 
         if (auto builder = builders.get_builder(mview_current_idx))
-        {
-            auto v = builder(this);
-            v->set_return_callback(callback);
-            
-            set_view(v);
-        }
+            set_view(builder(this), callback);
     }
 }
 

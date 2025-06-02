@@ -16,8 +16,8 @@ using namespace spotify;
 class artists_base_view: public view
 {
 public:
-    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
-        view(panel, title), api_proxy(api)
+    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L""):
+        view(panel, title, dir_name), api_proxy(api)
         {}
     
     ~artists_base_view() { api_proxy.reset(); }
@@ -47,7 +47,6 @@ public:
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
-    auto get_dir_name() const -> const wstring& override;
     
     // artists_base_view interface
     auto get_artists() -> std::generator<const artist_t&> override;
