@@ -77,6 +77,7 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     void update_panel_info(OpenPanelInfo *info) override;
+    auto get_dir_name() const -> const wstring& override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;

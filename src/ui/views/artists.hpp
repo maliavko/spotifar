@@ -47,6 +47,7 @@ public:
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
+    auto get_dir_name() const -> const wstring& override;
     
     // artists_base_view interface
     auto get_artists() -> std::generator<const artist_t&> override;
