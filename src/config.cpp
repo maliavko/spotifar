@@ -52,6 +52,7 @@ static const wchar_t
     *activate_global_hotkeys_opt = L"ActivateGlobalHotkeys",
     *verbose_logging_enabled_opt = L"EnableVerboseLogging",
     *views_settings_opt = L"ViewsSettings",
+    *multi_views_settings_opt = L"MultiViewsSettings",
     *spotify_client_id_opt = L"SpotifyClientID",
     *spotify_client_secret_opt = L"SpotifyClientSecret",
     *localhost_service_port_opt = L"LocalhostServicePort",
@@ -112,6 +113,18 @@ void to_json(json::Value &result, const settings::view_t &v, json::Allocator &al
     result.AddMember("sort_mode_idx", json::Value(v.sort_mode_idx), allocator);
     result.AddMember("is_descending", json::Value(v.is_descending), allocator);
     result.AddMember("view_mode", json::Value(v.view_mode), allocator);
+}
+
+void from_json(const json::Value &j, settings::multiview_t &v)
+{
+    v.idx = j["idx"].GetUint64();
+}
+
+void to_json(json::Value &result, const settings::multiview_t &v, json::Allocator &allocator)
+{
+    result = json::Value(json::kObjectType);
+
+    result.AddMember("idx", json::Value(v.idx), allocator);
 }
 
 settings_context::settings_context(const wstring &subkey):
@@ -331,9 +344,14 @@ void read(const PluginStartupInfo *info)
     _settings.playback_initial_volume = ctx->get_int(playback_initial_volume_opt, 50);
 
     // views settings
-    auto views_settings_json = ctx->get_str(views_settings_opt, "");
-    if (!views_settings_json.empty())
-        json::parse_to(views_settings_json, _settings.views);
+    auto views_json = ctx->get_str(views_settings_opt, "");
+    if (!views_json.empty())
+        json::parse_to(views_json, _settings.views);
+
+    // multiview settings
+    auto mviews_json = ctx->get_str(multi_views_settings_opt, "");
+    if (!mviews_json.empty())
+        json::parse_to(mviews_json, _settings.mviews);
 
     // hotkeys
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
@@ -378,9 +396,13 @@ void write()
     ctx->set_str(playback_volume_ctrl_opt, _settings.playback_volume_ctrl);
     ctx->set_int(playback_initial_volume_opt, _settings.playback_initial_volume);
     
-    // view
-    auto buffer = json::dump(_settings.views);
-    ctx->set_str(views_settings_opt, buffer->GetString());
+    // views
+    auto views_buffer = json::dump(_settings.views);
+    ctx->set_str(views_settings_opt, views_buffer->GetString());
+    
+    // multiviews
+    auto mviews_buffer = json::dump(_settings.mviews);
+    ctx->set_str(multi_views_settings_opt, mviews_buffer->GetString());
 
     // global hotkeys
     ctx->set_bool(activate_global_hotkeys_opt, _settings.is_global_hotkeys_enabled);
@@ -441,9 +463,15 @@ const std::pair<WORD, WORD>* get_hotkey(int hotkey_id)
     return nullptr;
 }
 
-settings::view_t* get_panel_settings(const string &view_uid, const settings::view_t &def)
+settings::view_t* get_view_settings(const string &view_uid, const settings::view_t &def)
 {
     auto result = _settings.views.emplace(view_uid, def);
+    return &result.first->second;
+}
+
+settings::multiview_t* get_multiview_settings(const string &mview_id, const settings::multiview_t &def)
+{
+    auto result = _settings.mviews.emplace(mview_id, def);
     return &result.first->second;
 }
 
