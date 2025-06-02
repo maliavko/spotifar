@@ -75,28 +75,14 @@ void show_new_releases(api_weak_ptr_t api)
     show_view(get_builder<new_releases_view>(api), [api] { show_browse(api); });
 }
 
-void show_recently_liked_tracks(api_weak_ptr_t api)
+void show_recently_saved(api_weak_ptr_t api)
 {
     show_multiview(
         {
-            .artists = get_builder<recently_liked_tracks_artists_view>(api),
-            .albums = get_builder<recently_liked_tracks_albums_view>(api),
+            .albums = get_builder<recently_saved_albums_view>(api),
             .tracks = get_builder<recently_liked_tracks_view>(api),
             .settings = config::get_multiview_settings(
-                "recently_liked_tracks", { multiview_builder_t::tracks_idx })
-        },
-        [api] { show_browse(api); }
-    );
-}
-
-void show_recently_saved_albums(api_weak_ptr_t api)
-{
-    show_multiview(
-        {
-            .artists = get_builder<recently_saved_album_artists_view>(api),
-            .albums = get_builder<recently_saved_albums_view>(api),
-            .settings = config::get_multiview_settings(
-                "recently_saved_albums", { multiview_builder_t::albums_idx })
+                "recently_saved", { multiview_builder_t::tracks_idx })
         },
         [api] { show_browse(api); }
     );

@@ -60,8 +60,7 @@ class browse_view: public root_base_view
 public:
     inline static const item_id_t
         new_releases_id = "new_releases",
-        recently_liked_tracks_id = "recently_liked_tracks",
-        recently_saved_albums_id = "recently_saved_albums",
+        recently_saved_id = "recently_saved",
         user_top_items_id = "user_top_items";
 public:
     browse_view(HANDLE panel, api_weak_ptr_t api);

@@ -492,75 +492,6 @@ void recent_albums_view::on_items_changed()
 
 
 //-----------------------------------------------------------------------------------------------------------
-recently_liked_tracks_albums_view::recently_liked_tracks_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
-{
-    if (auto api = api_proxy.lock())
-        collection = api->get_saved_tracks();
-
-    rebuild_items();
-}
-
-config::settings::view_t recently_liked_tracks_albums_view::get_default_settings() const
-{
-    return { 1, false, 6 };
-}
-
-const view::sort_modes_t& recently_liked_tracks_albums_view::get_sort_modes() const
-{
-    static sort_modes_t modes;
-    if (!modes.size())
-    {
-        modes = albums_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
-    }
-    return modes;
-}
-
-intptr_t recently_liked_tracks_albums_view::compare_items(const sort_mode_t &sort_mode,
-    const data_item_t *data1, const data_item_t *data2)
-{
-    if (sort_mode.far_sort_mode == SM_MTIME)
-    {
-        const auto
-            &item1 = static_cast<const saved_album_t*>(data1),
-            &item2 = static_cast<const saved_album_t*>(data2);
-
-        return item1->added_at.compare(item2->added_at);
-    }
-    return albums_base_view::compare_items(sort_mode, data1, data2);
-}
-
-void recently_liked_tracks_albums_view::show_tracks_view(const album_t &album) const
-{
-    events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_recently_liked_tracks, api_proxy));
-}
-
-std::generator<const album_t&> recently_liked_tracks_albums_view::get_albums()
-{
-    for (const auto &i: items)
-        co_yield i;
-}
-
-void recently_liked_tracks_albums_view::rebuild_items()
-{
-    items.clear();
-    
-    if (collection && collection->fetch(false, true, 3))
-    {
-        std::set<item_id_t> used_ids{};
-
-        for (const auto &track: *collection)
-            if (!used_ids.contains(track.album.id))
-            {
-                used_ids.insert(track.album.id);
-                items.push_back({ {track.album}, track.added_at });
-            }
-    }
-}
-
-//-----------------------------------------------------------------------------------------------------------
 recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
 {
@@ -601,7 +532,7 @@ intptr_t recently_saved_albums_view::compare_items(const sort_mode_t &sort_mode,
 void recently_saved_albums_view::show_tracks_view(const album_t &album) const
 {
     events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_recently_saved_albums, api_proxy));
+        std::bind(events::show_recently_saved, api_proxy));
 }
 
 std::generator<const album_t&> recently_saved_albums_view::get_albums()
