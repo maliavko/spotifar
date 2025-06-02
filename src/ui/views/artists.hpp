@@ -16,8 +16,8 @@ using namespace spotify;
 class artists_base_view: public view_abstract
 {
 public:
-    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
-        view_abstract(panel, title, callback), api_proxy(api)
+    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
+        view_abstract(panel, title), api_proxy(api)
         {}
     
     ~artists_base_view() { api_proxy.reset(); }
