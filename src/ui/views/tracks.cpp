@@ -653,7 +653,7 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel))
+    tracks_base_view(panel, api, get_text(MPanelPlayingQueueItemLabel))
 {
     utils::events::start_listening<playback_observer>(this);
 }
