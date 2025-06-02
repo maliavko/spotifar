@@ -396,7 +396,7 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel))
+    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel), get_text(MPanelRecentsItemLabel))
 {
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
@@ -523,7 +523,7 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
 
 //-----------------------------------------------------------------------------------------------------------
 saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel))
+    tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel), get_text(MPanelCollectionItemLabel))
 {
     utils::events::start_listening<playback_observer>(this);
     if (auto api = api_proxy.lock())
@@ -607,12 +607,6 @@ void saved_tracks_view::update_panel_info(OpenPanelInfo *info)
     modes[9] = modes[8];
 
     modes[0] = modes[8];
-}
-
-const wstring& saved_tracks_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelCollectionItemLabel));
-    return dir_name;
 }
 
 bool saved_tracks_view::start_playback(const string &track_id)

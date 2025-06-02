@@ -3,8 +3,12 @@
 
 namespace spotifar { namespace ui {
 
-using namespace spotify;
 namespace panels = utils::far3::panels;
+
+view::view(HANDLE panel, const wstring &title, const wstring &dir_name): panel(panel), title(title)
+{
+    this->dir_name = utils::strip_invalid_filename_chars(dir_name.empty() ? title : dir_name);
+}
 
 config::settings::view_t* view::get_settings() const
 {

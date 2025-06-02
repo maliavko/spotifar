@@ -254,7 +254,7 @@ void artist_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), get_text(MPanelCollectionItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
@@ -320,12 +320,6 @@ void saved_albums_view::update_panel_info(OpenPanelInfo *info)
     modes[7].ColumnTypes = L"C7,C0,NON,C6,Z";
     modes[7].ColumnWidths = L"12,6,30,30,0";
     modes[7].ColumnTitles = titles_7;
-}
-
-const wstring& saved_albums_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelCollectionItemLabel));
-    return dir_name;
 }
 
 void saved_albums_view::show_tracks_view(const album_t &album) const
@@ -406,7 +400,7 @@ void new_releases_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 recent_albums_view::recent_albums_view(HANDLE panel, api_weak_ptr_t api):
-    albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel))
+    albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel), get_text(MPanelRecentsItemLabel))
 {
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
