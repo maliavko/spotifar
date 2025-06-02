@@ -171,6 +171,12 @@ config::settings::view_t followed_artists_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
+const wstring& followed_artists_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelCollectionItemLabel));
+    return dir_name;
+}
+
 std::generator<const artist_t&> followed_artists_view::get_artists()
 {
     if (collection && collection->fetch())

@@ -322,6 +322,12 @@ void saved_albums_view::update_panel_info(OpenPanelInfo *info)
     modes[7].ColumnTitles = titles_7;
 }
 
+const wstring& saved_albums_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelCollectionItemLabel));
+    return dir_name;
+}
+
 void saved_albums_view::show_tracks_view(const album_t &album) const
 {
     events::show_album_tracks(api_proxy, album,

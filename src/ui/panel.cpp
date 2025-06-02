@@ -75,12 +75,12 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     if (view == nullptr) return;
     
-    const auto &view_cur_dir = view->get_dir_name();
-    if (!view_cur_dir.empty())
+    const auto &view_title = view->get_title();
+    if (!view_title.empty())
     {
         // showing "Spotifar: Menu Item Name" title in case a cur dir is not empty
         config::fsf.snprintf(title, std::size(title), L" %s: %s ",
-            far3::get_text(MPluginUserName), view_cur_dir.c_str());
+            far3::get_text(MPluginUserName), view_title.c_str());
     }
     else
     {
@@ -89,7 +89,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     }
     
     config::fsf.snprintf(dir_name, std::size(dir_name),
-        utils::strip_invalid_filename_chars(view_cur_dir).c_str());
+        utils::strip_invalid_filename_chars(view->get_dir_name()).c_str());
 
     info->StructSize = sizeof(*info);
     info->CurDir = dir_name;

@@ -18,15 +18,15 @@ public:
         FARDIALOGFLAGS flags = FDLG_NONE);
     virtual ~modal_dialog();
 
-    auto run() -> bool;
+    bool run();
 
     virtual void init() {};
     virtual void cleanup() {};
 protected:
     virtual auto handle_result(intptr_t dialog_run_result) -> intptr_t { return FALSE; };
-    virtual auto handle_key_pressed(int ctrl_id, int combined_key) -> bool { return FALSE; }
+    virtual bool handle_key_pressed(int ctrl_id, int combined_key) { return FALSE; }
 private:
-    auto handle_dlg_proc_event(intptr_t msg_id, int control_id, void *param) -> bool;
+    bool handle_dlg_proc_event(intptr_t msg_id, int control_id, void *param);
     friend static auto WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2) -> intptr_t;
 protected:
     HANDLE hdlg;
