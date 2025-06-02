@@ -44,6 +44,7 @@ public:
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
+    auto get_dir_name() const -> const wstring& override;
 
     // playlists_base_view
     auto get_playlists() -> std::generator<const simplified_playlist_t&> override;

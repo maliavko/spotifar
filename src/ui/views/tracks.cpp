@@ -611,6 +611,12 @@ void saved_tracks_view::update_panel_info(OpenPanelInfo *info)
     modes[0] = modes[8];
 }
 
+const wstring& saved_tracks_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelCollectionItemLabel));
+    return dir_name;
+}
+
 bool saved_tracks_view::start_playback(const string &track_id)
 {
     //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));

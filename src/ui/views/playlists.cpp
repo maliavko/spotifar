@@ -199,6 +199,12 @@ config::settings::view_t saved_playlists_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
+const wstring& saved_playlists_view::get_dir_name() const
+{
+    static wstring dir_name(get_text(MPanelCollectionItemLabel));
+    return dir_name;
+}
+
 std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists()
 {
     if (collection && collection->fetch())
