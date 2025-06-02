@@ -16,8 +16,8 @@ using namespace spotify;
 class playlists_base_view: public view_abstract
 {
 public:
-    playlists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, return_callback_t callback):
-        view_abstract(panel, title, callback), api_proxy(api)
+    playlists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
+        view_abstract(panel, title), api_proxy(api)
         {}
 
     auto get_items() -> const items_t& override;

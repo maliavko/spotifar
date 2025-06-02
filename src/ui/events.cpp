@@ -20,102 +20,115 @@ namespace spotifar { namespace ui { namespace events {
             };
     }
 
-    static void show_view(ui_events_observer::view_builder_t &&builder)
+    static void show_view(ui_events_observer::view_builder_t &&builder, view_abstract::return_callback_t callback)
     {
-        ObserverManager::notify(&ui_events_observer::show_view, PANEL_ACTIVE, builder);
+        ObserverManager::notify(&ui_events_observer::show_view, PANEL_ACTIVE, builder, callback);
     }
 
-    static void show_multiview(ui_events_observer::multiview_builder_t &&callbacks)
+    static void show_multiview(ui_events_observer::multiview_builder_t &&builders, view_abstract::return_callback_t callback)
     {
-        ObserverManager::notify(&ui_events_observer::show_multiview, PANEL_ACTIVE, callbacks);
+        ObserverManager::notify(&ui_events_observer::show_multiview, PANEL_ACTIVE, builders, callback);
     }
 
     void show_root(api_weak_ptr_t api)
     {
-        show_view(get_builder<root_view>(api));
+        show_view(get_builder<root_view>(api), nullptr);
     }
 
     void show_collection(api_weak_ptr_t api)
     {
-        show_multiview({
-            .artists = get_builder<followed_artists_view>(api),
-            .albums = get_builder<saved_albums_view>(api),
-            .tracks = get_builder<saved_tracks_view>(api),
-            .playlists = get_builder<saved_playlists_view>(api),
-            .default_view_idx = ui_events_observer::multiview_builder_t::artists_idx
-        });
+        show_multiview(
+            {
+                .artists = get_builder<followed_artists_view>(api),
+                .albums = get_builder<saved_albums_view>(api),
+                .tracks = get_builder<saved_tracks_view>(api),
+                .playlists = get_builder<saved_playlists_view>(api),
+                .default_view_idx = ui_events_observer::multiview_builder_t::artists_idx
+            },
+            [api] { show_root(api); }
+        );
     }
 
     void show_browse(api_weak_ptr_t api)
     {
-        show_view(get_builder<browse_view>(api));
+        show_view(get_builder<browse_view>(api), [api] { show_root(api); });
     }
 
     void show_recents(api_weak_ptr_t api)
     {
-        show_multiview({
-            .artists = get_builder<recent_artists_view>(api),
-            .albums = get_builder<recent_albums_view>(api),
-            .tracks = get_builder<recent_tracks_view>(api),
-            .playlists = get_builder<recent_playlists_view>(api),
-            .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
-        });
+        show_multiview(
+            {
+                .artists = get_builder<recent_artists_view>(api),
+                .albums = get_builder<recent_albums_view>(api),
+                .tracks = get_builder<recent_tracks_view>(api),
+                .playlists = get_builder<recent_playlists_view>(api),
+                .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
+            },
+            [api] { show_root(api); }
+        );
     }
     
     void show_new_releases(api_weak_ptr_t api)
     {
-        show_view(get_builder<new_releases_view>(api));
+        show_view(get_builder<new_releases_view>(api), [api] { show_browse(api); });
     }
     
     void show_recently_liked_tracks(api_weak_ptr_t api)
     {
-        show_multiview({
-            .artists = get_builder<recently_liked_tracks_artists_view>(api),
-            .albums = get_builder<recently_liked_tracks_albums_view>(api),
-            .tracks = get_builder<recently_liked_tracks_view>(api),
-            .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
-        });
+        show_multiview(
+            {
+                .artists = get_builder<recently_liked_tracks_artists_view>(api),
+                .albums = get_builder<recently_liked_tracks_albums_view>(api),
+                .tracks = get_builder<recently_liked_tracks_view>(api),
+                .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
+            },
+            [api] { show_browse(api); }
+        );
     }
     
     void show_recently_saved_albums(api_weak_ptr_t api)
     {
-        show_multiview({
-            .artists = get_builder<recently_saved_album_artists_view>(api),
-            .albums = get_builder<recently_saved_albums_view>(api),
-            .default_view_idx = ui_events_observer::multiview_builder_t::albums_idx
-        });
+        show_multiview(
+            {
+                .artists = get_builder<recently_saved_album_artists_view>(api),
+                .albums = get_builder<recently_saved_albums_view>(api),
+                .default_view_idx = ui_events_observer::multiview_builder_t::albums_idx
+            },
+            [api] { show_browse(api); }
+        );
     }
     
     void show_user_top_items(api_weak_ptr_t api)
     {
-        show_multiview({
-            .artists = get_builder<user_top_artists_view>(api),
-            .tracks = get_builder<user_top_tracks_view>(api),
-            .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
-        });
+        show_multiview(
+            {
+                .artists = get_builder<user_top_artists_view>(api),
+                .tracks = get_builder<user_top_tracks_view>(api),
+                .default_view_idx = ui_events_observer::multiview_builder_t::tracks_idx
+            },
+            [api] { show_browse(api); }
+        );
     }
 
     void show_playlist(api_weak_ptr_t api, const playlist_t &playlist)
     {
-        show_view(get_builder<playlist_view>(api, playlist));
+        show_view(get_builder<playlist_view>(api, playlist), [api] { show_collection(api); });
     }
     
-    void show_artist_albums(api_weak_ptr_t api, const artist_t &artist,
-        view_abstract::return_callback_t callback)
+    void show_artist_albums(api_weak_ptr_t api, const artist_t &artist, view_abstract::return_callback_t callback)
     {
         if (!callback)
             callback = std::bind(show_root, api);
         
-        show_view(get_builder<artist_view>(api, artist, callback));
+        show_view(get_builder<artist_view>(api, artist), callback);
     }
     
-    void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album,
-        view_abstract::return_callback_t callback)
+    void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album, view_abstract::return_callback_t callback)
     {
         if (!callback)
             callback = std::bind(show_root, api);
         
-        show_view(get_builder<album_tracks_view>(api, album, callback));
+        show_view(get_builder<album_tracks_view>(api, album), callback);
     }
     
     void show_player()
@@ -125,7 +138,7 @@ namespace spotifar { namespace ui { namespace events {
     
     void show_playing_queue(api_weak_ptr_t api)
     {
-        show_view(get_builder<playing_queue_view>(api));
+        show_view(get_builder<playing_queue_view>(api), [api] { show_root(api); });
     }
 
     void select_item(const string &item_id)

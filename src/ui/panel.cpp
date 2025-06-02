@@ -29,7 +29,7 @@ static const FarKey overriden_bindings[] = {
 class stub_view: public view_abstract
 {
 public:
-    stub_view(HANDLE panel): view_abstract(panel, L"", nullptr) {}
+    stub_view(HANDLE panel): view_abstract(panel, L"") {}
 protected:
     auto get_sort_modes() const -> const sort_modes_t& override
     {
@@ -342,16 +342,20 @@ void panel::refresh(const string &item_id) const
     }
 }
 
-void panel::show_view(HANDLE panel, view_builder_t builder)
+void panel::show_view(HANDLE panel, view_builder_t builder, view_abstract::return_callback_t callback)
 {
     if (is_this_panel(panel))
     {
         mview_builders.clear(); // removing any previously set filters
-        set_view(builder(this));
+
+        auto v = builder(this);
+        v->set_return_callback(callback);
+
+        set_view(v);
     }
 }
 
-void panel::show_multiview(HANDLE panel, multiview_builder_t builders)
+void panel::show_multiview(HANDLE panel, multiview_builder_t builders, view_abstract::return_callback_t callback)
 {
     if (is_this_panel(panel))
     {
@@ -359,7 +363,12 @@ void panel::show_multiview(HANDLE panel, multiview_builder_t builders)
         mview_current_idx = builders.default_view_idx;
 
         if (auto builder = builders.get_builder(mview_current_idx))
-            set_view(builder(this));
+        {
+            auto v = builder(this);
+            v->set_return_callback(callback);
+            
+            set_view(v);
+        }
     }
 }
 
