@@ -186,7 +186,7 @@ bool playlists_base_view::request_extra_info(const data_item_t *data)
 
 //-----------------------------------------------------------------------------------------------------------
 saved_playlists_view::saved_playlists_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylistsItemLabel)), api_proxy(api_proxy)
+    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylistsItemLabel), get_text(MPanelCollectionItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_playlists();
@@ -196,12 +196,6 @@ config::settings::view_t saved_playlists_view::get_default_settings() const
 {
     // sort mode - by Name; ascending; view mode - F3
     return { 0, false, 3 };
-}
-
-const wstring& saved_playlists_view::get_dir_name() const
-{
-    static wstring dir_name(get_text(MPanelCollectionItemLabel));
-    return dir_name;
 }
 
 std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists()
@@ -214,7 +208,7 @@ std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists
 
 //----------------------------------------------------------------------------------------------------------
 recent_playlists_view::recent_playlists_view(HANDLE panel, api_weak_ptr_t api):
-    playlists_base_view(panel, api, get_text(MPanelPlaylistsItemLabel))
+    playlists_base_view(panel, api, get_text(MPanelPlaylistsItemLabel), get_text(MPanelRecentsItemLabel))
 {
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();

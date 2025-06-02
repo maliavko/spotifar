@@ -4,6 +4,7 @@ refactor
 
 application ideas
 - small improvements
+    - think over the namings of lng keys, they are too long
     - goto playlist from player UI
     - showing some simple sorting's direction sign around the column name the sorting is applied to
     - make safer calls of the main artists from the album or tracks objects: "artists[0]"
