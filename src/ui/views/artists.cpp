@@ -159,7 +159,7 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 
 //-----------------------------------------------------------------------------------------------------------
 followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel), std::bind(events::show_root, api_proxy))
+    artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_followed_artists();
@@ -220,17 +220,15 @@ void followed_artists_view::show_filters_dialog()
 
 //-----------------------------------------------------------------------------------------------------------
 recent_artists_view::recent_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_root, api))
+    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel))
 {
     utils::events::start_listening<play_history_observer>(this);
-
     rebuild_items();
 }
 
 recent_artists_view::~recent_artists_view()
 {
     utils::events::stop_listening<play_history_observer>(this);
-
     items.clear();
 }
 
@@ -310,8 +308,7 @@ void recent_artists_view::on_items_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 recently_liked_tracks_artists_view::recently_liked_tracks_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel),
-                      std::bind(events::show_root, api))
+    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_tracks();
@@ -385,7 +382,7 @@ void recently_liked_tracks_artists_view::show_albums_view(const artist_t &artist
 
 //-----------------------------------------------------------------------------------------------------------
 recently_saved_album_artists_view::recently_saved_album_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_browse, api))
+    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
@@ -461,7 +458,7 @@ void recently_saved_album_artists_view::show_albums_view(const artist_t &artist)
 
 //-----------------------------------------------------------------------------------------------------------
 user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), std::bind(events::show_browse, api))
+    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_user_top_artists();

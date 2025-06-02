@@ -124,7 +124,7 @@ bool root_base_view::request_extra_info(const data_item_t* data)
 
 //-------------------------------------------------------------------------------------------------------------
 root_view::root_view(HANDLE panel, api_weak_ptr_t api):
-    root_base_view(panel, api, L"", {}, {
+    root_base_view(panel, api, L"", {
         {
             { collection_id },
             MPanelCollectionItemLabel, MPanelCollectionItemDescr,
@@ -152,8 +152,7 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
 //-------------------------------------------------------------------------------------------------------------
 browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(
-        panel, api, get_text(MPanelBrowseItemLabel),
-        std::bind(events::show_root, api), {
+        panel, api, get_text(MPanelBrowseItemLabel), {
         {
             { new_releases_id },
             MPanelNewReleasesItemLabel, MPanelNewReleasesItemDescr,

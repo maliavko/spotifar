@@ -186,8 +186,7 @@ bool playlists_base_view::request_extra_info(const data_item_t *data)
 
 //-----------------------------------------------------------------------------------------------------------
 saved_playlists_view::saved_playlists_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylistsItemLabel), std::bind(events::show_root, api_proxy)),
-    api_proxy(api_proxy)
+    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylistsItemLabel)), api_proxy(api_proxy)
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_playlists();
@@ -215,19 +214,16 @@ std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists
 
 //----------------------------------------------------------------------------------------------------------
 recent_playlists_view::recent_playlists_view(HANDLE panel, api_weak_ptr_t api):
-    playlists_base_view(panel, api, get_text(MPanelPlaylistsItemLabel),
-                        std::bind(events::show_root, api))
+    playlists_base_view(panel, api, get_text(MPanelPlaylistsItemLabel))
 {
-    rebuild_items();
-
     utils::events::start_listening<play_history_observer>(this);
+    rebuild_items();
 }
 
 recent_playlists_view::~recent_playlists_view()
 {
-    items.clear();
-
     utils::events::stop_listening<play_history_observer>(this);
+    items.clear();
 }
 
 config::settings::view_t recent_playlists_view::get_default_settings() const
