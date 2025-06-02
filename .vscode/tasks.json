@@ -23,9 +23,8 @@
             "command": "cargo",
             "args": [
                 "build",
-                //"--release",
-                //"--no-default-features",
-                "--manifest-path=${workspaceFolder}\\thirdparty\\librespot\\Cargo.toml\""
+                "--profile=x${input:buildType}",
+                "--manifest-path=${workspaceFolder}\\thirdparty\\librespot\\Cargo.toml"
             ],
             "group": {
                 "kind": "build"
