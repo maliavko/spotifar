@@ -13,11 +13,11 @@ using namespace spotify;
 
 /// @brief A base class for all the views, representing a list
 /// of artists in either way
-class artists_base_view: public view_abstract
+class artists_base_view: public view
 {
 public:
     artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title):
-        view_abstract(panel, title), api_proxy(api)
+        view(panel, title), api_proxy(api)
         {}
     
     ~artists_base_view() { api_proxy.reset(); }
@@ -77,7 +77,7 @@ protected:
     void rebuild_items();
 
     // view interface
-    auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
+    auto get_sort_modes() const -> const view::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t override;
@@ -106,7 +106,7 @@ protected:
     void rebuild_items();
 
     // view interface
-    auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
+    auto get_sort_modes() const -> const view::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t override;
@@ -134,7 +134,7 @@ protected:
     void rebuild_items();
 
     // view interface
-    auto get_sort_modes() const -> const view_abstract::sort_modes_t& override;
+    auto get_sort_modes() const -> const view::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
         const data_item_t *data2) -> intptr_t override;

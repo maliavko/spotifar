@@ -6,12 +6,12 @@ namespace spotifar { namespace ui {
 using namespace spotify;
 namespace panels = utils::far3::panels;
 
-config::settings::view_t* view_abstract::get_settings() const
+config::settings::view_t* view::get_settings() const
 {
     return config::get_panel_settings(get_uid(), get_default_settings());
 }
 
-void view_abstract::select_sort_mode(int idx)
+void view::select_sort_mode(int idx)
 {
     if (idx > (int)sort_modes.size())
     {
@@ -33,7 +33,7 @@ void view_abstract::select_sort_mode(int idx)
     panels::set_sort_mode(get_panel_handle(), sm.far_sort_mode, settings->is_descending);
 }
 
-void view_abstract::on_items_updated()
+void view::on_items_updated()
 {
     if (is_first_init)
     {
@@ -52,14 +52,14 @@ void view_abstract::on_items_updated()
     }
 }
 
-const data_item_t* view_abstract::unpack_user_data(const UserDataItem &user_data)
+const data_item_t* view::unpack_user_data(const UserDataItem &user_data)
 {
     if (user_data.Data != nullptr)
         return reinterpret_cast<const data_item_t*>(user_data.Data);
     return nullptr;
 }
 
-intptr_t view_abstract::compare_items(const CompareInfo *info)
+intptr_t view::compare_items(const CompareInfo *info)
 {
     if ((int)sort_modes.size() > settings->sort_mode_idx)
         return compare_items(
@@ -70,7 +70,7 @@ intptr_t view_abstract::compare_items(const CompareInfo *info)
     return -2; // fallback solution - delegate sorting to Far
 }
 
-intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
+intptr_t view::process_input(const ProcessPanelInputInfo *info)
 {
     namespace keys = utils::keys;
 
@@ -108,7 +108,7 @@ intptr_t view_abstract::process_input(const ProcessPanelInputInfo *info)
     return FALSE;
 }
 
-intptr_t view_abstract::select_item(const SetDirectoryInfo *info)
+intptr_t view::select_item(const SetDirectoryInfo *info)
 {
     if (info->UserData.Data == nullptr)
     {
@@ -125,12 +125,12 @@ intptr_t view_abstract::select_item(const SetDirectoryInfo *info)
     return select_item(unpack_user_data(info->UserData));
 }
 
-intptr_t view_abstract::request_extra_info(const PluginPanelItem *data)
+intptr_t view::request_extra_info(const PluginPanelItem *data)
 {
     return request_extra_info(unpack_user_data(data->UserData));
 }
 
-size_t view_abstract::get_item_idx(const string &item_id)
+size_t view::get_item_idx(const string &item_id)
 {
     const auto &items = panels::get_items(get_panel_handle());
     for (size_t idx = 1; idx < items.size(); idx++) // zero index is ".." folder

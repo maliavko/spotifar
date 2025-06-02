@@ -8,7 +8,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-const view_abstract::sort_modes_t& tracks_base_view::get_sort_modes() const
+const view::sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
@@ -21,9 +21,9 @@ const view_abstract::sort_modes_t& tracks_base_view::get_sort_modes() const
     return modes;
 }
 
-const view_abstract::items_t& tracks_base_view::get_items()
+const view::items_t& tracks_base_view::get_items()
 {
-    static view_abstract::items_t items; items.clear();
+    static view::items_t items; items.clear();
 
     for (const auto &track: get_tracks())
     {
@@ -313,7 +313,7 @@ void album_tracks_view::update_panel_info(OpenPanelInfo *info)
     }
 }
 
-const view_abstract::sort_modes_t& album_tracks_view::get_sort_modes() const
+const view::sort_modes_t& album_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -413,7 +413,7 @@ config::settings::view_t recent_tracks_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-const view_abstract::sort_modes_t& recent_tracks_view::get_sort_modes() const
+const view::sort_modes_t& recent_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -541,7 +541,7 @@ config::settings::view_t saved_tracks_view::get_default_settings() const
     return { 0, true, 3 };
 }
 
-const view_abstract::sort_modes_t& saved_tracks_view::get_sort_modes() const
+const view::sort_modes_t& saved_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -687,7 +687,7 @@ std::generator<const track_t&> playing_queue_view::get_tracks()
     }
 }
 
-const view_abstract::sort_modes_t& playing_queue_view::get_sort_modes() const
+const view::sort_modes_t& playing_queue_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
@@ -725,7 +725,7 @@ bool recently_liked_tracks_view::start_playback(const string &track_id)
     return true;
 }
 
-const view_abstract::sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
+const view::sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -772,7 +772,7 @@ config::settings::view_t user_top_tracks_view::get_default_settings() const
     return { 0, false, 1 };
 }
 
-const view_abstract::sort_modes_t& user_top_tracks_view::get_sort_modes() const
+const view::sort_modes_t& user_top_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },

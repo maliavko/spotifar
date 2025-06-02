@@ -56,7 +56,7 @@ intptr_t show_settings_menu()
     return TRUE;
 }
 
-intptr_t show_sort_dialog(const view_abstract &v)
+intptr_t show_sort_dialog(const view &v)
 {
     const auto &modes = v.get_sort_modes();
     const auto &settings = v.get_settings();

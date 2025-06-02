@@ -8,9 +8,9 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-const view_abstract::items_t& playlists_base_view::get_items()
+const view::items_t& playlists_base_view::get_items()
 {
-    static view_abstract::items_t items; items.clear();
+    static view::items_t items; items.clear();
 
     for (const auto &playlist: get_playlists())
     {
@@ -56,7 +56,7 @@ const view_abstract::items_t& playlists_base_view::get_items()
     return items;
 }
 
-const view_abstract::sort_modes_t& playlists_base_view::get_sort_modes() const
+const view::sort_modes_t& playlists_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Name",      SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
@@ -231,7 +231,7 @@ config::settings::view_t recent_playlists_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-const view_abstract::sort_modes_t& recent_playlists_view::get_sort_modes() const
+const view::sort_modes_t& recent_playlists_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())

@@ -8,7 +8,7 @@ using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-const view_abstract::items_t& albums_base_view::get_items()
+const view::items_t& albums_base_view::get_items()
 {
     static items_t items; items.clear();
 
@@ -124,7 +124,7 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view_abstract::sort_modes_t& albums_base_view::get_sort_modes() const
+const view::sort_modes_t& albums_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
@@ -273,7 +273,7 @@ std::generator<const album_t&> saved_albums_view::get_albums()
             co_yield a;
 }
 
-const view_abstract::sort_modes_t& saved_albums_view::get_sort_modes() const
+const view::sort_modes_t& saved_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -423,7 +423,7 @@ config::settings::view_t recent_albums_view::get_default_settings() const
     return { 1, false, 6 };
 }
 
-const view_abstract::sort_modes_t& recent_albums_view::get_sort_modes() const
+const view::sort_modes_t& recent_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -512,7 +512,7 @@ config::settings::view_t recently_liked_tracks_albums_view::get_default_settings
     return { 1, false, 6 };
 }
 
-const view_abstract::sort_modes_t& recently_liked_tracks_albums_view::get_sort_modes() const
+const view::sort_modes_t& recently_liked_tracks_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -579,7 +579,7 @@ config::settings::view_t recently_saved_albums_view::get_default_settings() cons
     return { 1, false, 6 };
 }
 
-const view_abstract::sort_modes_t& recently_saved_albums_view::get_sort_modes() const
+const view::sort_modes_t& recently_saved_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
