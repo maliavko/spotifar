@@ -57,9 +57,9 @@ void artists_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view_abstract::items_t& artists_base_view::get_items()
+const view::items_t& artists_base_view::get_items()
 {
-    static view_abstract::items_t items; items.clear();
+    static view::items_t items; items.clear();
 
     for (const auto &artist: get_artists())
     {
@@ -125,7 +125,7 @@ bool artists_base_view::request_extra_info(const data_item_t *data)
     return false;
 }
 
-const view_abstract::sort_modes_t& artists_base_view::get_sort_modes() const
+const view::sort_modes_t& artists_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
@@ -237,7 +237,7 @@ config::settings::view_t recent_artists_view::get_default_settings() const
     return { 1, false, 6 };
 }
 
-const view_abstract::sort_modes_t& recent_artists_view::get_sort_modes() const
+const view::sort_modes_t& recent_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -321,7 +321,7 @@ config::settings::view_t recently_liked_tracks_artists_view::get_default_setting
     return { 1, false, 6 };
 }
 
-const view_abstract::sort_modes_t& recently_liked_tracks_artists_view::get_sort_modes() const
+const view::sort_modes_t& recently_liked_tracks_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -395,7 +395,7 @@ config::settings::view_t recently_saved_album_artists_view::get_default_settings
     return { 1, false, 6 };
 }
 
-const view_abstract::sort_modes_t& recently_saved_album_artists_view::get_sort_modes() const
+const view::sort_modes_t& recently_saved_album_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -469,7 +469,7 @@ config::settings::view_t user_top_artists_view::get_default_settings() const
     return { 1, false, 1 };
 }
 
-const view_abstract::sort_modes_t& user_top_artists_view::get_sort_modes() const
+const view::sort_modes_t& user_top_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },

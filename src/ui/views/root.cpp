@@ -8,7 +8,7 @@ using utils::far3::get_text;
 using namespace events;
 
 //-------------------------------------------------------------------------------------------------------------
-const view_abstract::key_bar_info_t* root_base_view::get_key_bar_info()
+const view::key_bar_info_t* root_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{
         // example data
@@ -18,7 +18,7 @@ const view_abstract::key_bar_info_t* root_base_view::get_key_bar_info()
     return &key_bar;
 }
 
-const view_abstract::info_lines_t* root_base_view::get_info_lines()
+const view::info_lines_t* root_base_view::get_info_lines()
 {
     static info_lines_t lines{
         // example data
@@ -29,7 +29,7 @@ const view_abstract::info_lines_t* root_base_view::get_info_lines()
     return &lines;
 }
 
-const view_abstract::sort_modes_t& root_base_view::get_sort_modes() const
+const view::sort_modes_t& root_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Name",      SM_NAME,        { VK_F3, LEFT_CTRL_PRESSED } },
@@ -74,7 +74,7 @@ void root_base_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view_abstract::items_t& root_base_view::get_items()
+const view::items_t& root_base_view::get_items()
 {
     static items_t items; items.clear();
     

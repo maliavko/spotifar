@@ -12,7 +12,7 @@ intptr_t show_settings_menu();
 /// @brief Opens a sort dialog with the all available sort modes
 /// for the given `view`. If a new mode is picked, its index will
 /// be returned; if the dialog is closed via Esc - "-1"
-intptr_t show_sort_dialog(const view_abstract &v);
+intptr_t show_sort_dialog(const view &v);
 
 /// @brief Shows a splash loading screen in the middle of the Far Manager's panels.
 /// If the `message` is not provided, the default one is shown.
