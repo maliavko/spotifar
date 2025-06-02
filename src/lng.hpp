@@ -87,6 +87,8 @@ namespace spotifar
 		MPanelNewReleasesItemDescr,
 		MPanelBrowseItemLabel,
 		MPanelBrowseItemDescr,
+		MPanelRecentlySavedLabel,
+		MPanelRecentlySavedDescr,
 		MPanelRecentlyLikedTracksLabel,
 		MPanelRecentlyLikedTracksDescr,
 		MPanelRecentlySavedAlbumsLabel,

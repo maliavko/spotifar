@@ -25,9 +25,7 @@ namespace events {
 
     void show_new_releases(api_weak_ptr_t);
 
-    void show_recently_liked_tracks(api_weak_ptr_t);
-
-    void show_recently_saved_albums(api_weak_ptr_t);
+    void show_recently_saved(api_weak_ptr_t);
 
     void show_user_top_items(api_weak_ptr_t);
 

@@ -159,14 +159,9 @@ browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
             std::bind(show_new_releases, api)
         },
         {
-            { recently_liked_tracks_id },
-            MPanelRecentlyLikedTracksLabel, MPanelRecentlyLikedTracksDescr,
-            std::bind(show_recently_liked_tracks, api)
-        },
-        {
-            { recently_saved_albums_id },
-            MPanelRecentlySavedAlbumsLabel, MPanelRecentlySavedAlbumsDescr,
-            std::bind(show_recently_saved_albums, api)
+            { recently_saved_id },
+            MPanelRecentlySavedLabel, MPanelRecentlySavedDescr,
+            std::bind(show_recently_saved, api)
         },
         {
             { user_top_items_id },
