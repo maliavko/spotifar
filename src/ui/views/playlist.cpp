@@ -7,7 +7,7 @@ using namespace utils::far3;
 using utils::far3::get_text;
 
 playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playlist_t &p):
-    view_abstract(panel, p.name),
+    view(panel, p.name),
     playlist(p),
     api_proxy(api_proxy)
 {
@@ -44,9 +44,9 @@ void playlist_view::update_panel_info(OpenPanelInfo *info)
     info->PanelModesNumber = std::size(modes);
 }
 
-const view_abstract::items_t& playlist_view::get_items()
+const view::items_t& playlist_view::get_items()
 {
-    static view_abstract::items_t items; items.clear();
+    static view::items_t items; items.clear();
 
     if (!collection || !collection->fetch())
         return items;
@@ -92,7 +92,7 @@ const view_abstract::items_t& playlist_view::get_items()
     return items;
 }
 
-const view_abstract::sort_modes_t& playlist_view::get_sort_modes() const
+const view::sort_modes_t& playlist_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { L"Name",      SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },

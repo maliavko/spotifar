@@ -10,7 +10,7 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class root_base_view: public view_abstract
+class root_base_view: public view
 {
 public:
     struct root_data_t: public data_item_t
@@ -22,7 +22,7 @@ public:
     using menu_items_t = std::vector<root_data_t>;
 public:
     root_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, menu_items_t items):
-        view_abstract(panel, title), api_proxy(api), menu_items(items)
+        view(panel, title), api_proxy(api), menu_items(items)
         {}
 
     auto get_items() -> const items_t& override;

@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "abstract.hpp"
 #include "spotify/common.hpp"
-#include "ui/views/view.hpp" // view_abstract
+#include "ui/views/view.hpp" // view
 #include "ui/events.hpp" // ui_events_observer
 
 namespace spotifar { namespace ui {
@@ -34,8 +34,8 @@ protected:
     
     // global ui events
     void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id = "") override;
-    void show_view(HANDLE panel, view_builder_t builder, view_abstract::return_callback_t callback = nullptr) override;
-    void show_multiview(HANDLE panel, multiview_builder_t builders, view_abstract::return_callback_t callback = nullptr) override;
+    void show_view(HANDLE panel, view_builder_t builder, view::return_callback_t callback = nullptr) override;
+    void show_multiview(HANDLE panel, multiview_builder_t builders, view::return_callback_t callback = nullptr) override;
     void close_panel(HANDLE panel) override;
     void show_filters_menu() override;
 private:

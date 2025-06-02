@@ -17,7 +17,7 @@ using namespace spotify;
 /// Spotify collections, each of them has a different key-features inside.
 /// To separate all of them from each other at any moment the panel creates and holds
 /// one view and change it by request of the user
-class view_abstract
+class view
 {
 public:
     struct sort_mode_t
@@ -49,11 +49,11 @@ public:
 public:
     /// @param panel a real param handle, PANEL_PASSIVE dose not work
     /// @param title a label used to be shown on top of the panel
-    view_abstract(HANDLE panel, const wstring &title):
+    view(HANDLE panel, const wstring &title):
         panel(panel), title(title)
         {}
     
-    virtual ~view_abstract() {}
+    virtual ~view() {}
 
     // a public interface, exposed to the panel class
 
@@ -117,7 +117,7 @@ private:
     HANDLE panel;
 };
 
-using view_ptr_t = std::shared_ptr<view_abstract>;
+using view_ptr_t = std::shared_ptr<view>;
 
 } // namespace ui
 } // namespace spotifar
