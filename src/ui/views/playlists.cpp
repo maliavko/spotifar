@@ -270,7 +270,7 @@ void recent_playlists_view::rebuild_items()
         if (!playlist)
         {
             playlist.id = item_id;
-            playlist.name = std::format(L"Forbidden_{}", utils::to_wstring(item_id));
+            playlist.name = std::format(L"Hidden_{}", utils::to_wstring(item_id));
         }
 
         items.push_back(history_playlist_t{ {playlist}, item.played_at });
