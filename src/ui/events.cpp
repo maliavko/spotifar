@@ -20,12 +20,12 @@ namespace spotifar { namespace ui { namespace events {
             };
     }
 
-    static void show_view(ui_events_observer::view_builder_t &&builder, view_abstract::return_callback_t callback)
+    static void show_view(ui_events_observer::view_builder_t &&builder, view::return_callback_t callback)
     {
         ObserverManager::notify(&ui_events_observer::show_view, PANEL_ACTIVE, builder, callback);
     }
 
-    static void show_multiview(ui_events_observer::multiview_builder_t &&builders, view_abstract::return_callback_t callback)
+    static void show_multiview(ui_events_observer::multiview_builder_t &&builders, view::return_callback_t callback)
     {
         ObserverManager::notify(&ui_events_observer::show_multiview, PANEL_ACTIVE, builders, callback);
     }
@@ -115,7 +115,7 @@ namespace spotifar { namespace ui { namespace events {
         show_view(get_builder<playlist_view>(api, playlist), [api] { show_collection(api); });
     }
     
-    void show_artist_albums(api_weak_ptr_t api, const artist_t &artist, view_abstract::return_callback_t callback)
+    void show_artist_albums(api_weak_ptr_t api, const artist_t &artist, view::return_callback_t callback)
     {
         if (!callback)
             callback = std::bind(show_root, api);
@@ -123,7 +123,7 @@ namespace spotifar { namespace ui { namespace events {
         show_view(get_builder<artist_view>(api, artist), callback);
     }
     
-    void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album, view_abstract::return_callback_t callback)
+    void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album, view::return_callback_t callback)
     {
         if (!callback)
             callback = std::bind(show_root, api);

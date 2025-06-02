@@ -26,10 +26,10 @@ static const FarKey overriden_bindings[] = {
 
 /// @brief A stub-view used for the first panel initialization, before any other
 /// view to be shown. Purposely visible when the user is not yet authorized
-class stub_view: public view_abstract
+class stub_view: public view
 {
 public:
-    stub_view(HANDLE panel): view_abstract(panel, L"") {}
+    stub_view(HANDLE panel): view(panel, L"") {}
 protected:
     auto get_sort_modes() const -> const sort_modes_t& override
     {
@@ -112,7 +112,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->KeyBar = &key_bar;
 
     // first, we collect all the key bindings into intermediate container
-    view_abstract::key_bar_info_t panel_key_bar{};
+    view::key_bar_info_t panel_key_bar{};
 
     // adding multiviews bar keys
     if (mview_builders.artists)
@@ -342,7 +342,7 @@ void panel::refresh(const string &item_id) const
     }
 }
 
-void panel::show_view(HANDLE panel, view_builder_t builder, view_abstract::return_callback_t callback)
+void panel::show_view(HANDLE panel, view_builder_t builder, view::return_callback_t callback)
 {
     if (is_this_panel(panel))
     {
@@ -355,7 +355,7 @@ void panel::show_view(HANDLE panel, view_builder_t builder, view_abstract::retur
     }
 }
 
-void panel::show_multiview(HANDLE panel, multiview_builder_t builders, view_abstract::return_callback_t callback)
+void panel::show_multiview(HANDLE panel, multiview_builder_t builders, view::return_callback_t callback)
 {
     if (is_this_panel(panel))
     {

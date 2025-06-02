@@ -15,37 +15,35 @@ using spotify::api_weak_ptr_t;
 /// accessible without instances
 namespace events {
 
-    void show_root(api_weak_ptr_t api);
+    void show_root(api_weak_ptr_t);
 
-    void show_collection(api_weak_ptr_t api);
+    void show_collection(api_weak_ptr_t);
 
-    void show_recents(api_weak_ptr_t api);
+    void show_recents(api_weak_ptr_t);
 
-    void show_browse(api_weak_ptr_t api);
+    void show_browse(api_weak_ptr_t);
 
-    void show_new_releases(api_weak_ptr_t api);
+    void show_new_releases(api_weak_ptr_t);
 
-    void show_recently_liked_tracks(api_weak_ptr_t api);
+    void show_recently_liked_tracks(api_weak_ptr_t);
 
-    void show_recently_saved_albums(api_weak_ptr_t api);
+    void show_recently_saved_albums(api_weak_ptr_t);
 
-    void show_user_top_items(api_weak_ptr_t api);
+    void show_user_top_items(api_weak_ptr_t);
 
-    void show_playlist(api_weak_ptr_t api, const spotify::playlist_t &playlist);
+    void show_playlist(api_weak_ptr_t, const spotify::playlist_t &playlist);
 
-    void show_artist_albums(api_weak_ptr_t api, const spotify::artist_t &artist,
-        view_abstract::return_callback_t callback = {});
+    void show_artist_albums(api_weak_ptr_t, const spotify::artist_t &, view::return_callback_t = {});
 
-    void show_album_tracks(api_weak_ptr_t api, const spotify::simplified_album_t &album,
-        view_abstract::return_callback_t callback = {});
+    void show_album_tracks(api_weak_ptr_t, const spotify::simplified_album_t &, view::return_callback_t = {});
 
-    void show_playing_queue(api_weak_ptr_t api);
+    void show_playing_queue(api_weak_ptr_t);
     
     void show_player();
 
     /// @brief Forcing the active panel to redraw and to try to find and
     /// set the given `item_id` under cursur
-    void select_item(const string &item_id);
+    void select_item(const item_id_t &item_id);
 
     /// @brief Forcing the given `panel` to redraw
     /// @param panel could be a panel handle, PANEL_ACTIVE or PANEL_PASSIVE
@@ -118,9 +116,9 @@ struct ui_events_observer: public BaseObserverProtocol
     /// on the panel after operation is finished
     virtual void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id) {}
 
-    virtual void show_view(HANDLE panel, view_builder_t builder, view_abstract::return_callback_t callback = {}) {}
+    virtual void show_view(HANDLE panel, view_builder_t, view::return_callback_t = {}) {}
 
-    virtual void show_multiview(HANDLE panel, multiview_builder_t callbacks, view_abstract::return_callback_t callback = {}) {}
+    virtual void show_multiview(HANDLE panel, multiview_builder_t, view::return_callback_t = {}) {}
 
     virtual void close_panel(HANDLE panel) {}
 

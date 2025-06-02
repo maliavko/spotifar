@@ -11,7 +11,7 @@ namespace spotifar { namespace ui {
 using namespace spotify;
 
 // TODO: move to tracks and derive from tracks_base_view?
-class playlist_view: public view_abstract
+class playlist_view: public view
 {
 public:
     playlist_view(HANDLE panel, api_weak_ptr_t api, const playlist_t &p);
