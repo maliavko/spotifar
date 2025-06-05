@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "abstract.hpp"
 #include "utils.hpp"
-#include "librespot.hpp"
+#include "playback_handler.hpp"
 #include "spotify/api.hpp"
 #include "spotify/auth.hpp"
 #include "spotify/releases.hpp"
@@ -33,8 +33,8 @@ protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
 
-    void launch_librespot_process(const string &access_token);
-    void shutdown_librespot_process();
+    void launch_playback_device(const string &access_token);
+    void shutdown_playback_device();
     
     void process_win_messages_queue();
 
@@ -66,7 +66,7 @@ private:
     // background thread, like hotkeys check etc.
     utils::tasks_queue background_tasks;
 
-    std::unique_ptr<librespot_handler> librespot;
+    std::unique_ptr<playback_handler> playback_device;
     std::unique_ptr<ui::notifications> notifications;
     std::unique_ptr<ui::player> player;
     std::shared_ptr<spotify::api> api;

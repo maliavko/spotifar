@@ -15,7 +15,7 @@ add_library(${PROJECT_NAME} SHARED
 	plugin.cpp
 	utils.cpp
 	config.cpp
-	librespot.cpp
+	playback_handler.cpp
 	spotify/items.cpp
 	spotify/auth.cpp
 	spotify/history.cpp

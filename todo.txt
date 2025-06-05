@@ -29,7 +29,6 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-    - shutting down librespot from config leaves a splash screen message visible
     - returning back does not select a proper item on the panel for multiviews
     - sorting works 95%: open albums view and sort by tracks number e.g.
 
