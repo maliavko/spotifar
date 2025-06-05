@@ -1,5 +1,5 @@
-#ifndef LIBRESPOT_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180
-#define LIBRESPOT_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180
+#ifndef PLAYBACK_HANDLER_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180
+#define PLAYBACK_HANDLER_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180
 #pragma once
 
 #include "stdafx.h"
@@ -7,17 +7,19 @@
 
 namespace spotifar {
 
-class librespot_handler:
-    public spotify::devices_observer // to wait for the Librespot device get available and pick it up
+class playback_handler:
+    public spotify::devices_observer
 {
 public:
-    librespot_handler(spotify::api_weak_ptr_t api):  api_proxy(api) {}
+    playback_handler(spotify::api_weak_ptr_t api):  api_proxy(api) {}
 
-    auto start(const string &access_token) -> bool;
+    bool start(const string &access_token);
+    void restart(const string &access_token);
     void shutdown();
 
     void tick();
-    auto is_started() const -> bool { return is_running; }
+    bool is_started() const { return is_running; }
+    bool pick_up_any();
 protected:
     void subscribe();
     void unsubscribe();
@@ -34,11 +36,11 @@ private:
     HANDLE pipe_write = NULL;
 };
 
-struct librespot_observer: public BaseObserverProtocol
+struct playback_device_observer: public BaseObserverProtocol
 {
     virtual void on_running_state_changed(bool is_running) {}
 };
 
 } // namespace spotifar
 
-#endif // LIBRESPOT_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180
+#endif // PLAYBACK_HANDLER_HPP_5549F561_6D96_4E39_B9AB_40BA0947A180
