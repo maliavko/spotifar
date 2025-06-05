@@ -8,8 +8,8 @@
 namespace spotifar {
 
 namespace hotkeys = config::hotkeys;
-namespace far3 = utils::far3;
 using namespace utils;
+using namespace utils::http;
 
 /// @brief The requests, which do not require showing splash screen, as they are processed
 /// in the background, hidden from user
@@ -22,7 +22,7 @@ plugin::plugin(): api(new spotify::api())
 {
     player = std::make_unique<ui::player>(api);
     notifications = std::make_unique<ui::notifications>(api);
-    librespot = std::make_unique<librespot_handler>(api);
+    playback_device = std::make_unique<playback_handler>(api);
 
     events::start_listening<config::config_observer>(this);
     events::start_listening<spotify::auth_observer>(this);
@@ -59,7 +59,7 @@ plugin::~plugin()
 
         shutdown_sync_worker();
         
-        shutdown_librespot_process();
+        shutdown_playback_device();
     
         events::stop_listening<spotify::releases_observer>(this);
         events::stop_listening<spotify::auth_observer>(this);
@@ -69,7 +69,7 @@ plugin::~plugin()
 
         player.reset();
         api.reset();
-        librespot.reset();
+        playback_device.reset();
         notifications.reset();
     }
     catch (const std::exception &ex)
@@ -97,7 +97,7 @@ void plugin::launch_sync_worker()
 
                 api->tick();
                 player->tick();
-                librespot->tick();
+                playback_device->tick();
 
                 background_tasks.process_all(); // ticking background tasks if any
 
@@ -135,23 +135,29 @@ void plugin::shutdown_sync_worker()
     log::api->info("Plugin's background thread has been stopped");
 }
 
-void plugin::launch_librespot_process(const string &access_token)
+void plugin::launch_playback_device(const string &access_token)
 {
-    if (!config::is_playback_backend_enabled()) return;
-
-    if (librespot != nullptr && !librespot->is_started() && !librespot->start(access_token))
+    if (config::is_playback_backend_enabled())
     {
-        shutdown_librespot_process(); // cleaning up the allocated resources if any
-        far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
+        if (!playback_device->start(access_token))
         {
-            far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
-        });
+            shutdown_playback_device(); // cleaning up the allocated resources if any
+
+            far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
+            {
+                far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
+            });
+        }
     }
+
+    // if there playback is not started for any reason, trying to pick up amy available device
+    if (!playback_device->is_started())
+        playback_device->pick_up_any();
 }
-void plugin::shutdown_librespot_process()
+
+void plugin::shutdown_playback_device()
 {
-    if (librespot != nullptr && librespot->is_started())
-        librespot->shutdown();
+    playback_device->shutdown();
 }
 
 void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
@@ -197,36 +203,28 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
 
 void plugin::on_playback_backend_setting_changed(bool is_enabled)
 {
-    log::global->debug("on_playback_backend_setting_changed, {}", is_enabled);
-
     if (is_enabled)
     {
         if (const auto &auth = api->get_auth_data())
-            launch_librespot_process(auth.access_token);
+            launch_playback_device(auth.access_token);
     }
     else
-        shutdown_librespot_process();
+        shutdown_playback_device();
 }
 
 void plugin::on_playback_backend_configuration_changed()
 {
     log::global->debug("on_playback_backend_configuration_changed");
     
-    const auto &auth = api->get_auth_data();
-    if (librespot != nullptr && auth)
-    {
-        // restart external process routine: shutdown, wait for the better and start over
-        shutdown_librespot_process();
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        launch_librespot_process(auth.access_token);
-    }
+    if (const auto &auth = api->get_auth_data(); playback_device)
+        playback_device->restart(auth.access_token);
 }
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
 {
     if (auth && !is_renewal) // only if it is not token renewal
     {
-        launch_librespot_process(auth.access_token);
+        launch_playback_device(auth.access_token);
         
         // after first valid authentication we show root view
         ui::events::show_root(api);
@@ -301,8 +299,6 @@ void plugin::on_request_finished(const string &url)
 
 void plugin::on_request_progress_changed(const string &url, size_t progress, size_t total)
 {
-    using namespace utils::http;
-
     if (!no_splash_requests.contains(trim_domain(trim_params(url))))
         ui::show_waiting(MWaitingItemsProgress, progress, total);
 }

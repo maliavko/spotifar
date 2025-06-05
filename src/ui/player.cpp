@@ -250,7 +250,7 @@ bool player::show()
         
         utils::events::start_listening<playback_observer>(this);
         utils::events::start_listening<devices_observer>(this);
-        utils::events::start_listening<librespot_observer>(this);
+        utils::events::start_listening<playback_device_observer>(this);
 
         if (hdlg != NULL)
         {
@@ -299,7 +299,7 @@ void player::cleanup()
 {
     utils::events::stop_listening<playback_observer>(this);
     utils::events::stop_listening<devices_observer>(this);
-    utils::events::stop_listening<librespot_observer>(this);
+    utils::events::stop_listening<playback_device_observer>(this);
     
     hdlg = NULL;
     visible = false;
