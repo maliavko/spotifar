@@ -6,7 +6,7 @@
 #include "spotify/playback.hpp"
 #include "spotify/devices.hpp"
 #include "controls.hpp"
-#include "librespot.hpp"
+#include "playback_handler.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -15,7 +15,7 @@ using namespace spotify;
 class player:
     public playback_observer, // represent timely playback changes in UI
     public devices_observer, // to keep up to date the list of available devices
-    public librespot_observer // to update the player visual when playback state is changed
+    public playback_device_observer // to update the player visual when playback state is changed
 {
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases

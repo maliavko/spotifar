@@ -28,6 +28,14 @@ void show_waiting(int msg_id, Args&&... args)
     config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
 }
 
+struct scoped_waiting
+{
+    HANDLE ss;
+    
+    scoped_waiting(int msg_id);
+    ~scoped_waiting();
+};
+
 } // namespace ui
 } // namespace spotifar
 

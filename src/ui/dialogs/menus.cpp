@@ -2,6 +2,7 @@
 #include "lng.hpp"
 #include "utils.hpp"
 #include "menus.hpp"
+#include "../events.hpp"
 #include "settings/hotkeys.hpp"
 #include "settings/general.hpp"
 #include "settings/backend.hpp"
@@ -94,6 +95,17 @@ intptr_t show_sort_dialog(const view &v)
         free(const_cast<wchar_t*>(item.Text));
 
     return sort_idx;
+}
+
+scoped_waiting::scoped_waiting(int msg_id)
+{
+    ss = config::ps_info.SaveScreen(0, 0, -1, -1);
+    show_waiting(msg_id);
+}
+
+scoped_waiting::~scoped_waiting()
+{
+    config::ps_info.RestoreScreen(ss);
 }
 
 } // namespace ui
