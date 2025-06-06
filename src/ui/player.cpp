@@ -560,7 +560,7 @@ bool player::on_artist_label_input_received(void *input_record)
     {
         hide();
 
-        ui::events::show_artist_albums(api, artist);
+        ui::events::show_artist(api, artist);
         ui::events::select_item(playback.item.album.id);
     }
 

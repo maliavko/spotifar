@@ -43,11 +43,11 @@ protected:
 
 
 /// @brief A class-view, representing the list of albums of a given `artist`
-class artist_view: public albums_base_view
+class artist_albums_view: public albums_base_view
 {
 public:
-    artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist);
-    ~artist_view() { albums.clear(); }
+    artist_albums_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist);
+    ~artist_albums_view() { albums.clear(); }
 protected:
     void rebuild_items();
 
