@@ -106,12 +106,19 @@ void show_playlist(api_weak_ptr_t api, const playlist_t &playlist)
     show_view(get_builder<playlist_view>(api, playlist), [api] { show_collection(api); });
 }
 
-void show_artist_albums(api_weak_ptr_t api, const artist_t &artist, view::return_callback_t callback)
+void show_artist(api_weak_ptr_t api, const artist_t &artist, view::return_callback_t callback)
 {
     if (!callback)
         callback = std::bind(show_root, api);
     
-    show_view(get_builder<artist_view>(api, artist), callback);
+    show_multiview(
+        {
+            .albums = get_builder<artist_albums_view>(api, artist),
+            .tracks = get_builder<artist_top_tracks_view>(api, artist),
+            .settings = config::get_multiview_settings("artist", { multiview_builder_t::albums_idx })
+        },
+        callback
+    );
 }
 
 void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album, view::return_callback_t callback)

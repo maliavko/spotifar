@@ -5,6 +5,7 @@
 namespace spotifar { namespace ui {
 
 using utils::far3::get_text;
+using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
@@ -797,6 +798,65 @@ std::generator<const track_t&> user_top_tracks_view::get_tracks()
     if (collection && collection->fetch(false, true, 4))
         for (const auto &t: *collection)
             co_yield t;
+}
+
+
+//-----------------------------------------------------------------------------------------------------------
+artist_top_tracks_view::artist_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const artist_t &artist):
+    tracks_base_view(panel, api_proxy, get_vtext(MPanelArtistTopArtistsLabel, artist.name), artist.name), artist(artist)
+{
+    if (auto api = api_proxy.lock())
+        tracks = api->get_artist_top_tracks(artist.id);
+    
+    utils::events::start_listening<playback_observer>(this);
+}
+
+artist_top_tracks_view::~artist_top_tracks_view()
+{
+    utils::events::stop_listening<playback_observer>(this);
+}
+
+config::settings::view_t artist_top_tracks_view::get_default_settings() const
+{
+    return { 5, false, 7 };
+}
+
+const view::sort_modes_t& artist_top_tracks_view::get_sort_modes() const
+{
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = tracks_base_view::get_sort_modes();
+        modes[5] = { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } };
+    }
+    return modes;
+}
+
+bool artist_top_tracks_view::start_playback(const string &track_id)
+{
+    if (auto api = api_proxy.lock())
+    {
+        // NOTE: Spotify API does not provide a way to specify track while playing
+        // the `artist` context. Just launching the context starting from the first track
+        api->start_playback(artist.get_uri()/*, track_t::make_uri(track_id)*/);
+        return true;
+    }
+    return false;
+}
+
+std::generator<const track_t&> artist_top_tracks_view::get_tracks()
+{
+    for (const auto &track: tracks) co_yield track;
+}
+
+void artist_top_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
+{
+    events::refresh_panel(get_panel_handle());
+}
+
+void artist_top_tracks_view::on_shuffle_state_changed(bool shuffle_state)
+{
+    events::refresh_panel(get_panel_handle());
 }
 
 } // namespace ui

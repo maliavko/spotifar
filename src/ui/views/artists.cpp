@@ -180,7 +180,7 @@ std::generator<const artist_t&> followed_artists_view::get_artists()
 
 void followed_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist_albums(api_proxy, artist,
+    events::show_artist(api_proxy, artist,
         std::bind(events::show_collection, api_proxy));
 }
 
@@ -290,7 +290,7 @@ std::generator<const artist_t&> recent_artists_view::get_artists()
 
 void recent_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist_albums(api_proxy, artist,
+    events::show_artist(api_proxy, artist,
         std::bind(events::show_recents, api_proxy));
 }
 
@@ -331,7 +331,7 @@ std::generator<const artist_t&> user_top_artists_view::get_artists()
 
 void user_top_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist_albums(api_proxy, artist,
+    events::show_artist(api_proxy, artist,
         std::bind(events::show_user_top_items, api_proxy));
 }
 

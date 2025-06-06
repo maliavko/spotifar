@@ -210,31 +210,31 @@ intptr_t albums_base_view::process_key_input(int combined_key)
 
 
 //-----------------------------------------------------------------------------------------------------------
-artist_view::artist_view(HANDLE panel, api_weak_ptr_t api, const artist_t &a):
-    albums_base_view(panel, api, a.name), artist(a)
+artist_albums_view::artist_albums_view(HANDLE panel, api_weak_ptr_t api, const artist_t &a):
+    albums_base_view(panel, api, a.name, a.name), artist(a)
 {
     rebuild_items();
 }
 
-config::settings::view_t artist_view::get_default_settings() const
+config::settings::view_t artist_albums_view::get_default_settings() const
 {
     return { 1, true, 3 };
 }
 
-std::generator<const album_t&> artist_view::get_albums()
+std::generator<const album_t&> artist_albums_view::get_albums()
 {
     for (const auto &a: albums) co_yield a;
 }
 
-void artist_view::show_tracks_view(const album_t &album) const
+void artist_albums_view::show_tracks_view(const album_t &album) const
 {
     // let's open a tracks list view for the selected album, which should return user to the same
     // artist's albums view
     events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
+        std::bind(events::show_artist, api_proxy, artist, get_return_callback()));
 }
 
-void artist_view::rebuild_items()
+void artist_albums_view::rebuild_items()
 {
     albums.clear();
 
@@ -373,7 +373,7 @@ void new_releases_view::show_tracks_view(const album_t &album) const
     {
         const auto &artist = api->get_artist(simple_artist.id);
         events::show_album_tracks(api_proxy, album,
-            std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
+            std::bind(events::show_artist, api_proxy, artist, get_return_callback()));
     }
 }
 
@@ -480,7 +480,7 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
     {
         const auto &artist = api_proxy.lock()->get_artist(simple_artist.id);
         events::show_album_tracks(api_proxy, album,
-            std::bind(events::show_artist_albums, api_proxy, artist, get_return_callback()));
+            std::bind(events::show_artist, api_proxy, artist, get_return_callback()));
     }
 }
 

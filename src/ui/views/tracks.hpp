@@ -187,6 +187,32 @@ private:
     user_top_tracks_ptr collection;
 };
 
+
+/// @brief
+class artist_top_tracks_view:
+    public tracks_base_view,
+    public playback_observer
+{
+public:
+    artist_top_tracks_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist);
+    ~artist_top_tracks_view();
+protected:
+    // view interface
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+
+    // tracks_base_view interface
+    bool start_playback(const string &track_id) override;
+    auto get_tracks() -> std::generator<const track_t&> override;
+
+    // playback_observer handlers
+    void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
+    void on_shuffle_state_changed(bool shuffle_state) override;
+private:
+    std::vector<track_t> tracks;
+    artist_t artist;
+};
+
 } // namespace ui
 } // namespace spotifar
 
