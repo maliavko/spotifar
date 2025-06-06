@@ -10,6 +10,7 @@
 #include "auth.hpp"
 #include "history.hpp"
 #include "releases.hpp"
+#include "library.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -25,7 +26,7 @@ public:
     void shutdown();
     void tick();
 
-    bool is_authenticated() const  override { return auth->is_authenticated(); }
+    bool is_authenticated() const override { return auth->is_authenticated(); }
     
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
 
@@ -60,8 +61,7 @@ public:
     auto get_image(const image_t &image, const item_id_t &item_id) -> wstring override;
 
     // playback api interface
-    void start_playback(const string &context_uri, const string &track_uri = "",
-        int position_ms = 0, const item_id_t &device_id = "") override;
+    void start_playback(const string &context_uri, const string &track_uri = "", int position_ms = 0, const item_id_t &device_id = "") override;
     void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") override;
     void start_playback(const simplified_album_t &album, const simplified_track_t &track) override;
     void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) override;
@@ -93,6 +93,8 @@ protected:
 private:
     BS::priority_thread_pool pool;
     http_cache api_responses_cache;
+
+    library collection;
 
     // caches
     std::unique_ptr<playback_cache> playback;
