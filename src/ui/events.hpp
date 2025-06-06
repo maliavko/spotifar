@@ -31,7 +31,7 @@ namespace events {
 
     void show_playlist(api_weak_ptr_t, const spotify::playlist_t &playlist);
 
-    void show_artist_albums(api_weak_ptr_t, const spotify::artist_t &, view::return_callback_t = {});
+    void show_artist(api_weak_ptr_t, const spotify::artist_t&, view::return_callback_t = {});
 
     void show_album_tracks(api_weak_ptr_t, const spotify::simplified_album_t &, view::return_callback_t = {});
 

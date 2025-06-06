@@ -97,6 +97,8 @@ namespace spotifar
 		MPanelUserTopTracksDescr,
 		MPanelUserTopArtistsLabel,
 		MPanelUserTopArtistsDescr,
+		MPanelArtistTopArtistsLabel,
+		MPanelArtistTopArtistsDescr,
 
         MPlayerSourceLabel,
         MPlayerSourceCollection,
