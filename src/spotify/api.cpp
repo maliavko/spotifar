@@ -39,7 +39,7 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
 }
 
 //----------------------------------------------------------------------------------------------
-api::api(): pool(pool_size)
+api::api(): pool(pool_size), collection(this)
 {
 }
 
@@ -75,7 +75,7 @@ void api::shutdown()
     auto ctx = config::lock_settings();
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->shutdown(*ctx); });
 
-    pool.purge(); // remove unfinished tasks from the queue
+    pool.purge(); // removing unfinished tasks from the queue
 
     api_responses_cache.shutdown();
 }
