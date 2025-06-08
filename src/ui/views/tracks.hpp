@@ -32,6 +32,7 @@ protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto process_key_input(int combined_key) -> intptr_t override;
+    auto get_key_bar_info() -> const key_bar_info_t* override;
 
     // collection_observer
     void on_saved_tracks_status_received(const item_ids_t &ids) override;

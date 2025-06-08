@@ -259,6 +259,27 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
+const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
+{
+    static key_bar_info_t key_bar{
+        { { VK_F7, 0 }, L"Like" },
+    };
+
+    auto crc32 = get_crc32();
+    auto item = utils::far3::panels::get_current_item(get_panel_handle());
+
+    if (item->CRC32 != crc32)
+        return nullptr;
+
+    if (auto *user_data = unpack_user_data(item->UserData))
+    {
+        if (auto api = api_proxy.lock())
+            key_bar[{ VK_F7, 0 }] = api->is_track_saved(user_data->id) ? L"Unlike" : L"Like";
+    }
+    
+    return &key_bar;
+}
+
 void tracks_base_view::on_saved_tracks_status_received(const item_ids_t &ids)
 {
     std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
