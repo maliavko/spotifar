@@ -55,6 +55,7 @@ S string_join(const std::vector<S> &parts, const E *delim)
     return os.str();
 }
 
+/// @brief A string_join specialization for C-style arrays
 template<typename E, typename S = std::basic_string<E>>
 S string_join(const std::vector<const E*> parts, const E *delim)
 {
@@ -63,6 +64,27 @@ S string_join(const std::vector<const E*> parts, const E *delim)
         str_parts.push_back(str);
 
     return string_join(str_parts, delim);
+}
+
+/// @brief Splits given string `s` by the given delimiter `delim` to the parts
+template<typename E, typename S = std::basic_string<E>>
+std::vector<S> string_split(const S &s, const E delim)
+{
+    std::vector<S> result;
+    std::basic_stringstream<E, std::char_traits<E>, std::allocator<E>> ss(s);
+    S item;
+
+    while (getline(ss, item, delim))
+        result.push_back(item);
+
+    return result;
+}
+
+/// @brief A string_split specialization for C strings
+template<typename E, typename S = std::basic_string<E>>
+std::vector<S> string_split(const E *s, const E delim)
+{
+    return string_split(S(s), delim);
 }
 
 /// @brief Returns a copy of a given string without trailing whitespaces

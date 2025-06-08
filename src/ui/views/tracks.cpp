@@ -9,6 +9,45 @@ using utils::far3::get_text;
 using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
 
+/// @brief Helper-method for adjusting columns data prepared by views for Far API.
+/// Extract columns data and add a new column to the front
+/// @tparam ViewType 
+/// @param modes filled Far API struct
+/// @param col_name new column name
+/// @param col_size new column size
+/// @param col_uid new column id (C1,2,....)
+template<class ViewType>
+static void update_columns_info(PanelMode *modes, const wchar_t *col_name, size_t col_size, const wchar_t *col_uid)
+{
+    static struct
+    {
+        std::vector<const wchar_t*> titles;
+        wstring width, types;
+    } columns[9];
+    
+    for (size_t idx = 3; idx < 9; idx++)
+    {
+        size_t columns_count = utils::string_split(modes[idx].ColumnWidths, L',').size();
+        assert (columns_count > 0);
+
+        // extending all the columns data with the track number column
+        columns[idx].titles.push_back(col_name);
+        columns[idx].titles.insert(columns[idx].titles.end(),
+            modes[idx].ColumnTitles, modes[idx].ColumnTitles + columns_count);
+
+        columns[idx].width = std::format(L"{},{}", col_size, modes[idx].ColumnWidths);
+
+        columns[idx].types = std::format(L"{},{}", col_uid, modes[idx].ColumnTypes);
+
+        // overriding the panel modes with the new columns data
+        modes[idx].ColumnTitles = &columns[idx].titles[0];
+        modes[idx].ColumnWidths = columns[idx].width.c_str();
+        modes[idx].ColumnTypes = columns[idx].types.c_str();
+    }
+
+    modes[9] = modes[0] = modes[8];
+}
+
 //-----------------------------------------------------------------------------------------------------------
 tracks_base_view::tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
     view(panel, title, dir_name), api_proxy(api)
@@ -45,12 +84,9 @@ const view::items_t& tracks_base_view::get_items()
     for (const auto &track: get_tracks())
     {
         std::vector<wstring> columns;
-
-        auto is_saved = api->is_track_saved(track.id);
         
         // column C0 - is explicit lyrics
-        // columns.push_back(track.is_explicit ? L" * " : L"");
-        columns.push_back(is_saved ? L" + " : L"");
+        columns.push_back(track.is_explicit ? L" * " : L"");
 
         // column C1 - duration
         auto duration = std::chrono::milliseconds(track.duration_ms);
@@ -76,6 +112,9 @@ const view::items_t& tracks_base_view::get_items()
 
         // column C6 - album's type
         columns.push_back(std::format(L"{: ^6}", track.album.get_type_abbrev()));
+
+        // column C7 - is saved in collection status
+        columns.push_back(api->is_track_saved(track.id) ? L" + " : L"");
         
         // inherited views custom columns
         const auto &extra = get_extra_columns(track);
@@ -105,45 +144,45 @@ void tracks_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
-    static const wchar_t* titles_3[] = { L"Name", L"[E]", L"Length", L"Pop %", };
-    modes[3].ColumnTypes = L"NON,C0,C1,C4";
-    modes[3].ColumnWidths = L"0,3,7,5";
+    static const wchar_t* titles_3[] = { L"Name", L"[+]", L"[E]", L"Length", L"Pop %", };
+    modes[3].ColumnTypes = L"NON,C7,C0,C1,C4";
+    modes[3].ColumnWidths = L"0,3,3,7,5";
     modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_4[] = { L"Name", L"Artist", L"Length" };
-    modes[4].ColumnTypes = L"NON,C3,C1";
-    modes[4].ColumnWidths = L"0,30,7";
+    static const wchar_t* titles_4[] = { L"Name", L"Artist", L"[+]", L"Length" };
+    modes[4].ColumnTypes = L"NON,C3,C7,C1";
+    modes[4].ColumnWidths = L"0,30,3,7";
     modes[4].ColumnTitles = titles_4;
     modes[4].StatusColumnTypes = NULL;
     modes[4].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_5[] = { L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
-    modes[5].ColumnTypes = L"NON,C3,C5,C6,C2,C0,C1,C4";
-    modes[5].ColumnWidths = L"0,35,35,6,6,3,7,5";
+    static const wchar_t* titles_5[] = { L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[+]", L"[E]", L"Length", L"Pop %", };
+    modes[5].ColumnTypes = L"NON,C3,C5,C6,C2,C7,C0,C1,C4";
+    modes[5].ColumnWidths = L"0,35,35,6,6,3,3,7,5";
     modes[5].ColumnTitles = titles_5;
     modes[5].StatusColumnTypes = NULL;
     modes[5].StatusColumnWidths = NULL;
     modes[5].Flags = PMFLAGS_FULLSCREEN;
 
-    static const wchar_t* titles_6[] = { L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
-    modes[6].ColumnTypes = L"NON,C3,C0,C1,C4";
-    modes[6].ColumnWidths = L"0,30,3,7,5";
+    static const wchar_t* titles_6[] = { L"Name", L"Artist", L"[+]", L"[E]", L"Length", L"Pop %", };
+    modes[6].ColumnTypes = L"NON,C3,C7,C0,C1,C4";
+    modes[6].ColumnWidths = L"0,30,3,3,7,5";
     modes[6].ColumnTitles = titles_6;
     modes[6].StatusColumnTypes = NULL;
     modes[6].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_7[] = { L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
-    modes[7].ColumnTypes = L"NON,C5,C2,C0,C1,C4";
-    modes[7].ColumnWidths = L"0,30,6,3,7,5";
+    static const wchar_t* titles_7[] = { L"Name", L"Album", L"Yr", L"[+]", L"[E]", L"Length", L"Pop %", };
+    modes[7].ColumnTypes = L"NON,C5,C2,C7,C0,C1,C4";
+    modes[7].ColumnWidths = L"0,30,6,3,3,7,5";
     modes[7].ColumnTitles = titles_7;
     modes[7].StatusColumnTypes = NULL;
     modes[7].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_8[] = { L"Name", L"Artist", L"Album", L"Yr", };
-    modes[8].ColumnTypes = L"NON,C3,C5,C2";
-    modes[8].ColumnWidths = L"0,30,30,6";
+    static const wchar_t* titles_8[] = { L"Name", L"Artist", L"Album", L"[+]", L"Yr", };
+    modes[8].ColumnTypes = L"NON,C3,C5,C7,C2";
+    modes[8].ColumnWidths = L"0,30,30,3,6";
     modes[8].ColumnTitles = titles_8;
     modes[8].StatusColumnTypes = NULL;
     modes[8].StatusColumnWidths = NULL;
@@ -276,71 +315,18 @@ config::settings::view_t album_tracks_view::get_default_settings() const
 
 void album_tracks_view::update_panel_info(OpenPanelInfo *info)
 {
+    // initializing the panel data with base view's info
     tracks_base_view::update_panel_info(info);
     
     auto *modes = const_cast<PanelMode*>(info->PanelModesArray);
 
-    // adding track number column to some of the view modes
+    // adding track number column to some of the view modes. In case the albums has
+    // several discs, the track number will be shown as `01/02`
     size_t n_width = is_multidisc ? 7 : 4;
     static const wchar_t* n_label = is_multidisc ? L"#/#" : L" #";
-    static struct
-    {
-        std::vector<const wchar_t*> titles;
-        wstring width, types;
-    } columns[9];
-
-    columns[3] =
-    {
-        { n_label, L"Name", L"[E]", L"Length", L"Pop %", },
-        std::format(L"{},0,3,7,5", n_width),
-        L"C7,NON,C0,C1,C4"
-    };
-
-    columns[4] =
-    {
-        { n_label, L"Name", L"Artist", L"Length", },
-        std::format(L"{},0,30,7", n_width),
-        L"C7,NON,C3,C1"
-    };
-
-    columns[5] =
-    {
-        { n_label, L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", },
-        std::format(L"{},0,35,35,6,6,3,7,5", n_width),
-        L"C7,NON,C3,C5,C6,C2,C0,C1,C4"
-    };
-
-    columns[6] =
-    {
-        { n_label, L"Name", L"Artist", L"[E]", L"Length", L"Pop %", },
-        std::format(L"{},0,30,3,7,5", n_width),
-        L"C7,NON,C3,C0,C1,C4"
-    };
-
-    columns[7] =
-    {
-        { n_label, L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", },
-        std::format(L"{},0,30,6,3,7,5", n_width),
-        L"C7,NON,C5,C2,C0,C1,C4"
-    };
-
-    columns[8] =
-    {
-        { n_label, L"Name", L"Artist", L"Album", L"Yr", },
-        std::format(L"{},0,30,30,6", n_width),
-        L"C7,NON,C3,C5,C2"
-    };
-
-    modes[9] = modes[8];
-
-    modes[0] = modes[8];
-
-    for (size_t idx = 3; idx < 9; idx++)
-    {
-        modes[idx].ColumnTitles = &columns[idx].titles[0];
-        modes[idx].ColumnWidths = columns[idx].width.c_str();
-        modes[idx].ColumnTypes = columns[idx].types.c_str();
-    }
+    
+    // adding track's number column
+    update_columns_info<album_tracks_view>(modes, n_label, n_width, L"C8");
 }
 
 const view::sort_modes_t& album_tracks_view::get_sort_modes() const
@@ -405,7 +391,7 @@ std::vector<wstring> album_tracks_view::get_extra_columns(const track_t& track) 
     }
 
     return {
-        track_number, // C7 - track number on its album
+        track_number, // C8 - track number on its album
     };
 }
 
@@ -470,45 +456,13 @@ intptr_t recent_tracks_view::compare_items(const sort_mode_t &sort_mode,
 
 void recent_tracks_view::update_panel_info(OpenPanelInfo *info)
 {
+    // initializing the panel data with base view's info
     tracks_base_view::update_panel_info(info);
     
     auto *modes = const_cast<PanelMode*>(info->PanelModesArray);
 
-    // adding `Played at` column to some of the view modes
-
-    static const wchar_t* titles_3[] = { L"Played at", L"Name", L"[E]", L"Length", L"Pop %", };
-    modes[3].ColumnTypes = L"C7,NON,C0,C1,C4";
-    modes[3].ColumnWidths = L"13,0,3,7,5";
-    modes[3].ColumnTitles = titles_3;
-
-    static const wchar_t* titles_4[] = { L"Played at", L"Name", L"Artist", L"Length" };
-    modes[4].ColumnTypes = L"C7,NON,C3,C1";
-    modes[4].ColumnWidths = L"13,0,30,7";
-    modes[4].ColumnTitles = titles_4;
-
-    static const wchar_t* titles_5[] = { L"Played at", L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
-    modes[5].ColumnTypes = L"C7,NON,C3,C5,C6,C2,C0,C1,C4";
-    modes[5].ColumnWidths = L"13,0,35,35,6,6,3,7,5";
-    modes[5].ColumnTitles = titles_5;
-
-    static const wchar_t* titles_6[] = { L"Played at", L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
-    modes[6].ColumnTypes = L"C7,NON,C3,C0,C1,C4";
-    modes[6].ColumnWidths = L"13,0,30,3,7,5";
-    modes[6].ColumnTitles = titles_6;
-
-    static const wchar_t* titles_7[] = { L"Played at", L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
-    modes[7].ColumnTypes = L"C7,NON,C5,C2,C0,C1,C4";
-    modes[7].ColumnWidths = L"13,0,30,6,3,7,5";
-    modes[7].ColumnTitles = titles_7;
-
-    static const wchar_t* titles_8[] = { L"Played at", L"Name", L"Artist", L"Album", L"Yr", };
-    modes[8].ColumnTypes = L"C7,NON,C3,C5,C2";
-    modes[8].ColumnWidths = L"13,0,30,30,6";
-    modes[8].ColumnTitles = titles_8;
-
-    modes[9] = modes[8];
-
-    modes[0] = modes[8];
+    // for recently played view we add `Played at` column
+    update_columns_info<recent_tracks_view>(modes, L"Played at", 13, L"C8");
 }
 
 void recent_tracks_view::rebuild_items()
@@ -558,7 +512,7 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
     }
     
     return {
-        formatted_time, // C7 - `played at` date
+        formatted_time, // C8 - `played at` date
     };
 }
 
@@ -610,45 +564,13 @@ intptr_t saved_tracks_view::compare_items(const sort_mode_t &sort_mode,
 
 void saved_tracks_view::update_panel_info(OpenPanelInfo *info)
 {
+    // initializing the panel data with base view's info
     tracks_base_view::update_panel_info(info);
     
     auto *modes = const_cast<PanelMode*>(info->PanelModesArray);
-
-    // adding `Saved at` column to some of the view modes
-
-    static const wchar_t* titles_3[] = { L"Saved at", L"Name", L"[E]", L"Length", L"Pop %", };
-    modes[3].ColumnTypes = L"C7,NON,C0,C1,C4";
-    modes[3].ColumnWidths = L"12,0,3,7,5";
-    modes[3].ColumnTitles = titles_3;
-
-    static const wchar_t* titles_4[] = { L"Saved at", L"Name", L"Artist", L"Length" };
-    modes[4].ColumnTypes = L"C7,NON,C3,C1";
-    modes[4].ColumnWidths = L"12,0,30,7";
-    modes[4].ColumnTitles = titles_4;
-
-    static const wchar_t* titles_5[] = { L"Saved at", L"Name", L"Artist", L"Album", L"Type", L"Yr", L"[E]", L"Length", L"Pop %", };
-    modes[5].ColumnTypes = L"C7,NON,C3,C5,C6,C2,C0,C1,C4";
-    modes[5].ColumnWidths = L"12,0,35,35,6,6,3,7,5";
-    modes[5].ColumnTitles = titles_5;
-
-    static const wchar_t* titles_6[] = { L"Saved at", L"Name", L"Artist", L"[E]", L"Length", L"Pop %", };
-    modes[6].ColumnTypes = L"C7,NON,C3,C0,C1,C4";
-    modes[6].ColumnWidths = L"12,0,30,3,7,5";
-    modes[6].ColumnTitles = titles_6;
-
-    static const wchar_t* titles_7[] = { L"Saved at", L"Name", L"Album", L"Yr", L"[E]", L"Length", L"Pop %", };
-    modes[7].ColumnTypes = L"C7,NON,C5,C2,C0,C1,C4";
-    modes[7].ColumnWidths = L"12,0,30,6,3,7,5";
-    modes[7].ColumnTitles = titles_7;
-
-    static const wchar_t* titles_8[] = { L"Saved at", L"Name", L"Artist", L"Album", L"Yr", };
-    modes[8].ColumnTypes = L"C7,NON,C3,C5,C2";
-    modes[8].ColumnWidths = L"12,0,30,30,6";
-    modes[8].ColumnTitles = titles_8;
-
-    modes[9] = modes[8];
-
-    modes[0] = modes[8];
+    
+    // for saved tracks view we add `Saved at` column
+    update_columns_info<saved_tracks_view>(modes, L"Saved at", 13, L"C8");
 }
 
 bool saved_tracks_view::start_playback(const string &track_id)
@@ -672,7 +594,7 @@ std::vector<wstring> saved_tracks_view::get_extra_columns(const track_t& track) 
     const auto &saved_at_str = std::format("{:^12}", saved_track.added_at.substr(0, 10));
 
     return {
-        utils::to_wstring(saved_at_str), // C7 - `added at` date
+        utils::to_wstring(saved_at_str), // C8 - `added at` date
     };
 }
 
