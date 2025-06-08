@@ -2,116 +2,92 @@
 
 namespace spotifar { namespace spotify {
 
+namespace json = utils::json;
 using utils::far3::synchro_tasks::dispatch_event;
 
-library::library(api_interface *api): api_proxy(api), pool(1)
+static const size_t batch_size = 50;
+
+void from_json(const json::Value &j, saved_items_t &v)
 {
+    from_json(j["tracks"], v.tracks);
+    from_json(j["albums"], v.albums);
 }
 
-library::~library()
+void to_json(json::Value &result, const saved_items_t &v, json::Allocator &allocator)
 {
-    stop_flag = true;
-    cv.notify_all();
+    result = json::Value(json::kObjectType);
+
+    json::Value tracks;
+    to_json(tracks, v.tracks, allocator);
+
+    json::Value albums;
+    to_json(albums, v.albums, allocator);
+
+    result.AddMember("tracks", json::Value(tracks, allocator), allocator);
+    result.AddMember("albums", json::Value(albums, allocator), allocator);
+}
+
+bool library::is_track_saved(const item_id_t &track_id)
+{
+    const auto &tracks = get().tracks;
+
+    if (const auto it = tracks.find(track_id); it != tracks.end())
+        return it->second;
     
-    api_proxy = nullptr;
-    pool.purge();
-}
-
-
-void library::request_saved_status(const item_ids_t &ids)
-{
-    pool.detach_task(
-        [this, ids]
-        {
-            std::unique_lock<std::mutex> thread_lock(cv_m);
-
-            //bool is_cached = api_proxy->is_request_cached("/v1/me/tracks/contains", ids, 50);
-
-            auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>("/v1/me/tracks/contains", ids, 50);
-            bool is_cached = requester.is_cached();
-
-            auto result = api_proxy->check_saved_tracks(ids);
-            if (result.size() == ids.size())
-            {
-                saved_status_t saved_status;
-                for (size_t i = 0; i < ids.size(); ++i)
-                    saved_status.insert({ ids[i], result[i] });
-
-                dispatch_event(&collection_observer::on_saved_tracks_status_received, saved_status);
-            }
-            else
-            {
-                log::api->error("Failed to get saved status for {} tracks", ids.size());
-            }
-
-            cv.wait_for(thread_lock, 0.5s, [this]{ return stop_flag; });
-        });
-}
-
-/*bool library::request_data(data_t &data)
-{
-    // NOTE: a normal behaviour of this method is to return `false` in case of error and `true`,
-    // if resync went well and data is received successfully. As we have here a long sync,
-    // which takes place over a bunch of delayed threaded requests, the responce is considered
-    // successful only when the last request is finished with no errors.
-
-    if (is_in_sync)
     {
-        // if there are no queued or ongoing tasks, we finish up the synching process:
-        // chaging the `is_in_sync` flag
-        if (pool.get_tasks_total() == 0)
-        {
-            data = interim_data;
-            is_in_sync = false;
-        }
-        
-        // if we are not in sync anymore - return `true`, the base class will store
-        // the caches and fire the appropriate observing events if needed
-        return !is_in_sync;
+        std::lock_guard<std::mutex> lock(data_access_guard);
+        tracks_to_process.push_back(track_id);
     }
 
-    interim_data.clear();
+    return false;
+}
 
-    if (artists->fetch(false, false))
+bool library::is_active() const
+{
+    return api_proxy->is_authenticated();
+}
+
+clock_t::duration library::get_sync_interval() const
+{
+    return 1500ms;
+}
+
+bool library::request_data(data_t &data)
+{
+    if (tracks_to_process.empty()) return false;
+
+    if (api_proxy != nullptr)
     {
-        auto time_treshold = utils::clock_t::now() - release_age;
-        
-        pool.detach_sequence<size_t>(0, artists->size(),
-            [this, time_treshold](const std::size_t idx)
+        item_ids_t ids;
+        {
+            std::lock_guard<std::mutex> lock(data_access_guard);
+            if (tracks_to_process.size() > batch_size)
             {
-                std::unique_lock<std::mutex> thread_lock(cv_m);
+                ids.assign(tracks_to_process.begin(), tracks_to_process.begin() + batch_size);
+                tracks_to_process.erase(tracks_to_process.begin(), tracks_to_process.begin() + batch_size);
+            }
+            else
+                ids = std::move(tracks_to_process);
+        }
 
-                const auto &artist = (*artists)[idx];
+        if (auto result = api_proxy->check_saved_tracks(ids); result.size() == ids.size())
+        {
+            library_statuses_t saved_status;
+            for (size_t i = 0; i < ids.size(); ++i)
+                saved_status.insert({ ids[i], result[i] });
 
-                auto albums = api_proxy->get_artist_albums(artist.id);
-                bool is_cached = albums->is_cached();
+            // extending the current data with the new saved statuses
+            data = get();
+            data.tracks.insert(saved_status.begin(), saved_status.end());
 
-                log::api->debug("Processing new artist's releases '{}' [{}], {} left",
-                    utils::to_string(artist.name), artist.id, pool.get_tasks_total());
-                
-                if (albums->fetch(false, false))
-                {
-                    for (const auto &album: *albums)
-                        if (album.get_release_date() > time_treshold)
-                        {
-                            log::api->info("A new release was found for the artist '{}' [{}]: {} [{}]",
-                                utils::to_string(artist.name), artist.id,
-                                utils::to_string(album.name), album.id);
-                            
-                            interim_data.push_back(album);
-                        }
-                }
-
-                // we put the thread to sleep to avoid spamming spotify API; in case
-                // the result was obtained from the cache, there is no need to do that
-                if (!is_cached)
-                {
-                    auto delay_time = utils::events::has_observers<playback_observer>() ? 30s : 10s;
-                    cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
-                }
-            });
-        
-        is_in_sync = true;
+            // dispatching an event to notify observers about the new saved status
+            dispatch_event(&collection_observer::on_saved_tracks_status_received, saved_status);
+            return true;
+        }
+        else
+        {
+            log::api->error("Failed to get saved status for {} tracks", ids.size());
+        }
     }
 
     return false;
@@ -119,19 +95,9 @@ void library::request_saved_status(const item_ids_t &ids)
 
 void library::on_data_synced(const data_t &data, const data_t &prev_data)
 {
-    log::global->info("A recent releases cache is found, next update in {}",
-        std::format("{:%T}", get_expires_at() - clock_t::now()));
-
-    const std::unordered_set<simplified_album_t> prev_releases(prev_data.begin(), prev_data.end());
-
-    recent_releases_t result;
-    for (const auto &album: data)
-        if (!prev_releases.contains(album))
-            result.push_back(album);
-
-    if (result.size() > 0)
-        dispatch_event(&releases_observer::on_releases_sync_finished, result);
-}*/
+    // ideally the event should've been fired from this method, however it would
+    // require to recalculate a difference, which is known in the method above
+}
     
 } // namespace spotify
 } // namespace spotifar

@@ -85,7 +85,6 @@ const view::items_t& artists_base_view::get_items()
         if (auto api = api_proxy.lock())
         {
             auto albums = api->get_artist_albums(artist.id);
-        
             if (auto total_albums = albums->peek_total())
                 albums_count = std::format(L"{: >6}", total_albums);
         }

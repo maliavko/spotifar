@@ -39,7 +39,7 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
 }
 
 //----------------------------------------------------------------------------------------------
-api::api(): pool(pool_size), collection(this)
+api::api(): pool(pool_size)
 {
 }
 
@@ -55,9 +55,9 @@ bool api::start()
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
     releases = std::make_unique<recent_releases>(this);
+    collection = std::make_unique<library>(this);
 
-    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(),
-        releases.get() });
+    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), releases.get(), collection.get() });
 
     auto ctx = config::lock_settings();
 
@@ -363,8 +363,8 @@ void api::toggle_playback(const item_id_t &device_id)
 
     // making sure we have a last updates playback state
     playback->resync(true);
-    const auto &state = playback->get();
-    if (!state.is_playing)
+
+    if (const auto &state = playback->get(); !state.is_playing)
         return resume_playback(device_id);
     else
         return pause_playback(device_id);
@@ -379,8 +379,7 @@ void api::pause_playback(const item_id_t &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = put(append_query_params("/v1/me/player/pause", params));
-            if (http::is_success(res))
+            if (auto res = put(append_query_params("/v1/me/player/pause", params)); http::is_success(res))
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([](auto &v) {
@@ -404,8 +403,7 @@ void api::skip_to_next(const item_id_t &device_id)
                     body.insert("device_id", dev_id);
             });
 
-            auto res = post("/v1/me/player/next", body.str());
-            if (!http::is_success(res))
+            if (auto res = post("/v1/me/player/next", body.str()); !http::is_success(res))
                 playback_cmd_error(http::get_status_message(res));
         });
 }
@@ -423,8 +421,7 @@ void api::skip_to_previous(const item_id_t &device_id)
                     body.insert("device_id", dev_id);
             });
             
-            auto res = post("/v1/me/player/previous", body.str());
-            if (!http::is_success(res))
+            if (auto res = post("/v1/me/player/previous", body.str()); !http::is_success(res))
                 playback_cmd_error(http::get_status_message(res));
         });
 }
@@ -441,8 +438,7 @@ void api::seek_to_position(int position_ms, const item_id_t &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = put(append_query_params("/v1/me/player/seek", params));
-            if (http::is_success(res))
+            if (auto res = put(append_query_params("/v1/me/player/seek", params)); http::is_success(res))
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([position_ms](auto &v) {
@@ -465,8 +461,7 @@ void api::toggle_shuffle(bool is_on, const item_id_t &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
             
-            auto res = put(append_query_params("/v1/me/player/shuffle", params));
-            if (http::is_success(res))
+            if (auto res = put(append_query_params("/v1/me/player/shuffle", params)); http::is_success(res))
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([is_on](auto &v) {
@@ -489,8 +484,7 @@ void api::set_repeat_state(const string &mode, const item_id_t &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = put(append_query_params("/v1/me/player/repeat", params));
-            if (http::is_success(res))
+            if (auto res = put(append_query_params("/v1/me/player/repeat", params)); http::is_success(res))
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([mode](auto &d) {
@@ -513,8 +507,7 @@ void api::set_playback_volume(int volume_percent, const item_id_t &device_id)
             if (!dev_id.empty())
                 params.insert({ "device_id", dev_id });
 
-            auto res = put(append_query_params("/v1/me/player/volume", params));
-            if (http::is_success(res))
+            if (auto res = put(append_query_params("/v1/me/player/volume", params)); http::is_success(res))
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([volume_percent](auto &d) {
@@ -538,7 +531,10 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
         return playback_cmd_error("The given device is already active, {}", device_it->to_str());
     
     pool.detach_task(
-        [this, start_playing, dev_id = std::as_const(device_id)]
+        [
+            this, start_playing, dev_id = std::as_const(device_id), &cache = *this->devices,
+            dev_idx = std::distance(devices.begin(), device_it)
+        ]
         {
             http::json_body_builder body;
 
@@ -548,10 +544,17 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
                 body.insert("play", start_playing);
             });
 
-            auto res = put("/v1/me/player", body.str());
-            if (http::is_success(res))
-                // if the transfer was performed successfully, we resync the list of available devices
-                this->devices->resync(true);
+            if (auto res = put("/v1/me/player", body.str()); http::is_success(res))
+            {
+                // patching local devices cache as the device is active now; patch exists only for
+                // short time during which the real request and response should happen and rewrite
+                // 'fake data'. If there are no listeners, it will not happen, so we execute resync
+                // manually
+                cache.patch([dev_idx](auto &d) {
+                    json::Pointer(std::format("/{}/is_active", dev_idx)).Set(d, true);
+                });
+                this->devices->resync();
+            }
             else
                 playback_cmd_error(http::get_status_message(res));
         });

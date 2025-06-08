@@ -100,6 +100,7 @@ public:
     void patch(patch_handler_t handler);
 
     auto get() const -> const T& { return data.get(); }
+    auto extract() -> T&& { return data.extract(); }
     auto get_expires_at() const -> const time_point& { return expires_at.get(); }
     bool is_valid() const { return get_expires_at() > clock_t::now(); }
 
@@ -193,13 +194,13 @@ void json_cache<T>::resync(bool force)
     T new_data;
     if (request_data(new_data))
     {
-        auto old_data = data.get();
+        auto old_data = data.extract();
         apply_patches(new_data);
 
-        data.set(new_data);
+        data.set(std::move(new_data));
 
         expires_at.set(sync_time + get_sync_interval());
-        on_data_synced(new_data, old_data);
+        on_data_synced(data.get(), old_data);
     }
     else
     {

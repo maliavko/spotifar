@@ -132,6 +132,7 @@
 "Some other device is active now '{0}', would you like to transfer playback to '{1}'?"
 "The Librespot device is not active"
 "Would you like to transfer playback to one of the available devices?"
+"There is no available device found, playback cannot be started"
 " Requesting data... "
 " Fetching progress {} / {} "
 " Initializing Spotify API "
