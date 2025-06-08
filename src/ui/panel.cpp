@@ -93,7 +93,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->StructSize = sizeof(*info);
     info->CurDir = dir_name;
     info->PanelTitle = title;
-    info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING;
+    info->Flags = OPIF_ADDDOTS | OPIF_SHOWNAMESONLY | OPIF_USEATTRHIGHLIGHTING | OPIF_USECRC32;
     info->StartPanelMode = '3';
     info->StartSortMode = SM_NAME;
 
@@ -158,6 +158,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
 
     if (view == nullptr) return TRUE;
 
+    size_t view_crc32 = view->get_crc32();
     const auto &items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
@@ -179,9 +180,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
             return TRUE;
         }
 
-        // TODO: the columns persist while the view exists, perhaps we do not need to copy the data here
         for (size_t i = 0; i < columns.size(); i++)
-            //column_data[i] = _wcsdup(columns[i].c_str());
             column_data[i] = columns[i].c_str();
 
         auto attrs = item.file_attrs;
@@ -196,6 +195,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;
         panel_item[idx].CustomColumnNumber = item.columns_data.size();
+        panel_item[idx].CRC32 = view_crc32;
         
         if (item.user_data != nullptr)
             panel_item[idx].UserData.Data = item.user_data;
@@ -217,10 +217,6 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
 
         free(const_cast<wchar_t*>(item.FileName));
         free(const_cast<wchar_t*>(item.Description));
-
-        //for (size_t j = 0; j < info->PanelItem[i].CustomColumnNumber; j++)
-        //    free(const_cast<wchar_t*>(item.CustomColumnData[j]));
-        //free(const_cast<wchar_t**>(item.CustomColumnData));
     }
     free(info->PanelItem);
 }

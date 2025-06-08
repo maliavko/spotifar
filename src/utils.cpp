@@ -409,6 +409,20 @@ namespace far3
             return pinfo;
         }
         
+        std::shared_ptr<FarPanelDirectory> get_directory(HANDLE panel)
+        {
+            size_t size = control(panel, FCTL_GETPANELDIRECTORY, NULL, NULL);
+            if (size == 0)
+                return nullptr;
+
+            if (auto pdir = make_sized_shared<FarPanelDirectory>(size))
+            {
+                control(panel, FCTL_GETPANELDIRECTORY, size, pdir.get());
+                return pdir;
+            }
+            return nullptr;
+        }
+        
         void quit(HANDLE panel)
         {
             control(panel, FCTL_CLOSEPANEL, 0, NULL);

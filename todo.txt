@@ -31,6 +31,7 @@ application ideas
 bugs
     - returning back does not select a proper item on the panel for multiviews
     - sorting works 95%: open albums view and sort by tracks number e.g.
+    - method panel::update_panel_items is called several times almost each panel opening
 
 to finish for alpha release
 - check all the default view settings and sort modes

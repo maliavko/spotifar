@@ -8,16 +8,6 @@ using utils::far3::get_text;
 using namespace events;
 
 //-------------------------------------------------------------------------------------------------------------
-const view::key_bar_info_t* root_base_view::get_key_bar_info()
-{
-    static key_bar_info_t key_bar{
-        // example data
-        // { { VK_F4, 0 }, get_text(MKeyBarF4) },
-    };
-
-    return &key_bar;
-}
-
 const view::info_lines_t* root_base_view::get_info_lines()
 {
     static info_lines_t lines{

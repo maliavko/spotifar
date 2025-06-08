@@ -26,7 +26,6 @@ public:
         {}
 
     auto get_items() -> const items_t& override;
-    auto get_key_bar_info() -> const key_bar_info_t* override;
     auto get_info_lines() -> const info_lines_t* override;
 protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
