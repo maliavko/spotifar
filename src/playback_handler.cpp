@@ -303,14 +303,25 @@ bool playback_handler::pick_up_any()
     if (api_proxy.expired()) return false;
 
     auto api = api_proxy.lock();
-    const auto &devices = api->get_available_devices();
+    const auto &devices = api->get_available_devices(true);
 
     // searching for an active device if any
     auto active_dev_it = std::find_if(
         devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
     
-    // if there is an active device already or no devices at all - stop processing
-    if (active_dev_it != devices.end() || devices.empty()) return false;
+    // if there is an active device already - no need to do anything
+    if (active_dev_it != devices.end()) return false;
+
+    // no available device found, warning the user
+    if (devices.empty())
+    {
+        const wchar_t* msgs[] = {
+            get_text(MTransferPlaybackTitle),
+            get_text(MTransferNoAvailableDevices),
+        };
+        config::ps_info.Message(&MainGuid, &FarMessageGuid, FMSG_MB_OK, nullptr, msgs, std::size(msgs), 0);
+        return false;
+    }
 
     std::vector<FarMenuItem> items;
     for (const auto &dev: devices)

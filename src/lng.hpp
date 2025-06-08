@@ -138,6 +138,7 @@ namespace spotifar
         MTransferPlaybackMessage,
         MTransferPlaybackInactiveMessage01,
         MTransferPlaybackInactiveMessage02,
+        MTransferNoAvailableDevices,
         MWaitingRequest,
         MWaitingItemsProgress,
         MWaitingInitSpotify,

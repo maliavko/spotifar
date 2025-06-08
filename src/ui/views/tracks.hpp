@@ -7,17 +7,19 @@
 #include "spotify/common.hpp"
 #include "spotify/playback.hpp"
 #include "spotify/history.hpp"
+#include "spotify/library.hpp"
 
 namespace spotifar { namespace ui {
 
 using namespace spotify;
 
-class tracks_base_view: public view
+class tracks_base_view:
+    public view,
+    public collection_observer
 {
 public:
-    tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L""):
-        view(panel, title, dir_name), api_proxy(api)
-        {}
+    tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L"");
+    ~tracks_base_view();
 
     auto get_items() -> const items_t& override;
 protected:
@@ -25,13 +27,17 @@ protected:
     virtual auto get_tracks() -> std::generator<const track_t&> = 0;
     virtual auto get_extra_columns(const track_t&) const -> std::vector<wstring> { return {}; }
 
-    // view interface
+    // view
     void update_panel_info(OpenPanelInfo *info) override;
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto process_key_input(int combined_key) -> intptr_t override;
+
+    // collection_observer
+    void on_saved_tracks_status_received(const library_statuses_t &statuses) override;
 protected:
     api_weak_ptr_t api_proxy;
+    items_t items;
 };
 
 

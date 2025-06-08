@@ -1,6 +1,7 @@
 #include "tracks.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
+#include "spotify/api.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -9,6 +10,18 @@ using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
+tracks_base_view::tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
+    view(panel, title, dir_name), api_proxy(api)
+{
+    utils::events::start_listening<collection_observer>(this);
+}
+
+tracks_base_view::~tracks_base_view()
+{
+    utils::events::stop_listening<collection_observer>(this);
+    items.clear();
+}
+
 const view::sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
@@ -24,14 +37,20 @@ const view::sort_modes_t& tracks_base_view::get_sort_modes() const
 
 const view::items_t& tracks_base_view::get_items()
 {
-    static view::items_t items; items.clear();
+    items.clear();
+
+    auto api_interface = api_proxy.lock();
+    auto api = static_cast<spotify::api*>(api_interface.get());
 
     for (const auto &track: get_tracks())
     {
         std::vector<wstring> columns;
+
+        auto is_saved = api->is_track_saved(track.id);
         
         // column C0 - is explicit lyrics
-        columns.push_back(track.is_explicit ? L" * " : L"");
+        // columns.push_back(track.is_explicit ? L" * " : L"");
+        columns.push_back(is_saved ? L" + " : L"");
 
         // column C1 - duration
         auto duration = std::chrono::milliseconds(track.duration_ms);
@@ -199,6 +218,16 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
         }
     }
     return FALSE;
+}
+
+void tracks_base_view::on_saved_tracks_status_received(const library_statuses_t &statuses)
+{
+    const auto &it = std::find_if(items.begin(), items.end(),
+        [&statuses](item_t &item) { return statuses.contains(item.id); });
+
+    // if any of view's tracks are changed, we need to refresh the panel
+    if (it != items.end())
+        events::refresh_panel(get_panel_handle());
 }
 
 
