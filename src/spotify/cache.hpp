@@ -99,8 +99,8 @@ public:
     /// for some time for the all upcoming resyncs
     void patch(patch_handler_t handler);
 
-    auto get() const -> const T& { return data.get(); }
-    auto extract() -> T&& { return data.extract(); }
+    auto get() const -> const T& { return value.get(); }
+    auto extract() -> T&& { return value.extract(); }
     auto get_expires_at() const -> const time_point& { return expires_at.get(); }
     bool is_valid() const { return get_expires_at() > clock_t::now(); }
 
@@ -130,8 +130,8 @@ protected:
     /// @param data a currently synced data
     /// @param prev_data a previously synced data to compare with
     virtual void on_data_synced(const T &data, const T &prev_data) {}
-private:
-    json_value<T> data;
+protected:
+    json_value<T> value;
     timestamp_value expires_at;
     bool is_persistent;
 
@@ -142,7 +142,7 @@ private:
 template<typename T>
 json_cache<T>::json_cache(const wstring &storage_key):
     is_persistent(!storage_key.empty()),
-    data(storage_key),
+    value(storage_key),
     expires_at(storage_key + L"Time")
 {
 }
@@ -152,14 +152,14 @@ void json_cache<T>::read(settings_ctx &ctx)
 {
     if (is_persistent)
     {
-        data.read(ctx);
+        value.read(ctx);
         expires_at.read(ctx);
     }
 
     // if the data is still valid, we send notification as
     // it was resynced well from server
     if (is_valid())
-        on_data_synced(data.get(), data.get());
+        on_data_synced(value.get(), value.get());
 }
 
 template<typename T>
@@ -167,7 +167,7 @@ void json_cache<T>::write(settings_ctx &ctx)
 {
     if (is_persistent)
     {
-        data.write(ctx);
+        value.write(ctx);
         expires_at.write(ctx);
     }
 }
@@ -177,7 +177,7 @@ void json_cache<T>::clear(settings_ctx &ctx)
 {
     if (is_persistent)
     {
-        data.clear(ctx);
+        value.clear(ctx);
         expires_at.clear(ctx);
     }
 }
@@ -188,19 +188,18 @@ void json_cache<T>::resync(bool force)
     auto sync_time = clock_t::now();
     // no updates for disabled caches, otherwise only in case the data
     // is invalid or resync is forced
-    if (!force && (!is_active() || is_valid()))
-        return;
+    if (!force && (!is_active() || is_valid())) return;
 
     T new_data;
     if (request_data(new_data))
     {
-        auto old_data = data.extract();
+        auto old_data = value.extract();
         apply_patches(new_data);
 
-        data.set(std::move(new_data));
+        value.set(std::move(new_data));
 
         expires_at.set(sync_time + get_sync_interval());
-        on_data_synced(data.get(), old_data);
+        on_data_synced(value.get(), old_data);
     }
     else
     {

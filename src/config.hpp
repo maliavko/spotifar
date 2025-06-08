@@ -345,6 +345,7 @@ public:
     virtual void clear(settings_context &ctx);
 
     auto get() const -> const value_t& { return data; }
+    auto get() -> value_t& { return data; }
     auto extract() -> value_t&& { return std::move(data); }
     void set(value_t &&d) { data = std::move(d); }
     void set(const value_t &d) { data = d; }
