@@ -41,12 +41,9 @@ using user_top_tracks_ptr = std::shared_ptr<user_top_tracks_t>;
 using user_top_artists_t = async_collection<artist_t, 1, std::chrono::weeks>;
 using user_top_artists_ptr = std::shared_ptr<user_top_artists_t>;
 
-struct api_interface
+class api_interface
 {
-    template<class T, int N, class C> friend class item_requester;
-    template<class T, int N, class C> friend class sync_collection;
-    template<class T, int N, class C> friend class async_collection;
-
+public:
     virtual ~api_interface() {}
 
     /// @brief Checks the spotify authorizations status
@@ -75,6 +72,16 @@ struct api_interface
     virtual auto get_recent_releases(bool force_resync = false) -> const recent_releases_t& = 0;
     
     // library & collections interface
+
+    /// @brief Returns tracks saving to collection (liked) status. The result is immediate,
+    /// if status is unknown, returns false and puts track id into the internal queue,
+    /// once status is obtained collection_observer::on_saved_tracks_status_received is called
+    /// @param force_sync turns method into blocking mode, which will wait for the status to be obtained
+    virtual bool is_track_saved(const item_id_t &track_id, bool force_sync = false) = 0;
+    
+    virtual bool save_tracks(const item_ids_t &ids) = 0;
+
+    virtual bool remove_saved_tracks(const item_ids_t &ids) = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
@@ -126,18 +133,6 @@ struct api_interface
     
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-queue
     virtual auto get_playing_queue() -> playing_queue_t = 0;
-
-    /// @brief Checks whether the given track id is in used saved collection
-    virtual bool check_saved_track(const item_id_t &track_id) = 0;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/check-users-saved-tracks 
-    virtual auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> = 0;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/save-tracks-user
-    virtual bool save_tracks(const item_ids_t &ids) = 0;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/remove-tracks-user
-    virtual bool remove_saved_tracks(const item_ids_t &ids) = 0;
     
     /// @brief Returns the downloaded and cached image filepath in case of success or empty string.
     /// @param image the image_t object to fetch from the Spotify server
@@ -211,6 +206,20 @@ protected:
 
     /// @brief Whether the given url is cached
     virtual bool is_request_cached(const string &url) const = 0;
+
+private:
+    friend class put_requester;
+
+    friend class del_requester;
+
+    template<class T, int N, class C>
+    friend class item_requester;
+
+    template<class T, int N, class C>
+    friend class sync_collection;
+
+    template<class T, int N, class C>
+    friend class async_collection;
 };
 
 using api_ptr_t = std::shared_ptr<api_interface>;
@@ -265,6 +274,61 @@ struct [[nodiscard]] requester_progress_notifier
 
     string request_url;
     bool is_active;
+};
+
+class modify_requester
+{
+public:
+    modify_requester(const string &url, const string &body = ""): url(url), body(body) {}
+
+    auto get_url() const -> const string& { return url; }
+
+    auto get_body() const -> const string& { return body; }
+
+    auto get_response() const -> const Result& { return response; }
+
+    bool execute(api_weak_ptr_t api_proxy)
+    {
+        if (auto api = api_proxy.lock())
+        {
+            response = execute_request(api.get());
+            if (!utils::http::is_success(response))
+            {
+                log::api->error("There is an error while executing API modify request: '{}', "
+                    "url '{}', body '{}'", utils::http::get_status_message(response), url, body);
+                return false;
+            }
+        }
+        return true;
+    }
+protected:
+    virtual Result execute_request(api_interface *api) = 0;
+private:
+    string url;
+    string body;
+    Result response;
+};
+
+class put_requester: public modify_requester
+{
+public:
+    using modify_requester::modify_requester;
+protected:
+    Result execute_request(api_interface *api) override
+    {
+        return api->put(get_url(), get_body());
+    }
+};
+
+class del_requester: public modify_requester
+{
+public:
+    using modify_requester::modify_requester;
+protected:
+    Result execute_request(api_interface *api) override
+    {
+        return api->del(get_url(), get_body());
+    }
 };
 
 /// @brief A helper-class for requesting data from spotify api. Incapsulates
@@ -788,6 +852,19 @@ protected:
 };
 
 void http_logger(const httplib::Request &req, const httplib::Response &res);
+
+// a helper function to dispatch a playback command execution error higher
+// to the listeners
+template <typename... Args>
+void playback_cmd_error(string msg_fmt, Args &&...args)
+{
+    auto formatted = std::vformat(msg_fmt, std::make_format_args(args...));
+    
+    log::api->error(formatted);
+
+    utils::far3::synchro_tasks::dispatch_event(
+        &api_requests_observer::on_playback_command_failed, formatted);
+}
 
 } // namespace spotify
 } // namespace spotifar

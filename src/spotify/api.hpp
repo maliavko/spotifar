@@ -26,8 +26,6 @@ public:
     void shutdown();
     void tick();
 
-    bool is_track_saved(const item_id_t &track_id) { return collection->is_track_saved(track_id); }
-
     bool is_authenticated() const override { return auth->is_authenticated(); }
     
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
@@ -37,6 +35,10 @@ public:
     auto get_available_devices(bool force_resync = false) -> const devices_cache::data_t& override;
     auto get_playback_state(bool force_resync = false) -> const playback_cache::data_t& override;
     auto get_recent_releases(bool force_resync = false) -> const recent_releases::data_t& override;
+    
+    bool is_track_saved(const item_id_t &track_id, bool force_sync = false) override;
+    bool save_tracks(const item_ids_t &ids) override { return collection->save_tracks(ids); }
+    bool remove_saved_tracks(const item_ids_t &ids) override { return collection->remove_saved_tracks(ids); }
     
     // library api interface
     auto get_followed_artists() -> followed_artists_ptr override;
@@ -54,10 +56,6 @@ public:
     auto get_user_top_artists() -> user_top_artists_ptr override;
     auto get_saved_playlists() -> saved_playlists_ptr override;
     auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr override;
-    auto check_saved_track(const item_id_t &track_id) -> bool override;
-    auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool> override;
-    auto save_tracks(const item_ids_t &ids) -> bool override;
-    auto remove_saved_tracks(const item_ids_t &ids) -> bool override;
     auto get_playing_queue() -> playing_queue_t override;
     auto get_saved_tracks() -> saved_tracks_ptr override;
     auto get_image(const image_t &image, const item_id_t &item_id) -> wstring override;
