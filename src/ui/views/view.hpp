@@ -65,6 +65,7 @@ public:
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto get_title() const -> const wstring& { return title; }
     auto get_dir_name() const -> const wstring& { return dir_name; }
+    auto get_crc32() const -> size_t { return utils::crc32::WSID(get_uid().c_str()); }
 
     /// @brief Called when user hits F3 key on the panel, returns an
     /// additional info for the panel item under cursor
