@@ -146,7 +146,7 @@ void notifications::on_track_changed(const track_t &track, const track_t &prev_t
 {
     using utils::far3::actl::is_wnd_in_focus;
 
-    if (WinToast::instance()->initialize())
+    if (WinToast::instance()->isInitialized())
     {
         if (const auto plugin_ptr = get_plugin())
         {
@@ -161,7 +161,7 @@ void notifications::on_track_changed(const track_t &track, const track_t &prev_t
 
 void notifications::show_now_playing(const spotify::track_t &track, bool show_buttons)
 {
-    if (!WinToast::instance()->initialize()) return;
+    if (!WinToast::instance()->isInitialized()) return;
 
     if (auto api = api_proxy.lock())
     {
@@ -215,7 +215,7 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
 
 void notifications::show_recent_releases_found(const spotify::recent_releases_t &releases)
 {
-    if (!WinToast::instance()->initialize()) return;
+    if (!WinToast::instance()->isInitialized()) return;
 
     if (auto api = api_proxy.lock())
     {

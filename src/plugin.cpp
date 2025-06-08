@@ -150,7 +150,7 @@ void plugin::launch_playback_device(const string &access_token)
         }
     }
 
-    // if there playback is not started for any reason, trying to pick up amy available device
+    // if playback is not started for any reason, trying to pick up any available device
     if (!playback_device->is_started())
         playback_device->pick_up_any();
 }
@@ -174,8 +174,7 @@ void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
 
             if (is_enabled) // then reinitialize those, which are enabled
             {
-                auto *hotkey = config::get_hotkey(hotkey_id);
-                if (hotkey != nullptr && hotkey->first != utils::keys::none)
+                if (auto *hotkey = config::get_hotkey(hotkey_id); hotkey->first != utils::keys::none)
                 {
                     if (!RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
                     {
@@ -266,7 +265,11 @@ void plugin::process_win_messages_queue()
                     {
                         const auto &pstate = api->get_playback_state(true);
                         if (!pstate.is_empty() && notifications != nullptr)
-                            return notifications->show_now_playing(pstate.item, true);
+                        {
+                            far3::synchro_tasks::push([this, pstate] {
+                                notifications->show_now_playing(pstate.item, true);
+                            }, "notification, show_now_playing");
+                        }
                         return;
                     }
                 }

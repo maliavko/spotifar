@@ -307,10 +307,10 @@ auto get_playback_volume_ctrl() -> string;
 auto get_playback_initial_volume() -> size_t;
 
 /// @brief Whether to show Windows pop-up notification when the track is changed
-auto is_track_changed_notification_enabled() -> bool;
+bool is_track_changed_notification_enabled();
 
 /// @brief THe image on the notifications will be squared or circled
-auto is_notification_image_circled() -> bool;
+bool is_notification_image_circled();
 
 
 /// @brief An interface to the class, which provides functionality to write
@@ -345,7 +345,9 @@ public:
     virtual void clear(settings_context &ctx);
 
     auto get() const -> const value_t& { return data; }
-    auto set(const value_t &d) -> void { data = d; }
+    auto extract() -> value_t&& { return std::move(data); }
+    void set(value_t &&d) { data = std::move(d); }
+    void set(const value_t &d) { data = d; }
 
 protected:
     /// @brief Implements the correct way to read and interpret data from the storage
