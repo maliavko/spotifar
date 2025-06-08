@@ -34,6 +34,7 @@ protected:
     void update_panel_info(OpenPanelInfo *info) override;
     bool request_extra_info(const data_item_t* data) override;
     auto select_item(const data_item_t *data) -> intptr_t override;
+    auto process_key_input(int combined_key) -> intptr_t override;
 
     virtual auto get_total(const item_id_t &menu_id, bool only_cached) -> size_t { return 0; }
 protected:

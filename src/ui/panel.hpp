@@ -30,7 +30,7 @@ protected:
     void set_view(view_ptr_t, view::return_callback_t = {});
     bool is_active() const;
     bool is_this_panel(HANDLE panel) const;
-    void refresh(const string &item_id = "") const;
+    void refresh(const string &item_id = "");
     
     // global ui events
     void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id = "") override;
@@ -41,6 +41,7 @@ protected:
 private:
     multiview_builder_t mview_builders;
     bool skip_view_refresh = true;
+    utils::clock_t::time_point last_refresh_time{};
 
     view_ptr_t view;
     plugin_ptr_t plugin_proxy;

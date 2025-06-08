@@ -26,6 +26,8 @@ public:
     void shutdown();
     void tick();
 
+    bool is_track_saved(const item_id_t &track_id) { return collection->is_track_saved(track_id); }
+
     bool is_authenticated() const override { return auth->is_authenticated(); }
     
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
@@ -94,9 +96,8 @@ private:
     BS::priority_thread_pool pool;
     http_cache api_responses_cache;
 
-    library collection;
-
     // caches
+    std::unique_ptr<library> collection;
     std::unique_ptr<playback_cache> playback;
     std::unique_ptr<devices_cache> devices;
     std::unique_ptr<auth_cache> auth;

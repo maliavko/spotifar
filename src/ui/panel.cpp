@@ -179,8 +179,10 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
             return TRUE;
         }
 
+        // TODO: the columns persist while the view exists, perhaps we do not need to copy the data here
         for (size_t i = 0; i < columns.size(); i++)
-            column_data[i] = _wcsdup(columns[i].c_str());
+            //column_data[i] = _wcsdup(columns[i].c_str());
+            column_data[i] = columns[i].c_str();
 
         auto attrs = item.file_attrs;
         if (item.is_selected)
@@ -216,9 +218,9 @@ void panel::free_panel_items(const FreeFindDataInfo *info)
         free(const_cast<wchar_t*>(item.FileName));
         free(const_cast<wchar_t*>(item.Description));
 
-        for (size_t j = 0; j < info->PanelItem[i].CustomColumnNumber; j++)
-            free(const_cast<wchar_t*>(item.CustomColumnData[j]));
-        free(const_cast<wchar_t**>(item.CustomColumnData));
+        //for (size_t j = 0; j < info->PanelItem[i].CustomColumnNumber; j++)
+        //    free(const_cast<wchar_t*>(item.CustomColumnData[j]));
+        //free(const_cast<wchar_t**>(item.CustomColumnData));
     }
     free(info->PanelItem);
 }
@@ -300,10 +302,10 @@ void panel::set_view(view_ptr_t v, view::return_callback_t callback)
     if (callback)
         view->set_return_callback(callback);
 
-    // forcing the panel to redraw only in cases when it will not do it itself:
-    //   - it is passive
-    //   - it was not selected via SetDirectoryW function, which will redraw panels itself
-    if (!is_active() || !skip_view_refresh)
+    // if a user switches the directories on the panels, Far subsequently rebuilds panel items
+    // and refreshes it, so we do not need to do it manually. In all other cases, if the view
+    // is switched - we're manually refreshing the panel
+    if (!skip_view_refresh)
         refresh();
 }
 
@@ -322,7 +324,7 @@ bool panel::is_this_panel(HANDLE panel) const
     return panel == this;
 }
 
-void panel::refresh(const string &item_id) const
+void panel::refresh(const string &item_id)
 {
     // perform a redraw only in case there is an item to select
     if (!item_id.empty())
@@ -339,6 +341,14 @@ void panel::refresh(const string &item_id) const
         far3::panels::update((HANDLE)this);
         far3::panels::redraw((HANDLE)this);
     }
+
+    const auto now = utils::clock_t::now();
+    if (now - last_refresh_time < 200ms)
+    {
+        log::global->debug("!!!!!!!!!!!!!!!!!!!! last refresh was less than 1 second ago");
+    }
+
+    last_refresh_time = now;
 }
 
 void panel::show_view(HANDLE panel, view_builder_t builder, view::return_callback_t callback)
