@@ -170,9 +170,9 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
         if (img_path.empty())
             return;
 
-        auto is_saved = api->check_saved_track(track.id);
+        auto is_saved = api->is_track_saved(track.id, true);
      
-        WinToastTemplate toast(WinToastTemplate::ImageAndText02);   
+        WinToastTemplate toast(WinToastTemplate::ImageAndText02);
     
         // image
         auto crop_hint = WinToastTemplate::CropHint::Square;

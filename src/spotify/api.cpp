@@ -25,19 +25,6 @@ auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::result_t
     return {};
 }
 
-// a helpers function to dispatch a playback command execution error higher
-// to the listeners
-template <typename... Args>
-void playback_cmd_error(string msg_fmt, Args &&...args)
-{
-    auto formatted = std::vformat(msg_fmt, std::make_format_args(args...));
-    
-    log::api->error(formatted);
-
-    utils::far3::synchro_tasks::dispatch_event(
-        &api_requests_observer::on_playback_command_failed, formatted);
-}
-
 //----------------------------------------------------------------------------------------------
 api::api(): pool(pool_size)
 {
@@ -129,6 +116,11 @@ std::vector<artist_t> api::get_artists(const item_ids_t &ids)
 {
     return request_item(several_items_requester<artist_t, 1, std::chrono::weeks>(
         "/v1/artists", ids, 50, "artists"), get_ptr());
+}
+
+bool api::is_track_saved(const item_id_t &track_id, bool force_sync)
+{
+    return collection->is_track_saved(track_id, force_sync);
 }
 
 followed_artists_ptr api::get_followed_artists()
@@ -238,61 +230,6 @@ playing_queue_t api::get_playing_queue()
 {
     return request_item(item_requester<playing_queue_t, 1, std::chrono::seconds>(
         "/v1/me/player/queue"), get_ptr());
-}
-
-bool api::check_saved_track(const item_id_t &track_id)
-{
-    const auto &flags = check_saved_tracks({ track_id });
-    return flags.size() > 0 && flags[0];
-}
-
-std::deque<bool> api::check_saved_tracks(const item_ids_t &ids)
-{
-    // note: bloody hell, damn vector specialization with bools is not a real vector,
-    // it cannot return ref to bools, so deque is used instead
-
-    // note: player visual style methods are being called extremely often, the 'like` button,
-    // which represents a state of a track being part of saved collection as well. That's why
-    // the response here is cached for a session
-    return request_item(several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
-        "/v1/me/tracks/contains", ids, 50), get_ptr());
-}
-
-bool api::save_tracks(const item_ids_t &ids)
-{
-    http::json_body_builder body;
-
-    body.object([&]
-    {
-        body.insert("ids", ids);
-    });
-
-    auto res = put("/v1/me/tracks", body.str());
-    if (!http::is_success(res))
-    {
-        playback_cmd_error(http::get_status_message(res));
-        return false;
-    }
-    return true;
-}
-
-bool api::remove_saved_tracks(const item_ids_t &ids)
-{
-    http::json_body_builder body;
-
-    body.object([&]
-    {
-        body.insert("ids", ids);
-    });
-
-    auto res = del("/v1/me/tracks", body.str());
-    if (!http::is_success(res))
-    {
-        playback_cmd_error(http::get_status_message(res));
-        return false;
-    }
-
-    return true;
 }
 
 void api::start_playback(const string &context_uri, const string &track_uri,
@@ -700,7 +637,7 @@ httplib::Result api::put(const string &request_url, const string &body)
     
     if (http::is_success(res))
     {
-        // invalidate all cached GET responses with the same base urls
+        // invalidate all cached GET responses with the same base url
         api_responses_cache.invalidate(request_url);
     }
 
