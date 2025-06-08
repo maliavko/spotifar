@@ -259,10 +259,12 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-void tracks_base_view::on_saved_tracks_status_received(const library_statuses_t &statuses)
+void tracks_base_view::on_saved_tracks_status_received(const item_ids_t &ids)
 {
+    std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
+
     const auto &it = std::find_if(items.begin(), items.end(),
-        [&statuses](item_t &item) { return statuses.contains(item.id); });
+        [&unique_ids](item_t &item) { return unique_ids.contains(item.id); });
 
     // if any of view's tracks are changed, we need to refresh the panel
     if (it != items.end())

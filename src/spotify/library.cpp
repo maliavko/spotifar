@@ -90,15 +90,11 @@ bool library::save_tracks(const item_ids_t &ids)
     }
     
     // updating tracks cache with the new saved tracks ids
-    library_statuses_t changed_tracks;
     auto &tracks = value.get().tracks;
     for (const auto &id: ids)
-    {
         tracks.insert_or_assign(id, true);
-        changed_tracks[id] = true;
-    }
 
-    dispatch_event(&collection_observer::on_saved_tracks_status_received, changed_tracks);
+    dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
 
     return true;
 }
@@ -120,15 +116,11 @@ bool library::remove_saved_tracks(const item_ids_t &ids)
     }
     
     // updating tracks cache with the new saved tracks ids
-    library_statuses_t changed_tracks;
     auto &tracks = value.get().tracks;
     for (const auto &id: ids)
-    {
         tracks.insert_or_assign(id, false);
-        changed_tracks[id] = false;
-    }
 
-    dispatch_event(&collection_observer::on_saved_tracks_status_received, changed_tracks);
+    dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
     
     return true;
 }
@@ -165,18 +157,11 @@ bool library::request_data(data_t &data)
         {
             data = get();
 
-            library_statuses_t changed_tracks;
             for (size_t i = 0; i < ids.size(); ++i)
-            {
-                // collecting changed statues to dispatch
-                changed_tracks.insert({ ids[i], result[i] });
-
-                // updating internal cache
                 data.tracks.insert_or_assign(ids[i], result[i]);
-            }
 
             // dispatching an event to notify observers about the new saved status
-            dispatch_event(&collection_observer::on_saved_tracks_status_received, changed_tracks);
+            dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
             return true;
         }
         else
