@@ -3,6 +3,7 @@
 namespace spotifar { namespace spotify {
 
 namespace json = utils::json;
+namespace http = utils::http;
 using utils::far3::synchro_tasks::dispatch_event;
 
 static const size_t batch_size = 50;
@@ -27,19 +28,109 @@ void to_json(json::Value &result, const saved_items_t &v, json::Allocator &alloc
     result.AddMember("albums", json::Value(albums, allocator), allocator);
 }
 
-bool library::is_track_saved(const item_id_t &track_id)
+bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
 {
-    const auto &tracks = get().tracks;
+    auto &tracks = value.get().tracks;
 
-    if (const auto it = tracks.find(track_id); it != tracks.end())
+    const auto it = tracks.find(track_id);
+    if (it != tracks.end())
         return it->second;
+
+    if (force_sync)
+    {
+        if (auto res = check_saved_tracks({ track_id }); res.size() == 1)
+        {
+            tracks.insert({ track_id, res[0] });
+            return res[0];
+        }
+    }
     
     {
         std::lock_guard<std::mutex> lock(data_access_guard);
-        tracks_to_process.push_back(track_id);
+        if (std::find(tracks_to_process.begin(), tracks_to_process.end(), track_id) == tracks_to_process.end())
+            tracks_to_process.push_back(track_id);
     }
 
     return false;
+}
+
+std::deque<bool> library::check_saved_tracks(const item_ids_t &ids)
+{
+    // note: bloody hell, damn vector specialization with bools is not a real vector,
+    // it cannot return ref to bools, so deque is used instead
+
+    // note: player visual style methods are being called extremely often, the 'like` button,
+    // which represents a state of a track being part of saved collection as well. That's why
+    // the response here is cached for a session
+    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
+        "/v1/me/tracks/contains", ids, batch_size);
+
+    if (requester.execute(api_proxy->get_ptr()))
+        return requester.get();
+    
+    // perhaps at some point it'd be good to add an error propagation here
+    // to show to the user
+    return {};
+}
+
+bool library::save_tracks(const item_ids_t &ids)
+{
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    auto requester = put_requester("/v1/me/tracks", body.str());
+    if (!requester.execute(api_proxy->get_ptr()))
+    {
+        playback_cmd_error(http::get_status_message(requester.get_response()));
+        return false;
+    }
+    
+    // updating tracks cache with the new saved tracks ids
+    library_statuses_t changed_tracks;
+    auto &tracks = value.get().tracks;
+    for (const auto &id: ids)
+    {
+        tracks.insert_or_assign(id, true);
+        changed_tracks[id] = true;
+    }
+
+    dispatch_event(&collection_observer::on_saved_tracks_status_received, changed_tracks);
+
+    return true;
+}
+
+bool library::remove_saved_tracks(const item_ids_t &ids)
+{
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    auto requester = del_requester("/v1/me/tracks", body.str());
+    if (!requester.execute(api_proxy->get_ptr()))
+    {
+        playback_cmd_error(http::get_status_message(requester.get_response()));
+        return false;
+    }
+    
+    // updating tracks cache with the new saved tracks ids
+    library_statuses_t changed_tracks;
+    auto &tracks = value.get().tracks;
+    for (const auto &id: ids)
+    {
+        tracks.insert_or_assign(id, false);
+        changed_tracks[id] = false;
+    }
+
+    dispatch_event(&collection_observer::on_saved_tracks_status_received, changed_tracks);
+    
+    return true;
 }
 
 bool library::is_active() const
@@ -70,18 +161,22 @@ bool library::request_data(data_t &data)
                 ids = std::move(tracks_to_process);
         }
 
-        if (auto result = api_proxy->check_saved_tracks(ids); result.size() == ids.size())
+        if (auto result = check_saved_tracks(ids); result.size() == ids.size())
         {
-            library_statuses_t saved_status;
-            for (size_t i = 0; i < ids.size(); ++i)
-                saved_status.insert({ ids[i], result[i] });
-
-            // extending the current data with the new saved statuses
             data = get();
-            data.tracks.insert(saved_status.begin(), saved_status.end());
+
+            library_statuses_t changed_tracks;
+            for (size_t i = 0; i < ids.size(); ++i)
+            {
+                // collecting changed statues to dispatch
+                changed_tracks.insert({ ids[i], result[i] });
+
+                // updating internal cache
+                data.tracks.insert_or_assign(ids[i], result[i]);
+            }
 
             // dispatching an event to notify observers about the new saved status
-            dispatch_event(&collection_observer::on_saved_tracks_status_received, saved_status);
+            dispatch_event(&collection_observer::on_saved_tracks_status_received, changed_tracks);
             return true;
         }
         else
@@ -91,12 +186,6 @@ bool library::request_data(data_t &data)
     }
 
     return false;
-}
-
-void library::on_data_synced(const data_t &data, const data_t &prev_data)
-{
-    // ideally the event should've been fired from this method, however it would
-    // require to recalculate a difference, which is known in the method above
 }
     
 } // namespace spotify
