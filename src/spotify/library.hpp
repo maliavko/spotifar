@@ -48,7 +48,7 @@ private:
 
 struct collection_observer: public BaseObserverProtocol
 {
-    virtual void on_saved_tracks_status_received(const library_statuses_t &changed_tracks) {}
+    virtual void on_saved_tracks_status_received(const item_ids_t &ids) {}
 };
 
 } // namespace spotify

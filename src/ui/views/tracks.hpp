@@ -34,7 +34,7 @@ protected:
     auto process_key_input(int combined_key) -> intptr_t override;
 
     // collection_observer
-    void on_saved_tracks_status_received(const library_statuses_t &statuses) override;
+    void on_saved_tracks_status_received(const item_ids_t &ids) override;
 protected:
     api_weak_ptr_t api_proxy;
     items_t items;
