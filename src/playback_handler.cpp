@@ -78,12 +78,11 @@ bool playback_handler::start(const string &access_token)
     if (config::is_playback_autoplay_enabled())
         cmd << L" --autoplay on";
 
-    if (!config::is_gapless_playback_enabled())
-        cmd << L" --disable-gapless";
+    //if (!config::is_gapless_playback_enabled())
+    //    cmd << L" --disable-gapless";
 
     if (!config::is_playback_cache_enabled())
         cmd << L" --disable-audio-cache";
-
 
     /// logging Librespot's command line arguments for debugging purposes
     log::global->info("Starting Librespot process, {}", utils::to_string(cmd.str()));
