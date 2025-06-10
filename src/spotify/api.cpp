@@ -69,6 +69,8 @@ void api::shutdown()
 
 void api::tick()
 {
+    // TODO: consider having a separate pool for caches resyncs with
+    // reduced amount of thread to control spamming the API
     auto future = pool.submit_loop<size_t>(0, caches.size(),
         [&caches = this->caches](const std::size_t idx) {
             caches[idx]->resync();
@@ -121,6 +123,11 @@ std::vector<artist_t> api::get_artists(const item_ids_t &ids)
 bool api::is_track_saved(const item_id_t &track_id, bool force_sync)
 {
     return collection->is_track_saved(track_id, force_sync);
+}
+
+bool api::is_album_saved(const item_id_t &album_id, bool force_sync)
+{
+    return collection->is_album_saved(album_id, force_sync);
 }
 
 followed_artists_ptr api::get_followed_artists()

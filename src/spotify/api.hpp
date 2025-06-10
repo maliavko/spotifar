@@ -40,6 +40,10 @@ public:
     bool save_tracks(const item_ids_t &ids) override { return collection->save_tracks(ids); }
     bool remove_saved_tracks(const item_ids_t &ids) override { return collection->remove_saved_tracks(ids); }
     
+    bool is_album_saved(const item_id_t &album_id, bool force_sync = false) override;
+    bool save_albums(const item_ids_t &ids) override { return collection->save_albums(ids); }
+    bool remove_saved_albums(const item_ids_t &ids) override { return collection->remove_saved_albums(ids); }
+    
     // library api interface
     auto get_followed_artists() -> followed_artists_ptr override;
     auto get_artist(const item_id_t &artist_id) -> artist_t override;

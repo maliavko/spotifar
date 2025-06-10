@@ -7,6 +7,7 @@
 #include "spotify/common.hpp"
 #include "spotify/history.hpp"
 #include "spotify/releases.hpp"
+#include "spotify/library.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -14,14 +15,13 @@ using namespace spotify;
 
 /// @brief A base class for all the view representing a list
 /// of albums in either way
-class albums_base_view: public view
+class albums_base_view:
+    public view,
+    public collection_observer
 {
 public:
-    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L""):
-        view(panel, title, dir_name), api_proxy(api)
-        {}
-    
-    ~albums_base_view() { api_proxy.reset(); }
+    albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L"");
+    ~albums_base_view();
 
     auto get_items() -> const items_t& override;
 protected:
@@ -35,10 +35,14 @@ protected:
     bool request_extra_info(const data_item_t* data) override;
     void update_panel_info(OpenPanelInfo *info) override;
     auto process_key_input(int combined_key) -> intptr_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
-        const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto get_key_bar_info() -> const key_bar_info_t* override;
+
+    // collection_observer
+    void on_saved_tracks_changed(const item_ids_t &ids) override;
 protected:
     api_weak_ptr_t api_proxy;
+    items_t items;
 };
 
 

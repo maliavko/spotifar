@@ -30,7 +30,7 @@ struct saved_items_cache_t
 
     bool resync(library_statuses_t&);
 
-    void update_saved_tracks(const item_ids_t &ids, bool status);
+    void update_saved_items(const item_ids_t &ids, bool status);
     
     bool is_item_saved(const item_id_t &item_id, bool force_sync);
 
@@ -56,8 +56,16 @@ public:
 
     // https://developer.spotify.com/documentation/web-api/reference/remove-tracks-user
     bool remove_saved_tracks(const item_ids_t &ids);
+
+    bool is_album_saved(const item_id_t &id, bool force_sync = false);
+
+    bool save_albums(const item_ids_t &ids);
+
+    bool remove_saved_albums(const item_ids_t &ids);
 protected:
     auto check_saved_tracks(const item_ids_t &ids) -> std::deque<bool>;
+
+    auto check_saved_albums(const item_ids_t &ids) -> std::deque<bool>;
 
     // json_cache's interface
     bool is_active() const override;
@@ -67,11 +75,14 @@ private:
     api_interface *api_proxy;
 
     saved_items_cache_t tracks;
+    saved_items_cache_t albums;
 };
 
 struct collection_observer: public BaseObserverProtocol
 {
-    virtual void on_saved_tracks_status_received(const item_ids_t &ids) {}
+    virtual void on_saved_tracks_changed(const item_ids_t &ids) {}
+
+    virtual void on_saved_albums_changed(const item_ids_t &ids) {}
 };
 
 } // namespace spotify

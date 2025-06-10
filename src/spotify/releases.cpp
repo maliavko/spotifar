@@ -89,7 +89,7 @@ bool recent_releases::request_data(data_t &data)
                 // the result was obtained from the cache, there is no need to do that
                 if (!is_cached)
                 {
-                    auto delay_time = utils::events::has_observers<playback_observer>() ? 30s : 10s;
+                    auto delay_time = utils::events::has_observers<playback_observer>() ? 30s : 15s;
                     cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
                 }
             });

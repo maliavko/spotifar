@@ -66,7 +66,7 @@ bool saved_items_cache_t::resync(library_statuses_t &data)
             data.insert_or_assign(ids[i], result[i]);
 
         // dispatching an event to notify observers about the new saved status
-        dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
+        dispatch_event(&collection_observer::on_saved_tracks_changed, ids);
         return true;
     }
     else
@@ -76,7 +76,7 @@ bool saved_items_cache_t::resync(library_statuses_t &data)
     return false;
 }
 
-void saved_items_cache_t::update_saved_tracks(const item_ids_t &ids, bool status)
+void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
 {
     auto &container = container_getter();
 
@@ -113,7 +113,8 @@ bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_syn
 
 library::library(api_interface *api):
     json_cache(), api_proxy(api),
-    tracks([this] { return std::ref(value.get().tracks); }, std::bind(&library::check_saved_tracks, this, phs::_1))
+    tracks([this] { return std::ref(value.get().tracks); }, std::bind(&library::check_saved_tracks, this, phs::_1)),
+    albums([this] { return std::ref(value.get().albums); }, std::bind(&library::check_saved_albums, this, phs::_1))
 {
 }
 
@@ -125,25 +126,6 @@ library::~library()
 bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
 {
     return tracks.is_item_saved(track_id, force_sync);
-}
-
-std::deque<bool> library::check_saved_tracks(const item_ids_t &ids)
-{
-    // note: bloody hell, damn vector specialization with bools is not a real vector,
-    // it cannot return ref to bools, so deque is used instead
-
-    // note: player visual style methods are being called extremely often, the 'like` button,
-    // which represents a state of a track being part of saved collection as well. That's why
-    // the response here is cached for a session
-    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
-        "/v1/me/tracks/contains", ids, batch_size);
-
-    if (requester.execute(api_proxy->get_ptr()))
-        return requester.get();
-    
-    // perhaps at some point it'd be good to add an error propagation here
-    // to show to the user
-    return {};
 }
 
 bool library::save_tracks(const item_ids_t &ids)
@@ -167,7 +149,7 @@ bool library::save_tracks(const item_ids_t &ids)
     for (const auto &id: ids)
         accessor.data.tracks.insert_or_assign(id, true);
 
-    dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
+    dispatch_event(&collection_observer::on_saved_tracks_changed, ids);
 
     return true;
 }
@@ -193,9 +175,94 @@ bool library::remove_saved_tracks(const item_ids_t &ids)
     for (const auto &id: ids)
         accessor.data.tracks.insert_or_assign(id, false);
 
-    dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
+    dispatch_event(&collection_observer::on_saved_tracks_changed, ids);
     
     return true;
+}
+
+bool library::is_album_saved(const item_id_t &album_id, bool force_sync)
+{
+    return albums.is_item_saved(album_id, force_sync);
+}
+
+bool library::save_albums(const item_ids_t &ids)
+{
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    auto requester = put_requester("/v1/me/albums", body.str());
+    if (!requester.execute(api_proxy->get_ptr()))
+    {
+        playback_cmd_error(http::get_status_message(requester.get_response()));
+        return false;
+    }
+    
+    // updating albums cache with the new saved albums ids
+    albums.update_saved_items(ids, true);
+
+    dispatch_event(&collection_observer::on_saved_albums_changed, ids);
+
+    return true;
+}
+
+bool library::remove_saved_albums(const item_ids_t &ids)
+{
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    auto requester = del_requester("/v1/me/albums", body.str());
+    if (!requester.execute(api_proxy->get_ptr()))
+    {
+        playback_cmd_error(http::get_status_message(requester.get_response()));
+        return false;
+    }
+    
+    // updating albums cache with the new saved albums ids
+    albums.update_saved_items(ids, false);
+
+    dispatch_event(&collection_observer::on_saved_albums_changed, ids);
+    
+    return true;
+}
+
+std::deque<bool> library::check_saved_tracks(const item_ids_t &ids)
+{
+    // note: bloody hell, damn vector specialization with bools is not a real vector,
+    // it cannot return ref to bools, so deque is used instead
+
+    // note: player visual style methods are being called extremely often, the 'like` button,
+    // which represents a state of a track being part of saved collection as well. That's why
+    // the response here is cached for a session
+    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
+        "/v1/me/tracks/contains", ids, batch_size);
+
+    if (requester.execute(api_proxy->get_ptr()))
+        return requester.get();
+    
+    // perhaps at some point it'd be good to add an error propagation here
+    // to show to the user
+    return {};
+}
+
+std::deque<bool> library::check_saved_albums(const item_ids_t &ids)
+{
+    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
+        "/v1/me/albums/contains", ids, batch_size);
+
+    if (requester.execute(api_proxy->get_ptr()))
+        return requester.get();
+    
+    // perhaps at some point it'd be good to add an error propagation here
+    // to show to the user
+    return {};
 }
 
 bool library::is_active() const
@@ -212,10 +279,10 @@ bool library::request_data(data_t &data)
 {
     data = get();
 
-    if (tracks.resync(data.tracks))
-        return true;
+    tracks.resync(data.tracks);
+    albums.resync(data.albums);
 
-    return false;
+    return true;
 }
     
 } // namespace spotify

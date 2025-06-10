@@ -7,16 +7,79 @@ namespace spotifar { namespace ui {
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
+/// @brief Helper-method for adjusting columns data prepared by views for Far API.
+/// Extract columns data and add a new column to the front
+/// @tparam ViewType 
+/// @param modes filled Far API struct
+/// @param col_name new column name
+/// @param col_size new column size
+/// @param col_uid new column id (C1,2,....)
+template<class ViewType>
+static void update_columns_info(PanelMode *modes, const wchar_t *col_name, size_t col_size, const wchar_t *col_uid)
+{
+    static struct
+    {
+        std::vector<const wchar_t*> titles;
+        wstring width, types;
+    } columns[9];
+    
+    for (size_t idx = 3; idx < 9; idx++)
+    {
+        size_t columns_count = utils::string_split(modes[idx].ColumnWidths, L',').size();
+        assert (columns_count > 0);
+
+        // extending all the columns data with the track number column
+        columns[idx].titles.push_back(col_name);
+        columns[idx].titles.insert(columns[idx].titles.end(),
+            modes[idx].ColumnTitles, modes[idx].ColumnTitles + columns_count);
+
+        columns[idx].width = std::format(L"{},{}", col_size, modes[idx].ColumnWidths);
+
+        columns[idx].types = std::format(L"{},{}", col_uid, modes[idx].ColumnTypes);
+
+        // overriding the panel modes with the new columns data
+        modes[idx].ColumnTitles = &columns[idx].titles[0];
+        modes[idx].ColumnWidths = columns[idx].width.c_str();
+        modes[idx].ColumnTypes = columns[idx].types.c_str();
+    }
+
+    modes[9] = modes[0] = modes[8];
+}
+
 //-----------------------------------------------------------------------------------------------------------
+albums_base_view::albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
+    view(panel, title, dir_name), api_proxy(api)
+{
+    utils::events::start_listening<collection_observer>(this);
+}
+
+albums_base_view::~albums_base_view()
+{
+    utils::events::stop_listening<collection_observer>(this);
+    items.clear();
+}
+
 const view::items_t& albums_base_view::get_items()
 {
-    static items_t items; items.clear();
+    items.clear();
 
     for (const auto &album: get_albums())
     {
         std::vector<wstring> columns;
         
-        // TODO: saved-or-not column?
+        size_t total_length_ms = 0;
+        bool is_saved = false;
+
+        if (auto api = api_proxy.lock())
+        {
+            auto tracks = api->get_album_tracks(album.id);
+            // collecting the data only from cache if exists
+            if (tracks->fetch(true, false))
+                for (const auto &t: *tracks)
+                    total_length_ms += t.duration_ms;
+
+            is_saved = api->is_album_saved(album.id);
+        }
         
         // column C0 - release year
         columns.push_back(std::format(L"{: ^6}", utils::to_wstring(album.get_release_year())));
@@ -31,16 +94,6 @@ const view::items_t& albums_base_view::get_items()
         columns.push_back(std::format(L"{: ^10}", utils::to_wstring(album.release_date)));
 
         // column C4 - album length
-        size_t total_length_ms = 0;
-        if (auto api = api_proxy.lock())
-        {
-            auto tracks = api->get_album_tracks(album.id);
-            // collecting the data only from cache if exists
-            if (tracks->fetch(true, false))
-                for (const auto &t: *tracks)
-                    total_length_ms += t.duration_ms;
-        }
-
         if (total_length_ms > 0)
             columns.push_back(std::format(L"{:%T >8}", std::chrono::milliseconds(total_length_ms)));
         else
@@ -51,6 +104,9 @@ const view::items_t& albums_base_view::get_items()
 
         // column C6 - main artist name
         columns.push_back(album.get_artist().name);
+
+        // column C7 - is saved in collection status
+        columns.push_back(is_saved ? L" + " : L"");
 
         // inherited views custom columns
         const auto &extra = get_extra_columns(album);
@@ -74,9 +130,9 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
 
-    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"Tx", L"Length", L"Type", L"Pop %" };
-    modes[3].ColumnTypes = L"C0,NON,C2,C4,C1,C5";
-    modes[3].ColumnWidths = L"6,0,4,8,6,5";
+    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"[+]", L"Tx", L"Length", L"Type", L"Pop %" };
+    modes[3].ColumnTypes = L"C0,NON,C7,C2,C4,C1,C5";
+    modes[3].ColumnWidths = L"6,0,3,4,8,6,5";
     modes[3].ColumnTitles = titles_3;
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
@@ -88,9 +144,9 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     modes[4].StatusColumnTypes = NULL;
     modes[4].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Artist", L"Tx", L"Length", L"Type", L"Pop %", L"Copyrights" };
-    modes[5].ColumnTypes = L"C0,NON,C6,C2,C4,C1,C5,Z";
-    modes[5].ColumnWidths = L"6,30,30,4,8,6,5,0";
+    static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Artist", L"[+]", L"Tx", L"Length", L"Type", L"Pop %", L"Copyrights" };
+    modes[5].ColumnTypes = L"C0,NON,C6,C7,C2,C4,C1,C5,Z";
+    modes[5].ColumnWidths = L"6,30,30,3,4,8,6,5,0";
     modes[5].ColumnTitles = titles_5;
     modes[5].StatusColumnTypes = NULL;
     modes[5].StatusColumnWidths = NULL;
@@ -109,9 +165,9 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     modes[7].StatusColumnWidths = NULL;
     modes[7].Flags = PMFLAGS_FULLSCREEN;
 
-    static const wchar_t* titles_8[] = { L"Yr", L"Name", L"Artist", L"Tx", L"Length", L"Type", L"Pop %" };
-    modes[8].ColumnTypes = L"C0,NON,C6,C2,C4,C1,C5";
-    modes[8].ColumnWidths = L"6,30,0,4,8,6,5";
+    static const wchar_t* titles_8[] = { L"Yr", L"Name", L"Artist", L"[+]", L"Tx", L"Length", L"Type", L"Pop %" };
+    modes[8].ColumnTypes = L"C0,NON,C6,C7,C2,C4,C1,C5";
+    modes[8].ColumnWidths = L"6,30,0,3,4,8,6,5";
     modes[8].ColumnTitles = titles_8;
     modes[8].StatusColumnTypes = NULL;
     modes[8].StatusColumnWidths = NULL;
@@ -204,8 +260,46 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             log::global->error("There is an error occured while getting a current panel item");
             return TRUE;
         }
+        case VK_F8:
+        {
+            
+            return TRUE;
+        }
     }
     return FALSE;
+}
+
+const view::key_bar_info_t* albums_base_view::get_key_bar_info()
+{
+    static key_bar_info_t key_bar{
+        { { VK_F7, 0 }, L"Like" },
+    };
+
+    auto crc32 = get_crc32();
+    auto item = utils::far3::panels::get_current_item(get_panel_handle());
+
+    if (item->CRC32 != crc32)
+        return nullptr;
+
+    if (auto *user_data = unpack_user_data(item->UserData))
+    {
+        if (auto api = api_proxy.lock())
+            key_bar[{ VK_F7, 0 }] = api->is_track_saved(user_data->id) ? L"Unlike" : L"Like";
+    }
+    
+    return &key_bar;
+}
+
+void albums_base_view::on_saved_tracks_changed(const item_ids_t &ids)
+{
+    std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
+
+    const auto &it = std::find_if(items.begin(), items.end(),
+        [&unique_ids](item_t &item) { return unique_ids.contains(item.id); });
+
+    // if any of view's tracks are changed, we need to refresh the panel
+    if (it != items.end())
+        events::refresh_panel(get_panel_handle());
 }
 
 
