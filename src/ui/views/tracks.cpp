@@ -78,12 +78,20 @@ const view::items_t& tracks_base_view::get_items()
 {
     items.clear();
 
-    auto api_interface = api_proxy.lock();
-    auto api = static_cast<spotify::api*>(api_interface.get());
-
     for (const auto &track: get_tracks())
     {
         std::vector<wstring> columns;
+        
+        bool is_selected = false;
+        bool is_saved = false;
+
+        if (auto api = api_proxy.lock())
+        {
+            const auto &pstate = api->get_playback_state();
+            is_selected = pstate.item && pstate.item.id == track.id;
+
+            is_saved = api->is_track_saved(track.id);
+        }
         
         // column C0 - is explicit lyrics
         columns.push_back(track.is_explicit ? L" * " : L"");
@@ -114,18 +122,11 @@ const view::items_t& tracks_base_view::get_items()
         columns.push_back(std::format(L"{: ^6}", track.album.get_type_abbrev()));
 
         // column C7 - is saved in collection status
-        columns.push_back(api->is_track_saved(track.id) ? L" + " : L"");
+        columns.push_back(is_saved ? L" + " : L"");
         
         // inherited views custom columns
         const auto &extra = get_extra_columns(track);
         columns.insert(columns.end(), extra.begin(), extra.end());
-        
-        bool is_item_selected = false;
-        if (auto api = api_proxy.lock())
-        {
-            const auto &pstate = api->get_playback_state();
-            is_item_selected = pstate.item && pstate.item.id == track.id;
-        }
 
         items.push_back({
             track.id,
@@ -134,7 +135,7 @@ const view::items_t& tracks_base_view::get_items()
             FILE_ATTRIBUTE_VIRTUAL,
             columns,
             const_cast<track_t*>(&track),
-            is_item_selected
+            is_selected
         });
     }
     return items;
@@ -280,7 +281,7 @@ const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
     return &key_bar;
 }
 
-void tracks_base_view::on_saved_tracks_status_received(const item_ids_t &ids)
+void tracks_base_view::on_saved_tracks_changed(const item_ids_t &ids)
 {
     std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
 
