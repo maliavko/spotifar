@@ -65,11 +65,13 @@ public:
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto get_title() const -> const wstring& { return title; }
     auto get_dir_name() const -> const wstring& { return dir_name; }
-    auto get_crc32() const -> size_t { return utils::crc32::WSID(get_uid().c_str()); }
 
     /// @brief Called when user hits F3 key on the panel, returns an
     /// additional info for the panel item under cursor
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
+    
+    // TODO: refactor to calculate once
+    auto get_crc32() const -> intptr_t { return utils::crc32::WSID(get_uid().c_str()); }
 
     /// @brief Searches for the `item_id` item on the panel and
     /// return its index or 0
@@ -96,12 +98,13 @@ protected:
     /// @brief A helper function to unpack user data from the far items
     static auto unpack_user_data(const UserDataItem &user_data) -> const data_item_t*;
 
-    /// @brief Returns a unique view string id, used in caching
-    string get_uid() const { return typeid(*this).name(); }
-
     /// @brief Returns a panel handle, the view is associsted with
     HANDLE get_panel_handle() const { return panel; }
 
+    // TODO: refactor to calculate once
+    /// @brief Returns a unique view string id, used in caching
+    string get_uid() const { return typeid(*this).name(); }
+    
     // derived classes' interface to the internal view mechanisms
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
     virtual bool request_extra_info(const data_item_t *data) { return false; }

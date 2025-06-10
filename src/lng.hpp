@@ -13,6 +13,8 @@ namespace spotifar
         MYes,
         MShowLogs,
         MRelaunch,
+        MLike,
+        MUnlike,
 
         MSortDialogTitle,
 

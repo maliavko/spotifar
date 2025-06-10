@@ -28,9 +28,19 @@ void to_json(json::Value &result, const saved_items_t &v, json::Allocator &alloc
     result.AddMember("albums", json::Value(albums, allocator), allocator);
 }
 
+
+bool library::toggle_track_saved(const item_id_t &id)
+{
+    if (is_track_saved(id), true)
+        return remove_saved_tracks({ id });
+    else
+        return save_tracks({ id });
+}
+
 bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
 {
-    auto &tracks = value.get().tracks;
+    auto accessor = lock_data();
+    auto &tracks = accessor.data.tracks;
 
     const auto it = tracks.find(track_id);
     if (it != tracks.end())
@@ -90,9 +100,9 @@ bool library::save_tracks(const item_ids_t &ids)
     }
     
     // updating tracks cache with the new saved tracks ids
-    auto &tracks = value.get().tracks;
+    auto accessor = lock_data();
     for (const auto &id: ids)
-        tracks.insert_or_assign(id, true);
+        accessor.data.tracks.insert_or_assign(id, true);
 
     dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
 
@@ -116,9 +126,9 @@ bool library::remove_saved_tracks(const item_ids_t &ids)
     }
     
     // updating tracks cache with the new saved tracks ids
-    auto &tracks = value.get().tracks;
+    auto accessor = lock_data();
     for (const auto &id: ids)
-        tracks.insert_or_assign(id, false);
+        accessor.data.tracks.insert_or_assign(id, false);
 
     dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
     
