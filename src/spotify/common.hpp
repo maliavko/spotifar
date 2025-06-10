@@ -75,13 +75,19 @@ public:
 
     /// @brief Returns tracks saving to collection (liked) status. The result is immediate,
     /// if status is unknown, returns false and puts track id into the internal queue,
-    /// once status is obtained collection_observer::on_saved_tracks_status_received is called
+    /// once status is obtained collection_observer::on_saved_tracks_changed is called
     /// @param force_sync turns method into blocking mode, which will wait for the status to be obtained
     virtual bool is_track_saved(const item_id_t &track_id, bool force_sync = false) = 0;
     
     virtual bool save_tracks(const item_ids_t &ids) = 0;
 
     virtual bool remove_saved_tracks(const item_ids_t &ids) = 0;
+
+    virtual bool is_album_saved(const item_id_t &id, bool force_sync = false) = 0;
+    
+    virtual bool save_albums(const item_ids_t &ids) = 0;
+
+    virtual bool remove_saved_albums(const item_ids_t &ids) = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
