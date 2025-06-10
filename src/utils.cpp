@@ -394,7 +394,6 @@ namespace far3
                 {
                     FarGetPluginPanelItem fgppi = { sizeof(FarGetPluginPanelItem), size, ppi.get() };
                     control(panel, cmd, i, &fgppi);
-                    ppi->FileAttributes |= FILE_ATTRIBUTE_ENCRYPTED;
 
                     result.push_back(ppi);
                 }

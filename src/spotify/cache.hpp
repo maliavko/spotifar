@@ -80,7 +80,17 @@ class json_cache: public cached_data_abstract
 {
 public:
     using data_t = T;
-    using patch_handler_t = std::function<void(json::Document &)>;
+    using patch_handler_t = std::function<void(json::Document&)>;
+    
+    /// @brief A helper to lock json_cache's data and guard it with mutex
+    /// for changes outside of the class 
+    struct accessor_t
+    {
+        std::lock_guard<std::mutex> lock;
+        T& data;
+
+        accessor_t(T &data, std::mutex &mutex): data(data), lock(mutex) {}
+    };
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
     /// the cache is not getting saved to disk, kept for sessino only
@@ -99,6 +109,7 @@ public:
     /// for some time for the all upcoming resyncs
     void patch(patch_handler_t handler);
 
+    auto lock_data() -> accessor_t;
     auto get() const -> const T& { return value.get(); }
     auto extract() -> T&& { return value.extract(); }
     auto get_expires_at() const -> const time_point& { return expires_at.get(); }
@@ -130,12 +141,13 @@ protected:
     /// @param data a currently synced data
     /// @param prev_data a previously synced data to compare with
     virtual void on_data_synced(const T &data, const T &prev_data) {}
-protected:
+private:
     json_value<T> value;
     timestamp_value expires_at;
     bool is_persistent;
 
     std::mutex patch_guard;
+    std::mutex data_access_guard;
     std::vector<std::pair<time_point, patch_handler_t>> patches;
 };
 
@@ -190,6 +202,8 @@ void json_cache<T>::resync(bool force)
     // is invalid or resync is forced
     if (!force && (!is_active() || is_valid())) return;
 
+    std::lock_guard lock(data_access_guard);
+
     T new_data;
     if (request_data(new_data))
     {
@@ -205,6 +219,12 @@ void json_cache<T>::resync(bool force)
     {
         expires_at.set(sync_time + get_retry_interval());
     }
+}
+
+template<typename T>
+json_cache<T>::accessor_t json_cache<T>::lock_data()
+{
+    return accessor_t(value.get(), data_access_guard);
 }
 
 template<typename T>
@@ -236,7 +256,7 @@ void json_cache<T>::apply_patches(T &item)
     std::erase_if(patches, [&now](auto &v) { return v.first + 1500ms < now; });
     
     // applying the valid patches next
-    for (const auto& [t, p]: patches)
+    for (const auto &[t, p]: patches)
         p(doc);
     
     // unpacking the item back to the data

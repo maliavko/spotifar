@@ -11,7 +11,8 @@ namespace panels = utils::far3::panels;
 
 /// @brief Helper-method for adjusting columns data prepared by views for Far API.
 /// Extract columns data and add a new column to the front
-/// @tparam ViewType 
+/// @tparam ViewType as function uses static variables, this parameters ensures we
+/// separate them for each view class using this helper
 /// @param modes filled Far API struct
 /// @param col_name new column name
 /// @param col_size new column size
@@ -140,6 +141,18 @@ const view::items_t& tracks_base_view::get_items()
     return items;
 }
 
+item_ids_t tracks_base_view::get_selected_items()
+{
+    item_ids_t result;
+    const auto &items = panels::get_items(get_panel_handle(), true);
+    for (size_t idx = 0; idx < items.size(); idx++)
+    {
+        if (auto user_data = unpack_user_data(items[idx]->UserData))
+            result.push_back(user_data->id);
+    }
+    return result;
+}
+
 void tracks_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
@@ -233,10 +246,57 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 {
     switch (combined_key)
     {
+        case VK_F4:
+        {
+            const auto &ids = get_selected_items();
+
+            if (ids.size() == 1)
+            {
+                // if only one items is selected, we launch it in the current folder context
+                log::global->debug("Launching content playback with the given track id {}", ids[0]);
+                start_playback(ids[0]);
+            }
+            else
+            {
+                // if there are several items selected on the panel, we are launching them in the order
+                // selected as a range of URIs
+                log::global->debug("Launching several tracks playback {}", utils::string_join(ids, ","));
+                if (auto api = api_proxy.lock())
+                {
+                    std::vector<string> uris;
+                    std::transform(ids.begin(), ids.end(), std::back_inserter(uris),
+                        [](const item_id_t &id) { return spotify::track_t::make_uri(id); });
+
+                    api->start_playback(uris);
+                }
+            }
+
+            return TRUE;
+        }
+        case VK_F8:
+        {
+            const auto &ids = get_selected_items();
+
+            if (auto api = api_proxy.lock(); !ids.empty())
+                // what to do - like or unlike - with the whole list  of items
+                // we decide based on the first item state
+                if (api->is_track_saved(ids[0], true))
+                    api->remove_saved_tracks(ids);
+                else
+                    api->save_tracks(ids);
+
+            return TRUE;
+        }
+    }
+
+
+    /*auto item = panels::get_current_item(get_panel_handle())
+
+    switch (combined_key)
+    {
         case VK_RETURN + utils::keys::mods::shift:
         {
-            auto item = panels::get_current_item(get_panel_handle());
-            if (item != nullptr)
+            if (item)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
                 {
@@ -255,28 +315,38 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 
             return TRUE;
         }
-    }
+        case VK_F8:
+        {
+            if (item)
+            {
+
+            }
+            return TRUE;
+        }
+    }*/
     return FALSE;
 }
 
 const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
 {
-    static key_bar_info_t key_bar{
-        { { VK_F7, 0 }, L"Like" },
-    };
+    static key_bar_info_t key_bar{};
 
-    auto crc32 = get_crc32();
+    auto view_crc32 = get_crc32();
     auto item = utils::far3::panels::get_current_item(get_panel_handle());
 
-    if (item->CRC32 != crc32)
-        return nullptr;
+    // right after switching the directory on the panel, when we trap here `panels::get_current_item`
+    // returns the `item` from  the previous directory. Checking crc32 helps to identify
+    // when the panel is refreshed eventually and we can be sure the item is valid
+    if (item->CRC32 != view_crc32) return nullptr;
 
-    if (auto *user_data = unpack_user_data(item->UserData))
+    if (auto *user_data = unpack_user_data(item->UserData); auto api = api_proxy.lock())
     {
-        if (auto api = api_proxy.lock())
-            key_bar[{ VK_F7, 0 }] = api->is_track_saved(user_data->id) ? L"Unlike" : L"Like";
+        if (api->is_track_saved(user_data->id))
+            key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+        else
+            key_bar[{ VK_F8, 0 }] = get_text(MLike);
     }
-    
+
     return &key_bar;
 }
 
