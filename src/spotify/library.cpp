@@ -4,6 +4,7 @@ namespace spotifar { namespace spotify {
 
 namespace json = utils::json;
 namespace http = utils::http;
+namespace phs = std::placeholders;
 using utils::far3::synchro_tasks::dispatch_event;
 
 static const size_t batch_size = 50;
@@ -42,26 +43,88 @@ bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
     auto accessor = lock_data();
     auto &tracks = accessor.data.tracks;
 
-    const auto it = tracks.find(track_id);
-    if (it != tracks.end())
+bool saved_items_cache_t::resync(library_statuses_t &data)
+{
+    if (ids_to_process.empty()) return false;
+
+    item_ids_t ids;
+
+    {
+        std::lock_guard<std::mutex> lock(access_guard);
+        if (ids_to_process.size() > batch_size)
+        {
+            ids.assign(ids_to_process.begin(), ids_to_process.begin() + batch_size);
+            ids_to_process.erase(ids_to_process.begin(), ids_to_process.begin() + batch_size);
+        }
+        else
+            ids = std::move(ids_to_process);
+    }
+
+    if (auto result = check_handler(ids); result.size() == ids.size())
+    {
+        for (size_t i = 0; i < ids.size(); ++i)
+            data.insert_or_assign(ids[i], result[i]);
+
+        // dispatching an event to notify observers about the new saved status
+        dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
+        return true;
+    }
+    else
+    {
+        log::api->error("Failed to get saved status for {} tracks", ids.size());
+    }
+    return false;
+}
+
+void saved_items_cache_t::update_saved_tracks(const item_ids_t &ids, bool status)
+{
+    auto &container = container_getter();
+
+    for (const auto &id: ids)
+        container.insert_or_assign(id, status);
+}
+
+bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_sync)
+{
+    auto &container = container_getter();
+
+    const auto it = container.find(item_id);
+    if (it != container.end())
         return it->second;
 
     if (force_sync)
     {
-        if (auto res = check_saved_tracks({ track_id }); res.size() == 1)
+        if (auto res = check_handler({ item_id }); res.size() == 1)
         {
-            tracks.insert({ track_id, res[0] });
+            container.insert_or_assign(item_id, res[0]);
             return res[0];
         }
     }
-    
+
     {
-        std::lock_guard<std::mutex> lock(data_access_guard);
-        if (std::find(tracks_to_process.begin(), tracks_to_process.end(), track_id) == tracks_to_process.end())
-            tracks_to_process.push_back(track_id);
+        std::lock_guard<std::mutex> lock(access_guard);
+        if (std::find(ids_to_process.begin(), ids_to_process.end(), item_id) == ids_to_process.end())
+            ids_to_process.push_back(item_id);
     }
 
     return false;
+}
+
+
+library::library(api_interface *api):
+    json_cache(), api_proxy(api),
+    tracks([this] { return std::ref(value.get().tracks); }, std::bind(&library::check_saved_tracks, this, phs::_1))
+{
+}
+
+library::~library()
+{
+    api_proxy = nullptr;
+}
+
+bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
+{
+    return tracks.is_item_saved(track_id, force_sync);
 }
 
 std::deque<bool> library::check_saved_tracks(const item_ids_t &ids)
@@ -147,38 +210,10 @@ clock_t::duration library::get_sync_interval() const
 
 bool library::request_data(data_t &data)
 {
-    if (tracks_to_process.empty()) return false;
+    data = get();
 
-    if (api_proxy != nullptr)
-    {
-        item_ids_t ids;
-        {
-            std::lock_guard<std::mutex> lock(data_access_guard);
-            if (tracks_to_process.size() > batch_size)
-            {
-                ids.assign(tracks_to_process.begin(), tracks_to_process.begin() + batch_size);
-                tracks_to_process.erase(tracks_to_process.begin(), tracks_to_process.begin() + batch_size);
-            }
-            else
-                ids = std::move(tracks_to_process);
-        }
-
-        if (auto result = check_saved_tracks(ids); result.size() == ids.size())
-        {
-            data = get();
-
-            for (size_t i = 0; i < ids.size(); ++i)
-                data.tracks.insert_or_assign(ids[i], result[i]);
-
-            // dispatching an event to notify observers about the new saved status
-            dispatch_event(&collection_observer::on_saved_tracks_status_received, ids);
-            return true;
-        }
-        else
-        {
-            log::api->error("Failed to get saved status for {} tracks", ids.size());
-        }
-    }
+    if (tracks.resync(data.tracks))
+        return true;
 
     return false;
 }
