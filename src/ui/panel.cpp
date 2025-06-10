@@ -158,7 +158,7 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
 
     if (view == nullptr) return TRUE;
 
-    size_t view_crc32 = view->get_crc32();
+    auto view_crc32 = view->get_crc32();
     const auto &items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
@@ -195,7 +195,8 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;
         panel_item[idx].CustomColumnNumber = item.columns_data.size();
-        panel_item[idx].CRC32 = view_crc32;
+        panel_item[idx].CRC32 = view_crc32; // emplacing the view's unique crc32 to be able to
+                                            // distibguish which view the item belongs to later if needed
         
         if (item.user_data != nullptr)
             panel_item[idx].UserData.Data = item.user_data;
@@ -245,10 +246,11 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                         should_refresh = true;
 
                 if (should_refresh) // refreshing only in case anything has changed
+                {
                     refresh();
-
-                // blocking F3 panel processing in general, as we have a custom one
-                return TRUE;
+                    return TRUE;
+                }
+                break;
             }
             // to show a sort menu for the currently opened view
             case VK_F12 + keys::mods::ctrl:

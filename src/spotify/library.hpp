@@ -25,6 +25,8 @@ public:
     library(api_interface *api): json_cache(), api_proxy(api) {}
     ~library() { api_proxy = nullptr; }
 
+    bool toggle_track_saved(const item_id_t &id);
+
     /// @brief https://developer.spotify.com/documentation/web-api/reference/check-users-saved-tracks 
     bool is_track_saved(const item_id_t &id, bool force_sync = false);
 
