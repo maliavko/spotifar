@@ -7,7 +7,7 @@
 #include "spotify/common.hpp"
 #include "spotify/history.hpp"
 #include "spotify/releases.hpp"
-#include "spotify/library.hpp"
+#include "spotify/collection.hpp"
 
 namespace spotifar { namespace ui {
 

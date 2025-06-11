@@ -1,4 +1,4 @@
-#include "library.hpp"
+#include "collection.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -31,7 +31,7 @@ void to_json(json::Value &result, const saved_items_t &v, json::Allocator &alloc
 }
 
 
-std::deque<bool> check_saved_items(api_interface *api, const string &endpoint_url, const item_ids_t &ids)
+static std::deque<bool> check_saved_items(api_interface *api, const string &endpoint_url, const item_ids_t &ids)
 {
     // note: bloody hell, damn vector specialization with bools is not a real vector,
     // it cannot return ref to bools, so deque is used instead
@@ -127,7 +127,7 @@ bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_syn
 
 
 //-------------------------------------------------------------------------------------------------------------------
-statuses_container_t& tracks_items_cache_t::get_container(library_base_t::data_t &data)
+statuses_container_t& tracks_items_cache_t::get_container(collection_base_t::data_t &data)
 {
     return data.tracks;
 }
@@ -137,7 +137,7 @@ std::deque<bool> tracks_items_cache_t::check_saved_items(api_interface *api, con
     return spotify::check_saved_items(api, "/v1/me/tracks/contains", ids);
 }
 
-statuses_container_t& albums_items_cache_t::get_container(library_base_t::data_t &data)
+statuses_container_t& albums_items_cache_t::get_container(collection_base_t::data_t &data)
 {
     return data.tracks;
 }
@@ -149,24 +149,24 @@ std::deque<bool> albums_items_cache_t::check_saved_items(api_interface *api, con
 
 
 //-------------------------------------------------------------------------------------------------------------------
-library::library(api_interface *api):
+collection::collection(api_interface *api):
     json_cache(), api_proxy(api),
     tracks([this] { return std::ref(value.get().tracks); }, std::bind(&library::check_saved_tracks, this, phs::_1)),
     albums([this] { return std::ref(value.get().albums); }, std::bind(&library::check_saved_albums, this, phs::_1))
 {
 }
 
-library::~library()
+collection::~collection()
 {
     api_proxy = nullptr;
 }
 
-bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
+bool collection::is_track_saved(const item_id_t &track_id, bool force_sync)
 {
     return tracks.is_item_saved(track_id, force_sync);
 }
 
-bool library::save_tracks(const item_ids_t &ids)
+bool collection::save_tracks(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -192,7 +192,7 @@ bool library::save_tracks(const item_ids_t &ids)
     return true;
 }
 
-bool library::remove_saved_tracks(const item_ids_t &ids)
+bool collection::remove_saved_tracks(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -218,12 +218,12 @@ bool library::remove_saved_tracks(const item_ids_t &ids)
     return true;
 }
 
-bool library::is_album_saved(const item_id_t &album_id, bool force_sync)
+bool collection::is_album_saved(const item_id_t &album_id, bool force_sync)
 {
     return albums.is_item_saved(album_id, force_sync);
 }
 
-bool library::save_albums(const item_ids_t &ids)
+bool collection::save_albums(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -247,7 +247,7 @@ bool library::save_albums(const item_ids_t &ids)
     return true;
 }
 
-bool library::remove_saved_albums(const item_ids_t &ids)
+bool collection::remove_saved_albums(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -271,17 +271,17 @@ bool library::remove_saved_albums(const item_ids_t &ids)
     return true;
 }
 
-bool library::is_active() const
+bool collection::is_active() const
 {
     return api_proxy->is_authenticated();
 }
 
-clock_t::duration library::get_sync_interval() const
+clock_t::duration collection::get_sync_interval() const
 {
     return 1500ms;
 }
 
-bool library::request_data(data_t &data)
+bool collection::request_data(data_t &data)
 {
     data = get();
 
