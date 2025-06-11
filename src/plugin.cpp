@@ -16,6 +16,7 @@ using namespace utils::http;
 static const std::set<string> no_splash_requests{
     "/v1/me/player/recently-played",
     "/v1/me/tracks/contains",
+    "/v1/me/albums/contains",
 };
 
 plugin::plugin(): api(new spotify::api())
