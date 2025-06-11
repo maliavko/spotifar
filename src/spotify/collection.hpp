@@ -1,5 +1,5 @@
-#ifndef LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465
-#define LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465
+#ifndef collection_HPP_92081AAB_EE4E_40B2_814E_83B712132465
+#define collection_HPP_92081AAB_EE4E_40B2_814E_83B712132465
 #pragma once
 
 #include "stdafx.h"
@@ -21,16 +21,16 @@ struct saved_items_t
     friend void to_json(json::Value &j, const saved_items_t &v, json::Allocator &allocator);
 };
 
-using library_base_t = json_cache<saved_items_t>;
+using collection_base_t = json_cache<saved_items_t>;
 
 /// @brief A cache container for the specific Spotify API items saving
 /// statuses. Provides a mechanism for accessing, requesting and storing
 /// the statuses with minimum overhead for the remote API
 class saved_items_cache_t
 {
-    using data_accessor_t = std::function<library_base_t::accessor_t()>;
+    using data_accessor_t = std::function<collection_base_t::accessor_t()>;
 public:
-    /// @param accessor function-getter to obtain a main library_base_t::data_t
+    /// @param accessor function-getter to obtain a main collection_base_t::data_t
     /// container for writing
     saved_items_cache_t(api_interface *api, data_accessor_t accessor):
         api_proxy(api), data_accessor(accessor)
@@ -54,7 +54,7 @@ public:
 protected:
     /// @brief Helps to get an access to the needed nested container, which is part of
     /// the main on `c`
-    virtual auto get_container(library_base_t::data_t& c) -> statuses_container_t& = 0;
+    virtual auto get_container(collection_base_t::data_t& c) -> statuses_container_t& = 0;
 
     /// @brief Implements a specific checking API request for the item types the class holds
     virtual auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> = 0;
@@ -71,7 +71,7 @@ class tracks_items_cache_t: public saved_items_cache_t
 public:
     using saved_items_cache_t::saved_items_cache_t;
 protected:
-    auto get_container(library_base_t::data_t &data) -> statuses_container_t& override;
+    auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
     auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
 };
 
@@ -81,7 +81,7 @@ class albums_items_cache_t: public saved_items_cache_t
 public:
     using saved_items_cache_t::saved_items_cache_t;
 protected:
-    auto get_container(library_base_t::data_t &data) -> statuses_container_t& override;
+    auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
     auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
 };
 
@@ -89,11 +89,11 @@ protected:
 /// @brief A class-container for providing an access to the API items and user's own collection.
 /// Caches the data, performs delayed request to reduce a workload to the API and sends events
 /// on readiness.
-class library: public library_base_t
+class collection: public collection_base_t
 {
 public:
-    library(api_interface *api);
-    ~library();
+    collection(api_interface *api);
+    ~collection();
 
     /// @brief Checks the given track `id` saving status. Returns immediately if is cached,
     /// otherwise returns `false` and puts to the queue for requesting.
@@ -146,4 +146,4 @@ struct collection_observer: public BaseObserverProtocol
 } // namespace spotify
 } // namespace spotifar
 
-#endif // LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465
+#endif // collection_HPP_92081AAB_EE4E_40B2_814E_83B712132465
