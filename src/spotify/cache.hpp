@@ -89,7 +89,7 @@ public:
         std::lock_guard<std::mutex> lock;
         T& data;
 
-        accessor_t(T &data, std::mutex &mutex): data(data), lock(mutex) {}
+        accessor_t(T &data, std::mutex &m): data(data), lock(m) {}
     };
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
