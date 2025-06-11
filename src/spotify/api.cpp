@@ -9,13 +9,13 @@ const string spotify_api_url = "https://api.spotify.com";
 
 // majority of time the threads are not needed, but in case of requesting
 // a collection with bunch of pages we perform them asynchronously
-const size_t pool_size = 12;
+const size_t POOL_SIZE = 12;
 
 // a helper-function to avoid copy-pasting. Performs an execution of a given
 // requester, checks the result and returns it back
 // @tparam R item_requester type
 template<class R>
-auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::result_t
+static auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::result_t
 {
     if (requester.execute(api))
         return requester.get();
@@ -26,7 +26,7 @@ auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::result_t
 }
 
 //----------------------------------------------------------------------------------------------
-api::api(): pool(pool_size)
+api::api(): pool(POOL_SIZE)
 {
 }
 
@@ -42,7 +42,7 @@ bool api::start()
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
     releases = std::make_unique<recent_releases>(this);
-    collection = std::make_unique<library>(this);
+    collection = std::make_unique<spotify::collection>(this);
 
     caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), releases.get(), collection.get() });
 

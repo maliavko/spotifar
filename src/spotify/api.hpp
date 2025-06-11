@@ -10,7 +10,7 @@
 #include "auth.hpp"
 #include "history.hpp"
 #include "releases.hpp"
-#include "library.hpp"
+#include "collection.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -99,7 +99,7 @@ private:
     http_cache api_responses_cache;
 
     // caches
-    std::unique_ptr<library> collection;
+    std::unique_ptr<collection> collection;
     std::unique_ptr<playback_cache> playback;
     std::unique_ptr<devices_cache> devices;
     std::unique_ptr<auth_cache> auth;
