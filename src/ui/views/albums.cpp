@@ -126,58 +126,111 @@ const view::items_t& albums_base_view::get_items()
     return items;
 }
 
+
+
+struct panel_mode_t
+{    
+    struct column_t
+    {
+        const wchar_t *uid;
+        const wchar_t *title;
+        const wchar_t *width;
+    };
+
+    wstring types, widths;
+    std::vector<const wchar_t*> titles{};
+    std::vector<column_t> columns;
+    bool is_wide;
+
+    panel_mode_t(std::vector<column_t> &&cols, bool is_wide = false): is_wide(is_wide)
+    {
+        columns = std::move(cols);
+
+        std::vector<const wchar_t*> all_types, all_widths;
+        for (const auto &column: columns)
+        {
+            titles.push_back(column.title);
+            all_types.push_back(column.uid);
+            all_widths.push_back(column.width);
+        }
+
+        if (columns.size() > 0)
+        {
+            types = utils::string_join(all_types, L",");
+            widths = utils::string_join(all_widths, L",");
+        }
+    }
+
+    bool is_empty() const { return columns.size() == 0; }
+};
+
+class panel_modes_t: std::vector<panel_mode_t>
+{
+public:
+    static const size_t MODES_COUNT = 10;
+    
+    using vector::vector;
+    using vector::size;
+    using vector::at;
+
+    const PanelMode* get_modes() const { return modes; }
+
+    void update()
+    {
+        for (size_t i = 0; i < MODES_COUNT; i++)
+        {
+            if (auto &mode = at(i); !mode.is_empty())
+            {
+                auto &far_mode = modes[i];
+
+                far_mode.ColumnTypes = mode.types.c_str();
+                far_mode.ColumnWidths = mode.widths.c_str();
+                far_mode.ColumnTitles = &mode.titles[0];
+                far_mode.Flags = mode.is_wide ? PMFLAGS_FULLSCREEN : PMFLAGS_NONE;
+                far_mode.StatusColumnTypes = NULL;
+                far_mode.StatusColumnWidths = NULL;
+            }
+        }
+    }
+private:
+    PanelMode modes[MODES_COUNT];
+};
+
 void albums_base_view::update_panel_info(OpenPanelInfo *info)
 {
-    static PanelMode modes[10];
+    using PM = panel_mode_t;
+    
+    static const panel_mode_t DummyPanelMode({});
 
-    static const wchar_t* titles_3[] = { L"Yr", L"Name", L"[+]", L"Tx", L"Length", L"Type", L"Pop %" };
-    modes[3].ColumnTypes = L"C0,NON,C7,C2,C4,C1,C5";
-    modes[3].ColumnWidths = L"6,0,3,4,8,6,5";
-    modes[3].ColumnTitles = titles_3;
-    modes[3].StatusColumnTypes = NULL;
-    modes[3].StatusColumnWidths = NULL;
+    static const panel_mode_t::column_t
+        ReleaseYear     { L"C0",    L"Yr",          L"6" },
+        Type            { L"C1",    L"Type",        L"6" },
+        TracksCount     { L"C2",    L"Tx",          L"4" },
+        ReleaseDate     { L"C3",    L"Release",     L"12" },
+        TotalDuration   { L"C4",    L"Length",      L"8" },
+        Popularity      { L"C5",    L"Pop %",       L"5" },
+        Artist          { L"C6",    L"Artist",      L"30" },
+        Saved           { L"C7",    L"[+]",         L"3" },
+        Name            { L"NON",   L"Name",        L"0" },
+        Copyrights      { L"Z",     L"Copyrights",  L"0" };
 
-    static const wchar_t* titles_4[] = { L"Yr", L"[+]", L"Name", L"Artist"};
-    modes[4].ColumnTypes = L"C0,C7,NON,C6";
-    modes[4].ColumnWidths = L"6,3,0,0";
-    modes[4].ColumnTitles = titles_4;
-    modes[4].StatusColumnTypes = NULL;
-    modes[4].StatusColumnWidths = NULL;
+    static panel_modes_t modes{
+        /* 0 */ DummyPanelMode,
+        /* 1 */ DummyPanelMode,
+        /* 2 */ DummyPanelMode,
+        /* 3 */ PM({ ReleaseYear, Name, Saved, TracksCount, TotalDuration, Type, Popularity }),
+        /* 4 */ PM({ ReleaseYear, Saved, Name, Artist }),
+        /* 5 */ PM({ ReleaseYear, Name, Artist, Saved, TracksCount, TotalDuration, Type, Popularity, Copyrights }, true),
+        /* 6 */ PM({ ReleaseYear, Name, Saved, Copyrights }),
+        /* 7 */ PM({ ReleaseYear, Name, Artist, Saved, Copyrights }, true),
+        /* 8 */ PM({ ReleaseYear, Name, Artist, Saved, TracksCount, TotalDuration, Type, Popularity }),
+        /* 9 */ DummyPanelMode,
+    };
 
-    static const wchar_t* titles_5[] = { L"Yr", L"Name", L"Artist", L"[+]", L"Tx", L"Length", L"Type", L"Pop %", L"Copyrights" };
-    modes[5].ColumnTypes = L"C0,NON,C6,C7,C2,C4,C1,C5,Z";
-    modes[5].ColumnWidths = L"6,30,30,3,4,8,6,5,0";
-    modes[5].ColumnTitles = titles_5;
-    modes[5].StatusColumnTypes = NULL;
-    modes[5].StatusColumnWidths = NULL;
-    modes[5].Flags = PMFLAGS_FULLSCREEN;
-
-    static const wchar_t* titles_6[] = { L"Yr", L"Name", L"[+]", L"Copyrights" };
-    modes[6].ColumnTypes = L"C0,NON,C7,Z";
-    modes[6].ColumnWidths = L"6,0,3,0";
-    modes[6].ColumnTitles = titles_6;
-
-    static const wchar_t* titles_7[] = { L"Yr", L"Name", L"Artist", L"[+]", L"Copyrights" };
-    modes[7].ColumnTypes = L"C0,NON,C6,C7,Z";
-    modes[7].ColumnWidths = L"6,30,30,3,0";
-    modes[7].ColumnTitles = titles_7;
-    modes[7].StatusColumnTypes = NULL;
-    modes[7].StatusColumnWidths = NULL;
-    modes[7].Flags = PMFLAGS_FULLSCREEN;
-
-    static const wchar_t* titles_8[] = { L"Yr", L"Name", L"Artist", L"[+]", L"Tx", L"Length", L"Type", L"Pop %" };
-    modes[8].ColumnTypes = L"C0,NON,C6,C7,C2,C4,C1,C5";
-    modes[8].ColumnWidths = L"6,30,0,3,4,8,6,5";
-    modes[8].ColumnTitles = titles_8;
-    modes[8].StatusColumnTypes = NULL;
-    modes[8].StatusColumnWidths = NULL;
-
-    modes[9] = modes[8];
-
-    modes[0] = modes[8];
-
-    info->PanelModesArray = modes;
-    info->PanelModesNumber = std::size(modes);
+    modes.update();
+    
+    info->PanelModesArray = modes.get_modes();
+    info->PanelModesNumber = modes.size();
 }
 
 const view::sort_modes_t& albums_base_view::get_sort_modes() const
