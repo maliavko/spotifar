@@ -100,6 +100,8 @@ protected:
 
     /// @brief Returns a panel handle, the view is associsted with
     HANDLE get_panel_handle() const { return panel; }
+    
+    item_ids_t get_selected_items();
 
     // TODO: refactor to calculate once
     /// @brief Returns a unique view string id, used in caching

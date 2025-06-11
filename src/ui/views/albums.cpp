@@ -137,9 +137,9 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     modes[3].StatusColumnTypes = NULL;
     modes[3].StatusColumnWidths = NULL;
 
-    static const wchar_t* titles_4[] = { L"Yr", L"Name", L"Artist" };
-    modes[4].ColumnTypes = L"C0,NON,C6";
-    modes[4].ColumnWidths = L"6,30,0";
+    static const wchar_t* titles_4[] = { L"Yr", L"[+]", L"Name", L"Artist"};
+    modes[4].ColumnTypes = L"C0,C7,NON,C6";
+    modes[4].ColumnWidths = L"6,3,0,0";
     modes[4].ColumnTitles = titles_4;
     modes[4].StatusColumnTypes = NULL;
     modes[4].StatusColumnWidths = NULL;
@@ -152,14 +152,14 @@ void albums_base_view::update_panel_info(OpenPanelInfo *info)
     modes[5].StatusColumnWidths = NULL;
     modes[5].Flags = PMFLAGS_FULLSCREEN;
 
-    static const wchar_t* titles_6[] = { L"Yr", L"Name", L"Copyrights" };
-    modes[6].ColumnTypes = L"C0,NON,Z";
-    modes[6].ColumnWidths = L"6,0,0";
+    static const wchar_t* titles_6[] = { L"Yr", L"Name", L"[+]", L"Copyrights" };
+    modes[6].ColumnTypes = L"C0,NON,C7,Z";
+    modes[6].ColumnWidths = L"6,0,3,0";
     modes[6].ColumnTitles = titles_6;
 
-    static const wchar_t* titles_7[] = { L"Yr", L"Name", L"Artist", L"Copyrights" };
-    modes[7].ColumnTypes = L"C0,NON,C6,Z";
-    modes[7].ColumnWidths = L"6,30,30,0";
+    static const wchar_t* titles_7[] = { L"Yr", L"Name", L"Artist", L"[+]", L"Copyrights" };
+    modes[7].ColumnTypes = L"C0,NON,C6,C7,Z";
+    modes[7].ColumnWidths = L"6,30,30,3,0";
     modes[7].ColumnTitles = titles_7;
     modes[7].StatusColumnTypes = NULL;
     modes[7].StatusColumnWidths = NULL;
@@ -243,7 +243,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
 {
     switch (combined_key)
     {
-        case VK_RETURN + utils::keys::mods::shift:
+        case VK_F4:
         {
             auto item = utils::far3::panels::get_current_item(get_panel_handle());
             if (auto api = api_proxy.lock(); item && api)
@@ -262,7 +262,16 @@ intptr_t albums_base_view::process_key_input(int combined_key)
         }
         case VK_F8:
         {
-            
+            const auto &ids = get_selected_items();
+
+            if (auto api = api_proxy.lock(); !ids.empty())
+                // what to do - like or unlike - with the whole list of items
+                // we decide based on the first item state
+                if (api->is_album_saved(ids[0], true))
+                    api->remove_saved_albums(ids);
+                else
+                    api->save_albums(ids);
+
             return TRUE;
         }
     }
@@ -271,26 +280,28 @@ intptr_t albums_base_view::process_key_input(int combined_key)
 
 const view::key_bar_info_t* albums_base_view::get_key_bar_info()
 {
-    static key_bar_info_t key_bar{
-        { { VK_F7, 0 }, L"Like" },
-    };
+    static key_bar_info_t key_bar{};
 
-    auto crc32 = get_crc32();
+    auto view_crc32 = get_crc32();
     auto item = utils::far3::panels::get_current_item(get_panel_handle());
 
-    if (item->CRC32 != crc32)
-        return nullptr;
+    // right after switching the directory on the panel, when we trap here `panels::get_current_item`
+    // returns the `item` from  the previous directory. Checking crc32 helps to identify
+    // when the panel is refreshed eventually and we can be sure the item is valid
+    if (item->CRC32 != view_crc32) return nullptr;
 
-    if (auto *user_data = unpack_user_data(item->UserData))
+    if (auto *user_data = unpack_user_data(item->UserData); auto api = api_proxy.lock())
     {
-        if (auto api = api_proxy.lock())
-            key_bar[{ VK_F7, 0 }] = api->is_track_saved(user_data->id) ? L"Unlike" : L"Like";
+        if (api->is_album_saved(user_data->id))
+            key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+        else
+            key_bar[{ VK_F8, 0 }] = get_text(MLike);
     }
-    
+
     return &key_bar;
 }
 
-void albums_base_view::on_saved_tracks_changed(const item_ids_t &ids)
+void albums_base_view::on_saved_albums_changed(const item_ids_t &ids)
 {
     std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
 
@@ -400,18 +411,18 @@ void saved_albums_view::update_panel_info(OpenPanelInfo *info)
 
     // adding `Saved at` column to some of the view modes
     static const wchar_t* titles_4[] = { L"Saved at", L"Yr", L"Name", L"Artist" };
-    modes[4].ColumnTypes = L"C7,C0,NON,C6";
+    modes[4].ColumnTypes = L"C8,C0,NON,C6";
     modes[4].ColumnWidths = L"12,6,30,0";
     modes[4].ColumnTitles = titles_4;
 
     static const wchar_t* titles_5[] = { L"Saved at", L"Yr", L"Name", L"Artist", L"Tx", L"Length", L"Type",
         L"Pop %", L"Copyrights" };
-    modes[5].ColumnTypes = L"C7,C0,NON,C6,C2,C4,C1,C5,Z";
+    modes[5].ColumnTypes = L"C8,C0,NON,C6,C2,C4,C1,C5,Z";
     modes[5].ColumnWidths = L"12,6,30,30,4,8,6,5,0";
     modes[5].ColumnTitles = titles_5;
 
     static const wchar_t* titles_7[] = { L"Saved at", L"Yr", L"Name", L"Artist", L"Copyrights" };
-    modes[7].ColumnTypes = L"C7,C0,NON,C6,Z";
+    modes[7].ColumnTypes = L"C8,C0,NON,C6,Z";
     modes[7].ColumnWidths = L"12,6,30,30,0";
     modes[7].ColumnTitles = titles_7;
 }
@@ -430,7 +441,7 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
     const auto &saved_at_str = std::format("{:^12}", saved_album.added_at.substr(0, 10));
 
     return {
-        utils::to_wstring(saved_at_str), // C7 - `added at` date
+        utils::to_wstring(saved_at_str), // C8 - `added at` date
     };
 }
 

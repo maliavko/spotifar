@@ -58,6 +58,10 @@ protected:
 
     /// @brief Implements a specific checking API request for the item types the class holds
     virtual auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> = 0;
+
+    /// @brief Implements a specific internal bus event, to notify all the listeners of
+    /// a particular container changes
+    virtual void dispatch_event(const item_ids_t &ids) = 0;
 private:
     api_interface *api_proxy;
     data_accessor_t data_accessor;
@@ -73,6 +77,7 @@ public:
 protected:
     auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
     auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
+    void dispatch_event(const item_ids_t &ids) override;
 };
 
 /// @brief Class specialisation for caching albums saving statuses
@@ -83,6 +88,7 @@ public:
 protected:
     auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
     auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
+    void dispatch_event(const item_ids_t &ids) override;
 };
 
 
@@ -91,6 +97,8 @@ protected:
 /// on readiness.
 class collection: public collection_base_t
 {
+    friend class saved_tracks_collection;
+    friend class saved_albums_collection;
 public:
     collection(api_interface *api);
     ~collection();
@@ -107,6 +115,12 @@ public:
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/remove-tracks-user
     bool remove_saved_tracks(const item_ids_t &ids);
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
+    auto get_saved_tracks() -> saved_tracks_ptr;
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
+    auto get_saved_albums() -> saved_albums_ptr;
 
     /// @brief Checks the given album `id` saving status. Returns immediately if is cached,
     /// otherwise returns `false` and puts to the queue for requesting.

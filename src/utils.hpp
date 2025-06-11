@@ -682,7 +682,7 @@ namespace crc32
         return *str ? 1+strlen_c(str+1) : 0;
     }
 
-    constexpr int WSID(const char* str) {
+    constexpr uint32_t WSID(const char* str) {
         return crc32((uint8_t*)str, strlen_c(str));
     }
 }
