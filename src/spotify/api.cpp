@@ -151,11 +151,6 @@ artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
     ));
 }
 
-saved_albums_ptr api::get_saved_albums()
-{
-    return saved_albums_ptr(new saved_albums_t(get_ptr(), "/v1/me/albums"));
-}
-
 std::vector<track_t> api::get_artist_top_tracks(const item_id_t &artist_id)
 {
     return request_item(item_requester<std::vector<track_t>, 1, std::chrono::weeks>(
@@ -184,11 +179,6 @@ album_tracks_ptr api::get_album_tracks(const item_id_t &album_id)
 {
     return album_tracks_ptr(new album_tracks_t(
         get_ptr(), std::format("/v1/albums/{}/tracks", album_id)));
-}
-
-saved_tracks_ptr api::get_saved_tracks()
-{
-    return saved_tracks_ptr(new saved_tracks_t(get_ptr(), "/v1/me/tracks"));
 }
 
 saved_playlists_ptr api::get_saved_playlists()

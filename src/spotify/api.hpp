@@ -39,17 +39,18 @@ public:
     bool is_track_saved(const item_id_t &track_id, bool force_sync = false) override;
     bool save_tracks(const item_ids_t &ids) override { return collection->save_tracks(ids); }
     bool remove_saved_tracks(const item_ids_t &ids) override { return collection->remove_saved_tracks(ids); }
+    auto get_saved_tracks() -> saved_tracks_ptr override { return collection->get_saved_tracks(); }
     
     bool is_album_saved(const item_id_t &album_id, bool force_sync = false) override;
     bool save_albums(const item_ids_t &ids) override { return collection->save_albums(ids); }
     bool remove_saved_albums(const item_ids_t &ids) override { return collection->remove_saved_albums(ids); }
+    auto get_saved_albums() -> saved_albums_ptr override { return collection->get_saved_albums(); }
     
     // library api interface
     auto get_followed_artists() -> followed_artists_ptr override;
     auto get_artist(const item_id_t &artist_id) -> artist_t override;
     auto get_artists(const item_ids_t &ids) -> std::vector<artist_t> override;
     auto get_artist_albums(const item_id_t &artist_id) -> artist_albums_ptr override;
-    auto get_saved_albums() -> saved_albums_ptr override;
     auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> override;
     auto get_album(const item_id_t &album_id) -> album_t override;
     auto get_albums(const item_ids_t &ids) -> std::vector<album_t> override;
@@ -61,7 +62,6 @@ public:
     auto get_saved_playlists() -> saved_playlists_ptr override;
     auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr override;
     auto get_playing_queue() -> playing_queue_t override;
-    auto get_saved_tracks() -> saved_tracks_ptr override;
     auto get_image(const image_t &image, const item_id_t &item_id) -> wstring override;
 
     // playback api interface

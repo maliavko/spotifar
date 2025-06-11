@@ -74,6 +74,18 @@ intptr_t view::compare_items(const CompareInfo *info)
     return -2; // fallback solution - delegate sorting to Far
 }
 
+item_ids_t view::get_selected_items()
+{
+    item_ids_t result;
+    const auto &items = panels::get_items(get_panel_handle(), true);
+    for (size_t idx = 0; idx < items.size(); idx++)
+    {
+        if (auto user_data = unpack_user_data(items[idx]->UserData))
+            result.push_back(user_data->id);
+    }
+    return result;
+}
+
 intptr_t view::process_input(const ProcessPanelInputInfo *info)
 {
     namespace keys = utils::keys;

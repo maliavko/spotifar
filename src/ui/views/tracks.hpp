@@ -23,8 +23,6 @@ public:
 
     auto get_items() -> const items_t& override;
 protected:
-    auto get_selected_items() -> item_ids_t;
-
     virtual bool start_playback(const item_id_t &track_id) = 0;
     virtual auto get_tracks() -> std::generator<const track_t&> = 0;
     virtual auto get_extra_columns(const track_t&) const -> std::vector<wstring> { return {}; }
