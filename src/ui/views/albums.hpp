@@ -39,7 +39,7 @@ protected:
     auto get_key_bar_info() -> const key_bar_info_t* override;
 
     // collection_observer
-    void on_saved_tracks_changed(const item_ids_t &ids) override;
+    void on_saved_albums_changed(const item_ids_t &ids) override;
 protected:
     api_weak_ptr_t api_proxy;
     items_t items;

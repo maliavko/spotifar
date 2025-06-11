@@ -142,18 +142,6 @@ const view::items_t& tracks_base_view::get_items()
     return items;
 }
 
-item_ids_t tracks_base_view::get_selected_items()
-{
-    item_ids_t result;
-    const auto &items = panels::get_items(get_panel_handle(), true);
-    for (size_t idx = 0; idx < items.size(); idx++)
-    {
-        if (auto user_data = unpack_user_data(items[idx]->UserData))
-            result.push_back(user_data->id);
-    }
-    return result;
-}
-
 void tracks_base_view::update_panel_info(OpenPanelInfo *info)
 {
     static PanelMode modes[10];
@@ -289,42 +277,6 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             return TRUE;
         }
     }
-
-
-    /*auto item = panels::get_current_item(get_panel_handle())
-
-    switch (combined_key)
-    {
-        case VK_RETURN + utils::keys::mods::shift:
-        {
-            if (item)
-            {
-                if (auto *user_data = unpack_user_data(item->UserData))
-                {
-                    log::global->info("Starting playback from the tracks view, {}", user_data->id);
-                    // if (start_playback(user_data->id))
-                    // {
-                    //     events::show_player();
-                    //     return TRUE;
-                    // }
-                    start_playback(user_data->id);
-                    return TRUE;
-                }
-            }
-            else
-                log::global->error("There is an error occured while getting a current panel item");
-
-            return TRUE;
-        }
-        case VK_F8:
-        {
-            if (item)
-            {
-
-            }
-            return TRUE;
-        }
-    }*/
     return FALSE;
 }
 
