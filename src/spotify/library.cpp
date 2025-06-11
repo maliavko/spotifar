@@ -7,8 +7,9 @@ namespace http = utils::http;
 namespace phs = std::placeholders;
 using utils::far3::synchro_tasks::dispatch_event;
 
-static const size_t batch_size = 50;
+static const size_t BATCH_SIZE = 50;
 
+//-------------------------------------------------------------------------------------------------------------------
 void from_json(const json::Value &j, saved_items_t &v)
 {
     from_json(j["tracks"], v.tracks);
@@ -30,33 +31,45 @@ void to_json(json::Value &result, const saved_items_t &v, json::Allocator &alloc
 }
 
 
-bool library::toggle_track_saved(const item_id_t &id)
+std::deque<bool> check_saved_items(api_interface *api, const string &endpoint_url, const item_ids_t &ids)
 {
-    if (is_track_saved(id), true)
-        return remove_saved_tracks({ id });
-    else
-        return save_tracks({ id });
+    // note: bloody hell, damn vector specialization with bools is not a real vector,
+    // it cannot return ref to bools, so deque is used instead
+
+    // note: player visual style methods are being called extremely often, the 'like` button,
+    // which represents a state of a track being part of saved collection as well. That's why
+    // the response here is cached for a session
+    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
+        endpoint_url, ids, BATCH_SIZE);
+
+    if (requester.execute(api->get_ptr()))
+        return requester.get();
+    
+    // perhaps at some point it'd be good to add an error propagation here
+    // to show to the user
+    return {};
 }
 
 
-bool saved_items_cache_t::resync(library_statuses_t &data)
+//-------------------------------------------------------------------------------------------------------------------
+bool saved_items_cache_t::resync(statuses_container_t &data)
 {
     if (ids_to_process.empty()) return false;
 
     item_ids_t ids;
 
     {
-        std::lock_guard<std::mutex> lock(access_guard);
-        if (ids_to_process.size() > batch_size)
+        std::lock_guard<std::mutex> lock(ids_access_guard);
+        if (ids_to_process.size() > BATCH_SIZE)
         {
-            ids.assign(ids_to_process.begin(), ids_to_process.begin() + batch_size);
-            ids_to_process.erase(ids_to_process.begin(), ids_to_process.begin() + batch_size);
+            ids.assign(ids_to_process.begin(), ids_to_process.begin() + BATCH_SIZE);
+            ids_to_process.erase(ids_to_process.begin(), ids_to_process.begin() + BATCH_SIZE);
         }
         else
             ids = std::move(ids_to_process);
     }
 
-    if (auto result = check_handler(ids); result.size() == ids.size())
+    if (auto result = check_saved_items(api_proxy, ids); result.size() == ids.size())
     {
         for (size_t i = 0; i < ids.size(); ++i)
             data.insert_or_assign(ids[i], result[i]);
@@ -74,7 +87,8 @@ bool saved_items_cache_t::resync(library_statuses_t &data)
 
 void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
 {
-    auto &container = container_getter();
+    auto accessor = data_accessor();
+    auto &container = get_container(accessor.data);
 
     for (const auto &id: ids)
         container.insert_or_assign(id, status);
@@ -82,7 +96,8 @@ void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
 
 bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_sync)
 {
-    auto &container = container_getter();
+    auto accessor = data_accessor();
+    auto &container = get_container(accessor.data);
 
     const auto it = container.find(item_id);
     if (it != container.end())
@@ -90,7 +105,7 @@ bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_syn
 
     if (force_sync)
     {
-        if (auto res = check_handler({ item_id }); res.size() == 1)
+        if (auto res = check_saved_items(api_proxy, { item_id }); res.size() == 1)
         {
             container.insert_or_assign(item_id, res[0]);
             return res[0];
@@ -98,7 +113,7 @@ bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_syn
     }
 
     {
-        std::lock_guard<std::mutex> lock(access_guard);
+        std::lock_guard<std::mutex> lock(ids_access_guard);
         if (std::find(ids_to_process.begin(), ids_to_process.end(), item_id) == ids_to_process.end())
             ids_to_process.push_back(item_id);
     }
@@ -107,10 +122,33 @@ bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_syn
 }
 
 
+//-------------------------------------------------------------------------------------------------------------------
+statuses_container_t& tracks_items_cache_t::get_container(library_base_t::data_t &data)
+{
+    return data.tracks;
+}
+
+std::deque<bool> tracks_items_cache_t::check_saved_items(api_interface *api, const item_ids_t &ids)
+{
+    return spotify::check_saved_items(api, "/v1/me/tracks/contains", ids);
+}
+
+statuses_container_t& albums_items_cache_t::get_container(library_base_t::data_t &data)
+{
+    return data.tracks;
+}
+
+std::deque<bool> albums_items_cache_t::check_saved_items(api_interface *api, const item_ids_t &ids)
+{
+    return spotify::check_saved_items(api, "/v1/me/albums/contains", ids);
+}
+
+
+//-------------------------------------------------------------------------------------------------------------------
 library::library(api_interface *api):
     json_cache(), api_proxy(api),
-    tracks([this] { auto accessor = lock_data(); return std::ref(accessor.data.tracks); }, std::bind(&library::check_saved_tracks, this, phs::_1)),
-    albums([this] { auto accessor = lock_data(); return std::ref(accessor.data.albums); }, std::bind(&library::check_saved_albums, this, phs::_1))
+    tracks(api, [this] { return lock_data(); }),
+    albums(api, [this] { return lock_data(); })
 {
 }
 
@@ -223,38 +261,6 @@ bool library::remove_saved_albums(const item_ids_t &ids)
     dispatch_event(&collection_observer::on_saved_albums_changed, ids);
     
     return true;
-}
-
-std::deque<bool> library::check_saved_tracks(const item_ids_t &ids)
-{
-    // note: bloody hell, damn vector specialization with bools is not a real vector,
-    // it cannot return ref to bools, so deque is used instead
-
-    // note: player visual style methods are being called extremely often, the 'like` button,
-    // which represents a state of a track being part of saved collection as well. That's why
-    // the response here is cached for a session
-    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
-        "/v1/me/tracks/contains", ids, batch_size);
-
-    if (requester.execute(api_proxy->get_ptr()))
-        return requester.get();
-    
-    // perhaps at some point it'd be good to add an error propagation here
-    // to show to the user
-    return {};
-}
-
-std::deque<bool> library::check_saved_albums(const item_ids_t &ids)
-{
-    auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
-        "/v1/me/albums/contains", ids, batch_size);
-
-    if (requester.execute(api_proxy->get_ptr()))
-        return requester.get();
-    
-    // perhaps at some point it'd be good to add an error propagation here
-    // to show to the user
-    return {};
 }
 
 bool library::is_active() const
