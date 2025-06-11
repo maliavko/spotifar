@@ -5,9 +5,62 @@ namespace spotifar { namespace spotify {
 namespace json = utils::json;
 namespace http = utils::http;
 namespace phs = std::placeholders;
-using utils::far3::synchro_tasks::dispatch_event;
 
 static const size_t BATCH_SIZE = 50;
+
+/// @brief A custom saved-tracks-collection specialization, to update collection cache,
+/// when the fetching is finished.
+class saved_tracks_collection: public saved_tracks_t
+{
+public:
+    saved_tracks_collection(api_interface *api, collection *collection):
+        saved_tracks_t(api->get_ptr(), "/v1/me/tracks"),
+        collection(collection)
+        {}
+    ~saved_tracks_collection() { collection = nullptr; }
+
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    {
+        if (saved_tracks_t::fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        {
+            item_ids_t ids;
+            std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
+
+            collection->tracks.update_saved_items(ids, true);
+            return true;
+        }
+        return false;
+    }
+private:
+    collection *collection;
+};
+
+/// @brief A custom saved-tracks-collection specialization, to update collection cache,
+/// when the fetching is finished.
+class saved_albums_collection: public saved_albums_t
+{
+public:
+    saved_albums_collection(api_interface *api, collection *collection):
+        saved_albums_t(api->get_ptr(), "/v1/me/albums"),
+        collection(collection)
+        {}
+    ~saved_albums_collection() { collection = nullptr; }
+
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    {
+        if (saved_albums_t::fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        {
+            item_ids_t ids;
+            std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
+
+            collection->albums.update_saved_items(ids, true);
+            return true;
+        }
+        return false;
+    }
+private:
+    collection *collection;
+};
 
 //-------------------------------------------------------------------------------------------------------------------
 void from_json(const json::Value &j, saved_items_t &v)
@@ -78,8 +131,7 @@ bool saved_items_cache_t::resync(statuses_container_t &data)
         for (size_t i = 0; i < ids.size(); ++i)
             data.insert_or_assign(ids[i], result[i]);
 
-        // dispatching an event to notify observers about the new saved status
-        dispatch_event(&collection_observer::on_saved_tracks_changed, ids);
+        dispatch_event(ids);
         return true;
     }
     else
@@ -96,6 +148,8 @@ void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
 
     for (const auto &id: ids)
         container.insert_or_assign(id, status);
+    
+    dispatch_event(ids);
 }
 
 bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_sync)
@@ -137,14 +191,26 @@ std::deque<bool> tracks_items_cache_t::check_saved_items(api_interface *api, con
     return spotify::check_saved_items(api, "/v1/me/tracks/contains", ids);
 }
 
+void tracks_items_cache_t::dispatch_event(const item_ids_t &ids)
+{
+    utils::far3::synchro_tasks::dispatch_event(
+        &collection_observer::on_saved_tracks_changed, ids);
+}
+
 statuses_container_t& albums_items_cache_t::get_container(collection_base_t::data_t &data)
 {
-    return data.tracks;
+    return data.albums;
 }
 
 std::deque<bool> albums_items_cache_t::check_saved_items(api_interface *api, const item_ids_t &ids)
 {
     return spotify::check_saved_items(api, "/v1/me/albums/contains", ids);
+}
+
+void albums_items_cache_t::dispatch_event(const item_ids_t &ids)
+{
+    utils::far3::synchro_tasks::dispatch_event(
+        &collection_observer::on_saved_albums_changed, ids);
 }
 
 
@@ -187,8 +253,6 @@ bool collection::save_tracks(const item_ids_t &ids)
     for (const auto &id: ids)
         accessor.data.tracks.insert_or_assign(id, true);
 
-    dispatch_event(&collection_observer::on_saved_tracks_changed, ids);
-
     return true;
 }
 
@@ -218,6 +282,16 @@ bool collection::remove_saved_tracks(const item_ids_t &ids)
     return true;
 }
 
+saved_tracks_ptr collection::get_saved_tracks()
+{
+    return saved_tracks_ptr(new saved_tracks_collection(api_proxy, this));
+}
+
+saved_albums_ptr collection::get_saved_albums()
+{
+    return saved_albums_ptr(new saved_albums_collection(api_proxy, this));
+}
+
 bool collection::is_album_saved(const item_id_t &album_id, bool force_sync)
 {
     return albums.is_item_saved(album_id, force_sync);
@@ -242,8 +316,6 @@ bool collection::save_albums(const item_ids_t &ids)
     // updating albums cache with the new saved albums ids
     albums.update_saved_items(ids, true);
 
-    dispatch_event(&collection_observer::on_saved_albums_changed, ids);
-
     return true;
 }
 
@@ -265,8 +337,6 @@ bool collection::remove_saved_albums(const item_ids_t &ids)
     
     // updating albums cache with the new saved albums ids
     albums.update_saved_items(ids, false);
-
-    dispatch_event(&collection_observer::on_saved_albums_changed, ids);
     
     return true;
 }
