@@ -4,8 +4,19 @@
 
 namespace spotifar { namespace ui {
 
+using PM = view::panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
+
+static const view::panel_mode_t::column_t
+    Name        { L"NON",   L"Name",        L"0" },
+    NameFixed   { L"NON",   L"Name",        L"30" },
+    TracksCount { L"C0",    L"Tx",          L"6" },
+    Owner       { L"C1",    L"Owner",       L"15" },
+    IsPublic    { L"C2",    L"Pub",         L"3" },
+    IsColab     { L"C3",    L"Col",         L"3" },
+    Duration    { L"C4",    L"Duration",    L"10" },
+    Descr       { L"Z",     L"Description", L"0" };
 
 //-----------------------------------------------------------------------------------------------------------
 const view::items_t& playlists_base_view::get_items()
@@ -79,44 +90,25 @@ intptr_t playlists_base_view::select_item(const data_item_t* data)
     return FALSE;
 }
 
-void playlists_base_view::update_panel_info(OpenPanelInfo *info)
+const view::panel_modes_t* playlists_base_view::get_panel_modes() const
 {
-    static PanelMode modes[10];
-
-    static const wchar_t* titles_3[] = { L"Name", L"Tracks", L"Length", L"Owner", L"Pub", L"Col" };
-    modes[3].ColumnTypes = L"NON,C0,C4,C1,C2,C3";
-    modes[3].ColumnWidths = L"0,6,10,15,3,3";
-    modes[3].ColumnTitles = titles_3;
-    modes[3].StatusColumnTypes = NULL;
-    modes[3].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_4[] = { L"Name", L"Description" };
-    modes[4].ColumnTypes = L"NON,Z";
-    modes[4].ColumnWidths = L"40,0";
-    modes[4].ColumnTitles = titles_4;
-    modes[4].StatusColumnTypes = NULL;
-    modes[4].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_5[] = { L"Name", L"Tracks", L"Length", L"Owner", L"Pub", L"Col", L"Description" };
-    modes[5].ColumnTypes = L"NON,C0,C4,C1,C2,C3,Z";
-    modes[5].ColumnWidths = L"0,6,10,15,3,3,0";
-    modes[5].ColumnTitles = titles_5;
-    modes[5].StatusColumnTypes = NULL;
-    modes[5].StatusColumnWidths = NULL;
-    modes[5].Flags = PMFLAGS_FULLSCREEN;
-
-    modes[6] = modes[3];
+    // TODO: columns are being copied, consdider some other ways
+    static panel_modes_t modes{
+        /* 0 */ PM::dummy(),
+        /* 1 */ PM::dummy(),
+        /* 2 */ PM::dummy(),
+        /* 3 */ PM({ Name, TracksCount, Duration, Owner, IsPublic, IsColab }),
+        /* 4 */ PM({ NameFixed, Descr }),
+        /* 5 */ PM({ Name, TracksCount, Duration, Owner, IsPublic, IsColab, Descr }, true),
+        /* 6 */ PM::dummy(3),
+        /* 7 */ PM::dummy(5),
+        /* 8 */ PM::dummy(3),
+        /* 9 */ PM::dummy(3),
+    };
     
-    modes[7] = modes[5];
+    modes.update(); // TODO: I think it could be emitted
     
-    modes[8] = modes[3];
-    
-    modes[9] = modes[3];
-    
-    modes[0] = modes[3];
-
-    info->PanelModesArray = modes;
-    info->PanelModesNumber = std::size(modes);
+    return &modes;
 }
 
 intptr_t playlists_base_view::compare_items(const sort_mode_t &sort_mode,

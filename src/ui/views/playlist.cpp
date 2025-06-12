@@ -3,45 +3,46 @@
 
 namespace spotifar { namespace ui {
 
+using PM = view::panel_mode_t;
 using namespace utils::far3;
 using utils::far3::get_text;
 
+static const view::panel_mode_t::column_t
+    Name        { L"NON",   L"Name",        L"0" },
+    AddedAt     { L"C0",    L"Added at",    L"12" },
+    Artist      { L"C1",    L"Artist",      L"22" },
+    Duration    { L"C2",    L"Time",        L"5" },
+    Album       { L"C4",    L"Album",       L"22" },
+    AlbumYear   { L"C5",    L"Year",        L"6" },
+    Descr       { L"Z",     L"Description", L"0" };
+
+//--------------------------------------------------------------------------------------------------------
 playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playlist_t &p):
-    view(panel, p.name),
-    playlist(p),
-    api_proxy(api_proxy)
+    view(panel, p.name), playlist(p), api_proxy(api_proxy)
 {
     if (auto api = api_proxy.lock())
         collection = api->get_playlist_tracks(p.id);
 }
 
-void playlist_view::update_panel_info(OpenPanelInfo *info)
+const view::panel_modes_t* playlist_view::get_panel_modes() const
 {
-    static PanelMode modes[10];
-
-    static const wchar_t* titles_3[] = { L"Name", L"Artist", L"Time", };
-    modes[3].ColumnTypes = L"NON,C1,C2";
-    modes[3].ColumnWidths = L"0,22,5";
-    modes[3].ColumnTitles = titles_3;
-    modes[3].StatusColumnTypes = NULL;
-    modes[3].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_4[] = { L"Name", L"Album", L"Year", };
-    modes[4].ColumnTypes = L"NON,C4,C5";
-    modes[4].ColumnWidths = L"0,22,6";
-    modes[4].ColumnTitles = titles_4;
-    modes[4].StatusColumnTypes = NULL;
-    modes[4].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_5[] = { L"Name", L"Added", };
-    modes[5].ColumnTypes = L"NON,C0";
-    modes[5].ColumnWidths = L"0,22";
-    modes[5].ColumnTitles = titles_5;
-    modes[5].StatusColumnTypes = NULL;
-    modes[5].StatusColumnWidths = NULL;
-
-    info->PanelModesArray = modes;
-    info->PanelModesNumber = std::size(modes);
+    // TODO: columns are being copied, consdider some other ways
+    static panel_modes_t modes{
+        /* 0 */ PM::dummy(),
+        /* 1 */ PM::dummy(),
+        /* 2 */ PM::dummy(),
+        /* 3 */ PM({ Name, Artist, Duration }),
+        /* 4 */ PM({ Name, Album, AlbumYear }),
+        /* 5 */ PM({ Name, AddedAt }),
+        /* 6 */ PM::dummy(3),
+        /* 7 */ PM::dummy(3),
+        /* 8 */ PM::dummy(3),
+        /* 9 */ PM::dummy(3),
+    };
+    
+    modes.update(); // TODO: I think it could be emitted
+    
+    return &modes;
 }
 
 const view::items_t& playlist_view::get_items()
@@ -136,7 +137,7 @@ intptr_t playlist_view::process_key_input(int combined_key)
 {
     switch (combined_key)
     {
-        case VK_RETURN + utils::keys::mods::shift:
+        case VK_F8:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
             {

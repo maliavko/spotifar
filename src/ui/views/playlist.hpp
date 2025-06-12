@@ -21,10 +21,9 @@ public:
 protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    void update_panel_info(OpenPanelInfo *info) override;
-    auto compare_items(const sort_mode_t &sort_mode,
-        const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto process_key_input(int combined_key) -> intptr_t override;
+    auto get_panel_modes() const -> const panel_modes_t* override;
 private:
     api_weak_ptr_t api_proxy;
     playlist_t playlist;
