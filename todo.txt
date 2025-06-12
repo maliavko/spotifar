@@ -15,6 +15,7 @@ application ideas
     - folow/unfollow artists
     - to save the last used view on the multiview
 - new functional
+    + add redirect to Spotify website after shift+enter hit
     + win toast notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
     - grab lyrics from here? https://lrclib.net/
@@ -35,6 +36,7 @@ bugs
     - method panel::update_panel_items is called several times almost each panel opening
     - cannot find Superdeathflame The Last Wave album in my collection
     - in the recently-played tracks view definitely saved(liked) tracks are often shown as not saved
+    - after removing http cache the recently played view show some rubbish
 
 to finish for alpha release
 - check all the default view settings and sort modes

@@ -5,8 +5,9 @@
 namespace spotifar { namespace ui {
 
 using PM = view::panel_mode_t;
-using namespace spotify;
 using utils::far3::get_text;
+using namespace spotify;
+namespace panels = utils::far3::panels;
 
 static const view::panel_mode_t::column_t
     Followers       { L"C0",    L"Followers",   L"9" },
@@ -134,6 +135,57 @@ const view::panel_modes_t* artists_base_view::get_panel_modes() const
     modes.update(); // TODO: I think it could be emitted
     
     return &modes;
+}
+
+intptr_t artists_base_view::process_key_input(int combined_key)
+{
+    using namespace utils::keys;
+
+    switch (combined_key)
+    {
+        case VK_F4:
+        {
+            auto item = utils::far3::panels::get_current_item(get_panel_handle());
+            if (auto api = api_proxy.lock(); item && api)
+            {
+                if (auto *user_data = unpack_user_data(item->UserData))
+                {
+                    api->start_playback(artist_t::make_uri(user_data->id));
+                    return TRUE;
+                }
+            }
+            
+            log::global->error("There is an error occured while getting a current panel item");
+            return TRUE;
+        }
+        case VK_F8:
+        {
+            /*const auto &ids = get_selected_items();
+
+            if (auto api = api_proxy.lock(); !ids.empty())
+                // what to do - like or unlike - with the whole list of items
+                // we decide based on the first item state
+                if (api->is_album_saved(ids[0], true))
+                    api->remove_saved_albums(ids);
+                else
+                    api->save_albums(ids);*/
+
+            return TRUE;
+        }
+        case VK_RETURN + mods::shift:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData))
+                {
+                    if (const artist_t *artist = static_cast<const artist_t*>(user_data); !artist->urls.spotify.empty())
+                        utils::open_web_browser(artist->urls.spotify);
+                }
+            }
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 

@@ -161,8 +161,8 @@ string auth_cache::request_auth_code()
     string redirect_url = httplib::append_query_params(
         spotify_auth_url + "/authorize/", params);
 
-    log::api->info("Requesting spotify auth code, redirecting to the external browser");
-    ShellExecuteA(NULL, "open", redirect_url.c_str(), 0, 0, SW_SHOW);
+    log::api->info("Requesting spotify auth code...");
+    utils::open_web_browser(redirect_url);
 
     // launching a http-server to receive an API auth reponse
     string result, result_msg = "could not retrive an access token for unknown reason";

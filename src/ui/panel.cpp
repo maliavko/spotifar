@@ -348,7 +348,7 @@ void panel::refresh(const string &item_id)
     const auto now = utils::clock_t::now();
     if (now - last_refresh_time < 150ms)
     {
-        log::global->debug("!!!!!!!!!!!!!!!!!!!! last refresh was less than 1 second ago");
+        log::global->debug("!!!!!!! last refresh was less than 1 second ago");
     }
 
     last_refresh_time = now;

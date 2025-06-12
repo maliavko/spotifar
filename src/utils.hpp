@@ -100,6 +100,8 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
+HINSTANCE open_web_browser(const string &address);
+
 class tasks_queue
 {
 public:

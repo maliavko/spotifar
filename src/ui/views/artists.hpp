@@ -33,6 +33,7 @@ protected:
     bool request_extra_info(const data_item_t *data) override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto get_panel_modes() const -> const panel_modes_t* override;
+    auto process_key_input(int combined_key) -> intptr_t override;
 protected:
     api_weak_ptr_t api_proxy;
 };
