@@ -31,10 +31,8 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-    - if the dialog "no librespot device, would you like to transfer somewhere?" is shown and close far - it hangs
     - returning back does not select a proper item on the panel for multiviews
-    - method panel::update_panel_items is called several times almost each panel opening
-    - cannot find Superdeathflame The Last Wave album in my collection
+    ??? cannot find Superdeathflame The Last Wave album in my collection
     - in the recently-played tracks view definitely saved(liked) tracks are often shown as not saved
     - after removing http cache the recently played view show some rubbish
 
