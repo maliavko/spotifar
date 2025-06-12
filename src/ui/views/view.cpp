@@ -5,6 +5,71 @@ namespace spotifar { namespace ui {
 
 namespace panels = utils::far3::panels;
 
+view::panel_mode_t::panel_mode_t(std::vector<panel_mode_t::column_t> &&cols, bool is_wide): is_wide(is_wide)
+{
+    columns = std::move(cols);
+    rebuild();
+}
+
+void view::panel_mode_t::insert_column(const column_t &col, size_t idx)
+{
+    if (idx > columns.size())
+    {
+        log::global->error("Trying to insert a new column for panel mode into wrong index");
+        return;
+    }
+    
+    auto it = columns.begin();
+    std::advance(it, idx);
+    columns.insert(it, col);
+    rebuild();
+}
+
+void view::panel_mode_t::rebuild()
+{
+    titles.clear();
+    std::vector<const wchar_t*> all_types, all_widths;
+
+    for (const auto &column: columns)
+    {
+        titles.push_back(column.title);
+        all_types.push_back(column.uid);
+        all_widths.push_back(column.width);
+    }
+
+    if (columns.size() > 0)
+    {
+        types = utils::string_join(all_types, L",");
+        widths = utils::string_join(all_widths, L",");
+    }
+}
+
+void view::panel_modes_t::update()
+{
+    for (size_t i = 0; i < MODES_COUNT; i++)
+    {
+        auto &mode = at(i);
+
+        // if the mode is empty, we check whether we need to reference to another one
+        if (mode.is_empty() && mode.copy_of_idx >= 0)
+            mode = at(mode.copy_of_idx);
+
+        // filling up the Far mode struct in case we eventually found a valid object
+        if (!mode.is_empty())
+        {
+            auto &far_mode = modes[i];
+
+            far_mode.ColumnTypes = mode.types.c_str();
+            far_mode.ColumnWidths = mode.widths.c_str();
+            far_mode.ColumnTitles = &mode.titles[0];
+            far_mode.Flags = mode.is_wide ? PMFLAGS_FULLSCREEN : PMFLAGS_NONE;
+            far_mode.StatusColumnTypes = NULL;
+            far_mode.StatusColumnWidths = NULL;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------------------------------
 view::view(HANDLE panel, const wstring &title, const wstring &dir_name): panel(panel), title(title)
 {
     this->dir_name = utils::strip_invalid_filename_chars(dir_name.empty() ? title : dir_name);
@@ -139,6 +204,15 @@ intptr_t view::select_item(const SetDirectoryInfo *info)
     }
 
     return select_item(unpack_user_data(info->UserData));
+}
+
+void view::update_panel_info2(OpenPanelInfo *info)
+{
+    if (const auto pmodes = get_panel_modes())
+    {
+        info->PanelModesArray = pmodes->get_modes();
+        info->PanelModesNumber = pmodes->size();
+    }
 }
 
 intptr_t view::request_extra_info(const PluginPanelItem *data)

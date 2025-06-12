@@ -150,6 +150,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     // allowing view to customize OpenPanelInfo struct
     view->update_panel_info(info);
+    view->update_panel_info2(info);
 }
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)

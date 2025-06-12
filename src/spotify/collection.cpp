@@ -142,10 +142,19 @@ void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
     auto accessor = data_accessor();
     auto &container = get_container(accessor.data);
 
+    item_ids_t changed_ids{};
+
     for (const auto &id: ids)
+    {
+        if (container.contains(id) && container.at(id) == status)
+            continue;
+            
         container.insert_or_assign(id, status);
+        changed_ids.push_back(id);
+    }
     
-    dispatch_event(ids);
+    if (!changed_ids.empty())
+        dispatch_event(changed_ids);
 }
 
 bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_sync)

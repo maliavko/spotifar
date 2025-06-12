@@ -30,10 +30,9 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto select_item(const data_item_t *data) -> intptr_t override;
-    void update_panel_info(OpenPanelInfo *info) override;
     bool request_extra_info(const data_item_t *data) override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
-        const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+    auto get_panel_modes() const -> const panel_modes_t* override;
 protected:
     api_weak_ptr_t api_proxy;
 };
