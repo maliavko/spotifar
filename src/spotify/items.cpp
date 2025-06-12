@@ -32,6 +32,18 @@ void to_json(Value &result, const image_t &i, json::Allocator &allocator)
     result.AddMember("height", Value(i.height), allocator);
 }
 
+void from_json(const json::Value &j, external_urls_t &e)
+{
+    e.spotify = j["spotify"].GetString();
+}
+
+void to_json(json::Value &result, const external_urls_t &e, json::Allocator &allocator)
+{
+    result = Value(json::kObjectType);
+
+    result.AddMember("spotify", Value(e.spotify, allocator), allocator);
+}
+
 void from_json(const json::Value &j, copyrights_t &c)
 {
     c.type = j["type"].GetString();
@@ -50,14 +62,31 @@ void from_json(const Value &j, simplified_artist_t &a)
 {
     a.id = j["id"].GetString();
     a.name = utils::utf8_decode(j["name"].GetString());
+    
+    from_json(j["external_urls"], a.urls);
 }
 
 void to_json(Value &result, const simplified_artist_t &a, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
 
+    Value urls;
+    to_json(urls, a.urls, allocator);
+
     result.AddMember("id", Value(a.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(a.name), allocator), allocator);
+    result.AddMember("external_urls", urls, allocator);
+}
+
+void from_json(const Value &j, artist_t &a)
+{
+    from_json(j, dynamic_cast<simplified_artist_t&>(a));
+
+    a.popularity = j["popularity"].GetUint();
+    a.followers_total = j["followers"]["total"].GetUint();
+    
+    from_json(j["images"], a.images);
+    from_json(j["genres"], a.genres);
 }
 
 void to_json(Value &result, const artist_t &a, json::Allocator &allocator)
@@ -88,17 +117,6 @@ wstring artist_t::get_main_genre() const
     if (genres.size() > 0)
         return utils::to_wstring(genres[0]);
     return utils::far3::get_text(MGenreUnknown);
-}
-
-void from_json(const Value &j, artist_t &a)
-{
-    from_json(j, dynamic_cast<simplified_artist_t&>(a));
-
-    a.popularity = j["popularity"].GetUint();
-    a.followers_total = j["followers"]["total"].GetUint();
-    
-    from_json(j["images"], a.images);
-    from_json(j["genres"], a.genres);
 }
 
 string simplified_album_t::get_release_year() const
@@ -163,6 +181,7 @@ void from_json(const Value &j, simplified_album_t &a)
 
     from_json(j["images"], a.images);
     from_json(j["artists"], a.artists);
+    from_json(j["external_urls"], a.urls);
 }
 
 void to_json(Value &result, const simplified_album_t &a, json::Allocator &allocator)
@@ -175,6 +194,9 @@ void to_json(Value &result, const simplified_album_t &a, json::Allocator &alloca
     Value artists;
     to_json(artists, a.artists, allocator);
 
+    Value urls;
+    to_json(urls, a.urls, allocator);
+
     result.AddMember("id", Value(a.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(a.name), allocator), allocator);
     result.AddMember("total_tracks", Value(a.total_tracks), allocator);
@@ -183,6 +205,7 @@ void to_json(Value &result, const simplified_album_t &a, json::Allocator &alloca
     result.AddMember("href", Value(a.href, allocator), allocator);
     result.AddMember("images", images, allocator);
     result.AddMember("artists", artists, allocator);
+    result.AddMember("external_urls", urls, allocator);
 }
 
 copyrights_t album_t::get_main_copyright() const
@@ -262,6 +285,7 @@ void from_json(const Value &j, simplified_track_t &t)
     t.name = utils::utf8_decode(j["name"].GetString());
     
     from_json(j["artists"], t.artists);
+    from_json(j["external_urls"], t.urls);
 }
 
 void to_json(Value &result, const simplified_track_t &t, json::Allocator &allocator)
@@ -271,6 +295,9 @@ void to_json(Value &result, const simplified_track_t &t, json::Allocator &alloca
     Value artists;
     to_json(artists, t.artists, allocator);
 
+    Value urls;
+    to_json(urls, t.urls, allocator);
+
     result.AddMember("id", Value(t.id, allocator), allocator);
     result.AddMember("name", Value(utils::utf8_encode(t.name), allocator), allocator);
     result.AddMember("duration_ms", Value(t.duration_ms), allocator);
@@ -278,6 +305,7 @@ void to_json(Value &result, const simplified_track_t &t, json::Allocator &alloca
     result.AddMember("disc_number", Value(t.disc_number), allocator);
     result.AddMember("explicit", Value(t.is_explicit), allocator);
     result.AddMember("artists", artists, allocator);
+    result.AddMember("external_urls", urls, allocator);
 }
 
 const string& track_t::get_fields_filter()
@@ -330,27 +358,6 @@ void from_json(const Value &j, saved_track_t &t)
     t.added_at = j["added_at"].GetString();
 }
 
-void to_json(Value &result, const simplified_playlist_t &p, json::Allocator &allocator)
-{
-    result = Value(json::kObjectType);
-
-    Value tracks;
-    tracks.AddMember("total", Value(p.tracks_total), allocator);
-
-    Value owner;
-    owner.AddMember("name", Value(utils::utf8_encode(p.user_display_name), allocator), allocator);
-
-    result.AddMember("id", Value(p.id, allocator), allocator);
-    result.AddMember("snapshot_id", Value(p.snapshot_id, allocator), allocator);
-    result.AddMember("name", Value(utils::utf8_encode(p.name), allocator), allocator);
-    result.AddMember("description", Value(utils::utf8_encode(p.description), allocator), allocator);
-    result.AddMember("href", Value(p.href, allocator), allocator);
-    result.AddMember("collaborative", Value(p.is_collaborative), allocator);
-    result.AddMember("public", Value(p.is_public), allocator);
-    result.AddMember("tracks", tracks, allocator);
-    result.AddMember("actions", owner, allocator);
-}
-
 void from_json(const Value &j, simplified_playlist_t &p)
 {
     p.id = j["id"].GetString();
@@ -363,6 +370,33 @@ void from_json(const Value &j, simplified_playlist_t &p)
     p.name = utils::utf8_decode(j["name"].GetString());
     p.user_display_name = utils::utf8_decode(j["owner"]["display_name"].GetString());
     p.description = utils::utf8_decode(j["description"].GetString());
+    
+    from_json(j["external_urls"], p.urls);
+}
+
+void to_json(Value &result, const simplified_playlist_t &p, json::Allocator &allocator)
+{
+    result = Value(json::kObjectType);
+
+    Value tracks;
+    tracks.AddMember("total", Value(p.tracks_total), allocator);
+
+    Value owner;
+    owner.AddMember("name", Value(utils::utf8_encode(p.user_display_name), allocator), allocator);
+
+    Value urls;
+    to_json(urls, p.urls, allocator);
+
+    result.AddMember("id", Value(p.id, allocator), allocator);
+    result.AddMember("snapshot_id", Value(p.snapshot_id, allocator), allocator);
+    result.AddMember("name", Value(utils::utf8_encode(p.name), allocator), allocator);
+    result.AddMember("description", Value(utils::utf8_encode(p.description), allocator), allocator);
+    result.AddMember("href", Value(p.href, allocator), allocator);
+    result.AddMember("collaborative", Value(p.is_collaborative), allocator);
+    result.AddMember("public", Value(p.is_public), allocator);
+    result.AddMember("tracks", tracks, allocator);
+    result.AddMember("actions", owner, allocator);
+    result.AddMember("external_urls", urls, allocator);
 }
 
 void to_json(Value &result, const playlist_t &a, json::Allocator &allocator)
