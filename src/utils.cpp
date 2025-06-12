@@ -300,9 +300,9 @@ namespace far3
             return control(panel, FCTL_REDRAWPANEL, 0, NULL);
         }
         
-        intptr_t update(HANDLE panel)
+        intptr_t update(HANDLE panel, bool reset_selection)
         {
-            return control(panel, FCTL_UPDATEPANEL);
+            return control(panel, FCTL_UPDATEPANEL, reset_selection ? 0 : 1);
         }
         
         bool is_active(HANDLE panel)
