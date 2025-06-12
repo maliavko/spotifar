@@ -28,11 +28,11 @@ protected:
     virtual auto get_extra_columns(const track_t&) const -> std::vector<wstring> { return {}; }
 
     // view
-    void update_panel_info(OpenPanelInfo *info) override;
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto process_key_input(int combined_key) -> intptr_t override;
     auto get_key_bar_info() -> const key_bar_info_t* override;
+    auto get_panel_modes() const -> const panel_modes_t* override;
 
     // collection_observer
     void on_saved_tracks_changed(const item_ids_t &ids) override;
@@ -55,7 +55,6 @@ protected:
 
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
-    void update_panel_info(OpenPanelInfo *info) override;
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
@@ -63,6 +62,7 @@ protected:
     bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t&) const -> std::vector<wstring> override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
 
     // playback_observer handlers
     void on_track_changed(const track_t &track, const track_t &prev_track) override;
@@ -70,6 +70,7 @@ private:
     bool is_multidisc = false;
     album_t album;
     std::vector<track_t> album_tracks;
+    panel_modes_t panel_modes;
 };
 
 
@@ -94,17 +95,18 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
     auto get_sort_modes() const -> const view::sort_modes_t& override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
-    void update_panel_info(OpenPanelInfo *info) override;
 
     // tracks_base_view interface
     bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t& track) const -> std::vector<wstring> override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
     
     // play_history_observer handlers
     void on_items_changed();
 private:
     std::vector<history_track_t> items;
+    panel_modes_t panel_modes;
 };
 
 
@@ -121,17 +123,18 @@ protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
-    void update_panel_info(OpenPanelInfo *info) override;
 
     // tracks_base_view interface
     bool start_playback(const string &track_id) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t&) const -> std::vector<wstring> override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
 
     // playback_observer handlers
     void on_track_changed(const track_t &track, const track_t &prev_track) override;
 private:
     saved_tracks_ptr collection;
+    panel_modes_t panel_modes;
 };
 
 
