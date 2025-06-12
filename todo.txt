@@ -32,9 +32,7 @@ application ideas
 bugs
     - if the dialog "no librespot device, would you like to transfer somewhere?" is shown and close far - it hangs
     - returning back does not select a proper item on the panel for multiviews
-    - sorting works 95%: open albums view and sort by tracks number e.g.
     - method panel::update_panel_items is called several times almost each panel opening
-    - once the update with saved tracks statuses come, the selection is reset
     - cannot find Superdeathflame The Last Wave album in my collection
     - in the recently-played tracks view definitely saved(liked) tracks are often shown as not saved
 
@@ -43,7 +41,7 @@ to finish for alpha release
 - to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch
 - help window
-- remove unfinished menus
++ remove unfinished menus
 - to review TODOs
 + to finalize "featuring" menus, user top items menu
 + to implement filter menu on each view
@@ -57,4 +55,4 @@ to finish for alpha release
 - to review the panels views and clean up the view and sort modes
     + to show saved albums, artists and tracks
     - to launch playback from all the possible views
-    - track number/disc number is shown weird
+    + track number/disc number is shown weird

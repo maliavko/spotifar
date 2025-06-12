@@ -328,7 +328,7 @@ namespace far3
         auto control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1 = 0, void *param2 = nullptr) -> intptr_t;
         auto redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx) -> intptr_t;
         auto redraw(HANDLE panel) -> intptr_t;
-        auto update(HANDLE panel) -> intptr_t;
+        auto update(HANDLE panel, bool reset_selection) -> intptr_t;
         bool is_active(HANDLE panel);
         bool does_exist(HANDLE panel);
         auto set_active(HANDLE panel) -> intptr_t;
