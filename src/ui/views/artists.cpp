@@ -335,7 +335,7 @@ void recent_artists_view::on_items_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel))
+    artists_base_view(panel, api, get_text(MPanelUserTopArtistsLabel), get_text(MPanelUserTopItemsLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_user_top_artists();
