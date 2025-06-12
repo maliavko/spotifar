@@ -181,6 +181,8 @@ bool albums_base_view::request_extra_info(const data_item_t* data)
 
 intptr_t albums_base_view::process_key_input(int combined_key)
 {
+    using namespace utils::keys;
+
     switch (combined_key)
     {
         case VK_F4:
@@ -212,6 +214,18 @@ intptr_t albums_base_view::process_key_input(int combined_key)
                 else
                     api->save_albums(ids);
 
+            return TRUE;
+        }
+        case VK_RETURN + mods::shift:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData))
+                {
+                    if (const album_t *album = static_cast<const album_t*>(user_data); !album->urls.spotify.empty())
+                        utils::open_web_browser(album->urls.spotify);
+                }
+            }
             return TRUE;
         }
     }

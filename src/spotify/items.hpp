@@ -43,6 +43,14 @@ struct image_t
     friend void to_json(json::Value &j, const image_t &i, json::Allocator &allocator);
 };
 
+struct external_urls_t
+{
+    string spotify;
+
+    friend void from_json(const json::Value &j, external_urls_t &e);
+    friend void to_json(json::Value &j, const external_urls_t &e, json::Allocator &allocator);
+};
+
 struct copyrights_t
 {
     string type;
@@ -57,6 +65,7 @@ struct copyrights_t
 struct simplified_artist_t: public data_item_t
 {
     wstring name = utils::far3::get_text(MArtistUnknown);
+    external_urls_t urls;
 
     string get_uri() const { return make_uri(id); }
     
@@ -94,6 +103,7 @@ struct simplified_album_t: public data_item_t
     string href;
     std::vector<image_t> images;
     std::vector<simplified_artist_t> artists;
+    external_urls_t urls;
 
     static string make_uri(const item_id_t &id) { return make_item_uri("album", id); }
 
@@ -144,6 +154,7 @@ struct simplified_track_t: public data_item_t
     size_t track_number;
     bool is_explicit;
     std::vector<simplified_artist_t> artists;
+    external_urls_t urls;
 
     static string make_uri(const item_id_t &id) { return make_item_uri("track", id); }
     static const string& get_fields_filter();
@@ -192,6 +203,7 @@ struct simplified_playlist_t: public data_item_t
     bool is_public;
     wstring description;
     size_t tracks_total;
+    external_urls_t urls;
 
     static string make_uri(const item_id_t &id) { return make_item_uri("playlist", id); }
     static const string& get_fields_filter();
