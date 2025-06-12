@@ -76,6 +76,7 @@ static const std::vector<std::vector<const wchar_t*>> migrations =
     {}, // #0 - initial config version
     { L"AccessToken", L"AccessTokenTime" },
     { L"AccessToken", L"AccessTokenTime" },
+    { L"PlayHistory", L"PlayHistoryTime" }, // added `external_urls` field to the API items
 };
 
 PluginStartupInfo ps_info;

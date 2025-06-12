@@ -650,7 +650,7 @@ void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
 
 //-----------------------------------------------------------------------------------------------------------
 recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel))
+    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel), get_text(MPanelRecentlySavedLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_tracks();
@@ -703,7 +703,7 @@ std::generator<const track_t&> recently_liked_tracks_view::get_tracks()
 
 //-----------------------------------------------------------------------------------------------------------
 user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel))
+    tracks_base_view(panel, api_proxy, get_text(MPanelUserTopTracksLabel), get_text(MPanelUserTopItemsLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_user_top_tracks();
@@ -738,7 +738,7 @@ std::generator<const track_t&> user_top_tracks_view::get_tracks()
 
 //-----------------------------------------------------------------------------------------------------------
 artist_top_tracks_view::artist_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const artist_t &artist):
-    tracks_base_view(panel, api_proxy, get_vtext(MPanelArtistTopArtistsLabel, artist.name), artist.name), artist(artist)
+    tracks_base_view(panel, api_proxy, get_vtext(MPanelArtistTopTracksLabel, artist.name), artist.name), artist(artist)
 {
     if (auto api = api_proxy.lock())
         tracks = api->get_artist_top_tracks(artist.id);

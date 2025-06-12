@@ -17,7 +17,7 @@ void http_logger(const Request &req, const Response &res)
     {
         if (!exclude.contains(http::trim_params(req.path)))
         {
-            log::api->debug("A successful HTTP request has been performed (code={}): [{}] {}, {}",
+            log::api->debug("A successful HTTP request has been performed (code={}): [{}] {} {}",
                 res.status, req.method, http::trim_domain(req.path), req.body);
         }
     }

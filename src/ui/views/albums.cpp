@@ -535,7 +535,7 @@ void recent_albums_view::on_items_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), get_text(MPanelRecentlySavedLabel))
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
