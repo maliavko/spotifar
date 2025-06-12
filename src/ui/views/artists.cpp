@@ -4,59 +4,20 @@
 
 namespace spotifar { namespace ui {
 
+using PM = view::panel_mode_t;
 using namespace spotify;
 using utils::far3::get_text;
 
+static const view::panel_mode_t::column_t
+    Followers       { L"C0",    L"Followers",   L"9" },
+    Popularity      { L"C1",    L"Pop %",       L"5" },
+    MainGenre       { L"C2",    L"Genre",       L"25" },
+    AlbumsCount     { L"C3",    L"Albums",      L"6" },
+    Name            { L"NON",   L"Name",        L"0" },
+    NameFixed       { L"NON",   L"Name",        L"30" },
+    Genres          { L"Z",   L"Name",          L"0" };
+
 //-----------------------------------------------------------------------------------------------------------
-void artists_base_view::update_panel_info(OpenPanelInfo *info)
-{
-    static PanelMode modes[10];
-
-    static const wchar_t* titles_3[] = { L"Name", L"Albums", L"Followers", L"Pop %" };
-    modes[3].ColumnTypes = L"NON,C3,C0,C1";
-    modes[3].ColumnWidths = L"0,6,9,5";
-    modes[3].ColumnTitles = titles_3;
-    modes[3].StatusColumnTypes = NULL;
-    modes[3].StatusColumnWidths = NULL;
-
-    modes[4].ColumnTypes = L"NON,C3";
-    modes[4].ColumnWidths = L"0,6";
-    modes[4].ColumnTitles = titles_3;
-    modes[4].StatusColumnTypes = NULL;
-    modes[4].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_5[] = { L"Name", L"Albums", L"Followers", L"Pop %", L"Genre" };
-    modes[5].ColumnTypes = L"NON,C3,C0,C1,C2";
-    modes[5].ColumnWidths = L"0,6,9,5,25";
-    modes[5].ColumnTitles = titles_5;
-    modes[5].StatusColumnTypes = NULL;
-    modes[5].StatusColumnWidths = NULL;
-    modes[5].Flags = PMFLAGS_FULLSCREEN;
-
-    static const wchar_t* titles_6[] = { L"Name", L"Genres" };
-    modes[6].ColumnTitles = titles_6;
-    modes[6].StatusColumnTypes = NULL;
-    modes[6].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_7[] = { L"Name", L"Albums", L"Genres" };
-    modes[7].ColumnTitles = titles_7;
-    modes[7].ColumnTypes = L"NON,C3,Z";
-    modes[7].ColumnWidths = L"30,6,0";
-    modes[7].StatusColumnTypes = NULL;
-    modes[7].StatusColumnWidths = NULL;
-    modes[7].Flags = PMFLAGS_FULLSCREEN;
-
-    modes[8] = modes[5]; // the same as 5th, but not fullscreen
-    modes[8].Flags &= ~PMFLAGS_FULLSCREEN;
-
-    modes[9] = modes[8];
-
-    modes[0] = modes[8];
-
-    info->PanelModesArray = modes;
-    info->PanelModesNumber = std::size(modes);
-}
-
 const view::items_t& artists_base_view::get_items()
 {
     static view::items_t items; items.clear();
@@ -153,6 +114,26 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
             return item1->followers_total - item2->followers_total;
     }
     return -2;
+}
+
+const view::panel_modes_t* artists_base_view::get_panel_modes() const
+{
+    static panel_modes_t modes{
+        /* 0 */ PM::dummy(8),
+        /* 1 */ PM::dummy(),
+        /* 2 */ PM::dummy(),
+        /* 3 */ PM({ Name, AlbumsCount, Followers, Popularity }),
+        /* 4 */ PM({ Name, AlbumsCount }),
+        /* 5 */ PM({ Name, AlbumsCount, Followers, Popularity, MainGenre }, true),
+        /* 6 */ PM({ NameFixed, Genres }),
+        /* 7 */ PM({ NameFixed, AlbumsCount, Genres }, true),
+        /* 8 */ PM::dummy(8, true),
+        /* 9 */ PM::dummy(8),
+    };
+
+    modes.update(); // TODO: I think it could be emitted
+    
+    return &modes;
 }
 
 

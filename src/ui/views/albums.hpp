@@ -33,10 +33,10 @@ protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto select_item(const data_item_t* data) -> intptr_t override;
     bool request_extra_info(const data_item_t* data) override;
-    void update_panel_info(OpenPanelInfo *info) override;
     auto process_key_input(int combined_key) -> intptr_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto get_key_bar_info() -> const key_bar_info_t* override;
+    auto get_panel_modes() const -> const panel_modes_t* override;
 
     // collection_observer
     void on_saved_albums_changed(const item_ids_t &ids) override;
@@ -80,14 +80,15 @@ protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
-    void update_panel_info(OpenPanelInfo *info) override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
     auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
 private:
     saved_albums_ptr collection;
+    panel_modes_t panel_modes;
 };
 
 
@@ -139,8 +140,7 @@ protected:
     // view interface
     auto get_sort_modes() const -> const view::sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
-        const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;
@@ -164,14 +164,16 @@ protected:
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
-    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1,
-        const data_item_t *data2) -> intptr_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
+    auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
 private:
     saved_albums_ptr collection;
+    panel_modes_t panel_modes;
 };
 
 } // namespace ui
