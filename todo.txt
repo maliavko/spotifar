@@ -15,6 +15,7 @@ application ideas
     - folow/unfollow artists
     - to save the last used view on the multiview
 - new functional
+    - to move followed artists to the collection cache, to add followed status on some panels like 'top user artists'
     + add redirect to Spotify website after shift+enter hit
     + win toast notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
@@ -31,10 +32,7 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-    - returning back does not select a proper item on the panel for multiviews
-    ??? cannot find Superdeathflame The Last Wave album in my collection
-    - in the recently-played tracks view definitely saved(liked) tracks are often shown as not saved
-    - after removing http cache the recently played view show some rubbish
+    - receiving saved tracks batches by 50, in the long lists make it constantly updating, flashing etc.
 
 to finish for alpha release
 - check all the default view settings and sort modes
