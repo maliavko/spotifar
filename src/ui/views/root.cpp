@@ -4,8 +4,14 @@
 
 namespace spotifar { namespace ui {
 
+using PM = view::panel_mode_t;
 using utils::far3::get_text;
 using namespace events;
+
+static const view::panel_mode_t::column_t
+    Name        { L"NON",   L"Name",        L"0" },
+    NameFixed   { L"NON",   L"Name",        L"30" },
+    Descr       { L"Z",     L"Description", L"0" };
 
 //-------------------------------------------------------------------------------------------------------------
 const view::info_lines_t* root_base_view::get_info_lines()
@@ -31,37 +37,6 @@ const view::sort_modes_t& root_base_view::get_sort_modes() const
 config::settings::view_t root_base_view::get_default_settings() const
 {
     return { 1, false, 3 };
-}
-
-void root_base_view::update_panel_info(OpenPanelInfo *info)
-{
-
-    static PanelMode modes[10];
-
-    static const wchar_t* titles_3[] = { L"Name" };
-    modes[3].ColumnTypes = L"NON";
-    modes[3].ColumnWidths = L"0";
-    modes[3].ColumnTitles = titles_3;
-    modes[3].StatusColumnTypes = NULL;
-    modes[3].StatusColumnWidths = NULL;
-
-    static const wchar_t* titles_4[] = { L"Name", L"Description" };
-    modes[4].ColumnTypes = L"NON,Z";
-    modes[4].ColumnWidths = L"30,0";
-    modes[4].ColumnTitles = titles_4;
-    modes[4].StatusColumnTypes = NULL;
-    modes[4].StatusColumnWidths = NULL;
-
-    modes[5] = modes[4];
-    modes[5].Flags = PMFLAGS_FULLSCREEN;
-    
-    modes[6] = modes[3];
-    modes[7] = modes[3];
-    modes[8] = modes[3];
-    modes[9] = modes[3];
-
-    info->PanelModesArray = modes;
-    info->PanelModesNumber = std::size(modes);
 }
 
 const view::items_t& root_base_view::get_items()
@@ -92,8 +67,7 @@ const view::items_t& root_base_view::get_items()
 
 intptr_t root_base_view::select_item(const data_item_t *data)
 {
-    if (data == nullptr)
-        return FALSE;
+    if (data == nullptr) return FALSE;
 
     for (const auto &mitem: menu_items)
         if (data->id == mitem.id)
@@ -109,7 +83,7 @@ intptr_t root_base_view::process_key_input(int combined_key)
 {
     switch (combined_key)
     {
-        case VK_RETURN + utils::keys::mods::shift:
+        case VK_F4:
         {
             auto item = utils::far3::panels::get_current_item(get_panel_handle());
             if (auto api = api_proxy.lock(); item && api)
@@ -125,6 +99,27 @@ intptr_t root_base_view::process_key_input(int combined_key)
         }
     }
     return FALSE;
+}
+
+const view::panel_modes_t* root_base_view::get_panel_modes() const
+{
+    // TODO: columns are being copied, consdider some other ways
+    static panel_modes_t modes{
+        /* 0 */ PM::dummy(),
+        /* 1 */ PM::dummy(),
+        /* 2 */ PM::dummy(),
+        /* 3 */ PM({ Name }),
+        /* 4 */ PM({ NameFixed, Descr }),
+        /* 5 */ PM({ NameFixed, Descr }, true),
+        /* 6 */ PM::dummy(3),
+        /* 7 */ PM::dummy(3),
+        /* 8 */ PM::dummy(3),
+        /* 9 */ PM::dummy(3),
+    };
+    
+    modes.update(); // TODO: I think it could be emitted
+    
+    return &modes;
 }
 
 bool root_base_view::request_extra_info(const data_item_t* data)

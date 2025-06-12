@@ -41,6 +41,55 @@ public:
         bool is_selected = false;
     };
 
+    struct panel_mode_t
+    {
+        struct column_t
+        {
+            const wchar_t *uid;
+            const wchar_t *title;
+            const wchar_t *width;
+        };
+
+        wstring types = L"";
+        wstring widths = L"";
+        std::vector<const wchar_t*> titles;
+        std::vector<column_t> columns;
+        bool is_wide = false;
+        int copy_of_idx = -1; // TODO: this copy algo does not work for some reason
+
+        panel_mode_t(std::vector<column_t> &&cols, bool is_wide = false);
+
+        panel_mode_t(int copy_of_idx, bool is_wide = false): copy_of_idx(copy_of_idx), is_wide(is_wide) {}
+
+        bool is_empty() const { return columns.size() == 0; }
+
+        void insert_column(const column_t &col, size_t idx);
+
+        void rebuild();
+
+        static panel_mode_t dummy(int copy_of_idx = -1, bool is_wide = false)
+        {
+            return panel_mode_t(copy_of_idx, is_wide);
+        }
+    };
+
+    class panel_modes_t: std::vector<panel_mode_t>
+    {
+    public:
+        static const size_t MODES_COUNT = 10;
+        
+        using vector::vector;
+        using vector::size;
+        using vector::at;
+        using vector::operator[];
+
+        const PanelMode* get_modes() const { return modes; }
+
+        void update();
+    private:
+        PanelMode modes[MODES_COUNT];
+    };
+
     using sort_modes_t = std::vector<sort_mode_t>;
     using items_t = std::vector<item_t>;
     using key_bar_info_t = std::unordered_map<FarKey, const wchar_t*>;
@@ -65,6 +114,7 @@ public:
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto get_title() const -> const wstring& { return title; }
     auto get_dir_name() const -> const wstring& { return dir_name; }
+    void update_panel_info2(OpenPanelInfo *info);
 
     /// @brief Called when user hits F3 key on the panel, returns an
     /// additional info for the panel item under cursor
@@ -89,7 +139,8 @@ public:
     virtual auto get_items() -> const items_t& = 0;
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
-    virtual void update_panel_info(OpenPanelInfo *info) {}
+    virtual auto get_panel_modes() const -> const panel_modes_t* { return nullptr; }
+    virtual void update_panel_info(OpenPanelInfo *info) {};
 
     /// @brief A handler used for showing a filtering dialog, by default show nothing.
     /// Called when user hits Ctrl+I combination on the panels
