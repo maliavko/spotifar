@@ -172,7 +172,7 @@ browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
         },
         {
             { user_top_items_id },
-            MPanelUserTopTracksLabel, MPanelUserTopTracksDescr,
+            MPanelUserTopItemsLabel, MPanelUserTopItemsDescr,
             std::bind(show_user_top_items, api)
         },
     })
