@@ -36,6 +36,7 @@ bugs
     - method panel::update_panel_items is called several times almost each panel opening
     - once the update with saved tracks statuses come, the selection is reset
     - cannot find Superdeathflame The Last Wave album in my collection
+    - in the recently-played tracks view definitely saved(liked) tracks are often shown as not saved
 
 to finish for alpha release
 - check all the default view settings and sort modes

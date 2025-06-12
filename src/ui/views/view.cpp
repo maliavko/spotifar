@@ -206,7 +206,7 @@ intptr_t view::select_item(const SetDirectoryInfo *info)
     return select_item(unpack_user_data(info->UserData));
 }
 
-void view::update_panel_info2(OpenPanelInfo *info)
+void view::update_panel_info(OpenPanelInfo *info)
 {
     if (const auto pmodes = get_panel_modes())
     {

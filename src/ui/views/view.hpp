@@ -114,7 +114,7 @@ public:
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
     auto get_title() const -> const wstring& { return title; }
     auto get_dir_name() const -> const wstring& { return dir_name; }
-    void update_panel_info2(OpenPanelInfo *info);
+    void update_panel_info(OpenPanelInfo *info);
 
     /// @brief Called when user hits F3 key on the panel, returns an
     /// additional info for the panel item under cursor
@@ -140,7 +140,6 @@ public:
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
     virtual auto get_panel_modes() const -> const panel_modes_t* { return nullptr; }
-    virtual void update_panel_info(OpenPanelInfo *info) {};
 
     /// @brief A handler used for showing a filtering dialog, by default show nothing.
     /// Called when user hits Ctrl+I combination on the panels
