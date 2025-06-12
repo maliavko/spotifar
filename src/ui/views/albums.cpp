@@ -4,47 +4,23 @@
 
 namespace spotifar { namespace ui {
 
+using PM = view::panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
-/// @brief Helper-method for adjusting columns data prepared by views for Far API.
-/// Extract columns data and add a new column to the front
-/// @tparam ViewType 
-/// @param modes filled Far API struct
-/// @param col_name new column name
-/// @param col_size new column size
-/// @param col_uid new column id (C1,2,....)
-template<class ViewType>
-static void update_columns_info(PanelMode *modes, const wchar_t *col_name, size_t col_size, const wchar_t *col_uid)
-{
-    static struct
-    {
-        std::vector<const wchar_t*> titles;
-        wstring width, types;
-    } columns[9];
-    
-    for (size_t idx = 3; idx < 9; idx++)
-    {
-        size_t columns_count = utils::string_split(modes[idx].ColumnWidths, L',').size();
-        assert (columns_count > 0);
+static const view::panel_mode_t::column_t
+    ReleaseYear     { L"C0",    L"Yr",          L"6" },
+    Type            { L"C1",    L"Type",        L"6" },
+    TracksCount     { L"C2",    L"Tx",          L"4" },
+    ReleaseDate     { L"C3",    L"Release",     L"12" },
+    TotalDuration   { L"C4",    L"Length",      L"8" },
+    Popularity      { L"C5",    L"Pop %",       L"5" },
+    Artist          { L"C6",    L"Artist",      L"30" },
+    Saved           { L"C7",    L"[+]",         L"3" },
+    SavedAt         { L"C8",    L"Saved at",    L"12" },
+    Name            { L"NON",   L"Name",        L"0" },
+    Copyrights      { L"Z",     L"Copyrights",  L"0" };
 
-        // extending all the columns data with the track number column
-        columns[idx].titles.push_back(col_name);
-        columns[idx].titles.insert(columns[idx].titles.end(),
-            modes[idx].ColumnTitles, modes[idx].ColumnTitles + columns_count);
-
-        columns[idx].width = std::format(L"{},{}", col_size, modes[idx].ColumnWidths);
-
-        columns[idx].types = std::format(L"{},{}", col_uid, modes[idx].ColumnTypes);
-
-        // overriding the panel modes with the new columns data
-        modes[idx].ColumnTitles = &columns[idx].titles[0];
-        modes[idx].ColumnWidths = columns[idx].width.c_str();
-        modes[idx].ColumnTypes = columns[idx].types.c_str();
-    }
-
-    modes[9] = modes[0] = modes[8];
-}
 
 //-----------------------------------------------------------------------------------------------------------
 albums_base_view::albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
@@ -111,13 +87,11 @@ const view::items_t& albums_base_view::get_items()
         // inherited views custom columns
         const auto &extra = get_extra_columns(album);
         columns.insert(columns.end(), extra.begin(), extra.end());
-        
-        const auto &copyright = album.get_main_copyright();
 
         items.push_back({
             album.id,
             album.name,
-            copyright.text,
+            album.get_main_copyright().text,
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             columns,
             const_cast<album_t*>(&album)
@@ -126,111 +100,24 @@ const view::items_t& albums_base_view::get_items()
     return items;
 }
 
-
-
-struct panel_mode_t
-{    
-    struct column_t
-    {
-        const wchar_t *uid;
-        const wchar_t *title;
-        const wchar_t *width;
-    };
-
-    wstring types, widths;
-    std::vector<const wchar_t*> titles{};
-    std::vector<column_t> columns;
-    bool is_wide;
-
-    panel_mode_t(std::vector<column_t> &&cols, bool is_wide = false): is_wide(is_wide)
-    {
-        columns = std::move(cols);
-
-        std::vector<const wchar_t*> all_types, all_widths;
-        for (const auto &column: columns)
-        {
-            titles.push_back(column.title);
-            all_types.push_back(column.uid);
-            all_widths.push_back(column.width);
-        }
-
-        if (columns.size() > 0)
-        {
-            types = utils::string_join(all_types, L",");
-            widths = utils::string_join(all_widths, L",");
-        }
-    }
-
-    bool is_empty() const { return columns.size() == 0; }
-};
-
-class panel_modes_t: std::vector<panel_mode_t>
+const view::panel_modes_t* albums_base_view::get_panel_modes() const
 {
-public:
-    static const size_t MODES_COUNT = 10;
-    
-    using vector::vector;
-    using vector::size;
-    using vector::at;
-
-    const PanelMode* get_modes() const { return modes; }
-
-    void update()
-    {
-        for (size_t i = 0; i < MODES_COUNT; i++)
-        {
-            if (auto &mode = at(i); !mode.is_empty())
-            {
-                auto &far_mode = modes[i];
-
-                far_mode.ColumnTypes = mode.types.c_str();
-                far_mode.ColumnWidths = mode.widths.c_str();
-                far_mode.ColumnTitles = &mode.titles[0];
-                far_mode.Flags = mode.is_wide ? PMFLAGS_FULLSCREEN : PMFLAGS_NONE;
-                far_mode.StatusColumnTypes = NULL;
-                far_mode.StatusColumnWidths = NULL;
-            }
-        }
-    }
-private:
-    PanelMode modes[MODES_COUNT];
-};
-
-void albums_base_view::update_panel_info(OpenPanelInfo *info)
-{
-    using PM = panel_mode_t;
-    
-    static const panel_mode_t DummyPanelMode({});
-
-    static const panel_mode_t::column_t
-        ReleaseYear     { L"C0",    L"Yr",          L"6" },
-        Type            { L"C1",    L"Type",        L"6" },
-        TracksCount     { L"C2",    L"Tx",          L"4" },
-        ReleaseDate     { L"C3",    L"Release",     L"12" },
-        TotalDuration   { L"C4",    L"Length",      L"8" },
-        Popularity      { L"C5",    L"Pop %",       L"5" },
-        Artist          { L"C6",    L"Artist",      L"30" },
-        Saved           { L"C7",    L"[+]",         L"3" },
-        Name            { L"NON",   L"Name",        L"0" },
-        Copyrights      { L"Z",     L"Copyrights",  L"0" };
-
     static panel_modes_t modes{
-        /* 0 */ DummyPanelMode,
-        /* 1 */ DummyPanelMode,
-        /* 2 */ DummyPanelMode,
+        /* 0 */ PM::dummy(4),
+        /* 1 */ PM::dummy(),
+        /* 2 */ PM::dummy(),
         /* 3 */ PM({ ReleaseYear, Name, Saved, TracksCount, TotalDuration, Type, Popularity }),
         /* 4 */ PM({ ReleaseYear, Saved, Name, Artist }),
         /* 5 */ PM({ ReleaseYear, Name, Artist, Saved, TracksCount, TotalDuration, Type, Popularity, Copyrights }, true),
         /* 6 */ PM({ ReleaseYear, Name, Saved, Copyrights }),
         /* 7 */ PM({ ReleaseYear, Name, Artist, Saved, Copyrights }, true),
         /* 8 */ PM({ ReleaseYear, Name, Artist, Saved, TracksCount, TotalDuration, Type, Popularity }),
-        /* 9 */ DummyPanelMode,
+        /* 9 */ PM::dummy(8),
     };
 
-    modes.update();
+    modes.update(); // TODO: I think it could be emitted
     
-    info->PanelModesArray = modes.get_modes();
-    info->PanelModesNumber = modes.size();
+    return &modes;
 }
 
 const view::sort_modes_t& albums_base_view::get_sort_modes() const
@@ -416,6 +303,13 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
+
+    panel_modes = *albums_base_view::get_panel_modes();
+    panel_modes[4].insert_column(SavedAt, 0);
+    panel_modes[5].insert_column(SavedAt, 0);
+    panel_modes[7].insert_column(SavedAt, 0);
+
+    panel_modes.update();
 }
 
 config::settings::view_t saved_albums_view::get_default_settings() const
@@ -454,30 +348,6 @@ intptr_t saved_albums_view::compare_items(const sort_mode_t &sort_mode,
         return item1->added_at.compare(item2->added_at);
     }
     return albums_base_view::compare_items(sort_mode, data1, data2);
-}
-
-void saved_albums_view::update_panel_info(OpenPanelInfo *info)
-{
-    albums_base_view::update_panel_info(info);
-    
-    auto *modes = const_cast<PanelMode*>(info->PanelModesArray);
-
-    // adding `Saved at` column to some of the view modes
-    static const wchar_t* titles_4[] = { L"Saved at", L"Yr", L"Name", L"Artist" };
-    modes[4].ColumnTypes = L"C8,C0,NON,C6";
-    modes[4].ColumnWidths = L"12,6,30,0";
-    modes[4].ColumnTitles = titles_4;
-
-    static const wchar_t* titles_5[] = { L"Saved at", L"Yr", L"Name", L"Artist", L"Tx", L"Length", L"Type",
-        L"Pop %", L"Copyrights" };
-    modes[5].ColumnTypes = L"C8,C0,NON,C6,C2,C4,C1,C5,Z";
-    modes[5].ColumnWidths = L"12,6,30,30,4,8,6,5,0";
-    modes[5].ColumnTitles = titles_5;
-
-    static const wchar_t* titles_7[] = { L"Saved at", L"Yr", L"Name", L"Artist", L"Copyrights" };
-    modes[7].ColumnTypes = L"C8,C0,NON,C6,Z";
-    modes[7].ColumnWidths = L"12,6,30,30,0";
-    modes[7].ColumnTitles = titles_7;
 }
 
 void saved_albums_view::show_tracks_view(const album_t &album) const
@@ -655,6 +525,13 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_albums();
+
+    panel_modes = *albums_base_view::get_panel_modes();
+    panel_modes[4].insert_column(SavedAt, 0);
+    panel_modes[5].insert_column(SavedAt, 0);
+    panel_modes[7].insert_column(SavedAt, 0);
+
+    panel_modes.update();
 }
 
 config::settings::view_t recently_saved_albums_view::get_default_settings() const
@@ -668,7 +545,7 @@ const view::sort_modes_t& recently_saved_albums_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = albums_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ L"Saved at", SM_MTIME, { VK_F8, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -689,8 +566,7 @@ intptr_t recently_saved_albums_view::compare_items(const sort_mode_t &sort_mode,
 
 void recently_saved_albums_view::show_tracks_view(const album_t &album) const
 {
-    events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_recently_saved, api_proxy));
+    events::show_album_tracks(api_proxy, album, std::bind(events::show_recently_saved, api_proxy));
 }
 
 std::generator<const album_t&> recently_saved_albums_view::get_albums()
@@ -699,6 +575,18 @@ std::generator<const album_t&> recently_saved_albums_view::get_albums()
     if (collection->fetch(false, true, 3))
         for (const auto &a: *collection)
             co_yield a;
+}
+
+std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t& album) const
+{
+    const auto &saved_album = static_cast<const saved_album_t&>(album);
+
+    // we take first 10 symbols - it is date, the rest is time
+    const auto &saved_at_str = std::format("{:^12}", saved_album.added_at.substr(0, 10));
+
+    return {
+        utils::to_wstring(saved_at_str), // C8 - `added at` date
+    };
 }
 
 } // namespace ui
