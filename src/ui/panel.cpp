@@ -279,6 +279,11 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 }
                 return TRUE;
             }
+            case VK_F9 + keys::mods::ctrl + keys::mods::alt:
+            {
+                ui::events::refresh_panel(this);
+                return TRUE;
+            }
         }
 
         // propagating the event processing routine to the nested view
@@ -336,7 +341,7 @@ void panel::refresh(const string &item_id)
     else
     {
         // ...or perform a whole panels rebuild and redraw
-        far3::panels::update((HANDLE)this);
+        far3::panels::update((HANDLE)this, false);
         far3::panels::redraw((HANDLE)this);
     }
 
