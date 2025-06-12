@@ -15,6 +15,12 @@ bool operator==(const FarKey &lhs, const FarKey &rhs)
 
 namespace spotifar { namespace utils {
 
+HINSTANCE open_web_browser(const string &address)
+{ 
+    log::global->debug("Redirecting to the external browser, {}", address);
+    return ShellExecuteA(NULL, "open", address.c_str(), 0, 0, SW_SHOW);
+}
+
 namespace keys
 {
     bool is_pressed(int virtual_key)

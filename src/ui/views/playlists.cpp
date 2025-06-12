@@ -136,20 +136,16 @@ intptr_t playlists_base_view::compare_items(const sort_mode_t &sort_mode,
 
 intptr_t playlists_base_view::process_key_input(int combined_key)
 {
+    using namespace utils::keys;
+
     switch (combined_key)
     {
-        case VK_RETURN + utils::keys::mods::shift:
+        case VK_F4:
         {
             if (auto item = panels::get_current_item(get_panel_handle()))
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
                 {
-                    // if (start_playback(user_data->id))
-                    // {
-                    //     events::show_player();
-                    //     return TRUE;
-                    // }
-                    
                     if (auto api = api_proxy.lock())
                     {
                         const auto playlist = static_cast<const simplified_playlist_t*>(user_data);
@@ -161,6 +157,18 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
             else
                 log::global->error("There is an error occured while getting a current panel item");
 
+            return TRUE;
+        }
+        case VK_RETURN + mods::shift:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData))
+                {
+                    if (const auto *pl = static_cast<const simplified_playlist_t*>(user_data); !pl->urls.spotify.empty())
+                        utils::open_web_browser(pl->urls.spotify);
+                }
+            }
             return TRUE;
         }
     }
