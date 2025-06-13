@@ -3,7 +3,6 @@
 #include "views/root.hpp"
 #include "views/artists.hpp"
 #include "views/playlists.hpp"
-#include "views/playlist.hpp"
 #include "views/albums.hpp"
 #include "views/tracks.hpp"
 
