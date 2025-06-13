@@ -5,10 +5,21 @@ namespace spotifar { namespace ui {
 
 namespace panels = utils::far3::panels;
 
-view::panel_mode_t::panel_mode_t(std::vector<const column_t*> &&cols, bool is_wide): is_wide(is_wide)
+//-------------------------------------------------------------------------------------------------
+view::panel_mode_t::panel_mode_t(std::vector<const column_t*> &&cols, bool is_wide)
 {
     columns = std::move(cols);
+
+    if (is_wide)
+        flags |= PMFLAGS_FULLSCREEN;
+    
     rebuild();
+}
+
+view::panel_mode_t::panel_mode_t(int copy_of_idx, bool is_wide): copy_of_idx(copy_of_idx)
+{
+    if (is_wide)
+        flags |= PMFLAGS_FULLSCREEN;
 }
 
 void view::panel_mode_t::insert_column(const column_t *col, size_t idx)
@@ -67,7 +78,7 @@ void view::panel_modes_t::rebuild()
             far_mode.ColumnTypes = mode.types.c_str();
             far_mode.ColumnWidths = mode.widths.c_str();
             far_mode.ColumnTitles = &mode.titles[0];
-            far_mode.Flags = mode.is_wide ? PMFLAGS_FULLSCREEN : PMFLAGS_NONE;
+            far_mode.Flags = mode.flags;
             far_mode.StatusColumnTypes = NULL;
             far_mode.StatusColumnWidths = NULL;
         }
@@ -180,9 +191,9 @@ intptr_t view::process_input(const ProcessPanelInputInfo *info)
             if (key == key_code + keys::mods::ctrl)
                 return TRUE;
         
-        // view mode hotkeys Ctrl+(1...0) pre-handling: saving the index into
+        // view mode hotkeys Ctrl+(0...9) pre-handling: saving the index into
         // specific view persistent settings to recover later
-        for (int key_code = keys::key_0; key_code <= keys::key_9; key_code++)
+        for (int key_code = keys::key_0; key_code < keys::key_0 + panel_modes_t::MODES_COUNT; key_code++)
             if (key == key_code + keys::mods::ctrl)
             {
                 settings->view_mode = key_code - keys::key_0;

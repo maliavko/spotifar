@@ -279,11 +279,6 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 }
                 return TRUE;
             }
-            case VK_F9 + keys::mods::ctrl + keys::mods::alt:
-            {
-                ui::events::refresh_panel(this);
-                return TRUE;
-            }
         }
 
         // propagating the event processing routine to the nested view

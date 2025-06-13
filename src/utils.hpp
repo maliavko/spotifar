@@ -165,6 +165,7 @@ namespace keys
         y = 0x59,
         z = 0x5A,
         key_0 = 0x30,
+        key_1 = 0x31,
         key_9 = 0x39;
 
     namespace mods
