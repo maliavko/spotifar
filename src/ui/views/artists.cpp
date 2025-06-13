@@ -123,16 +123,14 @@ const view::panel_modes_t* artists_base_view::get_panel_modes() const
         /* 0 */ PM::dummy(8),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ Name, AlbumsCount, Followers, Popularity }),
-        /* 4 */ PM({ Name, AlbumsCount }),
-        /* 5 */ PM({ Name, AlbumsCount, Followers, Popularity, MainGenre }, true),
-        /* 6 */ PM({ NameFixed, Genres }),
-        /* 7 */ PM({ NameFixed, AlbumsCount, Genres }, true),
+        /* 3 */ PM({ &Name, &AlbumsCount, &Followers, &Popularity }),
+        /* 4 */ PM({ &Name, &AlbumsCount }),
+        /* 5 */ PM({ &Name, &AlbumsCount, &Followers, &Popularity, &MainGenre }, true),
+        /* 6 */ PM({ &NameFixed, &Genres }),
+        /* 7 */ PM({ &NameFixed, &AlbumsCount, &Genres }, true),
         /* 8 */ PM::dummy(8, true),
         /* 9 */ PM::dummy(8),
     };
-
-    modes.update(); // TODO: I think it could be emitted
     
     return &modes;
 }
@@ -218,7 +216,8 @@ void followed_artists_view::show_albums_view(const artist_t &artist) const
 
 void followed_artists_view::show_filters_dialog()
 {
-    // TODO: unfinished, not for the aplha release
+    // unfinished, not for the aplha release
+
     /*PluginDialogBuilder builder(config::ps_info, MainGuid, FarMessageGuid, L"Test Dialog", NULL);
 
     std::unordered_set<string> genres;

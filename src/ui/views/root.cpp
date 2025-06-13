@@ -103,21 +103,18 @@ intptr_t root_base_view::process_key_input(int combined_key)
 
 const view::panel_modes_t* root_base_view::get_panel_modes() const
 {
-    // TODO: columns are being copied, consdider some other ways
     static panel_modes_t modes{
         /* 0 */ PM::dummy(),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ Name }),
-        /* 4 */ PM({ NameFixed, Descr }),
-        /* 5 */ PM({ NameFixed, Descr }, true),
+        /* 3 */ PM({ &Name }),
+        /* 4 */ PM({ &NameFixed, &Descr }),
+        /* 5 */ PM({ &NameFixed, &Descr }, true),
         /* 6 */ PM::dummy(3),
         /* 7 */ PM::dummy(3),
         /* 8 */ PM::dummy(3),
         /* 9 */ PM::dummy(3),
     };
-    
-    modes.update(); // TODO: I think it could be emitted
     
     return &modes;
 }
