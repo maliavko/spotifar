@@ -41,7 +41,6 @@ protected:
 private:
     multiview_builder_t mview_builders;
     bool skip_view_refresh = true;
-    utils::clock_t::time_point last_refresh_time{};
 
     view_ptr_t view;
     plugin_ptr_t plugin_proxy;

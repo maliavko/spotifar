@@ -8,14 +8,8 @@ application ideas
     - view are being populated on the fly usually in get_items() method, which works, but reduced performance at each redraw, which mainly require only redraw, but no items update; consider separating api collection populating from redrawing the panels, see saved_tracks_view e.g.
     - too many events classes, consider unifying some of them; plus maybe to move them somewhere to the separate file to reduce dependencies
     - think over the namings of lng keys, they are too long
-    - goto playlist from player UI
-    - showing some simple sorting's direction sign around the column name the sorting is applied to
-    - make safer calls of the main artists from the album or tracks objects: "artists[0]"
-    + to add a description to all the async tasks and log it additionally with errors
     - close plugin if another librespot device is being detected
-    - to save multiview current tab between sessions
     - folow/unfollow artists
-    - to save the last used view on the multiview
 - new functional
     - show somewhere in UI the fresh releases synch status
     - to move followed artists to the collection cache, to add followed status on some panels like 'top user artists'
@@ -35,10 +29,11 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
+- new releases has doubles on the panel
 
 to finish for alpha release
 - check all the default view settings and sort modes
-- to saved/remove artists, albums and tracks, to show their status on the panels
++ to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch
 - help window
 + remove unfinished menus
