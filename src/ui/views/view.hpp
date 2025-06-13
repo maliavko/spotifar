@@ -144,7 +144,9 @@ public:
     /// additional info for the panel item under cursor
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
     
-    // TODO: refactor to calculate once
+    // Not cool it is calculated every time, no way I can come up with to
+    // precache the value, as it should know derived class type, which is
+    // available only after object is craeted
     auto get_crc32() const -> intptr_t { return utils::crc32::WSID(get_uid().c_str()); }
 
     /// @brief Searches for the `item_id` item on the panel and
@@ -177,7 +179,6 @@ protected:
     
     item_ids_t get_selected_items();
 
-    // TODO: refactor to calculate once
     /// @brief Returns a unique view string id, used in caching
     string get_uid() const { return typeid(*this).name(); }
     
