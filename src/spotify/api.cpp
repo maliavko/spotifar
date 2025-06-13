@@ -518,6 +518,12 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
 {
     static const wstring cache_folder = std::format(L"{}\\images", config::get_plugin_data_folder());
 
+    if (!image.is_valid())
+    {
+        log::global->warn("The given image is invalid, item_id {}", item_id);
+        return L"";
+    }
+
     if (!std::filesystem::exists(cache_folder))
         std::filesystem::create_directories(cache_folder);
 
