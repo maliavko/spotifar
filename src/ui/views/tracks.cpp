@@ -279,7 +279,7 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
     rebuild_items();
 
     panel_modes = *tracks_base_view::get_panel_modes();
-    for (size_t i = 3; i < 10; i++)
+    for (size_t i = 3; i < panel_modes_t::MODES_COUNT; i++)
         panel_modes[i].insert_column(is_multidisc ? &TxMultNumber : &TxNumber, 0);
 
     panel_modes.rebuild();
@@ -471,7 +471,7 @@ std::generator<const track_t&> recent_tracks_view::get_tracks()
     for (const auto &track: items) co_yield track;
 }
 
-void recent_tracks_view::on_items_changed()
+void recent_tracks_view::on_history_changed()
 {
     rebuild_items();
     events::refresh_panel(get_panel_handle());

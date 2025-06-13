@@ -524,7 +524,7 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
     }
 }
 
-void recent_albums_view::on_items_changed()
+void recent_albums_view::on_history_changed()
 {
     rebuild_items();
     events::refresh_panel(get_panel_handle());

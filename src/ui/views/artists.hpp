@@ -85,7 +85,7 @@ protected:
     auto get_artists() -> std::generator<const artist_t&> override;
     auto show_albums_view(const artist_t &artist) const -> void override;
     
-    void on_items_changed();
+    void on_history_changed();
 private:
     std::vector<history_artist_t> items;
 };
