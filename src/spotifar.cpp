@@ -246,8 +246,7 @@ intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 
 HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 {
-    // TODO: unfinished
-    // spdlog::debug("HANDLE WINAPI AnalyseW(const AnalyseInfo *info)");
+    // unfinished experiments, not for the alpha release
     return NULL;
 }
 
@@ -255,7 +254,7 @@ HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 /// The function is also called when file on the panel is being copied to the other panel
 intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 {
-    // TODO: unfinished
+    // unfinished experiments, not for the alpha release
     // spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *info)");
     
     // // wchar_t FileName[MAX_PATH];
@@ -274,8 +273,6 @@ intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 /// @brief https://api.farmanager.com/ru/exported_functions/deletefilesw.html
 intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
 {
-    // TODO: unfinished
-    // spdlog::debug("intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)");
     return FALSE;
 }
 
