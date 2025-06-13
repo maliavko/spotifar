@@ -106,16 +106,14 @@ const view::panel_modes_t* albums_base_view::get_panel_modes() const
         /* 0 */ PM::dummy(4),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ ReleaseYear, Name, Saved, TracksCount, TotalDuration, Type, Popularity }),
-        /* 4 */ PM({ ReleaseYear, Saved, Name, Artist }),
-        /* 5 */ PM({ ReleaseYear, Name, Artist, Saved, TracksCount, TotalDuration, Type, Popularity, Copyrights }, true),
-        /* 6 */ PM({ ReleaseYear, Name, Saved, Copyrights }),
-        /* 7 */ PM({ ReleaseYear, Name, Artist, Saved, Copyrights }, true),
-        /* 8 */ PM({ ReleaseYear, Name, Artist, Saved, TracksCount, TotalDuration, Type, Popularity }),
+        /* 3 */ PM({ &ReleaseYear, &Name, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity }),
+        /* 4 */ PM({ &ReleaseYear, &Saved, &Name, &Artist }),
+        /* 5 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity, &Copyrights }, true),
+        /* 6 */ PM({ &ReleaseYear, &Name, &Saved, &Copyrights }),
+        /* 7 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &Copyrights }, true),
+        /* 8 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity }),
         /* 9 */ PM::dummy(8),
     };
-
-    modes.update(); // TODO: I think it could be emitted
     
     return &modes;
 }
@@ -319,11 +317,11 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
         collection = api->get_saved_albums();
 
     panel_modes = *albums_base_view::get_panel_modes();
-    panel_modes[4].insert_column(SavedAt, 0);
-    panel_modes[5].insert_column(SavedAt, 0);
-    panel_modes[7].insert_column(SavedAt, 0);
+    panel_modes[4].insert_column(&SavedAt, 0);
+    panel_modes[5].insert_column(&SavedAt, 0);
+    panel_modes[7].insert_column(&SavedAt, 0);
 
-    panel_modes.update();
+    panel_modes.rebuild();
 }
 
 config::settings::view_t saved_albums_view::get_default_settings() const
@@ -541,11 +539,11 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
         collection = api->get_saved_albums();
 
     panel_modes = *albums_base_view::get_panel_modes();
-    panel_modes[4].insert_column(SavedAt, 0);
-    panel_modes[5].insert_column(SavedAt, 0);
-    panel_modes[7].insert_column(SavedAt, 0);
+    panel_modes[4].insert_column(&SavedAt, 0);
+    panel_modes[5].insert_column(&SavedAt, 0);
+    panel_modes[7].insert_column(&SavedAt, 0);
 
-    panel_modes.update();
+    panel_modes.rebuild();
 }
 
 config::settings::view_t recently_saved_albums_view::get_default_settings() const
