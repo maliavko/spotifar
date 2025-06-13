@@ -551,7 +551,7 @@ bool player::on_artist_label_input_received(void *input_record)
     }
 
     // if we won't find our artist by name, we pick the main one
-    auto simplified_artist = playback.item.artists[0];
+    auto simplified_artist = playback.item.get_artist();
     for (const auto &a: playback.item.artists)
         if (a.name == utils::trim(result))
             simplified_artist = a;
@@ -578,7 +578,7 @@ bool player::on_track_label_input_received(void *input_record)
     auto api = api_proxy.lock();
     const auto &playback = api->get_playback_state();
 
-    if (const auto &artist = api->get_artist(playback.item.artists[0].id))
+    if (const auto &a = playback.item.get_artist(); const auto &artist = api->get_artist(a.id))
     {
         hide();
 
@@ -615,8 +615,41 @@ bool player::on_source_label_input_received(void *input_record)
     const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
+    
+    if (auto api = api_proxy.lock())
+    {
+        const auto &state = api->get_playback_state();
+        const auto &ctx = state.context;
 
-    return true;
+        if (ctx.is_collection())
+        {
+            // showing a collection view
+            ui::events::show_collection(api_proxy, multiview_builder_t::tracks_idx);
+        }
+        else if (ctx.is_artist())
+        {
+            // showing an artist's view with its albums
+            if (const auto &artist = api->get_artist(ctx.get_item_id()))
+                ui::events::show_artist(api, artist, [this] { events::show_root(api_proxy); });
+        }
+        else if (ctx.is_album())
+        {
+            ui::events::show_album_tracks(api, state.item.album, std::bind(ui::events::show_root, api_proxy));
+        }
+        else if (ctx.is_playlist())
+        {
+            if (const auto &playlist = api->get_playlist(ctx.get_item_id()))
+                ui::events::show_playlist(api, playlist);
+        }
+        
+        ui::events::select_item(state.item.id);
+
+        hide();
+
+        return true;
+    }
+
+    return false;
 }
 
 bool player::on_track_bar_input_received(void *input_record)

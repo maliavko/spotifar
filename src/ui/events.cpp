@@ -34,16 +34,20 @@ void show_root(api_weak_ptr_t api)
     show_view(get_builder<root_view>(api), {});
 }
 
-void show_collection(api_weak_ptr_t api)
+void show_collection(api_weak_ptr_t api, int page_idx)
 {
+    auto settings = config::get_multiview_settings("collection", { multiview_builder_t::artists_idx });
+
+    if (page_idx > -1)
+        settings->idx = page_idx;
+    
     show_multiview(
         {
             .artists = get_builder<followed_artists_view>(api),
             .albums = get_builder<saved_albums_view>(api),
             .tracks = get_builder<saved_tracks_view>(api),
             .playlists = get_builder<saved_playlists_view>(api),
-            .settings = config::get_multiview_settings(
-                "collection", { multiview_builder_t::artists_idx })
+            .settings = settings
         },
         [api] { show_root(api); }
     );

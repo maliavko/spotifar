@@ -368,8 +368,7 @@ intptr_t saved_albums_view::compare_items(const sort_mode_t &sort_mode,
 
 void saved_albums_view::show_tracks_view(const album_t &album) const
 {
-    events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_collection, api_proxy));
+    events::show_album_tracks(api_proxy, album, [this] { events::show_collection(api_proxy); });
 }
 
 std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) const

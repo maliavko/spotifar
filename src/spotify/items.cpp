@@ -152,9 +152,9 @@ wstring simplified_album_t::get_type_abbrev() const
     return L"??";
 }
 
-simplified_artist_t simplified_album_t::get_artist() const
+simplified_artist_t simplified_album_t::get_artist() const noexcept
 {
-    return artists.size() > 0 ? artists[0] : simplified_artist_t();
+    return artists.size() > 0 ? artists[0] : simplified_artist_t{};
 }
 
 const image_t simplified_album_t::get_image() const noexcept
@@ -270,9 +270,9 @@ const string& simplified_track_t::get_fields_filter()
     return fields;
 }
 
-simplified_artist_t simplified_track_t::get_artist() const
+simplified_artist_t simplified_track_t::get_artist() const noexcept
 {
-    return artists.size() > 0 ? artists[0] : simplified_artist_t();
+    return artists.size() > 0 ? artists[0] : simplified_artist_t{};
 }
 
 wstring simplified_track_t::get_artists_full_name() const

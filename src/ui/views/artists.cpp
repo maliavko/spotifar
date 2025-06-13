@@ -210,8 +210,7 @@ std::generator<const artist_t&> followed_artists_view::get_artists()
 
 void followed_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist(api_proxy, artist,
-        std::bind(events::show_collection, api_proxy));
+    events::show_artist(api_proxy, artist, [this] { events::show_collection(api_proxy); });
 }
 
 void followed_artists_view::show_filters_dialog()
@@ -287,7 +286,7 @@ void recent_artists_view::rebuild_items()
     auto play_history = api->get_play_history();
     for (auto it = play_history.rbegin(); it != play_history.rend(); ++it)
         if (it->track.artists.size() > 0)
-            recent_artists[it->track.artists[0].id] = *it;
+            recent_artists[it->track.get_artist().id] = *it;
 
     if (recent_artists.size() > 0)
     {

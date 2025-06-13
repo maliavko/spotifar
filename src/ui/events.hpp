@@ -17,7 +17,7 @@ namespace events {
 
     void show_root(api_weak_ptr_t);
 
-    void show_collection(api_weak_ptr_t);
+    void show_collection(api_weak_ptr_t, int page_idx = -1);
 
     void show_recents(api_weak_ptr_t);
 
@@ -29,7 +29,7 @@ namespace events {
 
     void show_user_top_items(api_weak_ptr_t);
 
-    void show_playlist(api_weak_ptr_t, const spotify::playlist_t &playlist);
+    void show_playlist(api_weak_ptr_t, const spotify::playlist_t &);
 
     void show_artist(api_weak_ptr_t, const spotify::artist_t&, view::return_callback_t = {});
 
