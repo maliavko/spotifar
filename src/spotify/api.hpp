@@ -92,10 +92,11 @@ protected:
     Result del(const string &url, const string &body = "") override;
     Result post(const string &url, const string &body = "") override;
     
-    auto get_pool() -> BS::priority_thread_pool& override { return pool; };
+    auto get_pool() -> BS::light_thread_pool& override { return requests_pool; };
     bool is_request_cached(const string &url) const override;
 private:
-    BS::priority_thread_pool pool;
+    BS::light_thread_pool requests_pool;
+    BS::light_thread_pool resyncs_pool;
     http_cache api_responses_cache;
 
     // caches
