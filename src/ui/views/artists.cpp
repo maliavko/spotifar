@@ -148,6 +148,8 @@ intptr_t artists_base_view::process_key_input(int combined_key)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
                 {
+                    // no several artists multiselection is allowed, starting playback for
+                    // the one which is currently under cursor
                     api->start_playback(artist_t::make_uri(user_data->id));
                     return TRUE;
                 }
