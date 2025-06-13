@@ -86,10 +86,14 @@ public:
     /// for changes outside of the class 
     struct accessor_t
     {
-        std::lock_guard<std::mutex> lock;
-        T& data;
+        //std::lock_guard<std::mutex> lock;
+        T &data;
 
-        accessor_t(T &data, std::mutex &m): data(data), lock(m) {}
+        //accessor_t(T &data, std::mutex &m): data(data), lock(m) {}
+
+        // TODO: uncertain about necessity of this class, introduced it to prevent data racing,
+        // never occured before, at the same time started getting deadlocks with it
+        accessor_t(T &data, std::mutex &m): data(data) {}
     };
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
