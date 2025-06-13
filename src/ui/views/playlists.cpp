@@ -280,7 +280,7 @@ std::generator<const simplified_playlist_t&> recent_playlists_view::get_playlist
         co_yield i;
 }
 
-void recent_playlists_view::on_items_changed()
+void recent_playlists_view::on_history_changed()
 {
     rebuild_items();
     events::refresh_panel(get_panel_handle());

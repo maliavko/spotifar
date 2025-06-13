@@ -35,7 +35,7 @@ clock_t::duration play_history::get_sync_interval() const
 void play_history::on_data_synced(const history_items_t &data, const history_items_t &prev_data)
 {
     if (data.size() != prev_data.size())
-        dispatch_event(&play_history_observer::on_items_changed);
+        dispatch_event(&play_history_observer::on_history_changed);
 }
 
 bool play_history::request_data(history_items_t &data)

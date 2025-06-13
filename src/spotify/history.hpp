@@ -31,7 +31,7 @@ private:
 
 struct play_history_observer: public BaseObserverProtocol
 {
-    virtual void on_items_changed() {}
+    virtual void on_history_changed() {}
 };
 
 } // namespace spotify
