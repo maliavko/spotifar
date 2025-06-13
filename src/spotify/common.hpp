@@ -208,7 +208,7 @@ protected:
 
     /// @brief Returns a reference to the internally allocated thread-pool. Used by
     /// requesters to perform async request
-    virtual auto get_pool() -> BS::priority_thread_pool& = 0;
+    virtual auto get_pool() -> BS::light_thread_pool& = 0;
 
     /// @brief Whether the given url is cached
     virtual bool is_request_cached(const string &url) const = 0;
