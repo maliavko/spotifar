@@ -325,7 +325,7 @@ void recent_artists_view::show_albums_view(const artist_t &artist) const
         std::bind(events::show_recents, api_proxy));
 }
 
-void recent_artists_view::on_items_changed()
+void recent_artists_view::on_history_changed()
 {
     rebuild_items();
     events::refresh_panel(get_panel_handle());

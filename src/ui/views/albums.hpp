@@ -147,7 +147,7 @@ protected:
     void show_tracks_view(const album_t &album) const override;
 
     // play_history_observer interface
-    void on_items_changed() override;
+    void on_history_changed() override;
 private:
     std::vector<history_album_t> items;
 };
