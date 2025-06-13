@@ -190,6 +190,9 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
                 {
+                    // TODO: consider starting playback for the artist context, but starting from
+                    // the first track of the selected album
+                    // TODO: multiselect?
                     log::global->info("Starting playback from the panel, {}", user_data->id);
                     api->start_playback(album_t::make_uri(user_data->id));
 
@@ -222,6 +225,19 @@ intptr_t albums_base_view::process_key_input(int combined_key)
                 {
                     if (const album_t *album = static_cast<const album_t*>(user_data); !album->urls.spotify.empty())
                         utils::open_web_browser(album->urls.spotify);
+                }
+            }
+            return TRUE;
+        }
+        case VK_RETURN + mods::shift + mods::alt:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData); *user_data)
+                {
+                    const album_t *album = static_cast<const album_t*>(user_data);
+                    if (auto api = api_proxy.lock(); const auto &a = api->get_artist(album->get_artist().id))
+                        events::show_artist(api_proxy, a);
                 }
             }
             return TRUE;
