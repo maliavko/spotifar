@@ -26,21 +26,18 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
 
 const view::panel_modes_t* playlist_view::get_panel_modes() const
 {
-    // TODO: columns are being copied, consdider some other ways
     static panel_modes_t modes{
         /* 0 */ PM::dummy(),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ Name, Artist, Duration }),
-        /* 4 */ PM({ Name, Album, AlbumYear }),
-        /* 5 */ PM({ Name, AddedAt }),
+        /* 3 */ PM({ &Name, &Artist, &Duration }),
+        /* 4 */ PM({ &Name, &Album, &AlbumYear }),
+        /* 5 */ PM({ &Name, &AddedAt }),
         /* 6 */ PM::dummy(3),
         /* 7 */ PM::dummy(3),
         /* 8 */ PM::dummy(3),
         /* 9 */ PM::dummy(3),
     };
-    
-    modes.update(); // TODO: I think it could be emitted
     
     return &modes;
 }

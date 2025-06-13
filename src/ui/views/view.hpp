@@ -53,17 +53,17 @@ public:
         wstring types = L"";
         wstring widths = L"";
         std::vector<const wchar_t*> titles;
-        std::vector<column_t> columns;
+        std::vector<const column_t*> columns;
         bool is_wide = false;
         int copy_of_idx = -1; // TODO: this copy algo does not work for some reason
 
-        panel_mode_t(std::vector<column_t> &&cols, bool is_wide = false);
+        panel_mode_t(std::vector<const column_t*> &&cols, bool is_wide = false);
 
         panel_mode_t(int copy_of_idx, bool is_wide = false): copy_of_idx(copy_of_idx), is_wide(is_wide) {}
 
         bool is_empty() const { return columns.size() == 0; }
 
-        void insert_column(const column_t &col, size_t idx);
+        void insert_column(const column_t *col, size_t idx);
 
         void rebuild();
 
@@ -75,17 +75,20 @@ public:
 
     class panel_modes_t: std::vector<panel_mode_t>
     {
+        using base_type_t = std::vector<panel_mode_t>;
     public:
         static const size_t MODES_COUNT = 10;
         
-        using vector::vector;
         using vector::size;
         using vector::at;
         using vector::operator[];
 
+        panel_modes_t(): base_type_t{} {}
+        panel_modes_t(std::initializer_list<panel_mode_t> il);
+
         const PanelMode* get_modes() const { return modes; }
 
-        void update();
+        void rebuild();
     private:
         PanelMode modes[MODES_COUNT];
     };

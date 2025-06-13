@@ -122,21 +122,18 @@ const view::items_t& tracks_base_view::get_items()
 
 const view::panel_modes_t* tracks_base_view::get_panel_modes() const
 {
-    // TODO: columns are being copied, consdider some other ways
     static panel_modes_t modes{
         /* 0 */ PM::dummy(8),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ Name, IsSaved, IsExplicit, Duration, Popularity }),
-        /* 4 */ PM({ Name, Artist, IsSaved, Duration }),
-        /* 5 */ PM({ Name, Artist, Album, Type, Year, IsSaved, IsExplicit, Duration, Popularity }, true),
-        /* 6 */ PM({ Name, Artist, IsSaved, IsExplicit, Duration, Popularity}),
-        /* 7 */ PM({ Name, Album, Year, IsSaved, IsExplicit, Duration, Popularity }, true),
-        /* 8 */ PM({ Name, Artist, Album, IsSaved, Year }),
+        /* 3 */ PM({ &Name, &IsSaved, &IsExplicit, &Duration, &Popularity }),
+        /* 4 */ PM({ &Name, &Artist, &IsSaved, &Duration }),
+        /* 5 */ PM({ &Name, &Artist, &Album, &Type, &Year, &IsSaved, &IsExplicit, &Duration, &Popularity }, true),
+        /* 6 */ PM({ &Name, &Artist, &IsSaved, &IsExplicit, &Duration, &Popularity}),
+        /* 7 */ PM({ &Name, &Album, &Year, &IsSaved, &IsExplicit, &Duration, &Popularity }, true),
+        /* 8 */ PM({ &Name, &Artist, &Album, &IsSaved, &Year }),
         /* 9 */ PM::dummy(8),
     };
-    
-    modes.update(); // TODO: I think it could be emitted
     
     return &modes;
 }
@@ -282,9 +279,9 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
 
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < 10; i++)
-        panel_modes[i].insert_column(is_multidisc ? TxMultNumber : TxNumber, 0);
+        panel_modes[i].insert_column(is_multidisc ? &TxMultNumber : &TxNumber, 0);
 
-    panel_modes.update();
+    panel_modes.rebuild();
 }
 
 album_tracks_view::~album_tracks_view()
@@ -412,9 +409,9 @@ recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
 
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < 10; i++)
-        panel_modes[i].insert_column(PlayedAt, 0);
+        panel_modes[i].insert_column(&PlayedAt, 0);
 
-    panel_modes.update();
+    panel_modes.rebuild();
 }
 
 recent_tracks_view::~recent_tracks_view()
@@ -516,9 +513,9 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
 
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < 10; i++)
-        panel_modes[i].insert_column(SavedAt, 0);
+        panel_modes[i].insert_column(&SavedAt, 0);
 
-    panel_modes.update();
+    panel_modes.rebuild();
 }
 
 saved_tracks_view::~saved_tracks_view()
