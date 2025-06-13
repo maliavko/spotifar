@@ -339,14 +339,6 @@ void panel::refresh(const string &item_id)
         far3::panels::update((HANDLE)this, false);
         far3::panels::redraw((HANDLE)this);
     }
-
-    const auto now = utils::clock_t::now();
-    if (now - last_refresh_time < 150ms)
-    {
-        log::global->debug("!!!!!!! last refresh was less than 1 second ago");
-    }
-
-    last_refresh_time = now;
 }
 
 void panel::show_view(HANDLE panel, view_builder_t builder, view::return_callback_t callback)
