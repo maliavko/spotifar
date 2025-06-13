@@ -231,6 +231,26 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             }
             return TRUE;
         }
+        case VK_RETURN + mods::shift + mods::alt:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData); *user_data)
+                {
+                    if (auto api = api_proxy.lock())
+                    {
+                        const auto *track = static_cast<const track_t*>(user_data);
+                        const auto artist = api->get_artist(track->get_artist().id);
+                        const auto album = api->get_album(track->album.id);
+                        
+                        if (album && artist)
+                            events::show_album_tracks(api_proxy, album,
+                                [api = this->api_proxy, artist] { events::show_artist(api, artist); });
+                    }
+                }
+            }
+            return TRUE;
+        }
     }
     return FALSE;
 }
