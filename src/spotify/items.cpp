@@ -78,6 +78,11 @@ void to_json(Value &result, const simplified_artist_t &a, json::Allocator &alloc
     result.AddMember("external_urls", urls, allocator);
 }
 
+const image_t artist_t::get_image() const noexcept
+{
+    return images.size() > 1 ? images[1] : image_t{};
+}
+
 void from_json(const Value &j, artist_t &a)
 {
     from_json(j, dynamic_cast<simplified_artist_t&>(a));
@@ -150,6 +155,11 @@ wstring simplified_album_t::get_type_abbrev() const
 simplified_artist_t simplified_album_t::get_artist() const
 {
     return artists.size() > 0 ? artists[0] : simplified_artist_t();
+}
+
+const image_t simplified_album_t::get_image() const noexcept
+{
+    return images.size() > 1 ? images[1] : image_t{};
 }
 
 wstring simplified_album_t::get_artists_full_name() const
