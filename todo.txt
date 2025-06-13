@@ -5,6 +5,7 @@ refactor
 
 application ideas
 - small improvements
+    - view are being populated on the fly usually in get_items() method, which works, but reduced performance at each redraw, which mainly require only redraw, but no items update; consider separating api collection populating from redrawing the panels, see saved_tracks_view e.g.
     - too many events classes, consider unifying some of them; plus maybe to move them somewhere to the separate file to reduce dependencies
     - think over the namings of lng keys, they are too long
     - goto playlist from player UI
@@ -41,7 +42,7 @@ to finish for alpha release
 + disabled shuffle plus, move it to some separate branch
 - help window
 + remove unfinished menus
-- to review TODOs
++ to review TODOs
 + to finalize "featuring" menus, user top items menu
 + to implement filter menu on each view
 + to add a proper github support: license, automations? binaries
