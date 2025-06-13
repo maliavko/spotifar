@@ -154,16 +154,20 @@ private:
 
 struct collection_observer: public BaseObserverProtocol
 {
-    /// @brief The even is being thrown when the given tracks' `ids` saving statuses
+    /// @brief The even is fired when the given tracks' `ids` saving statuses
     /// have been changed
     virtual void on_tracks_statuses_changed(const item_ids_t &ids) {}
 
+    /// @brief The event is fired  when the given tracks statuses
+    /// are received
     virtual void on_tracks_statuses_received(const item_ids_t &ids) {}
 
-    /// @brief The even is being thrown when the given albums' `ids` saving statuses
+    /// @brief The even is fired when the given albums' `ids` saving statuses
     /// have been changed
     virtual void on_albums_statuses_changed(const item_ids_t &ids) {}
 
+    /// @brief The event is fired  when the given albums statuses
+    /// are received
     virtual void on_albums_statuses_received(const item_ids_t &ids) {}
 };
 
