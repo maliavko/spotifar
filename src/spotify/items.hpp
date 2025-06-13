@@ -84,6 +84,9 @@ struct artist_t: public simplified_artist_t
 
     wstring get_main_genre() const;
 
+    /// @brief Returns a middle size image or stub object in case of any error 
+    const image_t get_image() const noexcept;
+
     friend void from_json(const json::Value &j, artist_t &a);
     friend void to_json(json::Value &j, const artist_t &a, json::Allocator &allocator);
 };
@@ -110,6 +113,9 @@ struct simplified_album_t: public data_item_t
     /// @brief Takes a first available artists or returns. Returns
     /// empty artist object in case of error
     simplified_artist_t get_artist() const;
+
+    /// @brief Returns a middle size image or stub object in case of any error 
+    const image_t get_image() const noexcept;
 
     /// @brief Returns a string, containing all the track's artists separated by comma 
     wstring get_artists_full_name() const;
