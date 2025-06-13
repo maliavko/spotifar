@@ -223,6 +223,35 @@ private:
     artist_t artist;
 };
 
+
+/// @brief
+class playlist_view:
+    public tracks_base_view,
+    public playback_observer
+{
+public:
+    playlist_view(HANDLE panel, api_weak_ptr_t, const playlist_t &);
+    ~playlist_view();
+protected:
+    // view interface
+    auto get_sort_modes() const -> const sort_modes_t& override;
+    auto get_default_settings() const -> config::settings::view_t override;
+    auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
+
+    // tracks_base_view interface
+    bool start_playback(const string &track_id) override;
+    auto get_tracks() -> std::generator<const track_t&> override;
+    auto get_extra_columns(const track_t&) const -> std::vector<wstring> override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
+
+    // playback_observer handlers
+    void on_track_changed(const track_t &track, const track_t &prev_track) override;
+private:
+    saved_tracks_ptr collection;
+    playlist_t playlist;
+    panel_modes_t panel_modes;
+};
+
 } // namespace ui
 } // namespace spotifar
 

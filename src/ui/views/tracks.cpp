@@ -25,6 +25,7 @@ static const view::panel_mode_t::column_t
     TxMultNumber{ L"C8",    L"#/#",         L"7" },
     PlayedAt    { L"C8",    L"Played at",   L"13" },
     SavedAt     { L"C8",    L"Saved at",    L"13" },
+    AddedAt     { L"C8",    L"Added at",    L"13" },
     Descr       { L"Z",     L"Description", L"0" };
 
 //-----------------------------------------------------------------------------------------------------------
@@ -789,6 +790,87 @@ void artist_top_tracks_view::on_track_changed(const track_t &track, const track_
 void artist_top_tracks_view::on_shuffle_state_changed(bool shuffle_state)
 {
     events::refresh_panel(get_panel_handle());
+}
+
+
+//--------------------------------------------------------------------------------------------------------
+playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playlist_t &p):
+    tracks_base_view(panel, api_proxy, p.name, p.name), playlist(p)
+{
+    if (auto api = api_proxy.lock())
+        collection = api->get_playlist_tracks(p.id);
+    
+    utils::events::start_listening<playback_observer>(this);
+
+    panel_modes = *tracks_base_view::get_panel_modes();
+    for (size_t i = 3; i < 10; i++)
+        panel_modes[i].insert_column(&AddedAt, 0);
+
+    panel_modes.rebuild();
+}
+
+playlist_view::~playlist_view()
+{
+    utils::events::stop_listening<playback_observer>(this);
+}
+
+config::settings::view_t playlist_view::get_default_settings() const
+{
+    return { 0, true, 3 };
+}
+
+const view::sort_modes_t& playlist_view::get_sort_modes() const
+{
+    static sort_modes_t modes;
+    if (!modes.size())
+    {
+        modes = tracks_base_view::get_sort_modes();
+        modes.push_back({ L"Added at", SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
+    }
+    return modes;
+}
+
+intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
+    const data_item_t *data1, const data_item_t *data2)
+{
+    if (sort_mode.far_sort_mode == SM_MTIME) //  by `added at` date
+    {
+        const auto
+            &item1 = static_cast<const saved_track_t*>(data1),
+            &item2 = static_cast<const saved_track_t*>(data2);
+
+        return item1->added_at.compare(item2->added_at);
+    }
+    return tracks_base_view::compare_items(sort_mode, data1, data2);
+}
+
+bool playlist_view::start_playback(const string &track_id)
+{
+    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
+    return true;
+}
+
+std::generator<const track_t&> playlist_view::get_tracks()
+{
+    if (collection->fetch())
+        for (const auto &t: *collection)
+            co_yield t;
+}
+
+std::vector<wstring> playlist_view::get_extra_columns(const track_t& track) const
+{
+    const auto &saved_track = static_cast<const saved_track_t&>(track);
+
+    // we take first 10 symbols - it is date, the rest is time
+    const auto &saved_at_str = std::format("{:^12}", saved_track.added_at.substr(0, 10));
+
+    return {
+        utils::to_wstring(saved_at_str), // C8 - `added at` date
+    };
+}
+
+void playlist_view::on_track_changed(const track_t &track, const track_t &prev_track)
+{
 }
 
 } // namespace ui
