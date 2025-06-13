@@ -1,6 +1,7 @@
 refactor
 - investigate "market" fields for some API requests, for now completly
-- gcc support
+- alternative compilers
+- noexcept
 
 application ideas
 - small improvements

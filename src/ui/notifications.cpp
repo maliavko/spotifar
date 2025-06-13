@@ -165,23 +165,25 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
 
     if (auto api = api_proxy.lock())
     {
-        // TODO remove raw indexing
-        auto img_path = api->get_image(track.album.images[1], track.album.id);
-        if (img_path.empty())
-            return;
-
+        auto album_img_path = api->get_image(track.album.get_image(), track.album.id);
         auto is_saved = api->is_track_saved(track.id, true);
      
         WinToastTemplate toast(WinToastTemplate::ImageAndText02);
     
-        // image
+        // album image
         auto crop_hint = WinToastTemplate::CropHint::Square;
         if (config::is_notification_image_circled())
             crop_hint = WinToastTemplate::CropHint::Circle;
-        toast.setImagePath(img_path, crop_hint);
+
+        if (!album_img_path.empty())
+            toast.setImagePath(album_img_path, crop_hint);
         
         // if (WinToast::isWin10AnniversaryOrHigher())
-        //     toast.setHeroImagePath(L"D:\\tmp2.jpg", false);
+        // {
+        //     auto artist = api->get_artist(track.get_artist().id);
+        //     auto artist_img_path = api->get_image(artist.get_image(), artist.id);
+        //     toast.setHeroImagePath(artist_img_path, true);
+        // }
         
         // text
         toast.setTextField(track.name, WinToastTemplate::FirstLine);
