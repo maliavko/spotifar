@@ -132,7 +132,7 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
         {
             { collection_id },
             MPanelCollectionItemLabel, MPanelCollectionItemDescr,
-            std::bind(show_collection, api),
+            [api] { show_collection(api); },
         },
         {
             { browse_id },
