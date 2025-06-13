@@ -111,7 +111,7 @@ const view::panel_modes_t* root_base_view::get_panel_modes() const
         /* 4 */ PM({ &NameFixed, &Descr }),
         /* 5 */ PM({ &NameFixed, &Descr }, true),
         /* 6 */ PM::dummy(3),
-        /* 7 */ PM::dummy(3),
+        /* 7 */ PM::dummy(5),
         /* 8 */ PM::dummy(3),
         /* 9 */ PM::dummy(3),
     };
