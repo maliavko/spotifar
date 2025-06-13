@@ -26,7 +26,7 @@ application ideas
     - similar artists: https://www.music-map.com/
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
-    - console commands support
+    - console commands support: export, flush caches
     - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
