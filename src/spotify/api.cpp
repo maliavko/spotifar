@@ -7,10 +7,6 @@ using namespace utils;
 
 const string spotify_api_url = "https://api.spotify.com";
 
-// majority of time the threads are not needed, but in case of requesting
-// a collection with bunch of pages we perform them asynchronously
-const size_t POOL_SIZE = 12;
-
 // a helper-function to avoid copy-pasting. Performs an execution of a given
 // requester, checks the result and returns it back
 // @tparam R item_requester type
@@ -26,7 +22,7 @@ static auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::resul
 }
 
 //----------------------------------------------------------------------------------------------
-api::api(): pool(POOL_SIZE)
+api::api(): requests_pool(10), resyncs_pool(3)
 {
 }
 
@@ -62,16 +58,16 @@ void api::shutdown()
     auto ctx = config::lock_settings();
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->shutdown(*ctx); });
 
-    pool.purge(); // removing unfinished tasks from the queue
+    // removing unfinished tasks from the queue
+    requests_pool.purge();
+    resyncs_pool.purge();
 
     api_responses_cache.shutdown();
 }
 
 void api::tick()
 {
-    // TODO: consider having a separate pool for caches resyncs with
-    // reduced amount of thread to control spamming the API
-    auto future = pool.submit_loop<size_t>(0, caches.size(),
+    auto future = resyncs_pool.submit_loop<size_t>(0, caches.size(),
         [&caches = this->caches](const std::size_t idx) {
             caches[idx]->resync();
         }, BS::pr::high);
@@ -306,7 +302,7 @@ void api::toggle_playback(const item_id_t &device_id)
 
 void api::pause_playback(const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [&cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {};
@@ -326,7 +322,7 @@ void api::pause_playback(const item_id_t &device_id)
 
 void api::skip_to_next(const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [this, dev_id = std::as_const(device_id)]
         {
             http::json_body_builder body;
@@ -344,7 +340,7 @@ void api::skip_to_next(const item_id_t &device_id)
 
 void api::skip_to_previous(const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [this, dev_id = std::as_const(device_id)]
         {
             http::json_body_builder body;
@@ -362,7 +358,7 @@ void api::skip_to_previous(const item_id_t &device_id)
 
 void api::seek_to_position(int position_ms, const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [position_ms, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
@@ -385,7 +381,7 @@ void api::seek_to_position(int position_ms, const item_id_t &device_id)
 
 void api::toggle_shuffle(bool is_on, const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [is_on, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
@@ -408,7 +404,7 @@ void api::toggle_shuffle(bool is_on, const item_id_t &device_id)
 
 void api::set_repeat_state(const string &mode, const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [mode, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
@@ -431,7 +427,7 @@ void api::set_repeat_state(const string &mode, const item_id_t &device_id)
 
 void api::set_playback_volume(int volume_percent, const item_id_t &device_id)
 {
-    pool.detach_task(
+    requests_pool.detach_task(
         [volume_percent, &cache = *playback, dev_id = std::as_const(device_id), this]
         {
             Params params = {
@@ -464,7 +460,7 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
     if (device_it->is_active)
         return playback_cmd_error("The given device is already active, {}", device_it->to_str());
     
-    pool.detach_task(
+    requests_pool.detach_task(
         [
             this, start_playing, dev_id = std::as_const(device_id), &cache = *this->devices,
             dev_idx = std::distance(devices.begin(), device_it)
@@ -500,7 +496,7 @@ void api::start_playback_raw(const string &body, const item_id_t &device_id)
     if (!device_id.empty())
         params.insert({ "device_id", device_id });
 
-    pool.detach_task(
+    requests_pool.detach_task(
         [
             this, &cache = *playback, dev_id = std::as_const(device_id),
             request_url = append_query_params("/v1/me/player/play", params), body
