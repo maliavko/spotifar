@@ -39,7 +39,8 @@ protected:
     auto get_panel_modes() const -> const panel_modes_t* override;
 
     // collection_observer
-    void on_saved_albums_changed(const item_ids_t &ids) override;
+    void on_albums_statuses_changed(const item_ids_t &ids) override;
+    void on_albums_statuses_received(const item_ids_t &ids) override;
 protected:
     api_weak_ptr_t api_proxy;
     items_t items;
@@ -86,6 +87,9 @@ protected:
     void show_tracks_view(const album_t &album) const override;
     auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
+    
+    // collection handlers
+    virtual void on_albums_statuses_changed(const item_ids_t &ids) override;
 private:
     saved_albums_ptr collection;
     panel_modes_t panel_modes;
@@ -159,7 +163,7 @@ class recently_saved_albums_view: public albums_base_view
 public:
     recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api);
 protected:
-    void rebuild_items();
+    bool repopulate() { return collection->fetch(false, true, 3); }
     
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
@@ -171,6 +175,9 @@ protected:
     void show_tracks_view(const album_t &album) const override;
     auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
+    
+    // collection handlers
+    virtual void on_albums_statuses_changed(const item_ids_t &ids) override;
 private:
     saved_albums_ptr collection;
     panel_modes_t panel_modes;

@@ -16,6 +16,7 @@ application ideas
     - folow/unfollow artists
     - to save the last used view on the multiview
 - new functional
+    - show somewhere in UI the fresh releases synch status
     - to move followed artists to the collection cache, to add followed status on some panels like 'top user artists'
     + add redirect to Spotify website after shift+enter hit
     + win toast notifications: https://github.com/mohabouje/WinToast?tab=readme-ov-file
@@ -27,13 +28,12 @@ application ideas
     - similar artists: https://www.music-map.com/
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
-    - console commands support: export, flush caches
+    - console commands support: export, flush caches, resync fresh releases
     - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-    - receiving saved tracks batches by 50, in the long lists make it constantly updating, flashing etc.
 
 to finish for alpha release
 - check all the default view settings and sort modes
