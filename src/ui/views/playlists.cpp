@@ -92,21 +92,18 @@ intptr_t playlists_base_view::select_item(const data_item_t* data)
 
 const view::panel_modes_t* playlists_base_view::get_panel_modes() const
 {
-    // TODO: columns are being copied, consdider some other ways
     static panel_modes_t modes{
         /* 0 */ PM::dummy(),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ Name, TracksCount, Duration, Owner, IsPublic, IsColab }),
-        /* 4 */ PM({ NameFixed, Descr }),
-        /* 5 */ PM({ Name, TracksCount, Duration, Owner, IsPublic, IsColab, Descr }, true),
+        /* 3 */ PM({ &Name, &TracksCount, &Duration, &Owner, &IsPublic, &IsColab }),
+        /* 4 */ PM({ &NameFixed, &Descr }),
+        /* 5 */ PM({ &Name, &TracksCount, &Duration, &Owner, &IsPublic, &IsColab, &Descr }, true),
         /* 6 */ PM::dummy(3),
         /* 7 */ PM::dummy(5),
         /* 8 */ PM::dummy(3),
         /* 9 */ PM::dummy(3),
     };
-    
-    modes.update(); // TODO: I think it could be emitted
     
     return &modes;
 }
