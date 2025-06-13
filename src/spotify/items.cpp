@@ -266,7 +266,7 @@ void from_json(const Value &j, saved_album_t &a)
 
 const string& simplified_track_t::get_fields_filter()
 {
-    static string fields = "id,name,duration_ms,disc_number,track_number,explicit,artists";
+    static string fields = "id,name,duration_ms,disc_number,track_number,explicit,artists,external_urls";
     return fields;
 }
 
@@ -422,7 +422,7 @@ void from_json(const Value &j, playlist_t &p)
 const string& simplified_playlist_t::get_fields_filter()
 {
     static string fields = std::format("id,href,name,collaborative,public,description,"
-        "tracks(total),owner(display_name),snapshot_id");
+        "tracks(total),owner(display_name),snapshot_id,external_urls");
     return fields;
 }
 
