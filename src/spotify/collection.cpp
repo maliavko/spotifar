@@ -131,7 +131,7 @@ bool saved_items_cache_t::resync(statuses_container_t &data)
         for (size_t i = 0; i < ids.size(); ++i)
             data.insert_or_assign(ids[i], result[i]);
 
-        dispatch_event(ids);
+        statuses_received_event(ids);
         return true;
     }
     else
@@ -143,39 +143,50 @@ bool saved_items_cache_t::resync(statuses_container_t &data)
 
 void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
 {
-    auto accessor = data_accessor();
-    auto &container = get_container(accessor.data);
-
-    item_ids_t changed_ids{};
-
-    for (const auto &id: ids)
+    item_ids_t changed_ids, received_ids;
     {
-        if (container.contains(id) && container.at(id) == status)
-            continue;
-            
-        container.insert_or_assign(id, status);
-        changed_ids.push_back(id);
+        auto accessor = data_accessor();
+        auto &container = get_container(accessor.data);
+
+        for (const auto &id: ids)
+        {
+            if (const auto it = container.find(id); it != container.end())
+            {
+                if (it->second != status)
+                    changed_ids.push_back(id);
+            }
+            else
+            {
+                received_ids.push_back(id);
+            }
+            container[id] = status;
+        }
     }
     
     if (!changed_ids.empty())
-        dispatch_event(changed_ids);
+        statuses_changed_event(changed_ids);
+    
+    if (!received_ids.empty())
+        statuses_received_event(received_ids);
 }
 
 bool saved_items_cache_t::is_item_saved(const item_id_t &item_id, bool force_sync)
 {
-    auto accessor = data_accessor();
-    auto &container = get_container(accessor.data);
-
-    const auto it = container.find(item_id);
-    if (it != container.end())
-        return it->second;
-
-    if (force_sync)
     {
-        if (auto res = check_saved_items(api_proxy, { item_id }); res.size() == 1)
+        auto accessor = data_accessor();
+        auto &container = get_container(accessor.data);
+
+        const auto it = container.find(item_id);
+        if (it != container.end())
+            return it->second;
+
+        if (force_sync)
         {
-            container.insert_or_assign(item_id, res[0]);
-            return res[0];
+            if (auto res = check_saved_items(api_proxy, { item_id }); res.size() == 1)
+            {
+                container.insert_or_assign(item_id, res[0]);
+                return res[0];
+            }
         }
     }
 
@@ -200,10 +211,16 @@ std::deque<bool> tracks_items_cache_t::check_saved_items(api_interface *api, con
     return spotify::check_saved_items(api, "/v1/me/tracks/contains", ids);
 }
 
-void tracks_items_cache_t::dispatch_event(const item_ids_t &ids)
+void tracks_items_cache_t::statuses_received_event(const item_ids_t &ids)
 {
     utils::far3::synchro_tasks::dispatch_event(
-        &collection_observer::on_saved_tracks_changed, ids);
+        &collection_observer::on_tracks_statuses_received, ids);
+}
+
+void tracks_items_cache_t::statuses_changed_event(const item_ids_t &ids)
+{
+    utils::far3::synchro_tasks::dispatch_event(
+        &collection_observer::on_tracks_statuses_changed, ids);
 }
 
 statuses_container_t& albums_items_cache_t::get_container(collection_base_t::data_t &data)
@@ -216,10 +233,16 @@ std::deque<bool> albums_items_cache_t::check_saved_items(api_interface *api, con
     return spotify::check_saved_items(api, "/v1/me/albums/contains", ids);
 }
 
-void albums_items_cache_t::dispatch_event(const item_ids_t &ids)
+void albums_items_cache_t::statuses_received_event(const item_ids_t &ids)
 {
     utils::far3::synchro_tasks::dispatch_event(
-        &collection_observer::on_saved_albums_changed, ids);
+        &collection_observer::on_albums_statuses_received, ids);
+}
+
+void albums_items_cache_t::statuses_changed_event(const item_ids_t &ids)
+{
+    utils::far3::synchro_tasks::dispatch_event(
+        &collection_observer::on_albums_statuses_changed, ids);
 }
 
 

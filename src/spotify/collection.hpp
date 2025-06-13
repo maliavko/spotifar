@@ -59,9 +59,13 @@ protected:
     /// @brief Implements a specific checking API request for the item types the class holds
     virtual auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> = 0;
 
+    /// @brief Implements a specific internal bus event, to notify all the listeners, that
+    /// the saving statuses have been received
+    virtual void statuses_received_event(const item_ids_t &ids) = 0;
+
     /// @brief Implements a specific internal bus event, to notify all the listeners of
     /// a particular container changes
-    virtual void dispatch_event(const item_ids_t &ids) = 0;
+    virtual void statuses_changed_event(const item_ids_t &ids) = 0;
 private:
     api_interface *api_proxy;
     data_accessor_t data_accessor;
@@ -77,7 +81,8 @@ public:
 protected:
     auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
     auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
-    void dispatch_event(const item_ids_t &ids) override;
+    void statuses_received_event(const item_ids_t &ids) override;
+    void statuses_changed_event(const item_ids_t &ids) override;
 };
 
 /// @brief Class specialisation for caching albums saving statuses
@@ -88,7 +93,8 @@ public:
 protected:
     auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
     auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
-    void dispatch_event(const item_ids_t &ids) override;
+    void statuses_received_event(const item_ids_t &ids) override;
+    void statuses_changed_event(const item_ids_t &ids) override;
 };
 
 
@@ -150,11 +156,15 @@ struct collection_observer: public BaseObserverProtocol
 {
     /// @brief The even is being thrown when the given tracks' `ids` saving statuses
     /// have been changed
-    virtual void on_saved_tracks_changed(const item_ids_t &ids) {}
+    virtual void on_tracks_statuses_changed(const item_ids_t &ids) {}
+
+    virtual void on_tracks_statuses_received(const item_ids_t &ids) {}
 
     /// @brief The even is being thrown when the given albums' `ids` saving statuses
     /// have been changed
-    virtual void on_saved_albums_changed(const item_ids_t &ids) {}
+    virtual void on_albums_statuses_changed(const item_ids_t &ids) {}
+
+    virtual void on_albums_statuses_received(const item_ids_t &ids) {}
 };
 
 } // namespace spotify

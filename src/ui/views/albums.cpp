@@ -253,7 +253,12 @@ const view::key_bar_info_t* albums_base_view::get_key_bar_info()
     return &key_bar;
 }
 
-void albums_base_view::on_saved_albums_changed(const item_ids_t &ids)
+void albums_base_view::on_albums_statuses_changed(const item_ids_t &ids)
+{
+    on_albums_statuses_received(ids);
+}
+
+void albums_base_view::on_albums_statuses_received(const item_ids_t &ids)
 {
     std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
 
@@ -321,6 +326,7 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     panel_modes[5].insert_column(&SavedAt, 0);
     panel_modes[7].insert_column(&SavedAt, 0);
 
+    collection->fetch();
     panel_modes.rebuild();
 }
 
@@ -332,9 +338,7 @@ config::settings::view_t saved_albums_view::get_default_settings() const
 
 std::generator<const album_t&> saved_albums_view::get_albums()
 {
-    if (collection && collection->fetch())
-        for (const auto &a: *collection)
-            co_yield a;
+    for (const auto &a: *collection) co_yield a;
 }
 
 const view::sort_modes_t& saved_albums_view::get_sort_modes() const
@@ -378,6 +382,15 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
     return {
         utils::to_wstring(saved_at_str), // C8 - `added at` date
     };
+}
+
+void saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
+{
+    // the base handlers update the view only in case some items
+    // were being change, this view should repopulate itself anyway
+    // as it represents the list of saved tracks
+    collection->fetch();
+    events::refresh_panel(get_panel_handle());
 }
 
 
@@ -470,8 +483,7 @@ const view::sort_modes_t& recent_albums_view::get_sort_modes() const
 
 std::generator<const album_t&> recent_albums_view::get_albums()
 {
-    for (const auto &i: items)
-        co_yield i;
+    for (const auto &i: items) co_yield i;
 }
 
 void recent_albums_view::rebuild_items()
@@ -543,6 +555,7 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
     panel_modes[5].insert_column(&SavedAt, 0);
     panel_modes[7].insert_column(&SavedAt, 0);
 
+    repopulate();
     panel_modes.rebuild();
 }
 
@@ -583,10 +596,7 @@ void recently_saved_albums_view::show_tracks_view(const album_t &album) const
 
 std::generator<const album_t&> recently_saved_albums_view::get_albums()
 {
-    // requesting only three pages of the data
-    if (collection->fetch(false, true, 3))
-        for (const auto &a: *collection)
-            co_yield a;
+    for (const auto &a: *collection) co_yield a;
 }
 
 std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t& album) const
@@ -599,6 +609,15 @@ std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t
     return {
         utils::to_wstring(saved_at_str), // C8 - `added at` date
     };
+}
+
+void recently_saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
+{
+    // the base handlers update the view only in case some items
+    // were being change, this view should repopulate itself anyway
+    // as it represents the list of saved tracks
+    if (repopulate())
+        events::refresh_panel(get_panel_handle());
 }
 
 } // namespace ui

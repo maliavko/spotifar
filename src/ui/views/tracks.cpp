@@ -258,7 +258,12 @@ const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
     return &key_bar;
 }
 
-void tracks_base_view::on_saved_tracks_changed(const item_ids_t &ids)
+void tracks_base_view::on_tracks_statuses_changed(const item_ids_t &ids)
+{
+    on_tracks_statuses_received(ids);
+}
+
+void tracks_base_view::on_tracks_statuses_received(const item_ids_t &ids)
 {
     std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
 
@@ -389,15 +394,7 @@ std::vector<wstring> album_tracks_view::get_extra_columns(const track_t& track) 
 void album_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
     if (album.id == track.album.id) // the currently playing track is from this album
-    {
         events::refresh_panel(get_panel_handle());
-
-        // experimental code to select the currently playing item on the panel
-        // panels::clear_selection(get_panel_handle());
-
-        // if (auto track_idx = get_item_idx(track.id))
-        //     panels::select_item(get_panel_handle(), track_idx);
-    }
 }
 
 
@@ -471,12 +468,6 @@ std::generator<const track_t&> recent_tracks_view::get_tracks()
     for (const auto &track: items) co_yield track;
 }
 
-void recent_tracks_view::on_history_changed()
-{
-    rebuild_items();
-    events::refresh_panel(get_panel_handle());
-}
-
 std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track) const
 {
     const auto &played_track = static_cast<const history_track_t&>(track);
@@ -502,6 +493,12 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
     };
 }
 
+void recent_tracks_view::on_history_changed()
+{
+    rebuild_items();
+    events::refresh_panel(get_panel_handle());
+}
+
 
 //-----------------------------------------------------------------------------------------------------------
 saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
@@ -509,14 +506,16 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
 {
     if (auto api = api_proxy.lock())
         collection = api->get_saved_tracks();
-    
-    utils::events::start_listening<playback_observer>(this);
 
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < 10; i++)
         panel_modes[i].insert_column(&SavedAt, 0);
 
     panel_modes.rebuild();
+
+    repopulate();
+    
+    utils::events::start_listening<playback_observer>(this);
 }
 
 saved_tracks_view::~saved_tracks_view()
@@ -563,9 +562,7 @@ bool saved_tracks_view::start_playback(const string &track_id)
 
 std::generator<const track_t&> saved_tracks_view::get_tracks()
 {
-    if (collection->fetch(false, true, 1))
-        for (const auto &t: *collection)
-            co_yield t;
+    for (const auto &track: *collection) co_yield track;
 }
 
 std::vector<wstring> saved_tracks_view::get_extra_columns(const track_t& track) const
@@ -582,6 +579,16 @@ std::vector<wstring> saved_tracks_view::get_extra_columns(const track_t& track) 
 
 void saved_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
+    events::refresh_panel(get_panel_handle());
+}
+
+void saved_tracks_view::on_tracks_statuses_changed(const item_ids_t &ids)
+{
+    // the base handlers update the view only in case some items
+    // were being change, this view should repopulate itself anyway
+    // as it represents the list of saved tracks
+    repopulate();
+    events::refresh_panel(get_panel_handle());
 }
 
 
@@ -806,6 +813,7 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
     for (size_t i = 3; i < 10; i++)
         panel_modes[i].insert_column(&AddedAt, 0);
 
+    collection->fetch();
     panel_modes.rebuild();
 }
 
@@ -852,9 +860,7 @@ bool playlist_view::start_playback(const string &track_id)
 
 std::generator<const track_t&> playlist_view::get_tracks()
 {
-    if (collection->fetch())
-        for (const auto &t: *collection)
-            co_yield t;
+    for (const auto &t: *collection) co_yield t;
 }
 
 std::vector<wstring> playlist_view::get_extra_columns(const track_t& track) const
@@ -871,6 +877,7 @@ std::vector<wstring> playlist_view::get_extra_columns(const track_t& track) cons
 
 void playlist_view::on_track_changed(const track_t &track, const track_t &prev_track)
 {
+    events::refresh_panel(get_panel_handle());
 }
 
 } // namespace ui

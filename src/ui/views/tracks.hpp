@@ -35,7 +35,8 @@ protected:
     auto get_panel_modes() const -> const panel_modes_t* override;
 
     // collection_observer
-    void on_saved_tracks_changed(const item_ids_t &ids) override;
+    void on_tracks_statuses_changed(const item_ids_t &ids) override;
+    void on_tracks_statuses_received(const item_ids_t &ids) override;
 protected:
     api_weak_ptr_t api_proxy;
     items_t items;
@@ -110,7 +111,7 @@ private:
 };
 
 
-/// @brief List of saved (liked) tracks, so-called user collection. 
+/// @brief List of saved (liked) tracks, so-called user collection
 class saved_tracks_view:
     public tracks_base_view,
     public playback_observer
@@ -119,6 +120,8 @@ public:
     saved_tracks_view(HANDLE panel, api_weak_ptr_t api);
     ~saved_tracks_view();
 protected:
+    void repopulate() { collection->fetch(false, true, 1); }
+
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
@@ -132,6 +135,9 @@ protected:
 
     // playback_observer handlers
     void on_track_changed(const track_t &track, const track_t &prev_track) override;
+    
+    // collection handlers
+    virtual void on_tracks_statuses_changed(const item_ids_t &ids) override;
 private:
     saved_tracks_ptr collection;
     panel_modes_t panel_modes;

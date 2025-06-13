@@ -75,7 +75,7 @@ public:
 
     /// @brief Returns tracks saving to collection (liked) status. The result is immediate,
     /// if status is unknown, returns false and puts track id into the internal queue,
-    /// once status is obtained collection_observer::on_saved_tracks_changed is called
+    /// once status is obtained collection_observer::on_tracks_statuses_changed is called
     /// @param force_sync turns method into blocking mode, which will wait for the status to be obtained
     virtual bool is_track_saved(const item_id_t &track_id, bool force_sync = false) = 0;
     
