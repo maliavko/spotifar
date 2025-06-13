@@ -103,7 +103,7 @@ protected:
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
     
     // play_history_observer handlers
-    void on_items_changed();
+    void on_history_changed();
 private:
     std::vector<history_track_t> items;
     panel_modes_t panel_modes;

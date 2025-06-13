@@ -55,7 +55,7 @@ private:
 /// @brief A list of recently listened playlists
 class recent_playlists_view:
     public playlists_base_view,
-    public play_history_observer // on_items_changed
+    public play_history_observer // on_history_changed
 {
 public:
     struct history_playlist_t: public playlist_t
@@ -77,7 +77,7 @@ protected:
     auto get_playlists() -> std::generator<const simplified_playlist_t&>;
     
     // play_history_observer handler
-    void on_items_changed() override;
+    void on_history_changed() override;
 private:
     std::vector<history_playlist_t> items;
 };
