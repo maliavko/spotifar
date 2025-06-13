@@ -50,29 +50,48 @@ public:
             const wchar_t *width;
         };
 
+        /// @brief contains the Far PanelMode struct compatible columns types string
         wstring types = L"";
+        
+        /// @brief contains the Far PanelMode struct compatible columns widths string
         wstring widths = L"";
+        
+        /// @brief contains the Far PanelMode struct compatible columns titles array
         std::vector<const wchar_t*> titles;
-        std::vector<const column_t*> columns;
-        bool is_wide = false;
-        int copy_of_idx = -1; // TODO: this copy algo does not work for some reason
 
+        int flags = PMFLAGS_NONE;
+        int copy_of_idx = -1;
+
+        /// @brief A default constructor, taking a vector of columns of the panel view mode.
+        /// In the end of the initialization the method `rebuild` is called
+        /// @param is_wide whether the panel mode should be wide (occupy two panels)
         panel_mode_t(std::vector<const column_t*> &&cols, bool is_wide = false);
 
-        panel_mode_t(int copy_of_idx, bool is_wide = false): copy_of_idx(copy_of_idx), is_wide(is_wide) {}
+        /// @brief An aux constructor, which initializes a dummy panel mode object, copying
+        /// the actual data from the mode of `copy_of_idx` index. Can copy the mode and
+        /// override its width behaviour by specifying `is_wide` flag
+        panel_mode_t(int copy_of_idx, bool is_wide = false);
 
+        /// @brief The mode does not have any columns
         bool is_empty() const { return columns.size() == 0; }
 
+        /// @brief Inserts a given column `col` to the mode at the specified position `idx`
         void insert_column(const column_t *col, size_t idx);
 
+        /// @brief Rebuild the public members according to the latest columns
+        /// data provided.
         void rebuild();
 
         static panel_mode_t dummy(int copy_of_idx = -1, bool is_wide = false)
         {
             return panel_mode_t(copy_of_idx, is_wide);
         }
+    private:
+        std::vector<const column_t*> columns;
     };
 
+    /// @brief Class-holder the panel view modes as an array. Helps
+    /// to build the modes, prepare the data, compatible for Far PanelMode[]
     class panel_modes_t: std::vector<panel_mode_t>
     {
         using base_type_t = std::vector<panel_mode_t>;
@@ -88,6 +107,8 @@ public:
 
         const PanelMode* get_modes() const { return modes; }
 
+        /// @brief Rebuilds the panel modes, according to the latest
+        /// changed data in the containers
         void rebuild();
     private:
         PanelMode modes[MODES_COUNT];
