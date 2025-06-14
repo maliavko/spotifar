@@ -8,6 +8,7 @@
 
 namespace spotifar { namespace ui { namespace events {
     
+using mv_builder_t = multiview_builder_t;
 using utils::far3::synchro_tasks::dispatch_event;
 
 template <class ViewT, typename... ArgsT>
@@ -24,7 +25,7 @@ static void show_view(view_builder_t &&builder, view::return_callback_t callback
     ObserverManager::notify(&ui_events_observer::show_view, PANEL_ACTIVE, builder, callback);
 }
 
-static void show_multiview(multiview_builder_t &&builders, view::return_callback_t callback)
+static void show_multiview(mv_builder_t &&builders, view::return_callback_t callback)
 {
     ObserverManager::notify(&ui_events_observer::show_multiview, PANEL_ACTIVE, builders, callback);
 }
@@ -36,7 +37,8 @@ void show_root(api_weak_ptr_t api)
 
 void show_collection(api_weak_ptr_t api, int page_idx)
 {
-    auto settings = config::get_multiview_settings("collection", { multiview_builder_t::artists_idx });
+    auto settings = config::get_multiview_settings("collection",
+        { mv_builder_t::artists_idx });
 
     if (page_idx > -1)
         settings->idx = page_idx;
@@ -58,16 +60,21 @@ void show_browse(api_weak_ptr_t api)
     show_view(get_builder<browse_view>(api), [api] { show_root(api); });
 }
 
-void show_recents(api_weak_ptr_t api)
+void show_recents(api_weak_ptr_t api, int page_idx)
 {
+    auto settings = config::get_multiview_settings("recents",
+        { mv_builder_t::tracks_idx });
+
+    if (page_idx > -1)
+        settings->idx = page_idx;
+    
     show_multiview(
         {
             .artists = get_builder<recent_artists_view>(api),
             .albums = get_builder<recent_albums_view>(api),
             .tracks = get_builder<recent_tracks_view>(api),
             .playlists = get_builder<recent_playlists_view>(api),
-            .settings = config::get_multiview_settings(
-                "recents", { multiview_builder_t::tracks_idx })
+            .settings = settings
         },
         [api] { show_root(api); }
     );
@@ -78,27 +85,37 @@ void show_new_releases(api_weak_ptr_t api)
     show_view(get_builder<new_releases_view>(api), [api] { show_browse(api); });
 }
 
-void show_recently_saved(api_weak_ptr_t api)
+void show_recently_saved(api_weak_ptr_t api, int page_idx)
 {
+    auto settings = config::get_multiview_settings("recently_saved",
+        { mv_builder_t::tracks_idx });
+
+    if (page_idx > -1)
+        settings->idx = page_idx;
+    
     show_multiview(
         {
             .albums = get_builder<recently_saved_albums_view>(api),
             .tracks = get_builder<recently_liked_tracks_view>(api),
-            .settings = config::get_multiview_settings(
-                "recently_saved", { multiview_builder_t::tracks_idx })
+            .settings = settings
         },
         [api] { show_browse(api); }
     );
 }
 
-void show_user_top_items(api_weak_ptr_t api)
+void show_user_top_items(api_weak_ptr_t api, int page_idx)
 {
+    auto settings = config::get_multiview_settings("user_top",
+        { mv_builder_t::tracks_idx });
+
+    if (page_idx > -1)
+        settings->idx = page_idx;
+    
     show_multiview(
         {
             .artists = get_builder<user_top_artists_view>(api),
             .tracks = get_builder<user_top_tracks_view>(api),
-            .settings = config::get_multiview_settings(
-                "user_top", { multiview_builder_t::tracks_idx })
+            .settings = settings,
         },
         [api] { show_browse(api); }
     );
@@ -106,30 +123,46 @@ void show_user_top_items(api_weak_ptr_t api)
 
 void show_playlist(api_weak_ptr_t api, const playlist_t &playlist)
 {
-    show_view(get_builder<playlist_view>(api, playlist), [api] { show_collection(api); });
+    show_view(
+        get_builder<playlist_view>(api, playlist),
+        [api] { show_collection(api, mv_builder_t::playlists_idx); }
+    );
 }
 
-void show_artist(api_weak_ptr_t api, const artist_t &artist, view::return_callback_t callback)
+void show_artist(api_weak_ptr_t api, const artist_t &artist, int page_idx,
+    view::return_callback_t callback)
 {
+    auto settings = config::get_multiview_settings("artist", { mv_builder_t::albums_idx });
+
+    if (page_idx > -1)
+        settings->idx = page_idx;
+
     if (!callback)
-        callback = std::bind(show_root, api);
+        callback = [api] { show_collection(api, mv_builder_t::artists_idx); };
     
     show_multiview(
         {
             .albums = get_builder<artist_albums_view>(api, artist),
             .tracks = get_builder<artist_top_tracks_view>(api, artist),
-            .settings = config::get_multiview_settings("artist", { multiview_builder_t::albums_idx })
+            .settings = settings
         },
         callback
     );
 }
 
-void show_album_tracks(api_weak_ptr_t api, const simplified_album_t &album, view::return_callback_t callback)
+void show_album_tracks(api_weak_ptr_t api_proxy, const simplified_album_t &album,
+    view::return_callback_t callback)
 {
     if (!callback)
-        callback = std::bind(show_root, api);
+    {
+        if (auto api = api_proxy.lock())
+        {
+            if (auto artist = api->get_artist(album.get_artist().id))
+                callback = [api, artist] { show_artist(api, artist, mv_builder_t::albums_idx); };   
+        }
+    }
     
-    show_view(get_builder<album_tracks_view>(api, album), callback);
+    show_view(get_builder<album_tracks_view>(api_proxy, album), callback);
 }
 
 void show_player()

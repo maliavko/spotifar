@@ -5,7 +5,6 @@ refactor
 
 application ideas
 - small improvements
-    - I think each events::show_*** method should have a default return_callback_t definition inside, in most cases they are going to be valid
     - view are being populated on the fly usually in get_items() method, which works, but reduced performance at each redraw, which mainly require only redraw, but no items update; consider separating api collection populating from redrawing the panels, see saved_tracks_view e.g.
     - too many events classes, consider unifying some of them; plus maybe to move them somewhere to the separate file to reduce dependencies
     - think over the namings of lng keys, they are too long
@@ -31,6 +30,8 @@ application ideas
 
 bugs
 - new releases has doubles on the panel
+- to block all the unneeded hotkeys
+- after fetching releases the opened view did not get updated
 
 to finish for alpha release
 - check all the default view settings and sort modes

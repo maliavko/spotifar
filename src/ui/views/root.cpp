@@ -137,17 +137,17 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
         {
             { browse_id },
             MPanelBrowseItemLabel, MPanelBrowseItemDescr,
-            std::bind(show_browse, api),
+            [api] { show_browse(api); },
         },
         {
             { recently_played_id },
             MPanelRecentsItemLabel, MPanelRecentsItemDescr,
-            std::bind(show_recents, api),
+            [api] { show_recents(api); },
         },
         {
             { playing_queue_id },
             MPanelPlayingQueueItemLabel, MPanelPlayingQueueItemDescr,
-            std::bind(show_playing_queue, api),
+            [api] { show_playing_queue(api); },
         },
     })
     {};
@@ -160,17 +160,17 @@ browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
         {
             { new_releases_id },
             MPanelNewReleasesItemLabel, MPanelNewReleasesItemDescr,
-            std::bind(show_new_releases, api)
+            [api] { show_new_releases(api); },
         },
         {
             { recently_saved_id },
             MPanelRecentlySavedLabel, MPanelRecentlySavedDescr,
-            std::bind(show_recently_saved, api)
+            [api] { show_recently_saved(api); },
         },
         {
             { user_top_items_id },
             MPanelUserTopItemsLabel, MPanelUserTopItemsDescr,
-            std::bind(show_user_top_items, api)
+            [api] { show_user_top_items(api); },
         },
     })
     {}

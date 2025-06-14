@@ -43,7 +43,11 @@ private:
     std::mutex cv_m;
     bool stop_flag = false;
     
-    data_t interim_data{}; // a container, accumulates the interim requested data
+    /// @brief a container, accumulates the interim requested data
+    /// @note some releases can be issued by several artists, which include them afterwards
+    /// into their discography; the worker finds them all, so we need to remove
+    /// duplicates
+    std::unordered_set<typename data_t::value_type> interim_data;
 
     bool is_in_sync = false; // a syncing procedure is in action flag
     followed_artists_ptr artists; // collection of followed artists to go over

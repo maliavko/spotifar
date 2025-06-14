@@ -44,7 +44,7 @@ bool recent_releases::request_data(data_t &data)
         // chaging the `is_in_sync` flag
         if (pool.get_tasks_total() == 0)
         {
-            data = interim_data;
+            data.assign(interim_data.begin(), interim_data.end());
             is_in_sync = false;
         }
         
@@ -81,7 +81,7 @@ bool recent_releases::request_data(data_t &data)
                                 utils::to_string(artist.name), artist.id,
                                 utils::to_string(album.name), album.id);
                             
-                            interim_data.push_back(album);
+                            interim_data.insert(album);
                         }
                 }
 
