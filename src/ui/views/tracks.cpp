@@ -316,6 +316,7 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
     utils::events::start_listening<playback_observer>(this);
     rebuild_items();
 
+    // rebuild should happen above, for the `is_multidisc` is valid
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < panel_modes_t::MODES_COUNT; i++)
         panel_modes[i].insert_column(is_multidisc ? &TxMultNumber : &TxNumber, 0);
@@ -562,15 +563,16 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
     tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel), get_text(MPanelCollectionItemLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_saved_tracks();
+        repopulate();
+    }
 
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < 10; i++)
         panel_modes[i].insert_column(&SavedAt, 0);
 
     panel_modes.rebuild();
-
-    repopulate();
     
     utils::events::start_listening<playback_observer>(this);
 }
@@ -902,12 +904,8 @@ void artist_top_tracks_view::on_track_changed(const track_t &track, const track_
     events::refresh_panel(get_panel_handle());
 }
 
-void artist_top_tracks_view::on_shuffle_state_changed(bool shuffle_state)
-{
-    events::refresh_panel(get_panel_handle());
-}
 
-
+// TODO: once the playlist management is added, to subscibe the class for the appropriate events
 //--------------------------------------------------------------------------------------------------------
 playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playlist_t &p):
     tracks_base_view(panel, api_proxy, p.name, p.name), playlist(p)
