@@ -91,7 +91,7 @@ intptr_t root_base_view::process_key_input(int combined_key)
                 if (auto *user_data = unpack_user_data(item->UserData); user_data->id == root_view::collection_id)
                 {
                     log::global->info("Starting collectiong playback");
-                    api->start_playback("spotify:collection");
+                    api->start_playback(CollectionUri);
 
                     return TRUE;
                 }

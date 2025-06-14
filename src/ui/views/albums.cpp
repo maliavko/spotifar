@@ -184,26 +184,48 @@ intptr_t albums_base_view::process_key_input(int combined_key)
 
     switch (combined_key)
     {
+        // launch a playback
         case VK_F4:
         {
-            auto item = utils::far3::panels::get_current_item(get_panel_handle());
-            if (auto api = api_proxy.lock(); item && api)
-            {
-                if (auto *user_data = unpack_user_data(item->UserData))
-                {
-                    // TODO: consider starting playback for the artist context, but starting from
-                    // the first track of the selected album
-                    // TODO: multiselect?
-                    log::global->info("Starting playback from the panel, {}", user_data->id);
-                    api->start_playback(album_t::make_uri(user_data->id));
+            const auto &ids = get_selected_items();
 
-                    return TRUE;
+            if (ids.size() == 1)
+            {
+                if (auto api = api_proxy.lock())
+                {
+                    // if only one items is selected, we launch it in the current folder context
+                    log::global->info("Launching playback with the given album id {}", ids[0]);
+                    api->start_playback(album_t::make_uri(ids[0]));
                 }
             }
-            
-            log::global->error("There is an error occured while getting a current panel item");
+            else
+            {
+                log::global->info("Launching several albums playback {}", utils::string_join(ids, ","));
+                if (auto api = api_proxy.lock())
+                {
+                    std::vector<string> tracks_uris;
+
+                    for (const auto &album_id: ids)
+                    {
+                        if (auto album_tracks = api->get_album_tracks(album_id); album_tracks->fetch())
+                        {
+                            std::transform(album_tracks->begin(), album_tracks->end(), std::back_inserter(tracks_uris),
+                                [](const auto &s_track) { return s_track.get_uri(); });
+                        }
+                        else
+                        {
+                            log::global->warn("Could not get the album tracks list, skipping");
+                        }
+                    }
+
+                    if (!tracks_uris.empty())
+                        api->start_playback(tracks_uris);
+                }
+            }
             return TRUE;
         }
+
+        // saved/remove from collection
         case VK_F8:
         {
             const auto &ids = get_selected_items();
@@ -218,6 +240,8 @@ intptr_t albums_base_view::process_key_input(int combined_key)
 
             return TRUE;
         }
+
+        // redirect to Spotify WEB
         case VK_RETURN + mods::shift:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
@@ -230,7 +254,10 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             }
             return TRUE;
         }
-        case VK_RETURN + mods::shift + mods::alt:
+
+        // PgDown + Ctrl
+        // go to the albums's origin artist
+        case VK_NEXT + mods::ctrl:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
             {
@@ -418,8 +445,8 @@ void saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
 new_releases_view::new_releases_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelNewReleasesItemLabel))
 {
-    utils::events::start_listening<releases_observer>(this);
     rebuild_items();
+    utils::events::start_listening<releases_observer>(this);
 }
 
 new_releases_view::~new_releases_view()
@@ -456,6 +483,7 @@ void new_releases_view::show_tracks_view(const album_t &album) const
 
 void new_releases_view::on_releases_sync_finished(const recent_releases_t releases)
 {
+    rebuild_items();
     events::refresh_panel(get_panel_handle());
 }
 
@@ -523,7 +551,7 @@ void recent_albums_view::rebuild_items()
     // the reverse order is used
     auto play_history = api->get_play_history();
     for (auto it = play_history.rbegin(); it != play_history.rend(); ++it)
-        recent_albums[it->track.album.id] = *it;
+        recent_albums[it->album.id] = *it;
 
     if (recent_albums.size() > 0)
     {
