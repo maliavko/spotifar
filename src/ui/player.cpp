@@ -75,7 +75,6 @@ enum controls : int
     repeat_btn,
     shuffle_btn,
     devices_combo,
-    queue_list,
 };
 
 static const wchar_t
@@ -124,9 +123,6 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     
     // devices box
     control(DI_COMBOBOX,    view_x2-13, 1, view_x2-1, 0,            combo_flags), // DEVICES
-
-    // queue
-    control(DI_LISTBOX,     qview_x1, qview_y1, qview_x2, qview_y2, DIF_LISTWRAPMODE | DIF_NOFOCUS | DIF_LISTNOCLOSE, L"Playing Queue"),
 };
 
 using control_handler_t = bool (player::*)(void*);
@@ -176,9 +172,6 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     { controls::repeat_btn, {
         { DN_BTNCLICK, &player::on_repeat_btn_click },
         { DN_CTLCOLORDLGITEM, &player::on_repeat_btn_style_applied },
-    }},
-    { controls::queue_list, {
-        { DN_CONTROLINPUT, &player::on_playing_queue_input_received },
     }},
 };
 
@@ -368,8 +361,6 @@ void player::expand(bool is_unfolded)
     // keep the same horizontal position, but center by vertical one
     auto rect = far3::dialogs::get_dialog_rect(hdlg);
     far3::dialogs::move_dialog_to(hdlg, rect.Left, -1);
-
-    update_playing_queue(is_unfolded);
 }
 
 void player::on_seek_forward_btn_clicked()
@@ -464,10 +455,6 @@ bool player::on_input_received(void *input_record)
                     case keys::d + keys::mods::alt:
                         if (is_control_enabled(controls::devices_combo))
                             far3::dialogs::open_list(hdlg, controls::devices_combo, true);
-                        return true;
-                    
-                    case keys::q + keys::mods::ctrl:
-                        events::show_playing_queue(api_proxy);
                         return true;
                 }
             }
@@ -867,9 +854,6 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
         const auto &state = api->get_playback_state();
         update_like_btn(!state.is_empty() && api->is_track_saved(state.item.id, true));
     }
-
-    if (is_expanded())
-        update_playing_queue(true);
 }
 
 void player::update_track_bar(int duration, int progress)
@@ -941,11 +925,7 @@ void player::on_shuffle_state_changed(bool state)
 void player::update_shuffle_btn(bool is_shuffling)
 {
     no_redraw nr(hdlg);
-
-    static wstring shuffle_label;
-
-    shuffle_label = utils::utf8_decode("Shuffle");
-    set_control_text(controls::shuffle_btn, shuffle_label);
+    set_control_text(controls::shuffle_btn, far3::get_text(MPlayerShuffleBtn));
 }
 
 void player::on_repeat_state_changed(const string &state)
@@ -980,34 +960,6 @@ void player::update_like_btn(bool is_saved)
 {
     no_redraw nr(hdlg);
     set_control_text(controls::like_btn, like_btn_label);
-}
-
-void player::update_playing_queue(bool is_visible)
-{
-    no_redraw nr(hdlg);
-    dlg_events_supressor s(this);
-
-    far3::dialogs::clear_list(hdlg, controls::queue_list);
-    far3::dialogs::resize_item(hdlg, controls::queue_list,
-        { qview_x1, qview_y1, qview_x2, qview_y2 });
-
-    if (is_visible)
-    {
-        if (auto api = api_proxy.lock())
-        {
-            const auto &items = api->get_playing_queue().queue;
-            for (size_t i = 0; i < items.size(); i++)
-            {
-                const auto &item = items[i];
-                const auto &long_name = std::format(L"{} - {}", item.album.get_artist().name, item.name);
-                far3::dialogs::add_list_item(hdlg, controls::queue_list, long_name, (int)i,
-                    (void*)item.get_uri().c_str(), item.get_uri().size());
-            }
-        }
-    }
-    
-    far3::dialogs::set_visible(hdlg, controls::queue_list, is_visible);
-    // far3::dialogs::set_focus(hdlg, controls::queue_list);
 }
 
 void player::on_state_changed(bool is_playing)

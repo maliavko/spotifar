@@ -168,7 +168,7 @@ hotkeys_dialog::hotkeys_dialog():
 {
     dialogs::set_checked(hdlg, hotkeys_checkbox, config::is_global_hotkeys_enabled());
 
-    for (auto &[ctrl_id, hotkey_id]: hotkey_edits)
+    for (const auto &[ctrl_id, hotkey_id]: hotkey_edits)
     {
         auto key_and_mods = config::get_hotkey(hotkey_id);
         if (key_and_mods == nullptr)
@@ -184,16 +184,16 @@ hotkeys_dialog::hotkeys_dialog():
 
 void hotkeys_dialog::init()
 {
-    dialogs::set_text(hdlg, hotkeys_checkbox, get_text(MConfigHotkeysBoxLabel));
-    dialogs::set_text(hdlg, hotkeys_table_label, get_text(MConfigHotkeysTableTitle));
-    dialogs::set_text(hdlg, play_pause_hotkey_label, get_text(MConfigPlayPauseSetting));
-    dialogs::set_text(hdlg, skip_next_hotkey_label, get_text(MConfigSkipToNextSetting));
-    dialogs::set_text(hdlg, skip_prev_hotkey_label, get_text(MConfigSkipToPrevSetting));
-    dialogs::set_text(hdlg, seek_forward_hotkey_label, get_text(MConfigSeekForwardSetting));
-    dialogs::set_text(hdlg, seek_backward_hotkey_label, get_text(MConfigSeekBackwardSetting));
-    dialogs::set_text(hdlg, volume_up_hotkey_label, get_text(MConfigVolumeUpSetting));
-    dialogs::set_text(hdlg, volume_down_hotkey_label, get_text(MConfigVolumeDownSetting));
-    dialogs::set_text(hdlg, show_toast_hotkey_label, get_text(MConfigShowToastSetting));
+    dialogs::set_text(hdlg, hotkeys_checkbox, get_text(MCfgHotkeys));
+    dialogs::set_text(hdlg, hotkeys_table_label, get_text(MCfgHotkeysTable));
+    dialogs::set_text(hdlg, play_pause_hotkey_label, get_text(MCfgPlayPause));
+    dialogs::set_text(hdlg, skip_next_hotkey_label, get_text(MCfgSkipToNext));
+    dialogs::set_text(hdlg, skip_prev_hotkey_label, get_text(MCfgSkipToPrev));
+    dialogs::set_text(hdlg, seek_forward_hotkey_label, get_text(MCfgSeekForward));
+    dialogs::set_text(hdlg, seek_backward_hotkey_label, get_text(MCfgSeekBackward));
+    dialogs::set_text(hdlg, volume_up_hotkey_label, get_text(MCfgVolumeUp));
+    dialogs::set_text(hdlg, volume_down_hotkey_label, get_text(MCfgVolumeDown));
+    dialogs::set_text(hdlg, show_toast_hotkey_label, get_text(MCfgShowToast));
 
     dialogs::set_text(hdlg, ok_button, get_text(MOk));
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
@@ -251,7 +251,7 @@ bool hotkeys_dialog::handle_key_pressed(int ctrl_id, int combined_key)
         auto key_code = std::to_wstring(vk_code);
 
         // disallowing to pick the already selected key
-        for (auto &[ctrl_id, hotkey_id]: hotkey_edits)
+        for (const auto &[ctrl_id, hotkey_id]: hotkey_edits)
             if (dialogs::get_text(hdlg, ctrl_id) == key_name)
                 return TRUE;
 

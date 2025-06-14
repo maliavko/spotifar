@@ -27,9 +27,18 @@ public:
     intptr_t process_input(const ProcessPanelInputInfo *info);
     intptr_t compare_items(const CompareInfo *info);
 protected:
+    /// @brief Sets the given view as the current one, registers given callback
+    /// as the one, which will be used once the view is closed, redraws panel
     void set_view(view_ptr_t, view::return_callback_t = {});
+
+    /// @brief Does panel contain Far cursor
     bool is_active() const;
+
+    /// @brief Checks whether the given `panel` handle belongs to the current one 
     bool is_this_panel(HANDLE panel) const;
+
+    /// @brief If `item_id` is given, searches if on the panel and selecte, calling redraw.
+    /// Otherwise force Far API repopulate panel and redraw it
     void refresh(const string &item_id = "");
     
     // global ui events

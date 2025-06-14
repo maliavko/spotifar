@@ -8,11 +8,6 @@ using PM = view::panel_mode_t;
 using utils::far3::get_text;
 using namespace events;
 
-static const view::panel_mode_t::column_t
-    Name        { L"NON",   L"Name",        L"0" },
-    NameFixed   { L"NON",   L"Name",        L"30" },
-    Descr       { L"Z",     L"Description", L"0" };
-
 //-------------------------------------------------------------------------------------------------------------
 const view::info_lines_t* root_base_view::get_info_lines()
 {
@@ -28,8 +23,8 @@ const view::info_lines_t* root_base_view::get_info_lines()
 const view::sort_modes_t& root_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Name",      SM_NAME,        { VK_F3, LEFT_CTRL_PRESSED } },
-        { L"Unsorted",  SM_UNSORTED,    { VK_F7, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarName),      SM_NAME,        { VK_F3, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarUnsorted),  SM_UNSORTED,    { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -90,7 +85,7 @@ intptr_t root_base_view::process_key_input(int combined_key)
             {
                 if (auto *user_data = unpack_user_data(item->UserData); user_data->id == root_view::collection_id)
                 {
-                    log::global->info("Starting collectiong playback");
+                    log::global->info("Starting collection playback");
                     api->start_playback(CollectionUri);
 
                     return TRUE;
@@ -103,6 +98,11 @@ intptr_t root_base_view::process_key_input(int combined_key)
 
 const view::panel_modes_t* root_base_view::get_panel_modes() const
 {
+    static const view::panel_mode_t::column_t
+        Name        { L"NON",   get_text(MSortColName),     L"0" },
+        NameFixed   { L"NON",   get_text(MSortColName),     L"30" },
+        Descr       { L"Z",     get_text(MSortColDescr),    L"0" };
+    
     static panel_modes_t modes{
         /* 0 */ PM::dummy(),
         /* 1 */ PM::dummy(),
@@ -131,22 +131,22 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(panel, api, L"", {
         {
             { collection_id },
-            MPanelCollectionItemLabel, MPanelCollectionItemDescr,
+            MPanelCollection, MPanelCollectionDescr,
             [api] { show_collection(api); },
         },
         {
             { browse_id },
-            MPanelBrowseItemLabel, MPanelBrowseItemDescr,
+            MPanelBrowse, MPanelBrowseDescr,
             [api] { show_browse(api); },
         },
         {
             { recently_played_id },
-            MPanelRecentsItemLabel, MPanelRecentsItemDescr,
+            MPanelRecents, MPanelRecentsDescr,
             [api] { show_recents(api); },
         },
         {
             { playing_queue_id },
-            MPanelPlayingQueueItemLabel, MPanelPlayingQueueItemDescr,
+            MPanelPlayingQueue, MPanelPlayingQueueDescr,
             [api] { show_playing_queue(api); },
         },
     })
@@ -156,20 +156,20 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
 //-------------------------------------------------------------------------------------------------------------
 browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
     root_base_view(
-        panel, api, get_text(MPanelBrowseItemLabel), {
+        panel, api, get_text(MPanelBrowse), {
         {
             { new_releases_id },
-            MPanelNewReleasesItemLabel, MPanelNewReleasesItemDescr,
+            MPanelNewReleases, MPanelNewReleasesDescr,
             [api] { show_new_releases(api); },
         },
         {
             { recently_saved_id },
-            MPanelRecentlySavedLabel, MPanelRecentlySavedDescr,
+            MPanelRecentlySaved, MPanelRecentlySavedDescr,
             [api] { show_recently_saved(api); },
         },
         {
             { user_top_items_id },
-            MPanelUserTopItemsLabel, MPanelUserTopItemsDescr,
+            MPanelUserTopItems, MPanelUserTopItemsDescr,
             [api] { show_user_top_items(api); },
         },
     })

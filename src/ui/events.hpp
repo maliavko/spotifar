@@ -118,7 +118,7 @@ struct ui_events_observer: public BaseObserverProtocol
     /// @brief Refreshes the plugin's panel, forcing it to repopulate items
     /// and redraw it. If `item_id` is given, the one will be selected
     /// on the panel after operation is finished
-    virtual void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id) {}
+    virtual void refresh_panels(HANDLE panel, const spotify::item_id_t &) {}
 
     virtual void show_view(HANDLE panel, view_builder_t, view::return_callback_t = {}) {}
 

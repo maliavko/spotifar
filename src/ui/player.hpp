@@ -32,7 +32,7 @@ public:
     bool is_expanded() const;
     void expand(bool is_unfolded);
 
-    // a set of public methods used by global 
+    // a set of public methods used globally 
     void on_seek_forward_btn_clicked();
     void on_seek_backward_btn_clicked();
     void on_volume_up_btn_clicked();
@@ -45,23 +45,23 @@ public:
     bool on_shuffle_btn_click(void* = nullptr);
     bool on_repeat_btn_click(void* = nullptr);
     bool on_devices_item_selected(void *dialog_item);
-    bool on_input_received(void *input_record);
-    bool on_artist_label_input_received(void *input_record);
-    bool on_source_label_input_received(void *input_record);
-    bool on_track_label_input_received(void *input_record);
-    bool on_track_bar_input_received(void *input_record);
-    bool on_like_btn_input_received(void *input_record);
-    bool on_playing_queue_input_received(void *input_record);
+    bool on_input_received(void*);
+    bool on_artist_label_input_received(void*);
+    bool on_source_label_input_received(void*);
+    bool on_track_label_input_received(void*);
+    bool on_track_bar_input_received(void*);
+    bool on_like_btn_input_received(void*);
+    bool on_playing_queue_input_received(void*);
 
     // controls' styles
-    bool on_play_btn_style_applied(void *dialog_item_colors);
-    bool on_prev_btn_style_applied(void *dialog_item_colors);
-    bool on_next_btn_style_applied(void *dialog_item_colors);
-    bool on_track_bar_style_applied(void *dialog_item_colors);
-    bool on_inactive_control_style_applied(void *dialog_item_colors);
-    bool on_shuffle_btn_style_applied(void *dialog_item_colors);
-    bool on_repeat_btn_style_applied(void *dialog_item_colors);
-    bool on_like_btn_style_applied(void *dialog_item_colors);
+    bool on_play_btn_style_applied(void*);
+    bool on_prev_btn_style_applied(void*);
+    bool on_next_btn_style_applied(void*);
+    bool on_track_bar_style_applied(void*);
+    bool on_inactive_control_style_applied(void*);
+    bool on_shuffle_btn_style_applied(void*);
+    bool on_repeat_btn_style_applied(void*);
+    bool on_like_btn_style_applied(void*);
 
 protected:
     friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);

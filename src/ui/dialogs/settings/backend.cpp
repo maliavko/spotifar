@@ -96,15 +96,15 @@ void backend_dialog::init()
     populate_combobox(hdlg, dither_combo, config::playback::dither::all, config::get_playback_dither());
     populate_combobox(hdlg, volume_ctrl_combo, config::playback::volume_ctrl::all, config::get_playback_volume_ctrl());
 
-    dialogs::set_text(hdlg, backend_checkbox, get_text(MConfigPlaybackSetting));
-    dialogs::set_text(hdlg, volume_normalisation_checkbox, get_text(MConfigNormalisationSetting));
-    dialogs::set_text(hdlg, autoplay_checkbox, get_text(MConfigAutoplaySetting));
-    dialogs::set_text(hdlg, gapless_playback_checkbox, get_text(MConfigGaplessSetting));
-    dialogs::set_text(hdlg, playback_cache_checkbox, get_text(MConfigCacheSetting));
-    dialogs::set_text(hdlg, bitrate_label, get_text(MConfigBitrateSetting));
-    dialogs::set_text(hdlg, format_label, get_text(MConfigFormatSetting));
-    dialogs::set_text(hdlg, dither_label, get_text(MConfigDitherSetting));
-    dialogs::set_text(hdlg, volume_ctrl_label, get_text(MConfigVolumeCtrlSetting));
+    dialogs::set_text(hdlg, backend_checkbox, get_text(MCfgPlayback));
+    dialogs::set_text(hdlg, volume_normalisation_checkbox, get_text(MCfgNormalisation));
+    dialogs::set_text(hdlg, autoplay_checkbox, get_text(MCfgAutoplay));
+    dialogs::set_text(hdlg, gapless_playback_checkbox, get_text(MCfgGapless));
+    dialogs::set_text(hdlg, playback_cache_checkbox, get_text(MCfgCache));
+    dialogs::set_text(hdlg, bitrate_label, get_text(MCfgBitrate));
+    dialogs::set_text(hdlg, format_label, get_text(MCfgFormat));
+    dialogs::set_text(hdlg, dither_label, get_text(MCfgDither));
+    dialogs::set_text(hdlg, volume_ctrl_label, get_text(MCfgVolumeCtrl));
     dialogs::set_text(hdlg, ok_button, get_text(MOk));
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }

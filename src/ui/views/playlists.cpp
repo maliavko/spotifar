@@ -8,16 +8,6 @@ using PM = view::panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
-static const view::panel_mode_t::column_t
-    Name        { L"NON",   L"Name",        L"0" },
-    NameFixed   { L"NON",   L"Name",        L"30" },
-    TracksCount { L"C0",    L"Tx",          L"6" },
-    Owner       { L"C1",    L"Owner",       L"15" },
-    IsPublic    { L"C2",    L"Pub",         L"3" },
-    IsColab     { L"C3",    L"Col",         L"3" },
-    Duration    { L"C4",    L"Duration",    L"10" },
-    Descr       { L"Z",     L"Description", L"0" };
-
 //-----------------------------------------------------------------------------------------------------------
 const view::items_t& playlists_base_view::get_items()
 {
@@ -70,9 +60,9 @@ const view::items_t& playlists_base_view::get_items()
 const view::sort_modes_t& playlists_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Name",      SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
-        { L"Tracks",    SM_SIZE,    { VK_F4, LEFT_CTRL_PRESSED } },
-        { L"Owner",     SM_OWNER,   { VK_F5, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarName),           SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarTracksCount),    SM_SIZE,    { VK_F4, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarOwner),          SM_OWNER,   { VK_F5, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -92,6 +82,16 @@ intptr_t playlists_base_view::select_item(const data_item_t* data)
 
 const view::panel_modes_t* playlists_base_view::get_panel_modes() const
 {
+    static const view::panel_mode_t::column_t
+        Name        { L"NON",   get_text(MSortColName),         L"0" },
+        NameFixed   { L"NON",   get_text(MSortColName),         L"30" },
+        TracksCount { L"C0",    get_text(MSortColTracksCount),  L"6" },
+        Owner       { L"C1",    get_text(MSortColOwner),        L"15" },
+        IsPublic    { L"C2",    get_text(MSortColIsPublic),     L"3" },
+        IsColab     { L"C3",    get_text(MSortColIsColab),      L"3" },
+        Duration    { L"C4",    get_text(MSortColDuration),     L"10" },
+        Descr       { L"Z",     get_text(MSortColDescr),        L"0" };
+    
     static panel_modes_t modes{
         /* 0 */ PM::dummy(),
         /* 1 */ PM::dummy(),
@@ -183,10 +183,13 @@ bool playlists_base_view::request_extra_info(const data_item_t *data)
 
 //-----------------------------------------------------------------------------------------------------------
 saved_playlists_view::saved_playlists_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylistsItemLabel), get_text(MPanelCollectionItemLabel))
+    playlists_base_view(panel, api_proxy, get_text(MPanelPlaylists), get_text(MPanelCollection))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_saved_playlists();
+        collection->fetch();
+    }
 }
 
 config::settings::view_t saved_playlists_view::get_default_settings() const
@@ -197,18 +200,17 @@ config::settings::view_t saved_playlists_view::get_default_settings() const
 
 std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists()
 {
-    if (collection && collection->fetch())
-        for (const auto &p: *collection)
-            co_yield p;
+    if (collection)
+        for (const auto &p: *collection) co_yield p;
 }
 
 
 //----------------------------------------------------------------------------------------------------------
 recent_playlists_view::recent_playlists_view(HANDLE panel, api_weak_ptr_t api):
-    playlists_base_view(panel, api, get_text(MPanelPlaylistsItemLabel), get_text(MPanelRecentsItemLabel))
+    playlists_base_view(panel, api, get_text(MPanelPlaylists), get_text(MPanelRecents))
 {
-    utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
+    utils::events::start_listening<play_history_observer>(this);
 }
 
 recent_playlists_view::~recent_playlists_view()
@@ -228,7 +230,7 @@ const view::sort_modes_t& recent_playlists_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = playlists_base_view::get_sort_modes();
-        modes.push_back({ L"Played", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarPlayedAt), SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
