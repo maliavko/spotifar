@@ -126,7 +126,10 @@ public:
     /// and match it respectively to the items on the panels, e.g. while returning back
     /// from the view
     view(HANDLE panel, const wstring &title, const wstring &dir_name = L"");
+    view(const view&) = delete;
     virtual ~view() {}
+
+    view& operator=(const view&) = delete;
 
     // a public interface, used by ui::panel class
 
@@ -144,10 +147,8 @@ public:
     /// additional info for the panel item under cursor
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
     
-    // Not cool it is calculated every time, no way I can come up with to
-    // precache the value, as it should know derived class type, which is
-    // available only after object is craeted
-    auto get_crc32() const -> intptr_t { return utils::crc32::WSID(get_uid().c_str()); }
+    /// @brief Returns a unique id for the object created
+    auto get_uid() const -> uint32_t { return id; }
 
     /// @brief Searches for the `item_id` item on the panel and
     /// return its index or 0
@@ -177,10 +178,12 @@ protected:
     /// @brief Returns a panel handle, the view is associsted with
     HANDLE get_panel_handle() const { return panel; }
     
+    /// @brief Returns ids of the selected items on the panel, if none are
+    /// selected, it returns the one item under cursor
     item_ids_t get_selected_items();
 
     /// @brief Returns a unique view string id, used in caching
-    string get_uid() const { return typeid(*this).name(); }
+    string get_type_uid() const { return typeid(*this).name(); }
     
     // derived classes' interface to the internal view mechanisms
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
@@ -196,6 +199,7 @@ private:
     wstring title;
     wstring dir_name;
     HANDLE panel;
+    uint32_t id;
 };
 
 using view_ptr_t = std::shared_ptr<view>;

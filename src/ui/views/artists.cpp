@@ -4,6 +4,7 @@
 
 namespace spotifar { namespace ui {
 
+using mv_build_t = multiview_builder_t;
 using PM = view::panel_mode_t;
 using utils::far3::get_text;
 using namespace spotify;
@@ -212,7 +213,7 @@ std::generator<const artist_t&> followed_artists_view::get_artists()
 
 void followed_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist(api_proxy, artist, [this] { events::show_collection(api_proxy); });
+    events::show_artist(api_proxy, artist);
 }
 
 void followed_artists_view::show_filters_dialog()
@@ -322,8 +323,8 @@ std::generator<const artist_t&> recent_artists_view::get_artists()
 
 void recent_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist(api_proxy, artist,
-        std::bind(events::show_recents, api_proxy));
+    events::show_artist(api_proxy, artist, mv_build_t::albums_idx,
+        [api = api_proxy] { events::show_recents(api, mv_build_t::artists_idx); });
 }
 
 void recent_artists_view::on_history_changed()
@@ -363,8 +364,8 @@ std::generator<const artist_t&> user_top_artists_view::get_artists()
 
 void user_top_artists_view::show_albums_view(const artist_t &artist) const
 {
-    events::show_artist(api_proxy, artist,
-        std::bind(events::show_user_top_items, api_proxy));
+    events::show_artist(api_proxy, artist, mv_build_t::default_idx,
+        [api = api_proxy] { events::show_user_top_items(api); });
 }
 
 
