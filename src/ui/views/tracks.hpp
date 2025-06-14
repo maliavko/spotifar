@@ -23,7 +23,7 @@ public:
 
     auto get_items() -> const items_t& override;
 protected:
-    virtual bool start_playback(const item_id_t &track_id) = 0;
+    virtual bool start_playback(const track_t&) = 0;
     virtual auto get_tracks() -> std::generator<const track_t&> = 0;
     virtual auto get_extra_columns(const track_t&) const -> std::vector<wstring> { return {}; }
 
@@ -60,7 +60,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
@@ -80,12 +80,6 @@ class recent_tracks_view:
     public tracks_base_view,
     public play_history_observer
 {
-    // extending a track_t class with `played_at` field, used only
-    // locally in the view class
-    struct history_track_t: public track_t
-    {
-        string played_at;
-    };
 public:
     recent_tracks_view(HANDLE panel, api_weak_ptr_t api);
     ~recent_tracks_view();
@@ -98,7 +92,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t& track) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
@@ -106,7 +100,7 @@ protected:
     // play_history_observer handlers
     void on_history_changed();
 private:
-    std::vector<history_track_t> items;
+    history_items_t items;
     panel_modes_t panel_modes;
 };
 
@@ -128,7 +122,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
@@ -158,7 +152,7 @@ protected:
     auto get_sort_modes() const -> const sort_modes_t& override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
 
     // playback_observer handlers
@@ -168,10 +162,13 @@ protected:
 
 
 /// @brief
-class recently_liked_tracks_view: public tracks_base_view
+class recently_liked_tracks_view:
+    public tracks_base_view,
+    public playback_observer
 {
 public:
     recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api);
+    ~recently_liked_tracks_view();
 protected:
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
@@ -179,15 +176,20 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
+
+    // playback_observer handlers
+    void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
 private:
     saved_tracks_ptr collection;
 };
 
 
 /// @brief
-class user_top_tracks_view: public tracks_base_view
+class user_top_tracks_view:
+    public tracks_base_view,
+    public playback_observer
 {
 public:
     user_top_tracks_view(HANDLE panel, api_weak_ptr_t api);
@@ -197,8 +199,11 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
+
+    // playback_observer handlers
+    void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
 private:
     user_top_tracks_ptr collection;
 };
@@ -218,7 +223,7 @@ protected:
     auto get_default_settings() const -> config::settings::view_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
 
     // playback_observer handlers
@@ -245,7 +250,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // tracks_base_view interface
-    bool start_playback(const string &track_id) override;
+    bool start_playback(const track_t&) override;
     auto get_tracks() -> std::generator<const track_t&> override;
     auto get_extra_columns(const track_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }

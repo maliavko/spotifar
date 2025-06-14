@@ -17,7 +17,7 @@ static const view::panel_mode_t::column_t
     AlbumsCount     { L"C3",    L"Albums",      L"6" },
     Name            { L"NON",   L"Name",        L"0" },
     NameFixed       { L"NON",   L"Name",        L"30" },
-    Genres          { L"Z",   L"Name",          L"0" };
+    Genres          { L"Z",     L"Name",        L"0" };
 
 //-----------------------------------------------------------------------------------------------------------
 const view::items_t& artists_base_view::get_items()
@@ -288,8 +288,8 @@ void recent_artists_view::rebuild_items()
     // the reverse order is used
     auto play_history = api->get_play_history();
     for (auto it = play_history.rbegin(); it != play_history.rend(); ++it)
-        if (it->track.artists.size() > 0)
-            recent_artists[it->track.get_artist().id] = *it;
+        if (it->artists.size() > 0)
+            recent_artists[it->get_artist().id] = *it;
 
     if (recent_artists.size() > 0)
     {

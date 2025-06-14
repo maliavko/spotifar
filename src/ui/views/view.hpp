@@ -176,11 +176,11 @@ protected:
     static auto unpack_user_data(const UserDataItem &user_data) -> const data_item_t*;
 
     /// @brief Returns a panel handle, the view is associsted with
-    HANDLE get_panel_handle() const { return panel; }
+    auto get_panel_handle() -> HANDLE const { return panel; }
     
     /// @brief Returns ids of the selected items on the panel, if none are
     /// selected, it returns the one item under cursor
-    item_ids_t get_selected_items();
+    auto get_selected_items() -> item_ids_t;
 
     /// @brief Returns a unique view string id, used in caching
     string get_type_uid() const { return typeid(*this).name(); }
