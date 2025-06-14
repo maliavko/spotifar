@@ -39,6 +39,8 @@ protected:
 };
 
 
+/// TODO: once the artists are added to the collection worker,
+/// subscribe to the appropriate events and rebuild items on changing
 /// @brief A class-view, representing a list of followed artists
 class followed_artists_view: public artists_base_view
 {
