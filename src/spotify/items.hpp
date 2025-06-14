@@ -22,6 +22,8 @@ static const item_id_t invalid_id = "";
 /// @param id spotify item id
 string make_item_uri(const string &item_type_name, const string &id);
 
+const string CollectionUri = "spotify:collection";
+
 struct data_item_t
 {
     item_id_t id = invalid_id;
@@ -75,22 +77,6 @@ struct simplified_artist_t: public data_item_t
     friend void to_json(json::Value &j, const simplified_artist_t &a, json::Allocator &allocator);
 };
 
-struct artist_t: public simplified_artist_t
-{
-    size_t followers_total = 0;
-    size_t popularity = 0;
-    std::vector<string> genres;
-    std::vector<image_t> images;
-
-    wstring get_main_genre() const;
-
-    /// @brief Returns a middle size image or stub object in case of any error 
-    const image_t get_image() const noexcept;
-
-    friend void from_json(const json::Value &j, artist_t &a);
-    friend void to_json(json::Value &j, const artist_t &a, json::Allocator &allocator);
-};
-
 struct simplified_album_t: public data_item_t
 {
     inline static const string
@@ -131,26 +117,6 @@ struct simplified_album_t: public data_item_t
     friend void to_json(json::Value &j, const simplified_album_t &a, json::Allocator &allocator);
 };
 
-struct album_t: public simplified_album_t
-{
-    size_t popularity = 0;
-    std::vector<copyrights_t> copyrights{};
-    string recording_label = "";
-
-    copyrights_t get_main_copyright() const;
-
-    friend void from_json(const json::Value &j, album_t &a);
-    friend void to_json(json::Value &j, const album_t &a, json::Allocator &allocator);
-};
-
-struct saved_album_t: public album_t
-{
-    string added_at;
-    
-    friend void from_json(const json::Value &j, saved_album_t &a);
-    friend void to_json(json::Value &j, saved_album_t &a, json::Allocator &allocator);
-};
-
 struct simplified_track_t: public data_item_t
 {
     wstring name;
@@ -178,6 +144,22 @@ struct simplified_track_t: public data_item_t
     friend void to_json(json::Value &j, const simplified_track_t &t, json::Allocator &allocator);
 };
 
+struct artist_t: public simplified_artist_t
+{
+    size_t followers_total = 0;
+    size_t popularity = 0;
+    std::vector<string> genres;
+    std::vector<image_t> images;
+
+    wstring get_main_genre() const;
+
+    /// @brief Returns a middle size image or stub object in case of any error 
+    const image_t get_image() const noexcept;
+
+    friend void from_json(const json::Value &j, artist_t &a);
+    friend void to_json(json::Value &j, const artist_t &a, json::Allocator &allocator);
+};
+
 struct track_t: public simplified_track_t
 {
     simplified_album_t album;
@@ -197,6 +179,27 @@ struct saved_track_t: public track_t
     
     friend void from_json(const json::Value &j, saved_track_t &t);
     friend void to_json(json::Value &result, const saved_track_t &t, json::Allocator &allocator);
+};
+
+struct album_t: public simplified_album_t
+{
+    size_t popularity = 0;
+    std::vector<copyrights_t> copyrights{};
+    string recording_label = "";
+    //std::vector<simplified_track_t> tracks;
+
+    copyrights_t get_main_copyright() const;
+
+    friend void from_json(const json::Value &j, album_t &a);
+    friend void to_json(json::Value &j, const album_t &a, json::Allocator &allocator);
+};
+
+struct saved_album_t: public album_t
+{
+    string added_at;
+    
+    friend void from_json(const json::Value &j, saved_album_t &a);
+    friend void to_json(json::Value &j, saved_album_t &a, json::Allocator &allocator);
 };
 
 struct simplified_playlist_t: public data_item_t
@@ -268,6 +271,7 @@ struct context_t
     bool is_album() const { return type == album; }
     bool is_playlist() const { return type == playlist; }
     bool is_collection() const { return type == collection; }
+    bool does_support_offset() const { return is_collection() || is_album() || is_playlist(); }
     string get_item_id() const;
 
     friend bool operator==(const context_t &lhs, const context_t &rhs);
@@ -316,9 +320,8 @@ struct playback_state_t
     friend void to_json(json::Value &j, const playback_state_t &p, json::Allocator &allocator);
 };
 
-struct history_item_t
+struct history_item_t: public track_t
 {
-    track_t track;
     context_t context;
     string played_at;
     
