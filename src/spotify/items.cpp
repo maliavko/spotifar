@@ -229,6 +229,7 @@ void from_json(const Value &j, album_t &a)
 {
     from_json(j, dynamic_cast<simplified_album_t&>(a));
     from_json(j["copyrights"], a.copyrights);
+    // from_json(j["items"], a.tracks);
     
     a.popularity = j["popularity"].GetUint();
     a.recording_label = j["label"].GetString();
@@ -242,6 +243,10 @@ void to_json(Value &result, const album_t &a, json::Allocator &allocator)
     Value copyrights;
     to_json(copyrights, a.copyrights, allocator);
     
+    // Value tracks;
+    // to_json(tracks, a.tracks, allocator);
+    
+    // result.AddMember("items", tracks, allocator);
     result.AddMember("copyrights", copyrights, allocator);
     result.AddMember("popularity", Value(a.popularity), allocator);
     result.AddMember("label", Value(a.recording_label, allocator), allocator);
@@ -612,23 +617,23 @@ string device_t::to_str() const
 void to_json(Value &result, const history_item_t &i, json::Allocator &allocator)
 {
     result = Value(json::kObjectType);
-
+    
     Value track;
-    to_json(track, i.track, allocator);
+    to_json(track, dynamic_cast<const track_t&>(i), allocator);
 
     Value context;
     to_json(context, i.context, allocator);
 
     result.AddMember("played_at", Value(i.played_at, allocator), allocator);
-    result.AddMember("track", track, allocator);
     result.AddMember("context", context, allocator);
+    result.AddMember("track", track, allocator);
 }
     
 void from_json(const Value &j, history_item_t &p)
 {
-    p.played_at = j["played_at"].GetString();
+    from_json(j["track"], dynamic_cast<track_t&>(p));
 
-    from_json(j["track"], p.track);
+    p.played_at = j["played_at"].GetString();
 
     if (!j["context"].IsNull())
         from_json(j["context"], p.context);

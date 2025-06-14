@@ -29,9 +29,6 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-- new releases has doubles on the panel
-- to block all the unneeded hotkeys
-- after fetching releases the opened view did not get updated
 
 to finish for alpha release
 - check all the default view settings and sort modes
@@ -49,7 +46,7 @@ to finish for alpha release
 + finilize the settings menu
     + audio backend view with options
     + propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
-- to review the panels views and clean up the view and sort modes
++ to review the panels views and clean up the view and sort modes
     + to show saved albums, artists and tracks
-    - to launch playback from all the possible views
+    + to launch playback from all the possible views
     + track number/disc number is shown weird

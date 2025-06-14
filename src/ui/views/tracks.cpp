@@ -26,6 +26,7 @@ static const view::panel_mode_t::column_t
     PlayedAt    { L"C8",    L"Played at",   L"13" },
     SavedAt     { L"C8",    L"Saved at",    L"13" },
     AddedAt     { L"C8",    L"Added at",    L"13" },
+    Context     { L"C9",    L"Context",     L"12" },
     Descr       { L"Z",     L"Description", L"0" };
 
 //-----------------------------------------------------------------------------------------------------------
@@ -186,15 +187,20 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 
             if (ids.size() == 1)
             {
-                // if only one items is selected, we launch it in the current folder context
-                log::global->debug("Launching content playback with the given track id {}", ids[0]);
-                start_playback(ids[0]);
+                if (const auto &item = panels::get_current_item(get_panel_handle()))
+                {
+                    if (auto *user_data = unpack_user_data(item->UserData))
+                    {
+                        if (const auto &track = static_cast<const track_t&>(*user_data))
+                            start_playback(track); // each derived view decides on the launching context
+                    }
+                }
             }
             else
             {
                 // if there are several items selected on the panel, we are launching them in the order
                 // selected as a range of URIs
-                log::global->debug("Launching several tracks playback {}", utils::string_join(ids, ","));
+                log::global->info("Launching several tracks playback {}", utils::string_join(ids, ","));
                 if (auto api = api_proxy.lock())
                 {
                     std::vector<string> uris;
@@ -383,11 +389,14 @@ intptr_t album_tracks_view::compare_items(const sort_mode_t &sort_mode,
     return tracks_base_view::compare_items(sort_mode, data1, data2);
 }
 
-bool album_tracks_view::start_playback(const string &track_id)
+bool album_tracks_view::start_playback(const track_t &track)
 {
     if (auto api = api_proxy.lock())
     {
-        api->start_playback(album.get_uri(), track_t::make_uri(track_id));
+        log::global->info("Starting playback in the album {} from track",
+            album.get_uri(), track.get_uri());
+        
+        api->start_playback(album.get_uri(), track.get_uri());
         return true;
     }
     return false;
@@ -467,8 +476,8 @@ intptr_t recent_tracks_view::compare_items(const sort_mode_t &sort_mode,
     if (sort_mode.far_sort_mode == SM_MTIME)
     {
         const auto
-            &item1 = static_cast<const history_track_t*>(data1),
-            &item2 = static_cast<const history_track_t*>(data2);
+            &item1 = static_cast<const history_item_t*>(data1),
+            &item2 = static_cast<const history_item_t*>(data2);
 
         return item1->played_at.compare(item2->played_at);
     }
@@ -480,14 +489,31 @@ void recent_tracks_view::rebuild_items()
     items.clear();
 
     if (auto api = api_proxy.lock())
-        for (const auto &item: api->get_play_history())
-            items.push_back(history_track_t{ {item.track}, item.played_at });
+        items = api->get_play_history();
 }
 
-bool recent_tracks_view::start_playback(const string &track_id)
+bool recent_tracks_view::start_playback(const track_t &track)
 {
-    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        if (const auto &history_track = static_cast<const history_item_t&>(track))
+        {
+            if (history_track.context.is_empty())
+            {
+                log::global->warn("History context is not available, launching the standalone "
+                    "track {}", history_track.id);
+                api->start_playback({ history_track.get_uri() });
+            }
+            else
+            {
+                log::global->info("Launching the track {} with the history context {}",
+                    history_track.id, history_track.context.uri);
+                api->start_playback(history_track.context.uri, history_track.get_uri());
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 std::generator<const track_t&> recent_tracks_view::get_tracks()
@@ -497,7 +523,8 @@ std::generator<const track_t&> recent_tracks_view::get_tracks()
 
 std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track) const
 {
-    const auto &played_track = static_cast<const history_track_t&>(track);
+    const auto &played_track = static_cast<const history_item_t&>(track);
+
     wstring formatted_time = utils::to_wstring(played_track.played_at);
 
     try
@@ -514,9 +541,12 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
         log::global->warn("Couldn't convert track last played time into "
             "local time: {}. {}", played_track.played_at, ex.what());
     }
+
+    auto context_name = utils::to_wstring(played_track.context.type);
     
     return {
-        formatted_time, // C8 - `played at` date
+        formatted_time,     // C8 - `played at` date
+        context_name,       // C9 - context type
     };
 }
 
@@ -581,15 +611,21 @@ intptr_t saved_tracks_view::compare_items(const sort_mode_t &sort_mode,
     return tracks_base_view::compare_items(sort_mode, data1, data2);
 }
 
-bool saved_tracks_view::start_playback(const string &track_id)
+bool saved_tracks_view::start_playback(const track_t &track)
 {
-    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        log::global->info("Starting saved tracks collection playback from track {}", track.get_uri());
+        api->start_playback(CollectionUri, track.get_uri());
+        return true;
+    }
+    return false;
 }
 
 std::generator<const track_t&> saved_tracks_view::get_tracks()
 {
-    for (const auto &track: *collection) co_yield track;
+    if (collection)
+        for (const auto &track: *collection) co_yield track;
 }
 
 std::vector<wstring> saved_tracks_view::get_extra_columns(const track_t& track) const
@@ -637,10 +673,26 @@ config::settings::view_t playing_queue_view::get_default_settings() const
     return { 1, false, 7 };
 }
 
-bool playing_queue_view::start_playback(const string &track_id)
+bool playing_queue_view::start_playback(const track_t &track)
 {
-    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        const auto &state = api->get_playback_state();
+        if (state.context.does_support_offset())
+        {
+            log::global->info("Launching the track {} with the context {}",
+                track.id, state.context.uri);
+            api->start_playback(state.context.uri, track.get_uri());
+        }
+        else
+        {
+            log::global->warn("The context does not support offsetting, launching the standalone "
+                "track {}", track.id);
+            api->start_playback({ track.get_uri() });
+        }
+        return true;
+    }
+    return false;
 }
 
 std::generator<const track_t&> playing_queue_view::get_tracks()
@@ -664,7 +716,7 @@ std::generator<const track_t&> playing_queue_view::get_tracks()
 const view::sort_modes_t& playing_queue_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
+        { L"Unsorted", SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -685,7 +737,17 @@ recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_pt
     tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel), get_text(MPanelRecentlySavedLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_saved_tracks();
+        collection->fetch(false, true, 3);
+    }
+
+    utils::events::start_listening<playback_observer>(this);
+}
+
+recently_liked_tracks_view::~recently_liked_tracks_view()
+{
+    utils::events::stop_listening<playback_observer>(this);
 }
 
 config::settings::view_t recently_liked_tracks_view::get_default_settings() const
@@ -693,10 +755,15 @@ config::settings::view_t recently_liked_tracks_view::get_default_settings() cons
     return { 0, false, 3 };
 }
 
-bool recently_liked_tracks_view::start_playback(const string &track_id)
+bool recently_liked_tracks_view::start_playback(const track_t &track)
 {
-    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        log::global->info("Starting saved tracks collection playback from track {}", track.get_uri());
+        api->start_playback(CollectionUri, track.get_uri());
+        return true;
+    }
+    return false;
 }
 
 const view::sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
@@ -726,10 +793,13 @@ intptr_t recently_liked_tracks_view::compare_items(const sort_mode_t &sort_mode,
 
 std::generator<const track_t&> recently_liked_tracks_view::get_tracks()
 {
-    // requesting only three pages of the data
-    if (collection->fetch(false, true, 3))
-        for (const auto &t: *collection)
-            co_yield t;
+    if (collection)
+        for (const auto &t: *collection) co_yield t;
+}
+
+void recently_liked_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
+{
+    events::refresh_panel(get_panel_handle());
 }
 
 
@@ -738,7 +808,10 @@ user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_prox
     tracks_base_view(panel, api_proxy, get_text(MPanelUserTopTracksLabel), get_text(MPanelUserTopItemsLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_user_top_tracks();
+        collection->fetch(false, true, 4);
+    }
 }
 
 config::settings::view_t user_top_tracks_view::get_default_settings() const
@@ -749,22 +822,31 @@ config::settings::view_t user_top_tracks_view::get_default_settings() const
 const view::sort_modes_t& user_top_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
+        { L"Unsorted", SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
 
-bool user_top_tracks_view::start_playback(const string &track_id)
+bool user_top_tracks_view::start_playback(const track_t &track)
 {
-    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        log::global->info("Starting standalone track from user's top {}", track.get_uri());
+        api->start_playback({ track.get_uri() });
+        return true;
+    }
+    return false;
 }
 
 std::generator<const track_t&> user_top_tracks_view::get_tracks()
 {
-    if (collection && collection->fetch(false, true, 4))
-        for (const auto &t: *collection)
-            co_yield t;
+    if (collection)
+        for (const auto &t: *collection) co_yield t;
+}
+
+void user_top_tracks_view::on_track_changed(const track_t &track, const track_t &prev_track)
+{
+    events::refresh_panel(get_panel_handle());
 }
 
 
@@ -794,18 +876,17 @@ const view::sort_modes_t& artist_top_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes[5] = { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } };
+        modes[5] = { L"Unsorted", SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } };
     }
     return modes;
 }
 
-bool artist_top_tracks_view::start_playback(const string &track_id)
+bool artist_top_tracks_view::start_playback(const track_t &track)
 {
     if (auto api = api_proxy.lock())
     {
-        // NOTE: Spotify API does not provide a way to specify track while playing
-        // the `artist` context. Just launching the context starting from the first track
-        api->start_playback(artist.get_uri()/*, track_t::make_uri(track_id)*/);
+        log::global->info("Starting standalone track from artist's top {}", track.get_uri());
+        api->start_playback({ track.get_uri() });
         return true;
     }
     return false;
@@ -832,7 +913,10 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
     tracks_base_view(panel, api_proxy, p.name, p.name), playlist(p)
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_playlist_tracks(p.id);
+        collection->fetch();
+    }
     
     utils::events::start_listening<playback_observer>(this);
 
@@ -840,7 +924,6 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
     for (size_t i = 3; i < 10; i++)
         panel_modes[i].insert_column(&AddedAt, 0);
 
-    collection->fetch();
     panel_modes.rebuild();
 }
 
@@ -879,15 +962,21 @@ intptr_t playlist_view::compare_items(const sort_mode_t &sort_mode,
     return tracks_base_view::compare_items(sort_mode, data1, data2);
 }
 
-bool playlist_view::start_playback(const string &track_id)
+bool playlist_view::start_playback(const track_t &track)
 {
-    //api_proxy->start_playback(album.get_uri(), track_t::make_uri(track_id));
-    return true;
+    if (auto api = api_proxy.lock())
+    {
+        log::global->info("Starting track {} from playlist {}", track.get_uri(), playlist.id);
+        api->start_playback(playlist.get_uri(), track.get_uri());
+        return true;
+    }
+    return false;
 }
 
 std::generator<const track_t&> playlist_view::get_tracks()
 {
-    for (const auto &t: *collection) co_yield t;
+    if (collection)
+        for (const auto &t: *collection) co_yield t;
 }
 
 std::vector<wstring> playlist_view::get_extra_columns(const track_t& track) const
