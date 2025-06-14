@@ -367,14 +367,16 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), get_text(MPanelCollectionItemLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_saved_albums();
+        collection->fetch();
+    }
 
     panel_modes = *albums_base_view::get_panel_modes();
     panel_modes[4].insert_column(&SavedAt, 0);
     panel_modes[5].insert_column(&SavedAt, 0);
     panel_modes[7].insert_column(&SavedAt, 0);
 
-    collection->fetch();
     panel_modes.rebuild();
 }
 
@@ -386,7 +388,8 @@ config::settings::view_t saved_albums_view::get_default_settings() const
 
 std::generator<const album_t&> saved_albums_view::get_albums()
 {
-    for (const auto &a: *collection) co_yield a;
+    if (collection)
+        for (const auto &a: *collection) co_yield a;
 }
 
 const view::sort_modes_t& saved_albums_view::get_sort_modes() const
@@ -436,8 +439,8 @@ void saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
     // the base handlers update the view only in case some items
     // were being change, this view should repopulate itself anyway
     // as it represents the list of saved tracks
-    collection->fetch();
-    events::refresh_panel(get_panel_handle());
+    if (collection->fetch())
+        events::refresh_panel(get_panel_handle());
 }
 
 
@@ -507,8 +510,8 @@ void new_releases_view::rebuild_items()
 recent_albums_view::recent_albums_view(HANDLE panel, api_weak_ptr_t api):
     albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel), get_text(MPanelRecentsItemLabel))
 {
-    utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
+    utils::events::start_listening<play_history_observer>(this);
 }
 
 recent_albums_view::~recent_albums_view()
@@ -604,14 +607,16 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
     albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), get_text(MPanelRecentlySavedLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_saved_albums();
+        repopulate();
+    }
 
     panel_modes = *albums_base_view::get_panel_modes();
     panel_modes[4].insert_column(&SavedAt, 0);
     panel_modes[5].insert_column(&SavedAt, 0);
     panel_modes[7].insert_column(&SavedAt, 0);
 
-    repopulate();
     panel_modes.rebuild();
 }
 
@@ -653,7 +658,8 @@ void recently_saved_albums_view::show_tracks_view(const album_t &album) const
 
 std::generator<const album_t&> recently_saved_albums_view::get_albums()
 {
-    for (const auto &a: *collection) co_yield a;
+    if (collection)
+        for (const auto &a: *collection) co_yield a;
 }
 
 std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t& album) const

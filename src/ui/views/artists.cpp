@@ -195,7 +195,10 @@ followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_pr
     artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel), get_text(MPanelCollectionItemLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_followed_artists();
+        collection->fetch();
+    }
 }
 
 config::settings::view_t followed_artists_view::get_default_settings() const
@@ -206,9 +209,8 @@ config::settings::view_t followed_artists_view::get_default_settings() const
 
 std::generator<const artist_t&> followed_artists_view::get_artists()
 {
-    if (collection && collection->fetch())
-        for (const auto &a: *collection)
-            co_yield a;
+    if (collection)
+        for (const auto &a: *collection) co_yield a;
 }
 
 void followed_artists_view::show_albums_view(const artist_t &artist) const
@@ -249,8 +251,8 @@ void followed_artists_view::show_filters_dialog()
 recent_artists_view::recent_artists_view(HANDLE panel, api_weak_ptr_t api):
     artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), get_text(MPanelRecentsItemLabel))
 {
-    utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
+    utils::events::start_listening<play_history_observer>(this);
 }
 
 recent_artists_view::~recent_artists_view()
@@ -317,8 +319,7 @@ intptr_t recent_artists_view::compare_items(const sort_mode_t &sort_mode,
 
 std::generator<const artist_t&> recent_artists_view::get_artists()
 {
-    for (const auto &i: items)
-        co_yield i;
+    for (const auto &i: items) co_yield i;
 }
 
 void recent_artists_view::show_albums_view(const artist_t &artist) const
@@ -339,7 +340,10 @@ user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
     artists_base_view(panel, api, get_text(MPanelUserTopArtistsLabel), get_text(MPanelUserTopItemsLabel))
 {
     if (auto api = api_proxy.lock())
+    {
         collection = api->get_user_top_artists();
+        collection->fetch(false, true, 4);
+    }
 }
 
 config::settings::view_t user_top_artists_view::get_default_settings() const
@@ -357,9 +361,8 @@ const view::sort_modes_t& user_top_artists_view::get_sort_modes() const
 
 std::generator<const artist_t&> user_top_artists_view::get_artists()
 {
-    if (collection && collection->fetch(false, true, 4))
-        for (const auto &a: *collection)
-            co_yield a;
+    if (collection)
+        for (const auto &a: *collection) co_yield a;
 }
 
 void user_top_artists_view::show_albums_view(const artist_t &artist) const

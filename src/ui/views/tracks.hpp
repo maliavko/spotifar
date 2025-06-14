@@ -228,7 +228,6 @@ protected:
 
     // playback_observer handlers
     void on_track_changed(const track_t &track, const spotify::track_t &prev_track) override;
-    void on_shuffle_state_changed(bool shuffle_state) override;
 private:
     std::vector<track_t> tracks;
     artist_t artist;
