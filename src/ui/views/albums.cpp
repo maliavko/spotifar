@@ -4,6 +4,7 @@
 
 namespace spotifar { namespace ui {
 
+using mv_build_t = multiview_builder_t;
 using PM = view::panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
@@ -250,7 +251,7 @@ const view::key_bar_info_t* albums_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{};
 
-    auto view_crc32 = get_crc32();
+    auto view_crc32 = get_uid();
     auto item = utils::far3::panels::get_current_item(get_panel_handle());
 
     // right after switching the directory on the panel, when we trap here `panels::get_current_item`
@@ -308,8 +309,12 @@ void artist_albums_view::show_tracks_view(const album_t &album) const
 {
     // let's open a tracks list view for the selected album, which should return user to the same
     // artist's albums view
-    events::show_album_tracks(api_proxy, album,
-        std::bind(events::show_artist, api_proxy, artist, get_return_callback()));
+    events::show_album_tracks(
+        api_proxy, album,
+        [api = api_proxy, artist = artist, this]
+        {
+            events::show_artist(api, artist, mv_build_t::albums_idx);
+        });
 }
 
 void artist_albums_view::rebuild_items()
@@ -440,8 +445,12 @@ void new_releases_view::show_tracks_view(const album_t &album) const
     if (auto api = api_proxy.lock(); api && simple_artist)
     {
         const auto &artist = api->get_artist(simple_artist.id);
-        events::show_album_tracks(api_proxy, album,
-            std::bind(events::show_artist, api_proxy, artist, get_return_callback()));
+        events::show_album_tracks(
+            api_proxy, album,
+            [api = api_proxy, artist = artist, this]
+            {
+                events::show_artist(api, artist, mv_build_t::albums_idx, get_return_callback());
+            });
     }
 }
 
@@ -546,8 +555,12 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
     if (auto api = api_proxy.lock(); api && simple_artist)
     {
         const auto &artist = api_proxy.lock()->get_artist(simple_artist.id);
-        events::show_album_tracks(api_proxy, album,
-            std::bind(events::show_artist, api_proxy, artist, get_return_callback()));
+        events::show_album_tracks(
+            api_proxy, album,
+            [api = api_proxy, artist = artist, this]
+            {
+                events::show_artist(api, artist, mv_build_t::albums_idx, get_return_callback());
+            });
     }
 }
 
@@ -606,7 +619,8 @@ intptr_t recently_saved_albums_view::compare_items(const sort_mode_t &sort_mode,
 
 void recently_saved_albums_view::show_tracks_view(const album_t &album) const
 {
-    events::show_album_tracks(api_proxy, album, std::bind(events::show_recently_saved, api_proxy));
+    events::show_album_tracks(api_proxy, album,
+        [api = api_proxy] { events::show_recently_saved(api); });
 }
 
 std::generator<const album_t&> recently_saved_albums_view::get_albums()

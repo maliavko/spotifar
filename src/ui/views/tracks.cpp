@@ -179,6 +179,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 
     switch (combined_key)
     {
+        // starting playback for the item or list of selected items
         case VK_F4:
         {
             const auto &ids = get_selected_items();
@@ -205,6 +206,8 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             }
             return TRUE;
         }
+
+        // like/unlike
         case VK_F8:
         {
             const auto &ids = get_selected_items();
@@ -219,6 +222,8 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 
             return TRUE;
         }
+
+        // redirect to Spotify WEB for the tracks under cursor
         case VK_RETURN + mods::shift:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
@@ -231,21 +236,21 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             }
             return TRUE;
         }
-        case VK_RETURN + mods::shift + mods::alt:
+
+        // PgDown + Ctrl
+        // go to the track's origin album: does make sense for all the view
+        // except the album's view, for it jut refreshes the panel
+        case VK_NEXT + mods::ctrl:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
             {
-                if (auto *user_data = unpack_user_data(item->UserData); *user_data)
+                if (auto *user_data = unpack_user_data(item->UserData); user_data != nullptr)
                 {
                     if (auto api = api_proxy.lock())
                     {
                         const auto *track = static_cast<const track_t*>(user_data);
-                        const auto artist = api->get_artist(track->get_artist().id);
-                        const auto album = api->get_album(track->album.id);
-                        
-                        if (album && artist)
-                            events::show_album_tracks(api_proxy, album,
-                                [api = this->api_proxy, artist] { events::show_artist(api, artist); });
+                        if (const auto album = api->get_album(track->album.id); *track)
+                            events::show_album_tracks(api_proxy, album);
                     }
                 }
             }
@@ -259,15 +264,17 @@ const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{};
 
-    auto view_crc32 = get_crc32();
+    auto view_uid = get_uid();
+
     auto item = utils::far3::panels::get_current_item(get_panel_handle());
 
     // right after switching the directory on the panel, when we trap here `panels::get_current_item`
     // returns the `item` from  the previous directory. Checking crc32 helps to identify
     // when the panel is refreshed eventually and we can be sure the item is valid
-    if (item->CRC32 != view_crc32) return nullptr;
+    if (item->CRC32 != view_uid) return nullptr;
 
-    if (auto *user_data = unpack_user_data(item->UserData); auto api = api_proxy.lock())
+    auto *user_data = unpack_user_data(item->UserData);
+    if (auto api = api_proxy.lock(); user_data != nullptr)
     {
         if (api->is_track_saved(user_data->id))
             key_bar[{ VK_F8, 0 }] = get_text(MUnlike);

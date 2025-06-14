@@ -630,7 +630,7 @@ bool player::on_source_label_input_received(void *input_record)
         {
             // showing an artist's view with its albums
             if (const auto &artist = api->get_artist(ctx.get_item_id()))
-                ui::events::show_artist(api, artist, [this] { events::show_root(api_proxy); });
+                ui::events::show_artist(api, artist);
         }
         else if (ctx.is_album())
         {
