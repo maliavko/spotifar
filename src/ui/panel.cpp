@@ -115,16 +115,16 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     // adding multiviews bar keys
     if (mview_builders.artists)
-        panel_key_bar[{ VK_F5, SHIFT_PRESSED }] = far3::get_text(MPanelArtistsItemLabel);
+        panel_key_bar[{ VK_F5, SHIFT_PRESSED }] = far3::get_text(MPanelArtists);
 
     if (mview_builders.albums)
-        panel_key_bar[{ VK_F6, SHIFT_PRESSED }] = far3::get_text(MPanelAlbumsItemLabel);
+        panel_key_bar[{ VK_F6, SHIFT_PRESSED }] = far3::get_text(MPanelAlbums);
 
     if (mview_builders.tracks)
-        panel_key_bar[{ VK_F7, SHIFT_PRESSED }] = far3::get_text(MPanelTracksItemLabel);
+        panel_key_bar[{ VK_F7, SHIFT_PRESSED }] = far3::get_text(MPanelTracks);
 
     if (mview_builders.playlists)
-        panel_key_bar[{ VK_F8, SHIFT_PRESSED }] = far3::get_text(MPanelPlaylistsItemLabel);
+        panel_key_bar[{ VK_F8, SHIFT_PRESSED }] = far3::get_text(MPanelPlaylists);
     
     // adding bar keys from the nested view
     if (const auto &view_key_bar = view->get_key_bar_info())

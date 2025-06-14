@@ -10,12 +10,13 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
+/// @brief A base class for the view of a static menus
 class root_base_view: public view
 {
 public:
     struct root_data_t: public data_item_t
     {
-        int name_key, descr_key;
+        int name_key, descr_key; // keys from LNG file
         return_callback_t callback;
     };
 

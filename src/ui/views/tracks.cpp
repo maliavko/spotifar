@@ -10,25 +10,6 @@ using utils::far3::get_text;
 using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
 
-static const view::panel_mode_t::column_t
-    Name        { L"NON",   L"Name",        L"0" },
-    NameFixed   { L"NON",   L"Name",        L"30" },
-    IsExplicit  { L"C0",    L"[E]",         L"3" },
-    Duration    { L"C1",    L"Duration",    L"7" },
-    Year        { L"C2",    L"Yr",          L"6" },
-    Artist      { L"C3",    L"Artist",      L"30" },
-    Popularity  { L"C4",    L"Pop %",       L"5" },
-    Album       { L"C5",    L"Album",       L"30" },
-    Type        { L"C6",    L"Type",        L"6" },
-    IsSaved     { L"C7",    L"[+]",         L"3" },
-    TxNumber    { L"C8",    L" #",          L"4" },
-    TxMultNumber{ L"C8",    L"#/#",         L"7" },
-    PlayedAt    { L"C8",    L"Played at",   L"13" },
-    SavedAt     { L"C8",    L"Saved at",    L"13" },
-    AddedAt     { L"C8",    L"Added at",    L"13" },
-    Context     { L"C9",    L"Context",     L"12" },
-    Descr       { L"Z",     L"Description", L"0" };
-
 //-----------------------------------------------------------------------------------------------------------
 tracks_base_view::tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
     view(panel, title, dir_name), api_proxy(api)
@@ -45,12 +26,12 @@ tracks_base_view::~tracks_base_view()
 const view::sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
-        { L"Release date",  SM_ATIME,           { VK_F4, LEFT_CTRL_PRESSED } },
-        { L"Popularity",    SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
-        { L"Album name",    SM_OWNER,           { VK_F6, LEFT_CTRL_PRESSED } },
-        { L"Artist name",   SM_CHTIME,          { VK_F7, LEFT_CTRL_PRESSED } },
-        { L"Length",        SM_SIZE,            { VK_F8, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarRelease),    SM_ATIME,           { VK_F4, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarPopularity), SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarAlbum),      SM_OWNER,           { VK_F6, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarArtist),     SM_CHTIME,          { VK_F7, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarDuration),   SM_SIZE,            { VK_F8, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -124,6 +105,24 @@ const view::items_t& tracks_base_view::get_items()
 
 const view::panel_modes_t* tracks_base_view::get_panel_modes() const
 {
+    static const view::panel_mode_t::column_t
+        Name        { L"NON",   get_text(MSortColName),         L"0" },
+        NameFixed   { L"NON",   get_text(MSortColName),         L"30" },
+        IsExplicit  { L"C0",    get_text(MSortColExplicit),     L"3" },
+        Duration    { L"C1",    get_text(MSortColDuration),     L"7" },
+        Year        { L"C2",    get_text(MSortColYear),         L"6" },
+        Artist      { L"C3",    get_text(MSortColArtist),       L"30" },
+        Popularity  { L"C4",    get_text(MSortColPopularity),   L"5" },
+        Album       { L"C5",    get_text(MSortColAlbum),        L"30" },
+        Type        { L"C6",    get_text(MSortColType),         L"6" },
+        IsSaved     { L"C7",    get_text(MSortColSaved),        L"3" },
+        TxNumber    { L"C8",    get_text(MSortColTrackNum),     L"4" },
+        TxMultNumber{ L"C8",    get_text(MSortColTrackMultiNum),L"7" },
+        PlayedAt    { L"C8",    get_text(MSortColPlayedAt),     L"13" },
+        SavedAt     { L"C8",    get_text(MSortColSavedAt),      L"13" },
+        AddedAt     { L"C8",    get_text(MSortColAddedAt),      L"13" },
+        Descr       { L"Z",     get_text(MSortColDescr),        L"0" };
+    
     static panel_modes_t modes{
         /* 0 */ PM::dummy(8),
         /* 1 */ PM::dummy(),
@@ -316,6 +315,10 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
     utils::events::start_listening<playback_observer>(this);
     rebuild_items();
 
+    static const view::panel_mode_t::column_t
+        TxNumber    { L"C8",    get_text(MSortColTrackNum),         L"4" },
+        TxMultNumber{ L"C8",    get_text(MSortColTrackMultiNum),    L"7" };
+
     // rebuild should happen above, for the `is_multidisc` is valid
     panel_modes = *tracks_base_view::get_panel_modes();
     for (size_t i = 3; i < panel_modes_t::MODES_COUNT; i++)
@@ -365,7 +368,7 @@ const view::sort_modes_t& album_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Track Number", SM_EXT, { VK_F9, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarTrackNum), SM_EXT, { VK_F9, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -437,13 +440,16 @@ void album_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 
 //-----------------------------------------------------------------------------------------------------------
 recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelTracksItemLabel), get_text(MPanelRecentsItemLabel))
+    tracks_base_view(panel, api, get_text(MPanelTracks), get_text(MPanelRecents))
 {
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
 
+    static const view::panel_mode_t::column_t
+        PlayedAt { L"C8", get_text(MSortColPlayedAt), L"13" };
+
     panel_modes = *tracks_base_view::get_panel_modes();
-    for (size_t i = 3; i < 10; i++)
+    for (size_t i = 3; i < panel_modes_t::MODES_COUNT; i++)
         panel_modes[i].insert_column(&PlayedAt, 0);
 
     panel_modes.rebuild();
@@ -466,7 +472,7 @@ const view::sort_modes_t& recent_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Played at", SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarPlayedAt), SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -560,7 +566,7 @@ void recent_tracks_view::on_history_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelTracksItemLabel), get_text(MPanelCollectionItemLabel))
+    tracks_base_view(panel, api_proxy, get_text(MPanelTracks), get_text(MPanelCollection))
 {
     if (auto api = api_proxy.lock())
     {
@@ -568,8 +574,11 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
         repopulate();
     }
 
+    static const view::panel_mode_t::column_t
+        SavedAt { L"C8", get_text(MSortColSavedAt), L"13" };
+
     panel_modes = *tracks_base_view::get_panel_modes();
-    for (size_t i = 3; i < 10; i++)
+    for (size_t i = 3; i < panel_modes_t::MODES_COUNT; i++)
         panel_modes[i].insert_column(&SavedAt, 0);
 
     panel_modes.rebuild();
@@ -594,7 +603,7 @@ const view::sort_modes_t& saved_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarSavedAt), SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -659,7 +668,7 @@ void saved_tracks_view::on_tracks_statuses_changed(const item_ids_t &ids)
 
 //-----------------------------------------------------------------------------------------------------------
 playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
-    tracks_base_view(panel, api, get_text(MPanelPlayingQueueItemLabel))
+    tracks_base_view(panel, api, get_text(MPanelPlayingQueue))
 {
     utils::events::start_listening<playback_observer>(this);
 }
@@ -718,7 +727,7 @@ std::generator<const track_t&> playing_queue_view::get_tracks()
 const view::sort_modes_t& playing_queue_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -736,7 +745,7 @@ void playing_queue_view::on_shuffle_state_changed(bool shuffle_state)
 
 //-----------------------------------------------------------------------------------------------------------
 recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracksLabel), get_text(MPanelRecentlySavedLabel))
+    tracks_base_view(panel, api_proxy, get_text(MPanelRecentlyLikedTracks), get_text(MPanelRecentlySaved))
 {
     if (auto api = api_proxy.lock())
     {
@@ -774,7 +783,7 @@ const view::sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarSavedAt), SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -807,7 +816,7 @@ void recently_liked_tracks_view::on_track_changed(const track_t &track, const tr
 
 //-----------------------------------------------------------------------------------------------------------
 user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    tracks_base_view(panel, api_proxy, get_text(MPanelUserTopTracksLabel), get_text(MPanelUserTopItemsLabel))
+    tracks_base_view(panel, api_proxy, get_text(MPanelUserTopTracks), get_text(MPanelUserTopItems))
 {
     if (auto api = api_proxy.lock())
     {
@@ -824,7 +833,7 @@ config::settings::view_t user_top_tracks_view::get_default_settings() const
 const view::sort_modes_t& user_top_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -854,7 +863,7 @@ void user_top_tracks_view::on_track_changed(const track_t &track, const track_t 
 
 //-----------------------------------------------------------------------------------------------------------
 artist_top_tracks_view::artist_top_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const artist_t &artist):
-    tracks_base_view(panel, api_proxy, get_vtext(MPanelArtistTopTracksLabel, artist.name), artist.name), artist(artist)
+    tracks_base_view(panel, api_proxy, get_vtext(MPanelArtistTopTracks, artist.name), artist.name), artist(artist)
 {
     if (auto api = api_proxy.lock())
         tracks = api->get_artist_top_tracks(artist.id);
@@ -878,7 +887,7 @@ const view::sort_modes_t& artist_top_tracks_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes[5] = { L"Unsorted", SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } };
+        modes[5] = { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } };
     }
     return modes;
 }
@@ -918,8 +927,11 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
     
     utils::events::start_listening<playback_observer>(this);
 
+    static const view::panel_mode_t::column_t
+        AddedAt { L"C8", get_text(MSortColAddedAt), L"13" };
+
     panel_modes = *tracks_base_view::get_panel_modes();
-    for (size_t i = 3; i < 10; i++)
+    for (size_t i = 3; i < panel_modes_t::MODES_COUNT; i++)
         panel_modes[i].insert_column(&AddedAt, 0);
 
     panel_modes.rebuild();
@@ -941,7 +953,7 @@ const view::sort_modes_t& playlist_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ L"Added at", SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarAddedAt), SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }

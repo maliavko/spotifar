@@ -142,9 +142,6 @@ public:
     auto get_title() const -> const wstring& { return title; }
     auto get_dir_name() const -> const wstring& { return dir_name; }
     void update_panel_info(OpenPanelInfo *info);
-
-    /// @brief Called when user hits F3 key on the panel, returns an
-    /// additional info for the panel item under cursor
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
     
     /// @brief Returns a unique id for the object created
@@ -153,7 +150,12 @@ public:
     /// @brief Searches for the `item_id` item on the panel and
     /// return its index or 0
     auto get_item_idx(const string &item_id) -> size_t;
+
+    /// @brief Return the view appropriate settings object, the object
+    /// is persistently saved to/load from Far config
     auto get_settings() const -> config::settings::view_t*;
+
+    /// @brief Switch sort mode on the current panel
     void select_sort_mode(int sort_mode_idx);
 
     /// @param callback a handler, which is being called when ".." is hit on the panel
@@ -162,10 +164,24 @@ public:
     /// @return A handler which is being called when ".." is hit on the panel
     auto get_return_callback() const -> const return_callback_t& { return return_callback; }
 
+    /// @brief Method should return the list of available sort modes, which
+    /// will be shown in the separate dialog on the panel 
     virtual auto get_sort_modes() const -> const sort_modes_t& = 0;
+
+    /// @brief Method should return a reference to the list of items,
+    /// which panel will represent
     virtual auto get_items() -> const items_t& = 0;
+
+    /// @brief Method should return the list of keys with their modifiers and labels,
+    /// which will be shown on the panel's key bar
     virtual auto get_key_bar_info() -> const key_bar_info_t* { return nullptr; }
+
+    /// @brief Method should return a list of info lines, visible for user
+    /// via Ctrl+L hotkey tmp panel
     virtual auto get_info_lines() -> const info_lines_t* { return nullptr; }
+
+    /// @brief Method should return the list of panel modes, which can be
+    /// user for the particular view
     virtual auto get_panel_modes() const -> const panel_modes_t* { return nullptr; }
 
     /// @brief A handler used for showing a filtering dialog, by default show nothing.
@@ -185,21 +201,38 @@ protected:
     /// @brief Returns a unique view string id, used in caching
     string get_type_uid() const { return typeid(*this).name(); }
     
-    // derived classes' interface to the internal view mechanisms
+    /// @brief If no saved settings is available for the view, the default ones
+    /// return by this method are gonna be used
     virtual auto get_default_settings() const -> config::settings::view_t = 0;
+
+    /// @brief Called when user hits F3 key on the panel, perform additional
+    /// calculations for the item under cursor with the given user `data`,
+    /// return `true` if panel should be updated
     virtual bool request_extra_info(const data_item_t *data) { return false; }
+
+    /// @brief Called when the folder item is selected on the panel,
+    /// usually the view redirects user to another view; return `TRUE` if
+    /// the panel should be redrawn
     virtual auto select_item(const data_item_t *data) -> intptr_t { return FALSE; }
+
+    /// @brief Called when the user input is received
+    /// @param combined_key is a summed int of a VK_*** key code and
+    /// all utils::keys::mods::*** modifiers
     virtual auto process_key_input(int combined_key) -> intptr_t { return FALSE; }
+
+    /// @brief Called when two items `data1` and `data2` on the panel
+    /// should be sorted
+    /// @param mode current sorting mode selected on th epanel
     virtual auto compare_items(const sort_mode_t &modes, const data_item_t *data1, const data_item_t *data2) -> intptr_t { return -2; }
 private:
     bool is_first_init = true; // data-is-set flag
     return_callback_t return_callback;
     sort_modes_t sort_modes;
     config::settings::view_t *settings;
-    wstring title;
-    wstring dir_name;
-    HANDLE panel;
-    uint32_t id;
+    wstring title; // used for representing folder name as a panel title
+    wstring dir_name; // used for associate a view with the item on the panel
+    HANDLE panel; // a panel object the view associated with
+    uint32_t id; // unique object id
 };
 
 using view_ptr_t = std::shared_ptr<view>;

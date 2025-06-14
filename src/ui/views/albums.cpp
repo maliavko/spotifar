@@ -9,19 +9,6 @@ using PM = view::panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
-static const view::panel_mode_t::column_t
-    ReleaseYear     { L"C0",    L"Yr",          L"6" },
-    Type            { L"C1",    L"Type",        L"6" },
-    TracksCount     { L"C2",    L"Tx",          L"4" },
-    ReleaseDate     { L"C3",    L"Release",     L"12" },
-    TotalDuration   { L"C4",    L"Length",      L"8" },
-    Popularity      { L"C5",    L"Pop %",       L"5" },
-    Artist          { L"C6",    L"Artist",      L"30" },
-    Saved           { L"C7",    L"[+]",         L"3" },
-    SavedAt         { L"C8",    L"Saved at",    L"12" },
-    Name            { L"NON",   L"Name",        L"0" },
-    Copyrights      { L"Z",     L"Copyrights",  L"0" };
-
 
 //-----------------------------------------------------------------------------------------------------------
 albums_base_view::albums_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
@@ -103,6 +90,19 @@ const view::items_t& albums_base_view::get_items()
 
 const view::panel_modes_t* albums_base_view::get_panel_modes() const
 {
+    static const view::panel_mode_t::column_t
+        ReleaseYear     { L"C0",    get_text(MSortColYear),         L"6" },
+        Type            { L"C1",    get_text(MSortColType),         L"6" },
+        TracksCount     { L"C2",    get_text(MSortColTracksCount),  L"4" },
+        ReleaseDate     { L"C3",    get_text(MSortColRelease),      L"12" },
+        TotalDuration   { L"C4",    get_text(MSortColDuration),     L"8" },
+        Popularity      { L"C5",    get_text(MSortColPopularity),   L"5" },
+        Artist          { L"C6",    get_text(MSortColArtist),       L"30" },
+        Saved           { L"C7",    get_text(MSortColSaved),        L"3" },
+        SavedAt         { L"C8",    get_text(MSortColSavedAt),      L"12" },
+        Name            { L"NON",   get_text(MSortColName),         L"0" },
+        Copyrights      { L"Z",     get_text(MSortColCopyrights),   L"0" };
+        
     static panel_modes_t modes{
         /* 0 */ PM::dummy(4),
         /* 1 */ PM::dummy(),
@@ -122,11 +122,11 @@ const view::panel_modes_t* albums_base_view::get_panel_modes() const
 const view::sort_modes_t& albums_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
-        { L"Release date",  SM_ATIME,           { VK_F4, LEFT_CTRL_PRESSED } },
-        { L"Popularity",    SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
-        { L"Tracks",        SM_SIZE,            { VK_F6, LEFT_CTRL_PRESSED } },
-        { L"Artist name",   SM_OWNER,           { VK_F7, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarRelease),    SM_ATIME,           { VK_F4, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarPopularity), SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarTracksCount),SM_SIZE,            { VK_F6, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarArtist),     SM_OWNER,           { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -364,13 +364,16 @@ void artist_albums_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), get_text(MPanelCollectionItemLabel))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbums), get_text(MPanelCollection))
 {
     if (auto api = api_proxy.lock())
     {
         collection = api->get_saved_albums();
         collection->fetch();
     }
+
+    static const view::panel_mode_t::column_t
+        SavedAt { L"C8", get_text(MSortColSavedAt), L"12" };
 
     panel_modes = *albums_base_view::get_panel_modes();
     panel_modes[4].insert_column(&SavedAt, 0);
@@ -398,7 +401,7 @@ const view::sort_modes_t& saved_albums_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = albums_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, { VK_F8, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarSavedAt), SM_MTIME, { VK_F8, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -446,7 +449,7 @@ void saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
 
 //-----------------------------------------------------------------------------------------------------------
 new_releases_view::new_releases_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelNewReleasesItemLabel))
+    albums_base_view(panel, api_proxy, get_text(MPanelNewReleases))
 {
     rebuild_items();
     utils::events::start_listening<releases_observer>(this);
@@ -508,7 +511,7 @@ void new_releases_view::rebuild_items()
 
 //-----------------------------------------------------------------------------------------------------------
 recent_albums_view::recent_albums_view(HANDLE panel, api_weak_ptr_t api):
-    albums_base_view(panel, api, get_text(MPanelAlbumsItemLabel), get_text(MPanelRecentsItemLabel))
+    albums_base_view(panel, api, get_text(MPanelAlbums), get_text(MPanelRecents))
 {
     rebuild_items();
     utils::events::start_listening<play_history_observer>(this);
@@ -531,7 +534,7 @@ const view::sort_modes_t& recent_albums_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = albums_base_view::get_sort_modes();
-        modes.push_back({ L"Played at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarPlayedAt), SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -604,13 +607,16 @@ void recent_albums_view::on_history_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    albums_base_view(panel, api_proxy, get_text(MPanelAlbumsItemLabel), get_text(MPanelRecentlySavedLabel))
+    albums_base_view(panel, api_proxy, get_text(MPanelAlbums), get_text(MPanelRecentlySaved))
 {
     if (auto api = api_proxy.lock())
     {
         collection = api->get_saved_albums();
         repopulate();
     }
+
+    static const view::panel_mode_t::column_t
+        SavedAt { L"C8", get_text(MSortColSavedAt), L"12" };
 
     panel_modes = *albums_base_view::get_panel_modes();
     panel_modes[4].insert_column(&SavedAt, 0);
@@ -631,7 +637,7 @@ const view::sort_modes_t& recently_saved_albums_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = albums_base_view::get_sort_modes();
-        modes.push_back({ L"Saved at", SM_MTIME, { VK_F8, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarSavedAt), SM_MTIME, { VK_F8, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }

@@ -5,8 +5,6 @@ refactor
 
 application ideas
 - small improvements
-    - too many events classes, consider unifying some of them; plus maybe to move them somewhere to the separate file to reduce dependencies
-    - think over the namings of lng keys, they are too long
     - close plugin if another librespot device is being detected
     - folow/unfollow artists
 - new functional
@@ -41,7 +39,7 @@ to finish for alpha release
 + to add a proper github support: license, automations? binaries
 + to add a proper errors handling
 + loading splash screen
-- localizations
++ localizations
 + finilize the settings menu
     + audio backend view with options
     + propagate spotify settings to librespot: normalisation, autoplay-similar, bitrate and etc. https://github.com/librespot-org/librespot/wiki/Options
