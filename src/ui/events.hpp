@@ -19,21 +19,23 @@ namespace events {
 
     void show_collection(api_weak_ptr_t, int page_idx = -1);
 
-    void show_recents(api_weak_ptr_t);
+    void show_recents(api_weak_ptr_t, int page_idx = -1);
 
     void show_browse(api_weak_ptr_t);
 
     void show_new_releases(api_weak_ptr_t);
 
-    void show_recently_saved(api_weak_ptr_t);
+    void show_recently_saved(api_weak_ptr_t, int page_idx = -1);
 
-    void show_user_top_items(api_weak_ptr_t);
+    void show_user_top_items(api_weak_ptr_t, int page_idx = -1);
 
     void show_playlist(api_weak_ptr_t, const spotify::playlist_t &);
 
-    void show_artist(api_weak_ptr_t, const spotify::artist_t&, view::return_callback_t = {});
+    void show_artist(api_weak_ptr_t, const spotify::artist_t&, int page_idx = -1,
+        view::return_callback_t = {});
 
-    void show_album_tracks(api_weak_ptr_t, const spotify::simplified_album_t &, view::return_callback_t = {});
+    void show_album_tracks(api_weak_ptr_t, const spotify::simplified_album_t &,
+        view::return_callback_t = {});
 
     void show_playing_queue(api_weak_ptr_t);
     
@@ -67,8 +69,9 @@ using view_builder_t = std::function<view_ptr_t(HANDLE)>;
 
 struct multiview_builder_t
 {
-    enum : size_t
+    enum : int
     {
+        default_idx = -1,
         artists_idx,
         albums_idx,
         tracks_idx,

@@ -152,13 +152,19 @@ void panel::update_panel_info(OpenPanelInfo *info)
     view->update_panel_info(info);
 }
 
+static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
+{
+    // as we do not allocate any memory for user data, we do not free it, just nulify
+    user_data = nullptr;
+}
+
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
 {
     skip_view_refresh = false;
 
     if (view == nullptr) return TRUE;
 
-    auto view_crc32 = view->get_crc32();
+    auto view_uid = view->get_uid();
     const auto &items = view->get_items();
 
     auto *panel_item = (PluginPanelItem*)malloc(sizeof(PluginPanelItem) * items.size());
@@ -195,11 +201,15 @@ intptr_t panel::update_panel_items(GetFindDataInfo *info)
         panel_item[idx].Description = _wcsdup(item.description.c_str());
         panel_item[idx].CustomColumnData = column_data;
         panel_item[idx].CustomColumnNumber = item.columns_data.size();
-        panel_item[idx].CRC32 = view_crc32; // emplacing the view's unique crc32 to be able to
-                                            // distibguish which view the item belongs to later if needed
+        panel_item[idx].CRC32 = view_uid; // emplacing the view's unique id to be able to
+                                          // distibguish which view the item belongs to later if needed
         
         if (item.user_data != nullptr)
+        {
+
             panel_item[idx].UserData.Data = item.user_data;
+            panel_item[idx].UserData.FreeData = free_user_data;
+        }
     }
 
     view->on_items_updated();
@@ -252,6 +262,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 }
                 break;
             }
+
             // to show a sort menu for the currently opened view
             case VK_F12 + keys::mods::ctrl:
             {
@@ -265,6 +276,8 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 
                 return TRUE; // no need to show a standard sorting menu
             }
+
+            // multiview handlers
             case VK_F5 + keys::mods::shift:
             case VK_F6 + keys::mods::shift:
             case VK_F7 + keys::mods::shift:
@@ -278,6 +291,16 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                         set_view(builder(this), view->get_return_callback());
                 }
                 return TRUE;
+            }
+
+            // goto root (backslash/pipe key)
+            case VK_OEM_5 + keys::mods::ctrl:
+            {
+                if (auto api = plugin_proxy->get_api().lock())
+                {
+                    events::show_root(api);
+                    return TRUE;
+                }
             }
         }
 

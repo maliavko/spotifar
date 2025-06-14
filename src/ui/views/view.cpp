@@ -89,11 +89,14 @@ void view::panel_modes_t::rebuild()
 view::view(HANDLE panel, const wstring &title, const wstring &dir_name): panel(panel), title(title)
 {
     this->dir_name = utils::strip_invalid_filename_chars(dir_name.empty() ? title : dir_name);
+    
+    static uint32_t id = 0;
+    this->id = ++id;
 }
 
 config::settings::view_t* view::get_settings() const
 {
-    return config::get_view_settings(get_uid(), get_default_settings());
+    return config::get_view_settings(get_type_uid(), get_default_settings());
 }
 
 void view::select_sort_mode(int idx)
@@ -101,7 +104,7 @@ void view::select_sort_mode(int idx)
     if (idx > (int)sort_modes.size())
     {
         log::global->error("Given sort mode index is out of range, index {}, "
-            "view uid {}, modes count {}", idx, get_uid(), sort_modes.size());
+            "view uid {}, modes count {}", idx, get_type_uid(), sort_modes.size());
         return;
     }
 
