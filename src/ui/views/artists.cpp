@@ -10,15 +10,6 @@ using utils::far3::get_text;
 using namespace spotify;
 namespace panels = utils::far3::panels;
 
-static const view::panel_mode_t::column_t
-    Followers       { L"C0",    L"Followers",   L"9" },
-    Popularity      { L"C1",    L"Pop %",       L"5" },
-    MainGenre       { L"C2",    L"Genre",       L"25" },
-    AlbumsCount     { L"C3",    L"Albums",      L"6" },
-    Name            { L"NON",   L"Name",        L"0" },
-    NameFixed       { L"NON",   L"Name",        L"30" },
-    Genres          { L"Z",     L"Name",        L"0" };
-
 //-----------------------------------------------------------------------------------------------------------
 const view::items_t& artists_base_view::get_items()
 {
@@ -90,9 +81,9 @@ bool artists_base_view::request_extra_info(const data_item_t *data)
 const view::sort_modes_t& artists_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Name",          SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
-        { L"Followers",     SM_SIZE,            { VK_F4, LEFT_CTRL_PRESSED } },
-        { L"Popularity",    SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarFollow),     SM_SIZE,            { VK_F4, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarPopularity), SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -120,6 +111,15 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
 
 const view::panel_modes_t* artists_base_view::get_panel_modes() const
 {
+    static const view::panel_mode_t::column_t
+        Followers   { L"C0",    get_text(MSortColFollow),       L"9" },
+        Popularity  { L"C1",    get_text(MSortColPopularity),   L"5" },
+        MainGenre   { L"C2",    get_text(MSortColGenre),        L"25" },
+        AlbumsCount { L"C3",    get_text(MSortColAlbumsCount),  L"6" },
+        Name        { L"NON",   get_text(MSortColName),         L"0" },
+        NameFixed   { L"NON",   get_text(MSortColName),         L"30" },
+        Genres      { L"Z",     get_text(MSortColGenre),        L"0" };
+
     static panel_modes_t modes{
         /* 0 */ PM::dummy(8),
         /* 1 */ PM::dummy(),
@@ -192,7 +192,7 @@ intptr_t artists_base_view::process_key_input(int combined_key)
 
 //-----------------------------------------------------------------------------------------------------------
 followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_proxy):
-    artists_base_view(panel, api_proxy, get_text(MPanelArtistsItemLabel), get_text(MPanelCollectionItemLabel))
+    artists_base_view(panel, api_proxy, get_text(MPanelArtists), get_text(MPanelCollection))
 {
     if (auto api = api_proxy.lock())
     {
@@ -249,7 +249,7 @@ void followed_artists_view::show_filters_dialog()
 
 //-----------------------------------------------------------------------------------------------------------
 recent_artists_view::recent_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelArtistsItemLabel), get_text(MPanelRecentsItemLabel))
+    artists_base_view(panel, api, get_text(MPanelArtists), get_text(MPanelRecents))
 {
     rebuild_items();
     utils::events::start_listening<play_history_observer>(this);
@@ -272,7 +272,7 @@ const view::sort_modes_t& recent_artists_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = artists_base_view::get_sort_modes();
-        modes.push_back({ L"Played at", SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarPlayedAt), SM_MTIME, { VK_F6, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }
@@ -337,7 +337,7 @@ void recent_artists_view::on_history_changed()
 
 //-----------------------------------------------------------------------------------------------------------
 user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
-    artists_base_view(panel, api, get_text(MPanelUserTopArtistsLabel), get_text(MPanelUserTopItemsLabel))
+    artists_base_view(panel, api, get_text(MPanelUserTopArtists), get_text(MPanelUserTopItems))
 {
     if (auto api = api_proxy.lock())
     {
@@ -354,7 +354,7 @@ config::settings::view_t user_top_artists_view::get_default_settings() const
 const view::sort_modes_t& user_top_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { L"Unsorted", SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }

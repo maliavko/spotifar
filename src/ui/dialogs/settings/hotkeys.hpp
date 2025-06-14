@@ -7,6 +7,7 @@
 
 namespace spotifar { namespace ui { namespace settings {
 
+/// @brief Subdialog for hotkeys management
 class hotkeys_dialog: public modal_dialog
 {
 public:
@@ -14,7 +15,7 @@ public:
 protected:
     void init() override;
     auto handle_result(intptr_t dialog_run_result) -> intptr_t override;
-    auto handle_key_pressed(int ctrl_id, int combined_key) -> bool override;
+    bool handle_key_pressed(int ctrl_id, int combined_key) override;
 };
 
 } // namespace settings

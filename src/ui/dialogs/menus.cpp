@@ -17,9 +17,9 @@ using far3::get_text;
 intptr_t show_settings_menu()
 {
     static FarMenuItem items[] = {
-        { MIF_NONE, get_text(MConfigDialogMenuGeneralOpt) },
-        { MIF_NONE, get_text(MConfigDialogMenuBackendOpt) },
-        { MIF_NONE, get_text(MConfigDialogMenuHotkeysOpt) },
+        { MIF_NONE, get_text(MCfgDlgMenuGeneral) },
+        { MIF_NONE, get_text(MCfgDlgMenuBackend) },
+        { MIF_NONE, get_text(MCfgDlgMenuHotkeys) },
     };
 
     while (1)
@@ -29,7 +29,7 @@ intptr_t show_settings_menu()
             &ConfigMenuGuid,
             -1, -1, 0, // centered, autowidth
             FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-            get_text(MConfigDialogMenuTitle), L"",
+            get_text(MCfgDlgMenuTitle), L"",
             {}, {}, {}, // no break codes, no help topic
             items, std::size(items)
         );
@@ -86,7 +86,7 @@ intptr_t show_sort_dialog(const view &v)
         &SortDialogGuid,
         info.PanelRect.left + 5, -1, 0, // horizontally alligned to the active panel left
         FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-        get_text(MSortDialogTitle), L"",
+        get_text(MSortDlgTitle), L"",
         {}, {}, {}, // no break codes, no help topic
         &result[0], result.size()
     );
