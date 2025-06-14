@@ -9,13 +9,13 @@ namespace spotifar { namespace ui {
 FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
     FARDIALOGITEMFLAGS flags, const wchar_t *data = L"");
 
+/// @brief A base class-helper for creating custom modal dialogs
 class modal_dialog
 {
 public:
     using layout_t = std::vector<FarDialogItem>;
 public:
-    modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
-        FARDIALOGFLAGS flags = FDLG_NONE);
+    modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout, FARDIALOGFLAGS flags = FDLG_NONE);
     virtual ~modal_dialog();
 
     bool run();

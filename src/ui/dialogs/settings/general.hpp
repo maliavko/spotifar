@@ -7,6 +7,7 @@
 
 namespace spotifar { namespace ui { namespace settings {
 
+/// @brief A subdialog for plugin's general configuration management
 class general_dialog: public modal_dialog
 {
 public:

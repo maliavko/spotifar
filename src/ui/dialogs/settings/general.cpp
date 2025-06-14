@@ -60,15 +60,15 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_EDIT,        view_x1+15, api_box_y+3, view_x2, 1,       DIF_LEFTTEXT),
     
     // ui block
-    ctrl(DI_TEXT,        -1, ui_box_y, box_x2, box_y2,              DIF_SEPARATOR, L"Notifications"),
-    ctrl(DI_CHECKBOX,    view_x1, ui_box_y+1, view_x1 + 15, 1,      DIF_LEFTTEXT, L"Track changed"),
-    ctrl(DI_TEXT,        view_center_x, ui_box_y+1, view_center_x+10, 1,     DIF_LEFTTEXT, L"Image shape"),
-    ctrl(DI_COMBOBOX,    view_center_x+13, ui_box_y+1, view_center_x+25, 1,        combo_flags),
+    ctrl(DI_TEXT,        -1, ui_box_y, box_x2, box_y2,                      DIF_SEPARATOR),
+    ctrl(DI_CHECKBOX,    view_x1, ui_box_y+1, view_x1 + 15, 1,              DIF_LEFTTEXT),
+    ctrl(DI_TEXT,        view_center_x, ui_box_y+1, view_center_x+10, 1,    DIF_LEFTTEXT),
+    ctrl(DI_COMBOBOX,    view_center_x+13, ui_box_y+1, view_center_x+25, 1, combo_flags),
 
     // buttons block
     ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,     DIF_SEPARATOR),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP | DIF_DEFAULTBUTTON, L"OK"),
-    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP, L"Cancel"),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP | DIF_DEFAULTBUTTON),
+    ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,   DIF_CENTERGROUP),
 };
 
 general_dialog::general_dialog():
@@ -89,29 +89,29 @@ general_dialog::general_dialog():
 
 void general_dialog::init()
 {
-    static const std::vector<string> items{ "square", "circle" };
+    static const std::vector<wstring> items{ get_text(MCfgImageShapeSquare), get_text(MCfgImageShapeCircle) };
 
     // image shape combo box initialization
     auto is_circled = config::is_notification_image_circled();
     for (size_t idx = 0; idx < items.size(); idx++)
     {
         const auto &item = items[idx];
-        dialogs::add_list_item(hdlg, image_shape_combo, utils::to_wstring(item), (int)idx,
+        dialogs::add_list_item(hdlg, image_shape_combo, item, (int)idx,
             (void*)item.c_str(), item.size(), idx == size_t(is_circled));
     }
 
     // labels
-    dialogs::set_text(hdlg, dialog_box, get_text(MConfigGeneralBoxTitle));
-    dialogs::set_text(hdlg, add_to_disk_checkbox, get_text(MConfigAddToDisksMenu));
-    dialogs::set_text(hdlg, verbose_logging_checkbox, get_text(MConfigVerboseLoggingSetting));
-    dialogs::set_text(hdlg, spotify_api_separator, get_text(MConfigSpotifyBlockTitle));
-    dialogs::set_text(hdlg, api_client_id_label, get_text(MConfigSpotifyClientID));
-    dialogs::set_text(hdlg, api_client_secret_label, get_text(MConfigSpotifyClientSecret));
-    dialogs::set_text(hdlg, api_port_label, get_text(MConfigLocalhostServicePort));
-    dialogs::set_text(hdlg, api_port_label, get_text(MConfigLocalhostServicePort));
-    dialogs::set_text(hdlg, ui_separator, get_text(MConfigNotificationsBlockTitle));
-    dialogs::set_text(hdlg, track_changed_notifications, get_text(MConfigTrackChangedSetting));
-    dialogs::set_text(hdlg, image_shape_label, get_text(MConfigImageShapeSetting));
+    dialogs::set_text(hdlg, dialog_box, get_text(MCfgGeneralBoxTitle));
+    dialogs::set_text(hdlg, add_to_disk_checkbox, get_text(MCfgAddToDisksMenu));
+    dialogs::set_text(hdlg, verbose_logging_checkbox, get_text(MCfgVerboseLog));
+    dialogs::set_text(hdlg, spotify_api_separator, get_text(MCfgSpotifyTitle));
+    dialogs::set_text(hdlg, api_client_id_label, get_text(MCfgSpotifyClientID));
+    dialogs::set_text(hdlg, api_client_secret_label, get_text(MCfgSpotifyClientSecret));
+    dialogs::set_text(hdlg, api_port_label, get_text(MCfgLocalhostServicePort));
+    dialogs::set_text(hdlg, api_port_label, get_text(MCfgLocalhostServicePort));
+    dialogs::set_text(hdlg, ui_separator, get_text(MCfgNotificationsTitle));
+    dialogs::set_text(hdlg, track_changed_notifications, get_text(MCfgTrackChanged));
+    dialogs::set_text(hdlg, image_shape_label, get_text(MCfgImageShape));
     dialogs::set_text(hdlg, ok_button, get_text(MOk));
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
@@ -135,7 +135,7 @@ intptr_t general_dialog::handle_result(intptr_t dialog_run_result)
 
             // notifications
             s.track_changed_notification_enabled = dialogs::is_checked(hdlg, track_changed_notifications);
-            s.is_circled_notification_image = dialogs::get_list_current_item_data<string>(hdlg, image_shape_combo) == "circle";
+            s.is_circled_notification_image = dialogs::get_list_current_pos(hdlg, image_shape_combo) == 1;
 
             ctx->fire_events(); // notify all the listeners
         }
