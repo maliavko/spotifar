@@ -261,6 +261,85 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             }
             return TRUE;
         }
+
+        case VK_F5 + mods::ctrl + mods::alt:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData); user_data != nullptr)
+                {
+                    if (auto api = api_proxy.lock())
+                    {
+                        const auto *track = static_cast<const track_t*>(user_data);
+
+                        // std::ostringstream cmd;
+
+                        // cmd << "C:\\Users\\malia\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\spotdl.exe download "
+                        //     << track->urls.spotify
+                        //     << " --auth-token " << api->get_auth_data().access_token
+                        //     << " --generate-lrc";
+
+                        // auto r = std::system(cmd.str().c_str());
+
+                        //std::wostringstream cmd;
+                        // cmd << L"C:\\Users\\malia\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\spotdl.exe download "
+                        //     << utils::to_wstring(track->urls.spotify)
+                        //     << L" --auth-token " << utils::to_wstring(api->get_auth_data().access_token)
+                        //     << L" --generate-lrc";
+
+                        // HANDLE pipe_read = NULL;
+                        // HANDLE pipe_write = NULL;
+                        // STARTUPINFO si;
+                        // PROCESS_INFORMATION pi;
+
+                        // SECURITY_ATTRIBUTES sa_attrs;
+                        // ZeroMemory(&sa_attrs, sizeof(sa_attrs));
+
+                        // sa_attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+                        // sa_attrs.bInheritHandle = TRUE;
+                        // sa_attrs.lpSecurityDescriptor = NULL;
+
+                        // if (!CreatePipe(&pipe_read, &pipe_write, &sa_attrs, 0))
+                        // {
+                        //     log::librespot->error("CreatePipe failed, {}", utils::get_last_system_error());
+                        //     return false;
+                        // }
+
+                        // if (!SetHandleInformation(pipe_read, HANDLE_FLAG_INHERIT, 0))
+                        // {
+                        //     log::librespot->error("SetHandleInformation failed, {}", utils::get_last_system_error());
+                        //     return false;
+                        // }
+                        
+                        // ZeroMemory(&si, sizeof(si));
+                        // si.cb = sizeof(si);
+                        // si.hStdError = pipe_write;
+                        // si.hStdOutput = pipe_write;
+                        // si.dwFlags |= STARTF_USESTDHANDLES;
+                        
+                        // ZeroMemory(&pi, sizeof(pi));
+
+                        // if(!CreateProcess(
+                        //     NULL,
+                        //     &cmd.str()[0],
+                        //     NULL, // process handle not inheritable
+                        //     NULL, // thread handle not inheritable
+                        //     TRUE, // set handle inheritance to TRUE
+                        //     0,    // https://learn.microsoft.com/en-us/windows/win32/procthread/process-creation-flags
+                        //     NULL, // Use parent's environment block
+                        //     NULL, // Use parent's starting directory 
+                        //     &si,  // Pointer to STARTUPINFO structure
+                        //     &pi)  // Pointer to PROCESS_INFORMATION structure
+                        // )
+                        // {
+                        //     log::librespot->error("CreateProcess failed, {}", utils::get_last_system_error());
+                        //     return false;
+                        // }
+                    }
+                }
+            }
+            return TRUE;
+        }
     }
     return FALSE;
 }

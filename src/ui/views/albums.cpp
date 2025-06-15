@@ -482,6 +482,7 @@ void new_releases_view::show_tracks_view(const album_t &album) const
             api_proxy, album,
             [api = api_proxy, artist = artist, this]
             {
+                // TODO: caugth some crashes here, perhaps `get_return_callback` is not valid already
                 events::show_artist(api, artist, mv_build_t::albums_idx, get_return_callback());
             });
     }
