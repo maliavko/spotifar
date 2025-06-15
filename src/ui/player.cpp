@@ -237,7 +237,7 @@ bool player::show()
 {
     if (!visible)
     {
-        hdlg = config::ps_info.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, 0,
+        hdlg = config::ps_info.DialogInit(&MainGuid, &PlayerDialogGuid, -1, -1, width, height, L"Player",
             &dlg_items_layout[0], std::size(dlg_items_layout), 0, FDLG_SMALLDIALOG | FDLG_NONMODAL, &dlg_proc, this);
         are_dlg_events_suppressed = false;
         

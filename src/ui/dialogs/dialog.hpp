@@ -15,7 +15,8 @@ class modal_dialog
 public:
     using layout_t = std::vector<FarDialogItem>;
 public:
-    modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout, FARDIALOGFLAGS flags = FDLG_NONE);
+    modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
+        const wchar_t *help_topic = L"", FARDIALOGFLAGS flags = FDLG_NONE);
     virtual ~modal_dialog();
 
     bool run();
