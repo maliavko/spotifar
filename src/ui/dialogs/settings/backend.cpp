@@ -79,7 +79,7 @@ static void populate_combobox(HANDLE hdlg, int combo_id, std::vector<string> ite
 }
 
 backend_dialog::backend_dialog():
-    modal_dialog(&ConfigBackendDialogGuid, width, height, dlg_items_layout)
+    modal_dialog(&ConfigBackendDialogGuid, width, height, dlg_items_layout, L"ConfigBackend")
 {
     dialogs::set_checked(hdlg, backend_checkbox, config::is_playback_backend_enabled());
     dialogs::set_checked(hdlg, volume_normalisation_checkbox, config::is_playback_normalisation_enabled());
