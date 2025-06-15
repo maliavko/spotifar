@@ -1,0 +1,489 @@
+.Language=English,English
+.PluginContents=Spotifar
+.Options CtrlStartPosChar=&
+.Options CtrlColorChar=\
+
+
+
+@Contents
+$ #Spotifar#
+
+    #Common info#
+
+    An alternative Spotify client implementation via Far Manager plugin. The plugin itself is just a
+UI facade for the [~Spotify Web API~@https://developer.spotify.com/documentation/web-api@], using Far Manager API
+to draw panels and dialogs for a user to perform some basic manipulations with the current playback and his spotify collection. Together with the
+plugin goes [~Librespot~@https://github.com/librespot-org/librespot@] playback device, which you can use for listening your collection, but keep in mind 
+that it is an open source project, which has its own troubles.
+
+    A public API provided by Spotify is quite rich on capabilities, at the same time sometimes lacks of
+basic stuff, which is either implemented partially or not implemented at all. You can find detailed information
+on the topic in appropriate ~paragraph~@Features@ of this help.
+
+
+    #Prerequisites#
+
+    The plugin is designed for using all the provided Spotify API, which requires #Premium Subscription# for most of operations. It still
+can be used for free, but the behavior is not tested well and bunch of API calls will end up receiving "403 Forbidden" http response,
+you can check all of them in the [~official docs~@https://developer.spotify.com/documentation/web-api@].
+
+    The built-in Librespot device as well requires #Premium Subscription# as well, which you'll not be able to use as well.
+
+
+    #Quick Start#
+
+    Before you can start using the plugin, you need to finish up a basic ~configuration~@QuickStart@, which is mandatory. It requires from you
+issuing your own personal Spotify API #Client ID# and #Client Secret#, which will be used to authenticate the plugin, without knowing your login and password.
+
+
+    [~Spotifar GitHub~@https://github.com/maliavko/spotifar@]
+    [~Librespot GitHub~@https://github.com/librespot-org/librespot@]
+    
+
+    Related topics
+    ~Quick Start~@QuickStart@
+    ~Suported Features~@Features@
+    ~Browsing and Navigating~@Panels@
+    ~Player dialog and hotkeys~@Player@
+    ~Configuration~@Config@
+
+
+
+@QuickStart
+
+    The authorization flow used by plugin is the one, provided by [~Spotify API~@https://developer.spotify.com/documentation/web-api/tutorials/code-flow@]. In short,
+for a better security user should generate Client ID and Client Secret, to avoid exposing his login and password directly. The plugin further, using these data,
+resolves and caches an auch code and access token, which is used with every API request via Bearer token and refreshed usually hourly.
+
+
+    #Obtaining your own client id and secret#
+
+    1. Open a [~Spotify developers dashboard~@https://developer.spotify.com/dashboard@]
+
+    2. Click #Create App# button, input your information
+        - #App name# and #App description# are up to you
+        - #Redirect URIs# - #http://127.0.0.1:5000/auth/callback#
+        - "Which API/SDKs are you planning to use?" - pick #Web API# and #Web Playback SDK#
+        - Consent an agreement with Spotify's terms and save your data
+
+    3. Assuming you read the Help already from Far, thus the Spotifar plugin is installed, you need to open the plugin settings #Shift+Alt+F9# and
+select #General# menu to open up a corresponded Settings dialog
+
+    4. In the #Spotify API# settings block input your freshly obtained #Client ID# and #Client Secret#
+
+    5. Leave #Port# data unchanged, unless you used a different one during your Spotify app registration in the step 2.
+
+    6. Launch login from plugins or disks menu
+
+    7. For the first launch, the plugin should resolve an auth code. For this it will force your default system browser to open an auth page, which 
+will ask you either to login into Spotify service, if it's not done yet, or just prompt you to agree on the permissions, which plugin [~requires~@https://github.com/maliavko/spotifar/blob/f3609aff81a1ff2a14dac98973af4bcd5d097e9a/src/spotify/auth.cpp@]
+for its operation. The full scope of possible Spotify API permissions you can find in the [~official docs~@https://developer.spotify.com/documentation/web-api/concepts/scopes@]
+
+    8. If everything goes well, you will see a sub http page with success response, and can safely close it and start using the plugin
+
+
+    Related topics
+    ~Back to Main~@Contents@
+    ~Configuration~@Config@
+    ~Browsing and Navigating~@Panels@
+
+
+
+@Features
+
+    The idea behind the plugin development was to simplify the official Spotify desktop application, bringing into focus only those which matters for daily usage.
+Spotifar favors your collection above all, trying to provide you simple and efficient access to it via our beloved Far panels. Below you can find a list of features,
+which are supported already, supported partially or will never be supported, unless Spotify will change their politics around their puublic API.
+
+
+    #Major Spotify API changes#
+
+    Starting from #November 27, 2024# Spotify blocked some of their web endpoints, mainly related to their internal algorythms.
+In practise for the third parties it means #no accees# to:
+    - all kind of recommendations and featurings: similar artists, freshly released albums, playlists created for you and etc.
+    - audio analysis features
+
+
+    #Supported features#
+
+    #Collections        # &your artists, albums, tracks and playlists representation and management, you can browse your collections like it is the list of files
+                        on the panel, performing most regular operations like sorting, selection and etc. as well as seeing additional Spotify API info and performing
+                        operations like saving or removing from your collection
+
+    #Recents            # &recently played tracks, artists, albums or playlists. Spotify API provides an access only to the latest 50 items, so plugin stores
+                        a cache of the items up to 250 items
+
+    #Playing Queue      # &20 first items in the playing queue, provided by Spotify API
+
+    #New Releases       # &as the access to the fresh releases feature is blocked by API, Spotifar implements its own. A separate threaded worker once in 24 hours
+                        goes through all your followed artists and searches for their most fresh releases (two weeks timeframe)
+
+    #User top items     # &your top artist and tracks over the past sic months
+
+    #Persistent modes   # &Spotifar saves your chosen panel view modes, sort modes and last visited views into Far config individually for each view, presented on 
+the panel.
+
+    #Player             # &a player dialog with the simple visual and all necessary basic components and controls
+
+    #Global Hotkeys     # &possibility to register ~global hotkeys~@ConfigHotkeys@ for most of the playback player commands like play, stop, skip and etc.
+
+    #Notifications      # &Windows toast-like pop-up notifications in the tray bar for "Now playing" and some others
+
+    #Start playback     # &almost everywhere on the panels for tracks, albums or artists, single or multi-selected
+
+
+    #Not Supported#
+
+    #Podcasts           # &not supported at all
+
+    #Playlists          # &only list representation via panel view, no playlists management supported yet
+
+    #Search             # &is not done yet
+
+
+    #For now, not possible to support#
+
+    #Audio analysis     # &blocked by Spotify by their recent policies, unlikely will be unblocked and supported
+
+    #Recommendations    # &Spotify internal algorithms are also blocked and cannot be accessed. Which means their custom playlists, radars, radios and stuff are
+not accessible at all. E.g. #Weekly recommendations# playlists, formed by Spotify returns 403 Forbidden, however it can be visible 
+in the #Recently played# view, can be started and even you can see part of the tracks in the #Playing Queue# view
+
+    If you wish to see the list of reported features or you want to add some new one, visit an official Spotifar [~GitHub page~@https://github.com/maliavko/spotifar/issues?q=is%3Aissue%20state%3Aopen%20label%3Afeature@]
+    
+
+    Related topics
+    ~Browsing and Navigating~@Panels@
+    ~Back to Main~@Contents@
+
+
+
+@Config
+$ #The main configuration Spotifar settings menu#
+
+    All the settings are divided into several logical groups for the better readability.
+
+    ~General~@ConfigGeneral@            &Far related, Spotify and UI configuration
+
+    ~Audio backend~@ConfigPlayback@      &Librespot playback device and audio stream
+
+    ~Hotkes~@ConfigHotkeys@             &Global hotkeys mapping for the most commonly used playback commands
+
+
+    Related topics
+    ~Browsing and Navigating~@Panels@
+    ~Caches and logging~@Caches@
+    ~Back to Main~@Contents@
+
+
+@ConfigGeneral
+$ #General Spotifar settings dialog#
+
+    #General#
+
+    #Add to disks menu      # &the plugin launch option will be added to the Far disks menu
+    #Verbose logging        # &additional debug and trace logging
+
+
+    #Spotify API#
+
+    &The mandatory settings for correct plugin operation, all of them are obtained
+from Spotify [~developer portal~@https://developer.spotify.com/dashboard/@]. See ~instruction~@QuickStart@
+how to generate your own secrets
+
+    #Client ID              # &your Spotify client ID
+    #Client Secret          # &your Spotify secret token
+    #Port                   # &a port, you used during the app registration
+
+
+    #Notifications#
+
+    #Track changed          # &show or not pop-up windows notification with the new track
+    #Image shape            # &notifications image shape: square or round
+
+
+    Related topics
+    ~Caches and logging~@Caches@
+    ~Obtaining spotify secret~@QuickStart@
+    ~Back to Main~@Contents@
+
+
+
+@ConfigBackend
+$ #Librespot device configuration settings#
+
+    #Backend enabled        # &enable/disable Librespot device, which is being started together with the plugin, in case it is on
+
+    #Vol. normalization     # &applies or not volume normalization
+
+    #Autoplay similar       # &if on, the playback will continue with some similar tracks on the Spotify chooice after the currently playing context is finished
+
+    #Gapeless playback      # &smooth tracks switching
+
+    #Audio cache            # &should Librespot cache your music or not
+
+    #Bitrate                # &audio stream bitrate value
+
+    #Format                 # &audio stream output format
+
+    #Dither                 # &dither algorithm
+
+    #Volume ctrl            # &volume control behaviour
+
+    Be careful changing these parameters, as they can be incompatible with each others, read [~appropriate docs~@https://github.com/librespot-org/librespot/wiki/Options@] first.
+
+
+@ConfigHotkeys
+
+    For changing the key, you put input cursor into the appropriate input field and hit the key you want to assign, the field should catch it
+
+    #Global hotkeys         # &enabled or disabled global hotkeys
+
+    #VKey                   # &Windows virtual key code, only for information
+
+    #Ctrl, Shift, Alt       # &keys modifiers, use at least some, to exclude hotkeys collissions on the system level
+
+    #play/pause             # &start or pause playback
+
+    #skip to next           # &skip current track to the next one
+
+    #skip to prev           # &skip current track to the previous one
+
+    #seek forward           # &seek current track forward by 5 sec
+
+    #seek backward          # &seek current track backward by 5 sec
+
+    #volume up              # &raise volume by 1
+
+    #volume down            # &decrease volume by 1
+
+    #show toast             # &show a "Now playing" notification in the tray
+
+
+
+@SortDialog
+$ #Sort dialog#
+
+    The default Far sorting approach is not applicable to the plugin's needs, so it was replaced by a custom-made dialog, which shows only applicable sorting modes
+for the particular views. Possible modes you can face:
+
+    #Name               # &by name
+
+    #Unsorted           # &keep original Spotify API sorting
+
+    #Followers          # &by number of artist's followers
+
+    #Popularity         # &by popularity, determined by API
+
+    #Release Data       # &by album release date
+
+    #Album              # &by album's name
+
+    #Artist             # &by artist's name
+
+    #Tracks Count       # &by album's or playlist's tracks count
+
+    #Duration           # &by total album's or track's time duration
+
+    #Track ##            # &by track's number
+
+    #Played At          # &by the last time an item was played at
+
+    #Added At           # &by the time the track was added to a playlist
+
+    #Saved At           # &by the time the item was saved to your collection
+
+
+    Related topics
+    ~Browsing and Navigating~@Panels@
+    ~Back to Main~@Contents@
+
+
+@Player
+$ #Player Dialog#
+
+    ╔════════════════════════ Spotifar ════════════════════════╗
+    ║ Source: context                            active-device↓║
+    ║                                                          ║
+    ║                                                          ║
+    ║ Artist1 name, Artist2 name                               ║
+    ║ Track name, can be long, or very long                    ║
+    ║                                                          ║
+    ║ 00:00 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 03:15 ║
+    ║                                                          ║
+    ║ [+]          Shuffle [<<] [ ► ] [>>] Off          [100%] ║
+    ╚══════════════════════════════════════════════════════════╝
+
+    #Controls#
+    
+    #Source             # &a current playing source: artist, album, track, playlist or your collection of saved tracks. If clicked, closes the player 
+and redirects user to the appropriate context view
+
+    #Artist name        # &contains a full list of all artists, featuring on the track. If clicked, closes the player and redirects user to the 
+appropriate view of the artist's, whose name was clicked; the plugin can detected which particular name the user has clicked on
+
+    #Track name         # &a currently playing track. If clicked, closes the player and redirects user to the album, the track belongs to
+
+    #Active device      # &a currently active playback device fromt he list of available
+
+    #00:00              # &current playing track progress timestamp
+
+    #03:15              # &the whole track's duration
+
+    #[+]                # &whether the track is saved in your collection or not. If clicked, sends a commands to the API to save/remove the track
+
+    #Shuffle            # &shuffle mode is enabled or not
+
+    #[<<] or [>>]       # &skip to previos or next respectively
+
+    #[ ► ]              # &play/pause button
+
+    #Off                # &a current repeat mode, can be #Off#, #Track# or #All#. Circles the modes if clicked
+
+    #[100%]             # &a volume level, can be changed via keyboard arrows
+
+
+    #Hotkeys#
+
+    #Space              # &play/pause
+
+    #Arrow Right        # &seek forward*
+
+    #Arrow Left         # &seek backward*
+
+    #Arrow Up           # &volume up*
+
+    #Arrow Down         # &volume down*
+
+    #Alt + Arrow Right  # &skip to next
+
+    #Alt + Arrow Left   # &skip to previous
+
+    #R                  # &cycle repeat modes
+
+    #S                  # &switch on/off shuffle mode
+
+    #Alt + D            # &open available devices dropdown menu
+
+
+    Related topics
+    ~Browsing and Navigating~@Panels@
+    ~Back to Main~@Contents@
+
+
+@Panels
+$ #Panels UI and its capabilities#
+
+    #Multiviews#
+
+    The plugin operates with the views, representing some specific users view on their collections, like "recently liked tracks" or "albums tracks" etc. 
+Most of the views share the same logic for the different types of items like albums, tracks or artists. So, to simplify browsing and navigating Spotifar
+introduces a specific type of view - #multiview#, which encapsulates some logic inside, "Recently Liked Items" e.g., and adds to it hotkeys, for switching between
+items types for the same view. For the different views a different range of switchers are available, but the mapping stays the same always.
+
+
+    #Folders structure#
+
+    #Root menu                      # &an entry point menu 
+        #Collection                 # &user's collection multiview; supports switching between artists, albums, tracks or playlists
+            #Artist                 # &artist personal view multiview; supports switching betwen albums and top tracks
+        #Browse                     # &a menu with aux items, helping to browse your Spotify activity
+            #New Releases           # &a list of albums, recently release by your followed artists
+            #Recently Saved Items   # &your 150 recently saved items; supports switching between albums and tracks
+            #Your top items         # &your top items for the past six months; supports switching between artists and tracks
+        #Recently Played            # &recently played tracks multiview; supports switching between artists, albums, tracks or playlists
+        #Playing Queue              # &represents a list of the closes 20 tracks of a currently playing queue
+
+
+    #Hotkeys#
+
+    #Alt + Q                # &show player dialog
+
+    #Ctrl + F12             # &show sort modes dialog
+
+    #F3                     # &executing some additional calculations on the item under cursor on the panel. For album it calculates full time duration, for
+artist - number of albums
+
+    #F4                     # &start playback of the item under cursor
+
+    #F8                     # &save or remove item from your collection
+
+    #Shift + F5             # &if available, switches multiview to the artists list
+
+    #Shift + F6             # &if available, switches multiview to the albums list
+
+    #Shift + F7             # &if available, switches multiview to the tracks list
+
+    #Shift + F8             # &if available, switches multiview to the playlists list
+
+    #Ctrl + F3...F9         # &switch of the available sorting modes
+
+    #Ctrl + 1..0            # &panel modes, adapted for the plugin's needs
+
+
+    #Currently playing track#
+
+    It is possible to see currenly playing track on the panel highlighted via standard Far highligting mechanism. Spotifar marks such tracks
+with #Encrypted# flag, so you can create a filter in the "Far menu" -> "Options" -> "Files highligting and sort groups" and create a custom filter,
+which catches only the items by Attributes, and select only #Encrypted#.
+
+    After doing that the currenyl playing track will be visible on all the views on th epanels.
+
+
+    #Columns#
+
+    #Name                   # &item's name
+
+    #Albums                 # &a number of artist's albums
+
+    #Followers              # &a number of artist's followers
+
+    #Pop %                  # &item's popularity, calculated by Spotify
+
+    #Genre                  # &a main artist's genre
+
+    #[+]                    # &saving in collection status
+
+    #Tx                     # &a tracks number
+
+    #Duration               # &a trackss or album's duration
+
+    #Type                   # &album's type: EP, LP or COMP
+
+    #Artist                 # &an artist's name
+
+    #Album                  # &an album's name
+
+    #Copyrights             # &a company, the copyrights belong to
+
+    #[E]                    # &track contains an explicity lyrics
+
+    #Owner                  # &a playlist's owner
+
+    #Pub                    # &is playlist public or not
+
+    #Col                    # &is playlist collaborative or not
+
+    #Played At              # &the time, a track was played at
+
+
+    Related topics
+    ~Player dialog~@Player@
+    ~Back to Main~@Contents@
+
+
+@Caches
+$ #Caches and logging#
+
+    Spotifar uses user's local folder for saving its own internal caches data. In most of the cases the folder should be something like
+C:\Users\<user-name>\AppData\Local\spotifar\. Here you can find the following items:
+
+    #cache\             # &Librespot audio cache
+
+    #images\            # &a cache of the tracks images, used for the Win tray notifications
+
+    #logs\              # &spotifar logs, splitted daily
+
+    #system-cache\      # &Librespot system cache
+
+    #responses.cache    # &Spotifar's http responses cache, used for reducing data transfer and workload to Spotify API

@@ -29,8 +29,8 @@ intptr_t show_settings_menu()
             &ConfigMenuGuid,
             -1, -1, 0, // centered, autowidth
             FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-            get_text(MCfgDlgMenuTitle), L"",
-            {}, {}, {}, // no break codes, no help topic
+            get_text(MCfgDlgMenuTitle), L"", L"Config", // title, bottom, helptopic
+            {}, {}, // no break codes
             items, std::size(items)
         );
 
@@ -86,8 +86,8 @@ intptr_t show_sort_dialog(const view &v)
         &SortDialogGuid,
         info.PanelRect.left + 5, -1, 0, // horizontally alligned to the active panel left
         FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
-        get_text(MSortDlgTitle), L"",
-        {}, {}, {}, // no break codes, no help topic
+        get_text(MSortDlgTitle), L"", L"SortDialog", // title, bottom, helptopic
+        {}, {}, // no break codes
         &result[0], result.size()
     );
 

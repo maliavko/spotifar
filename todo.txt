@@ -8,6 +8,7 @@ application ideas
     - close plugin if another librespot device is being detected
     - folow/unfollow artists
 - new functional
+    - download music via https://github.com/spotDL/spotify-downloader
     - show somewhere in UI the fresh releases synch status
     - to move followed artists to the collection cache, to add followed status on some panels like 'top user artists'
     + add redirect to Spotify website after shift+enter hit
@@ -31,7 +32,7 @@ to finish for alpha release
 - check all the default view settings and sort modes
 + to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch
-- help window
++ help window
 + remove unfinished menus
 + to review TODOs
 + to finalize "featuring" menus, user top items menu
