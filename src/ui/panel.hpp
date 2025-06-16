@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "abstract.hpp"
-#include "spotify/common.hpp"
+#include "spotify/interfaces.hpp"
 #include "ui/views/view.hpp" // view
 #include "ui/events.hpp" // ui_events_observer
 

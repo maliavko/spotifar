@@ -1,6 +1,7 @@
 #include "artists.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
+#include "spotify/requesters.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -32,8 +33,8 @@ const view::items_t& artists_base_view::get_items()
         std::vector<wstring> columns;
         
         bool is_followed = false;
-        if (auto api = api_proxy.lock())
-            is_followed = api->is_artist_followed(artist.id);
+        if (auto api = api_proxy.lock(); auto *library = api->get_library())
+            is_followed = library->is_artist_followed(artist.id);
 
         // column C0 - followers count
         auto followers = artist.followers_total;
@@ -190,10 +191,10 @@ intptr_t artists_base_view::process_key_input(int combined_key)
             if (auto api = api_proxy.lock(); !ids.empty())
                 // what to do - like or unlike - with the whole list of items
                 // we decide based on the first item state
-                if (api->is_artist_followed(ids[0], true))
-                    api->unfollow_artists(ids);
+                if (auto *library = api->get_library(); library->is_artist_followed(ids[0], true))
+                    library->unfollow_artists(ids);
                 else
-                    api->follow_artists(ids);
+                    library->follow_artists(ids);
 
             return TRUE;
         }
@@ -231,7 +232,8 @@ const view::key_bar_info_t* artists_base_view::get_key_bar_info()
     auto *user_data = unpack_user_data(item->UserData);
     if (auto api = api_proxy.lock(); user_data != nullptr)
     {
-        if (api->is_artist_followed(user_data->id))
+        auto *library = api->get_library();
+        if (library->is_artist_followed(user_data->id))
             key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
         else
             key_bar[{ VK_F8, 0 }] = get_text(MLike);
@@ -264,7 +266,7 @@ followed_artists_view::followed_artists_view(HANDLE panel, api_weak_ptr_t api_pr
 {
     if (auto api = api_proxy.lock())
     {
-        collection = api->get_followed_artists();
+        collection = api->get_library()->get_followed_artists();
         collection->fetch();
     }
 }

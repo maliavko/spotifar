@@ -1,5 +1,6 @@
 #include "releases.hpp"
-#include "playback.hpp"
+#include "requesters.hpp"
+#include "observer_protocols.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -8,7 +9,7 @@ using utils::far3::synchro_tasks::dispatch_event;
 recent_releases::recent_releases(api_interface *api):
     json_cache<data_t>(L"recent_releases"), api_proxy(api), pool(1)
 {
-    artists = api_proxy->get_followed_artists();
+    artists = api_proxy->get_library()->get_followed_artists();
 }
 
 recent_releases::~recent_releases()

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "devices.hpp"
+#include "requesters.hpp"
+#include "observer_protocols.hpp"
 
 namespace spotifar { namespace spotify {
 

@@ -3,15 +3,17 @@
 #pragma once
 
 #include "stdafx.h"
-#include "spotify/common.hpp"
+#include "spotify/interfaces.hpp"
 
 namespace spotifar {
 
 struct plugin_interface
 {
     virtual ~plugin_interface() {}
+
     virtual bool is_player_visible() const = 0;
-    virtual spotify::api_weak_ptr_t get_api() = 0;
+
+    virtual auto get_api() -> spotify::api_weak_ptr_t = 0;
 };
 
 using plugin_ptr_t = std::shared_ptr<plugin_interface>;

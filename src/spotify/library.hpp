@@ -1,10 +1,10 @@
-#ifndef collection_HPP_92081AAB_EE4E_40B2_814E_83B712132465
-#define collection_HPP_92081AAB_EE4E_40B2_814E_83B712132465
+#ifndef LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465
+#define LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465
 #pragma once
 
 #include "stdafx.h"
-#include "common.hpp"
 #include "cache.hpp"
+#include "interfaces.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -114,58 +114,31 @@ protected:
 /// @brief A class-container for providing an access to the API items and user's own collection.
 /// Caches the data, performs delayed request to reduce a workload to the API and sends events
 /// on readiness.
-class collection: public collection_base_t
+class library:
+    public collection_base_t,
+    public library_interface
 {
     friend class saved_tracks_collection;
     friend class saved_albums_collection;
     friend class followed_artists_collection;
 public:
-    collection(api_interface *api);
-    ~collection();
+    library(api_interface *api);
+    ~library();
 
-    /// @brief Checks the given track `id` saving status. Returns immediately if is cached,
-    /// otherwise returns `false` and puts to the queue for requesting.
-    /// @param force_sync forces method to check the status synchroniously
-    /// 
-    /// https://developer.spotify.com/documentation/web-api/reference/check-users-saved-tracks 
-    bool is_track_saved(const item_id_t &id, bool force_sync = false);
+    auto get_saved_tracks() -> saved_tracks_ptr override;
+    bool is_track_saved(const item_id_t &id, bool force_sync = false) override;
+    bool save_tracks(const item_ids_t &ids) override;
+    bool remove_saved_tracks(const item_ids_t &ids) override;
 
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/save-tracks-user
-    bool save_tracks(const item_ids_t &ids);
+    auto get_saved_albums() -> saved_albums_ptr override;
+    bool is_album_saved(const item_id_t &id, bool force_sync = false) override;
+    bool save_albums(const item_ids_t &ids) override;
+    bool remove_saved_albums(const item_ids_t &ids) override;
 
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/remove-tracks-user
-    bool remove_saved_tracks(const item_ids_t &ids);
-    
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
-    auto get_saved_tracks() -> saved_tracks_ptr;
-
-    /// @brief Checks the given album `id` saving status. Returns immediately if is cached,
-    /// otherwise returns `false` and puts to the queue for requesting.
-    /// @param force_sync forces method to check the status synchroniously
-    /// 
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/check-users-saved-albums
-    bool is_album_saved(const item_id_t &id, bool force_sync = false);
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/save-albums-user 
-    bool save_albums(const item_ids_t &ids);
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/remove-albums-user
-    bool remove_saved_albums(const item_ids_t &ids);
-    
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
-    auto get_saved_albums() -> saved_albums_ptr;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/check-current-user-follows
-    bool is_artist_followed(const item_id_t &artist_id, bool force_sync);
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
-    bool follow_artists(const item_ids_t &ids);
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
-    bool unfollow_artists(const item_ids_t &ids);
-    
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
-    auto get_followed_artists() -> followed_artists_ptr;
+    auto get_followed_artists() -> followed_artists_ptr override;
+    bool is_artist_followed(const item_id_t &artist_id, bool force_sync = false) override;
+    bool follow_artists(const item_ids_t &ids) override;
+    bool unfollow_artists(const item_ids_t &ids) override;
 protected:
     // json_cache's interface
     bool is_active() const override;
@@ -179,28 +152,7 @@ private:
     artists_items_cache_t artists;
 };
 
-struct collection_observer: public BaseObserverProtocol
-{
-    /// @brief The even is fired when the given tracks `ids` saving statuses have been changed
-    virtual void on_tracks_statuses_changed(const item_ids_t &ids) {}
-
-    /// @brief The event is fired  when the given tracks statuses are received
-    virtual void on_tracks_statuses_received(const item_ids_t &ids) {}
-
-    /// @brief The even is fired when the given albums `ids` saving statuses have been changed
-    virtual void on_albums_statuses_changed(const item_ids_t &ids) {}
-
-    /// @brief The event is fired  when the given albums statuses are received
-    virtual void on_albums_statuses_received(const item_ids_t &ids) {}
-
-    /// @brief The even is fired when the given artists `ids` saving statuses have been changed
-    virtual void on_artists_statuses_changed(const item_ids_t &ids) {}
-
-    /// @brief The event is fired  when the given artists statuses are received
-    virtual void on_artists_statuses_received(const item_ids_t &ids) {}
-};
-
 } // namespace spotify
 } // namespace spotifar
 
-#endif // collection_HPP_92081AAB_EE4E_40B2_814E_83B712132465
+#endif // LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465

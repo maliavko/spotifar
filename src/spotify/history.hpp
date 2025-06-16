@@ -2,9 +2,8 @@
 #define CACHE_HPP_6BE0F54C_3187_4D5F_AC83_CE8B78223B72
 #pragma once
 
-#include "common.hpp"
-#include "items.hpp"
 #include "cache.hpp"
+#include "interfaces.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -29,10 +28,6 @@ private:
     api_interface *api_proxy;
 };
 
-struct play_history_observer: public BaseObserverProtocol
-{
-    virtual void on_history_changed() {}
-};
 
 } // namespace spotify
 } // namespace spotifar

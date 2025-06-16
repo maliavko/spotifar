@@ -1,5 +1,4 @@
 #include "notifications.hpp"
-#include "spotify/common.hpp"
 #include "lng.hpp"
 #include "utils.hpp"
 #include "ui/events.hpp"
@@ -54,10 +53,11 @@ protected:
 
         if (auto api = api_proxy.lock())
         {
+            auto *library = api->get_library();
             switch (action_idx)
             {
                 case 0: // like btn
-                    api->save_tracks({ track_id });
+                    library->save_tracks({ track_id });
                     break;
                 case 1: // next btn
                     api->skip_to_next();
@@ -165,8 +165,9 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
 
     if (auto api = api_proxy.lock())
     {
+        auto *library = api->get_library();
         auto album_img_path = api->get_image(track.album.get_image(), track.album.id);
-        auto is_saved = api->is_track_saved(track.id, true);
+        auto is_saved = library->is_track_saved(track.id, true);
      
         WinToastTemplate toast(WinToastTemplate::ImageAndText02);
     
