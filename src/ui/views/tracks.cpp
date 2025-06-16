@@ -735,14 +735,14 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
     events::refresh_panel(get_panel_handle());
 }
 
-void saved_tracks_view::on_tracks_statuses_changed(const item_ids_t &ids)
-{
-    // the base handlers update the view only in case some items
-    // were being change, this view should repopulate itself anyway
-    // as it represents the list of saved tracks
-    repopulate();
-    events::refresh_panel(get_panel_handle());
-}
+// void saved_tracks_view::on_tracks_statuses_changed(const item_ids_t &ids)
+// {
+//     // the base handlers update the view only in case some items
+//     // were being change, this view should repopulate itself anyway
+//     // as it represents the list of saved tracks
+//     repopulate();
+//     events::refresh_panel(get_panel_handle());
+// }
 
 
 //-----------------------------------------------------------------------------------------------------------
