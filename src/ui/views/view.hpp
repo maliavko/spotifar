@@ -2,11 +2,9 @@
 #define VIEW_HPP_BD8268F0_532D_4A60_9847_B08580783467
 #pragma once
 
-#include "stdafx.h"
 #include "utils.hpp"
 #include "config.hpp"
-#include "spotify/items.hpp"
-#include "spotify/common.hpp"
+#include "spotify/interfaces.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -149,7 +147,7 @@ public:
 
     /// @brief Searches for the `item_id` item on the panel and
     /// return its index or 0
-    auto get_item_idx(const string &item_id) -> size_t;
+    auto get_item_idx(const item_id_t &item_id) -> size_t;
 
     /// @brief Return the view appropriate settings object, the object
     /// is persistently saved to/load from Far config

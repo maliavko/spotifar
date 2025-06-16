@@ -2,15 +2,13 @@
 #define API_HPP_DFF0C34C_5CB3_4F4E_B23A_906584C67C66
 #pragma once
 
-#include "stdafx.h"
-#include "items.hpp"
-#include "common.hpp"
+#include "interfaces.hpp"
 #include "playback.hpp"
 #include "devices.hpp"
 #include "auth.hpp"
 #include "history.hpp"
 #include "releases.hpp"
-#include "collection.hpp"
+#include "library.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -35,23 +33,10 @@ public:
     auto get_available_devices(bool force_resync = false) -> const devices_cache::data_t& override;
     auto get_playback_state(bool force_resync = false) -> const playback_cache::data_t& override;
     auto get_recent_releases(bool force_resync = false) -> const recent_releases::data_t& override;
-    
-    bool is_track_saved(const item_id_t &track_id, bool force_sync = false) override;
-    bool save_tracks(const item_ids_t &ids) override { return collection->save_tracks(ids); }
-    bool remove_saved_tracks(const item_ids_t &ids) override { return collection->remove_saved_tracks(ids); }
-    auto get_saved_tracks() -> saved_tracks_ptr override { return collection->get_saved_tracks(); }
-    
-    bool is_album_saved(const item_id_t &album_id, bool force_sync = false) override;
-    bool save_albums(const item_ids_t &ids) override { return collection->save_albums(ids); }
-    bool remove_saved_albums(const item_ids_t &ids) override { return collection->remove_saved_albums(ids); }
-    auto get_saved_albums() -> saved_albums_ptr override { return collection->get_saved_albums(); }
-    
-    bool is_artist_followed(const item_id_t &album_id, bool force_sync = false) override;
-    bool follow_artists(const item_ids_t &ids) override { return collection->follow_artists(ids); }
-    bool unfollow_artists(const item_ids_t &ids) override { return collection->unfollow_artists(ids); }
-    auto get_followed_artists() -> followed_artists_ptr override { return collection->get_followed_artists(); }
+    auto get_library() -> library_interface* override { return library.get(); };
     
     // library api interface
+
     auto get_artist(const item_id_t &artist_id) -> artist_t override;
     auto get_artists(const item_ids_t &ids) -> std::vector<artist_t> override;
     auto get_artist_albums(const item_id_t &artist_id) -> artist_albums_ptr override;
@@ -69,6 +54,7 @@ public:
     auto get_image(const image_t &image, const item_id_t &item_id) -> wstring override;
 
     // playback api interface
+
     void start_playback(const string &context_uri, const string &track_uri = "", int position_ms = 0, const item_id_t &device_id = "") override;
     void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") override;
     void start_playback(const simplified_album_t &album, const simplified_track_t &track) override;
@@ -88,13 +74,12 @@ protected:
     /// fills up all the default attributes and token, and returns it
     auto get_client() const -> std::shared_ptr<httplib::Client>;
     
-    void start_playback_raw(const string &body, const item_id_t &device_id);
+    void start_playback_base(const string &body, const item_id_t &device_id);
     
-    // the main interface for raw http requests
-    Result get(const string &url, utils::clock_t::duration cache_for = {}) override;
-    Result put(const string &url, const string &body = "") override;
-    Result del(const string &url, const string &body = "") override;
-    Result post(const string &url, const string &body = "") override;
+    httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}) override;
+    httplib::Result put(const string &url, const string &body = "") override;
+    httplib::Result del(const string &url, const string &body = "") override;
+    httplib::Result post(const string &url, const string &body = "") override;
     
     auto get_pool() -> BS::light_thread_pool& override { return requests_pool; };
     bool is_request_cached(const string &url) const override;
@@ -104,7 +89,8 @@ private:
     http_cache api_responses_cache;
 
     // caches
-    std::unique_ptr<collection> collection;
+
+    std::unique_ptr<library> library;
     std::unique_ptr<playback_cache> playback;
     std::unique_ptr<devices_cache> devices;
     std::unique_ptr<auth_cache> auth;

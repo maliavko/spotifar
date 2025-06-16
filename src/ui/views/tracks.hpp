@@ -4,10 +4,7 @@
 
 #include "stdafx.h"
 #include "view.hpp"
-#include "spotify/common.hpp"
-#include "spotify/playback.hpp"
-#include "spotify/history.hpp"
-#include "spotify/collection.hpp"
+#include "spotify/observer_protocols.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -114,7 +111,7 @@ public:
     saved_tracks_view(HANDLE panel, api_weak_ptr_t api);
     ~saved_tracks_view();
 protected:
-    void repopulate() { collection->fetch(false, true, 1); }
+    bool repopulate();
 
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
