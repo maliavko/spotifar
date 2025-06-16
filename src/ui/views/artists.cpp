@@ -11,13 +11,29 @@ using namespace spotify;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
+artists_base_view::artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
+    view(panel, title, dir_name), api_proxy(api)
+{
+    utils::events::start_listening<collection_observer>(this);
+}
+
+artists_base_view::~artists_base_view()
+{
+    utils::events::stop_listening<collection_observer>(this);
+    api_proxy.reset();
+}
+
 const view::items_t& artists_base_view::get_items()
 {
-    static view::items_t items; items.clear();
+    items.clear();
 
     for (const auto &artist: get_artists())
     {
         std::vector<wstring> columns;
+        
+        bool is_followed = false;
+        if (auto api = api_proxy.lock())
+            is_followed = api->is_artist_followed(artist.id);
 
         // column C0 - followers count
         auto followers = artist.followers_total;
@@ -43,6 +59,10 @@ const view::items_t& artists_base_view::get_items()
                 albums_count = std::format(L"{: >6}", total_albums);
         }
         columns.push_back(albums_count);
+
+        // column C4 - is saved in collection status
+        columns.push_back(is_followed ? L" + " : L"");
+        
 
         items.push_back({
             artist.id,
@@ -116,6 +136,7 @@ const view::panel_modes_t* artists_base_view::get_panel_modes() const
         Popularity  { L"C1",    get_text(MSortColPopularity),   L"5" },
         MainGenre   { L"C2",    get_text(MSortColGenre),        L"25" },
         AlbumsCount { L"C3",    get_text(MSortColAlbumsCount),  L"6" },
+        IsFollowed  { L"C4",    get_text(MSortColSaved),        L"3" },
         Name        { L"NON",   get_text(MSortColName),         L"0" },
         NameFixed   { L"NON",   get_text(MSortColName),         L"30" },
         Genres      { L"Z",     get_text(MSortColGenre),        L"0" };
@@ -124,9 +145,9 @@ const view::panel_modes_t* artists_base_view::get_panel_modes() const
         /* 0 */ PM::dummy(8),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
-        /* 3 */ PM({ &Name, &AlbumsCount, &Followers, &Popularity }),
-        /* 4 */ PM({ &Name, &AlbumsCount }),
-        /* 5 */ PM({ &Name, &AlbumsCount, &Followers, &Popularity, &MainGenre }, true),
+        /* 3 */ PM({ &Name, &IsFollowed, &AlbumsCount, &Followers, &Popularity }),
+        /* 4 */ PM({ &Name, &IsFollowed, &AlbumsCount }),
+        /* 5 */ PM({ &Name, &IsFollowed, &AlbumsCount, &Followers, &Popularity, &MainGenre }, true),
         /* 6 */ PM({ &NameFixed, &Genres }),
         /* 7 */ PM({ &NameFixed, &AlbumsCount, &Genres }, true),
         /* 8 */ PM::dummy(8, true),
@@ -142,6 +163,7 @@ intptr_t artists_base_view::process_key_input(int combined_key)
 
     switch (combined_key)
     {
+        // starting playbackl for the target artist
         case VK_F4:
         {
             auto item = utils::far3::panels::get_current_item(get_panel_handle());
@@ -159,20 +181,24 @@ intptr_t artists_base_view::process_key_input(int combined_key)
             log::global->error("There is an error occured while getting a current panel item");
             return TRUE;
         }
+
+        // follow/unfollow
         case VK_F8:
         {
-            /*const auto &ids = get_selected_items();
+            const auto &ids = get_selected_items();
 
             if (auto api = api_proxy.lock(); !ids.empty())
                 // what to do - like or unlike - with the whole list of items
                 // we decide based on the first item state
-                if (api->is_album_saved(ids[0], true))
-                    api->remove_saved_albums(ids);
+                if (api->is_artist_followed(ids[0], true))
+                    api->unfollow_artists(ids);
                 else
-                    api->save_albums(ids);*/
+                    api->follow_artists(ids);
 
             return TRUE;
         }
+
+        // redirect to Spotify Web
         case VK_RETURN + mods::shift:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
@@ -187,6 +213,48 @@ intptr_t artists_base_view::process_key_input(int combined_key)
         }
     }
     return FALSE;
+}
+
+const view::key_bar_info_t* artists_base_view::get_key_bar_info()
+{
+    static key_bar_info_t key_bar{};
+
+    auto view_uid = get_uid();
+
+    auto item = utils::far3::panels::get_current_item(get_panel_handle());
+
+    // right after switching the directory on the panel, when we trap here `panels::get_current_item`
+    // returns the `item` from  the previous directory. Checking crc32 helps to identify
+    // when the panel is refreshed eventually and we can be sure the item is valid
+    if (item->CRC32 != view_uid) return nullptr;
+
+    auto *user_data = unpack_user_data(item->UserData);
+    if (auto api = api_proxy.lock(); user_data != nullptr)
+    {
+        if (api->is_artist_followed(user_data->id))
+            key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+        else
+            key_bar[{ VK_F8, 0 }] = get_text(MLike);
+    }
+
+    return &key_bar;
+}
+
+void artists_base_view::on_artists_statuses_changed(const item_ids_t &ids)
+{
+    on_artists_statuses_received(ids);
+}
+
+void artists_base_view::on_artists_statuses_received(const item_ids_t &ids)
+{
+    std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
+
+    const auto &it = std::find_if(items.begin(), items.end(),
+        [&unique_ids](item_t &item) { return unique_ids.contains(item.id); });
+
+    // if any of view's tracks are changed, we need to refresh the panel
+    if (it != items.end())
+        events::refresh_panel(get_panel_handle());
 }
 
 

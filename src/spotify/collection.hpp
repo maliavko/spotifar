@@ -16,6 +16,7 @@ struct saved_items_t
 {
     statuses_container_t tracks;
     statuses_container_t albums;
+    statuses_container_t artists;
     
     friend void from_json(const json::Value &j, saved_items_t &v);
     friend void to_json(json::Value &j, const saved_items_t &v, json::Allocator &allocator);
@@ -97,6 +98,18 @@ protected:
     void statuses_changed_event(const item_ids_t &ids) override;
 };
 
+/// @brief Class specialisation for caching artists saving statuses
+class artists_items_cache_t: public saved_items_cache_t
+{
+public:
+    using saved_items_cache_t::saved_items_cache_t;
+protected:
+    auto get_container(collection_base_t::data_t &data) -> statuses_container_t& override;
+    auto check_saved_items(api_interface *api, const item_ids_t &ids) -> std::deque<bool> override;
+    void statuses_received_event(const item_ids_t &ids) override;
+    void statuses_changed_event(const item_ids_t &ids) override;
+};
+
 
 /// @brief A class-container for providing an access to the API items and user's own collection.
 /// Caches the data, performs delayed request to reduce a workload to the API and sends events
@@ -105,6 +118,7 @@ class collection: public collection_base_t
 {
     friend class saved_tracks_collection;
     friend class saved_albums_collection;
+    friend class followed_artists_collection;
 public:
     collection(api_interface *api);
     ~collection();
@@ -124,9 +138,6 @@ public:
     
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
     auto get_saved_tracks() -> saved_tracks_ptr;
-    
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
-    auto get_saved_albums() -> saved_albums_ptr;
 
     /// @brief Checks the given album `id` saving status. Returns immediately if is cached,
     /// otherwise returns `false` and puts to the queue for requesting.
@@ -140,6 +151,21 @@ public:
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/remove-albums-user
     bool remove_saved_albums(const item_ids_t &ids);
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
+    auto get_saved_albums() -> saved_albums_ptr;
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/check-current-user-follows
+    bool is_artist_followed(const item_id_t &artist_id, bool force_sync);
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/follow-artists-users
+    bool follow_artists(const item_ids_t &ids);
+
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/unfollow-artists-users
+    bool unfollow_artists(const item_ids_t &ids);
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
+    auto get_followed_artists() -> followed_artists_ptr;
 protected:
     // json_cache's interface
     bool is_active() const override;
@@ -150,11 +176,12 @@ private:
 
     tracks_items_cache_t tracks;
     albums_items_cache_t albums;
+    artists_items_cache_t artists;
 };
 
 struct collection_observer: public BaseObserverProtocol
 {
-    /// @brief The even is fired when the given tracks' `ids` saving statuses
+    /// @brief The even is fired when the given tracks `ids` saving statuses
     /// have been changed
     virtual void on_tracks_statuses_changed(const item_ids_t &ids) {}
 
@@ -162,13 +189,21 @@ struct collection_observer: public BaseObserverProtocol
     /// are received
     virtual void on_tracks_statuses_received(const item_ids_t &ids) {}
 
-    /// @brief The even is fired when the given albums' `ids` saving statuses
+    /// @brief The even is fired when the given albums `ids` saving statuses
     /// have been changed
     virtual void on_albums_statuses_changed(const item_ids_t &ids) {}
 
     /// @brief The event is fired  when the given albums statuses
     /// are received
     virtual void on_albums_statuses_received(const item_ids_t &ids) {}
+
+    /// @brief The even is fired when the given artists `ids` saving statuses
+    /// have been changed
+    virtual void on_artists_statuses_changed(const item_ids_t &ids) {}
+
+    /// @brief The event is fired  when the given artists statuses
+    /// are received
+    virtual void on_artists_statuses_received(const item_ids_t &ids) {}
 };
 
 } // namespace spotify

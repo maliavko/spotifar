@@ -5,6 +5,7 @@ refactor
 
 application ideas
 - small improvements
+    - changing followed artists should invalidate release radara worker
     - close plugin if another librespot device is being detected
     - folow/unfollow artists
 - new functional

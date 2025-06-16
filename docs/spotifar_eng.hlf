@@ -420,6 +420,8 @@ artist - number of albums
 
     #Ctrl + 1..0            # &panel modes, adapted for the plugin's needs
 
+    #Shift + Enter          # &open web-browser with the item's Spotify official page
+
 
     #Currently playing track#
 
