@@ -437,14 +437,14 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
     };
 }
 
-void saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
-{
-    // the base handlers update the view only in case some items
-    // were being change, this view should repopulate itself anyway
-    // as it represents the list of saved tracks
-    if (collection->fetch())
-        events::refresh_panel(get_panel_handle());
-}
+// void saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
+// {
+//     // the base handlers update the view only in case some items
+//     // were being change, this view should repopulate itself anyway
+//     // as it represents the list of saved tracks
+//     if (collection->fetch())
+//         events::refresh_panel(get_panel_handle());
+// }
 
 
 //-----------------------------------------------------------------------------------------------------------
@@ -681,14 +681,14 @@ std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t
     };
 }
 
-void recently_saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
-{
-    // the base handlers update the view only in case some items
-    // were being change, this view should repopulate itself anyway
-    // as it represents the list of saved tracks
-    if (repopulate())
-        events::refresh_panel(get_panel_handle());
-}
+// void recently_saved_albums_view::on_albums_statuses_changed(const item_ids_t &ids)
+// {
+//     // the base handlers update the view only in case some items
+//     // were being change, this view should repopulate itself anyway
+//     // as it represents the list of saved tracks
+//     if (repopulate())
+//         events::refresh_panel(get_panel_handle());
+// }
 
 } // namespace ui
 } // namespace spotifar
