@@ -287,8 +287,7 @@ void plugin::on_request_started(const string &url)
     // sync and async multipage collections fetching. In most of the cases it is done when
     // the new view is created and getting populated. So, we show a splash screen and it will
     // get closed automatically when the view initialization is done and the panel is redrawn
-    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
-        ui::show_waiting(MWaitingRequest);
+    ui::show_waiting(MWaitingRequest);
 }
 
 void plugin::on_request_finished(const string &url)
@@ -302,8 +301,7 @@ void plugin::on_request_finished(const string &url)
 
 void plugin::on_request_progress_changed(const string &url, size_t progress, size_t total)
 {
-    if (!no_splash_requests.contains(trim_domain(trim_params(url))))
-        ui::show_waiting(MWaitingItemsProgress, progress, total);
+    ui::show_waiting(MWaitingItemsProgress, progress, total);
 }
 
 void plugin::on_playback_command_failed(const string &message)

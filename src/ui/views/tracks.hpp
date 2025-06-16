@@ -98,7 +98,7 @@ protected:
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
     
     // play_history_observer handlers
-    void on_history_changed();
+    void on_history_changed() override;
 private:
     history_items_t items;
     panel_modes_t panel_modes;
