@@ -6,6 +6,7 @@
 #include "view.hpp"
 #include "spotify/common.hpp"
 #include "spotify/history.hpp"
+#include "spotify/collection.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -13,14 +14,13 @@ using namespace spotify;
 
 /// @brief A base class for all the views, representing a list
 /// of artists in either way
-class artists_base_view: public view
+class artists_base_view:
+    public view,
+    public collection_observer
 {
 public:
-    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L""):
-        view(panel, title, dir_name), api_proxy(api)
-        {}
-    
-    ~artists_base_view() { api_proxy.reset(); }
+    artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name = L"");
+    ~artists_base_view();
 
     auto get_items() -> const items_t& override;
 protected:
@@ -34,8 +34,14 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto get_panel_modes() const -> const panel_modes_t* override;
     auto process_key_input(int combined_key) -> intptr_t override;
+    auto get_key_bar_info() -> const key_bar_info_t* override;
+
+    // collection_observer
+    void on_artists_statuses_changed(const item_ids_t &ids) override;
+    void on_artists_statuses_received(const item_ids_t &ids) override;
 protected:
     api_weak_ptr_t api_proxy;
+    items_t items;
 };
 
 
@@ -84,9 +90,9 @@ protected:
     
     // artists_base_view
     auto get_artists() -> std::generator<const artist_t&> override;
-    auto show_albums_view(const artist_t &artist) const -> void override;
+    void show_albums_view(const artist_t &artist) const override;
     
-    void on_history_changed();
+    void on_history_changed() override;
 private:
     std::vector<history_artist_t> items;
 };

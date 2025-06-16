@@ -1,4 +1,4 @@
-#include "collection.hpp"
+ #include "collection.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -13,6 +13,7 @@ static const size_t BATCH_SIZE = 50;
 class saved_tracks_collection: public saved_tracks_t
 {
 public:
+    /// @param collection A collection to be updated pointer
     saved_tracks_collection(api_interface *api, collection *collection):
         saved_tracks_t(api->get_ptr(), "/v1/me/tracks"),
         collection(collection)
@@ -35,11 +36,12 @@ private:
     collection *collection;
 };
 
-/// @brief A custom saved-tracks-collection specialization, to update collection cache,
-/// when the fetching is finished.
+/// @brief A custom saved-albums-collection specialization, to update collection cache,
+/// when the fetching is finished. 
 class saved_albums_collection: public saved_albums_t
 {
 public:
+    /// @param collection A collection to be updated pointer
     saved_albums_collection(api_interface *api, collection *collection):
         saved_albums_t(api->get_ptr(), "/v1/me/albums"),
         collection(collection)
@@ -62,11 +64,45 @@ private:
     collection *collection;
 };
 
+/// @brief A custom saved-artists-collection specialization, to update collection cache,
+/// when the fetching is finished. 
+class followed_artists_collection: public followed_artists_t
+{
+public:
+    /// @param collection A collection to be updated pointer
+    followed_artists_collection(api_interface *api, collection *collection):
+        followed_artists_t(api->get_ptr(), "/v1/me/following", {{ "type", "artist" }}, "artists"),
+        collection(collection)
+        {}
+    ~followed_artists_collection() { collection = nullptr; }
+
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    {
+        if (followed_artists_t::fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        {
+            item_ids_t ids;
+            std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
+
+            collection->artists.update_saved_items(ids, true);
+            return true;
+        }
+        return false;
+    }
+private:
+    collection *collection;
+};
+
 //-------------------------------------------------------------------------------------------------------------------
 void from_json(const json::Value &j, saved_items_t &v)
 {
-    from_json(j["tracks"], v.tracks);
-    from_json(j["albums"], v.albums);
+    if (!j["tracks"].IsNull())
+        from_json(j["tracks"], v.tracks);
+
+    if (!j["albums"].IsNull())
+        from_json(j["albums"], v.albums);
+
+    if (!j["artists"].IsNull())
+        from_json(j["artists"], v.artists);
 }
 
 void to_json(json::Value &result, const saved_items_t &v, json::Allocator &allocator)
@@ -79,23 +115,27 @@ void to_json(json::Value &result, const saved_items_t &v, json::Allocator &alloc
     json::Value albums;
     to_json(albums, v.albums, allocator);
 
+    json::Value artists;
+    to_json(artists, v.artists, allocator);
+
     result.AddMember("tracks", json::Value(tracks, allocator), allocator);
     result.AddMember("albums", json::Value(albums, allocator), allocator);
+    result.AddMember("artists", json::Value(artists, allocator), allocator);
 }
 
 
 static std::deque<bool> check_saved_items(api_interface *api, const string &endpoint_url, const item_ids_t &ids)
 {
-    // note: bloody hell, damn vector specialization with bools is not a real vector,
+    // NOTE: bloody hell, damn vector specialization with bools is not a real vector,
     // it cannot return ref to bools, so deque is used instead
 
-    // note: player visual style methods are being called extremely often, the 'like` button,
+    // NOTE: player visual style methods are being called extremely often, the 'like` button,
     // which represents a state of a track being part of saved collection as well. That's why
     // the response here is cached for a session
     auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
         endpoint_url, ids, BATCH_SIZE);
 
-    if (requester.execute(api->get_ptr()))
+    if (requester.execute(api->get_ptr(), false, false))
         return requester.get();
     
     // perhaps at some point it'd be good to add an error propagation here
@@ -132,7 +172,7 @@ bool saved_items_cache_t::resync(statuses_container_t &data)
     }
     else
     {
-        log::api->error("Failed to get saved status for {} tracks", ids.size());
+        log::api->error("Failed to get saved status for {} items", ids.size());
     }
     return false;
 }
@@ -219,6 +259,7 @@ void tracks_items_cache_t::statuses_changed_event(const item_ids_t &ids)
         &collection_observer::on_tracks_statuses_changed, ids);
 }
 
+
 statuses_container_t& albums_items_cache_t::get_container(collection_base_t::data_t &data)
 {
     return data.albums;
@@ -242,11 +283,38 @@ void albums_items_cache_t::statuses_changed_event(const item_ids_t &ids)
 }
 
 
+statuses_container_t& artists_items_cache_t::get_container(collection_base_t::data_t &data)
+{
+    return data.artists;
+}
+
+std::deque<bool> artists_items_cache_t::check_saved_items(api_interface *api, const item_ids_t &ids)
+{
+    // possible types: "artist" and "user"
+    const auto url = httplib::append_query_params("/v1/me/following/contains", {{ "type", "artist" }});
+
+    return spotify::check_saved_items(api, url, ids);
+}
+
+void artists_items_cache_t::statuses_received_event(const item_ids_t &ids)
+{
+    utils::far3::synchro_tasks::dispatch_event(
+        &collection_observer::on_artists_statuses_received, ids);
+}
+
+void artists_items_cache_t::statuses_changed_event(const item_ids_t &ids)
+{
+    utils::far3::synchro_tasks::dispatch_event(
+        &collection_observer::on_artists_statuses_changed, ids);
+}
+
+
 //-------------------------------------------------------------------------------------------------------------------
 collection::collection(api_interface *api):
     json_cache(), api_proxy(api),
     tracks(api, [this] { return lock_data(); }),
-    albums(api, [this] { return lock_data(); })
+    albums(api, [this] { return lock_data(); }),
+    artists(api, [this] { return lock_data(); })
 {
 }
 
@@ -309,11 +377,6 @@ saved_tracks_ptr collection::get_saved_tracks()
     return saved_tracks_ptr(new saved_tracks_collection(api_proxy, this));
 }
 
-saved_albums_ptr collection::get_saved_albums()
-{
-    return saved_albums_ptr(new saved_albums_collection(api_proxy, this));
-}
-
 bool collection::is_album_saved(const item_id_t &album_id, bool force_sync)
 {
     return albums.is_item_saved(album_id, force_sync);
@@ -363,6 +426,71 @@ bool collection::remove_saved_albums(const item_ids_t &ids)
     return true;
 }
 
+saved_albums_ptr collection::get_saved_albums()
+{
+    return saved_albums_ptr(new saved_albums_collection(api_proxy, this));
+}
+
+bool collection::is_artist_followed(const item_id_t &artist_id, bool force_sync)
+{
+    return artists.is_item_saved(artist_id, force_sync);
+}
+
+bool collection::follow_artists(const item_ids_t &ids)
+{
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    // possible types: "artist" and "user"
+    const auto url = httplib::append_query_params("/v1/me/following", {{ "type", "artist" }});
+
+    auto requester = put_requester(url, body.str());
+    if (!requester.execute(api_proxy->get_ptr()))
+    {
+        playback_cmd_error(http::get_status_message(requester.get_response()));
+        return false;
+    }
+    
+    // updating artists cache with the new saved artists ids
+    artists.update_saved_items(ids, true);
+
+    return true;
+}
+
+bool collection::unfollow_artists(const item_ids_t &ids)
+{
+    http::json_body_builder body;
+
+    body.object([&]
+    {
+        body.insert("ids", ids);
+    });
+
+    // possible types: "artist" and "user"
+    const auto url = httplib::append_query_params("/v1/me/following", {{ "type", "artist" }});
+
+    auto requester = del_requester(url, body.str());
+    if (!requester.execute(api_proxy->get_ptr()))
+    {
+        playback_cmd_error(http::get_status_message(requester.get_response()));
+        return false;
+    }
+    
+    // updating artists cache with the new saved artists ids
+    artists.update_saved_items(ids, false);
+    
+    return true;
+}
+
+followed_artists_ptr collection::get_followed_artists()
+{
+    return followed_artists_ptr(new followed_artists_collection(api_proxy, this));
+}
+
 bool collection::is_active() const
 {
     return api_proxy->is_authenticated();
@@ -377,10 +505,10 @@ bool collection::request_data(data_t &data)
 {
     data = get();
 
-    tracks.resync(data.tracks);
-    albums.resync(data.albums);
+    if (tracks.resync(data.tracks) || albums.resync(data.albums) || artists.resync(data.artists))
+        return true;
 
-    return true;
+    return false;
 }
     
 } // namespace spotify
