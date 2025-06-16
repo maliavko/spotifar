@@ -88,8 +88,12 @@ protected:
     auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
     
+    // @experimental: with this handler uncommented the view will be updating each time
+    // we like or unlike tracks: repopulate and redraw, without - just redraw. So, the list
+    // will stay the same, just refreshed the items' statuses
+    // 
     // collection handlers
-    virtual void on_albums_statuses_changed(const item_ids_t &ids) override;
+    //virtual void on_albums_statuses_changed(const item_ids_t &ids) override;
 private:
     saved_albums_ptr collection;
     panel_modes_t panel_modes;
@@ -176,8 +180,12 @@ protected:
     auto get_extra_columns(const album_t&) const -> std::vector<wstring> override;
     auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
     
+    // @experimental: with this handler uncommented the view will be updating each time
+    // we like or unlike tracks: repopulate and redraw, without - just redraw. So, the list
+    // will stay the same, just refreshed the items' statuses
+    // 
     // collection handlers
-    virtual void on_albums_statuses_changed(const item_ids_t &ids) override;
+    //virtual void on_albums_statuses_changed(const item_ids_t &ids) override;
 private:
     saved_albums_ptr collection;
     panel_modes_t panel_modes;
