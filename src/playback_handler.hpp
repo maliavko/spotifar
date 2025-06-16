@@ -3,7 +3,8 @@
 #pragma once
 
 #include "stdafx.h"
-#include "spotify/devices.hpp"
+#include "spotify/interfaces.hpp"
+#include "spotify/observer_protocols.hpp"
 
 namespace spotifar {
 

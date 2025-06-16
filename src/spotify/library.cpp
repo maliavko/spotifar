@@ -1,4 +1,6 @@
- #include "collection.hpp"
+ #include "library.hpp"
+ #include "requesters.hpp"
+ #include "observer_protocols.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -14,11 +16,11 @@ class saved_tracks_collection: public saved_tracks_t
 {
 public:
     /// @param collection A collection to be updated pointer
-    saved_tracks_collection(api_interface *api, collection *collection):
+    saved_tracks_collection(api_interface *api, library *library):
         saved_tracks_t(api->get_ptr(), "/v1/me/tracks"),
-        collection(collection)
+        library(library)
         {}
-    ~saved_tracks_collection() { collection = nullptr; }
+    ~saved_tracks_collection() { library = nullptr; }
 
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
     {
@@ -27,13 +29,13 @@ public:
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
 
-            collection->tracks.update_saved_items(ids, true);
+            library->tracks.update_saved_items(ids, true);
             return true;
         }
         return false;
     }
 private:
-    collection *collection;
+    library *library;
 };
 
 /// @brief A custom saved-albums-collection specialization, to update collection cache,
@@ -42,11 +44,11 @@ class saved_albums_collection: public saved_albums_t
 {
 public:
     /// @param collection A collection to be updated pointer
-    saved_albums_collection(api_interface *api, collection *collection):
+    saved_albums_collection(api_interface *api, library *library):
         saved_albums_t(api->get_ptr(), "/v1/me/albums"),
-        collection(collection)
+        library(library)
         {}
-    ~saved_albums_collection() { collection = nullptr; }
+    ~saved_albums_collection() { library = nullptr; }
 
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
     {
@@ -55,13 +57,13 @@ public:
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
 
-            collection->albums.update_saved_items(ids, true);
+            library->albums.update_saved_items(ids, true);
             return true;
         }
         return false;
     }
 private:
-    collection *collection;
+    library *library;
 };
 
 /// @brief A custom saved-artists-collection specialization, to update collection cache,
@@ -70,11 +72,11 @@ class followed_artists_collection: public followed_artists_t
 {
 public:
     /// @param collection A collection to be updated pointer
-    followed_artists_collection(api_interface *api, collection *collection):
+    followed_artists_collection(api_interface *api, library *library):
         followed_artists_t(api->get_ptr(), "/v1/me/following", {{ "type", "artist" }}, "artists"),
-        collection(collection)
+        library(library)
         {}
-    ~followed_artists_collection() { collection = nullptr; }
+    ~followed_artists_collection() { library = nullptr; }
 
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
     {
@@ -83,13 +85,13 @@ public:
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
 
-            collection->artists.update_saved_items(ids, true);
+            library->artists.update_saved_items(ids, true);
             return true;
         }
         return false;
     }
 private:
-    collection *collection;
+    library *library;
 };
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -310,7 +312,7 @@ void artists_items_cache_t::statuses_changed_event(const item_ids_t &ids)
 
 
 //-------------------------------------------------------------------------------------------------------------------
-collection::collection(api_interface *api):
+library::library(api_interface *api):
     json_cache(), api_proxy(api),
     tracks(api, [this] { return lock_data(); }),
     albums(api, [this] { return lock_data(); }),
@@ -318,17 +320,17 @@ collection::collection(api_interface *api):
 {
 }
 
-collection::~collection()
+library::~library()
 {
     api_proxy = nullptr;
 }
 
-bool collection::is_track_saved(const item_id_t &track_id, bool force_sync)
+bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
 {
     return tracks.is_item_saved(track_id, force_sync);
 }
 
-bool collection::save_tracks(const item_ids_t &ids)
+bool library::save_tracks(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -350,7 +352,7 @@ bool collection::save_tracks(const item_ids_t &ids)
     return true;
 }
 
-bool collection::remove_saved_tracks(const item_ids_t &ids)
+bool library::remove_saved_tracks(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -372,17 +374,17 @@ bool collection::remove_saved_tracks(const item_ids_t &ids)
     return true;
 }
 
-saved_tracks_ptr collection::get_saved_tracks()
+saved_tracks_ptr library::get_saved_tracks()
 {
     return saved_tracks_ptr(new saved_tracks_collection(api_proxy, this));
 }
 
-bool collection::is_album_saved(const item_id_t &album_id, bool force_sync)
+bool library::is_album_saved(const item_id_t &album_id, bool force_sync)
 {
     return albums.is_item_saved(album_id, force_sync);
 }
 
-bool collection::save_albums(const item_ids_t &ids)
+bool library::save_albums(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -404,7 +406,7 @@ bool collection::save_albums(const item_ids_t &ids)
     return true;
 }
 
-bool collection::remove_saved_albums(const item_ids_t &ids)
+bool library::remove_saved_albums(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -426,17 +428,17 @@ bool collection::remove_saved_albums(const item_ids_t &ids)
     return true;
 }
 
-saved_albums_ptr collection::get_saved_albums()
+saved_albums_ptr library::get_saved_albums()
 {
     return saved_albums_ptr(new saved_albums_collection(api_proxy, this));
 }
 
-bool collection::is_artist_followed(const item_id_t &artist_id, bool force_sync)
+bool library::is_artist_followed(const item_id_t &artist_id, bool force_sync)
 {
     return artists.is_item_saved(artist_id, force_sync);
 }
 
-bool collection::follow_artists(const item_ids_t &ids)
+bool library::follow_artists(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -461,7 +463,7 @@ bool collection::follow_artists(const item_ids_t &ids)
     return true;
 }
 
-bool collection::unfollow_artists(const item_ids_t &ids)
+bool library::unfollow_artists(const item_ids_t &ids)
 {
     http::json_body_builder body;
 
@@ -486,22 +488,22 @@ bool collection::unfollow_artists(const item_ids_t &ids)
     return true;
 }
 
-followed_artists_ptr collection::get_followed_artists()
+followed_artists_ptr library::get_followed_artists()
 {
     return followed_artists_ptr(new followed_artists_collection(api_proxy, this));
 }
 
-bool collection::is_active() const
+bool library::is_active() const
 {
     return api_proxy->is_authenticated();
 }
 
-clock_t::duration collection::get_sync_interval() const
+clock_t::duration library::get_sync_interval() const
 {
     return 1500ms;
 }
 
-bool collection::request_data(data_t &data)
+bool library::request_data(data_t &data)
 {
     data = get();
 
