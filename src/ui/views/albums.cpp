@@ -1,6 +1,7 @@
 #include "albums.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
+#include "spotify/requesters.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -42,7 +43,8 @@ const view::items_t& albums_base_view::get_items()
                 for (const auto &t: *tracks)
                     total_length_ms += t.duration_ms;
 
-            is_saved = api->is_album_saved(album.id);
+            auto *library = api->get_library();
+            is_saved = library->is_album_saved(album.id);
         }
         
         // column C0 - release year
@@ -231,12 +233,14 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             const auto &ids = get_selected_items();
 
             if (auto api = api_proxy.lock(); !ids.empty())
+            {
                 // what to do - like or unlike - with the whole list of items
                 // we decide based on the first item state
-                if (api->is_album_saved(ids[0], true))
-                    api->remove_saved_albums(ids);
+                if (auto *library = api->get_library(); library->is_album_saved(ids[0], true))
+                    library->remove_saved_albums(ids);
                 else
-                    api->save_albums(ids);
+                    library->save_albums(ids);
+            }
 
             return TRUE;
         }
@@ -288,7 +292,8 @@ const view::key_bar_info_t* albums_base_view::get_key_bar_info()
 
     if (auto *user_data = unpack_user_data(item->UserData); auto api = api_proxy.lock())
     {
-        if (api->is_album_saved(user_data->id))
+        auto *library = api->get_library();
+        if (library->is_album_saved(user_data->id))
             key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
         else
             key_bar[{ VK_F8, 0 }] = get_text(MLike);
@@ -368,7 +373,7 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
 {
     if (auto api = api_proxy.lock())
     {
-        collection = api->get_saved_albums();
+        collection = api->get_library()->get_saved_albums();
         collection->fetch();
     }
 
@@ -612,7 +617,7 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
 {
     if (auto api = api_proxy.lock())
     {
-        collection = api->get_saved_albums();
+        collection = api->get_library()->get_saved_albums();
         repopulate();
     }
 
@@ -625,6 +630,11 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
     panel_modes[7].insert_column(&SavedAt, 0);
 
     panel_modes.rebuild();
+}
+
+bool recently_saved_albums_view::repopulate()
+{
+    return collection->fetch(false, true, 3);
 }
 
 config::settings::view_t recently_saved_albums_view::get_default_settings() const

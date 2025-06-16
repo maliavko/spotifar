@@ -1,4 +1,5 @@
 #include "api.hpp"
+#include "requesters.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -35,13 +36,13 @@ bool api::start()
 {
     // the order matters
     auth = std::make_unique<auth_cache>(this, config::get_client_id(), config::get_client_secret(), config::get_localhost_port());
-    collection = std::make_unique<spotify::collection>(this);
+    library = std::make_unique<spotify::library>(this);
     devices = std::make_unique<devices_cache>(this);
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
     releases = std::make_unique<recent_releases>(this);
 
-    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), releases.get(), collection.get() });
+    caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), releases.get(), library.get() });
 
     auto ctx = config::lock_settings();
 
@@ -115,21 +116,6 @@ std::vector<artist_t> api::get_artists(const item_ids_t &ids)
 {
     return request_item(several_items_requester<artist_t, 1, std::chrono::weeks>(
         "/v1/artists", ids, 50, "artists"), get_ptr());
-}
-
-bool api::is_track_saved(const item_id_t &track_id, bool force_sync)
-{
-    return collection->is_track_saved(track_id, force_sync);
-}
-
-bool api::is_album_saved(const item_id_t &album_id, bool force_sync)
-{
-    return collection->is_album_saved(album_id, force_sync);
-}
-
-bool api::is_artist_followed(const item_id_t &artist_id, bool force_sync)
-{
-    return collection->is_artist_followed(artist_id, force_sync);
 }
 
 artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
@@ -238,7 +224,7 @@ void api::start_playback(const string &context_uri, const string &track_uri,
         }
     });
     
-    start_playback_raw(body.str(), device_id);
+    start_playback_base(body.str(), device_id);
 }
 
 void api::start_playback(const std::vector<string> &uris, const item_id_t &device_id)
@@ -252,7 +238,7 @@ void api::start_playback(const std::vector<string> &uris, const item_id_t &devic
         body.insert("uris", uris);
     });
 
-    start_playback_raw(body.str(), device_id);
+    start_playback_base(body.str(), device_id);
 }
 
 void api::start_playback(const simplified_album_t &album, const simplified_track_t &track)
@@ -267,7 +253,7 @@ void api::start_playback(const simplified_playlist_t &playlist, const simplified
 
 void api::resume_playback(const item_id_t &device_id)
 {
-    return start_playback_raw("", device_id);
+    return start_playback_base("", device_id);
 }
 
 void api::toggle_playback(const item_id_t &device_id)
@@ -485,7 +471,7 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
         });
 }
 
-void api::start_playback_raw(const string &body, const item_id_t &device_id)
+void api::start_playback_base(const string &body, const item_id_t &device_id)
 {
     Params params = {};
     if (!device_id.empty())

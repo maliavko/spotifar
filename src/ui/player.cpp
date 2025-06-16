@@ -683,11 +683,12 @@ bool player::on_like_btn_input_received(void *input_record)
     if (playback.is_empty())
         return true;
     
-    bool is_saved = api->is_track_saved(playback.item.id, true);
+    auto *library = api->get_library();
+    bool is_saved = library->is_track_saved(playback.item.id, true);
     if (is_saved)
-        api->remove_saved_tracks({ playback.item.id });
+        library->remove_saved_tracks({ playback.item.id });
     else
-        api->save_tracks({ playback.item.id });
+        library->save_tracks({ playback.item.id });
     
     update_like_btn(is_saved);
 
@@ -701,7 +702,8 @@ bool player::on_like_btn_style_applied(void *dialog_item_colors)
     auto *dic = reinterpret_cast<FarDialogItemColors*>(dialog_item_colors);
     auto api = api_proxy.lock();
     const auto &playback = api->get_playback_state();
-    if (!playback.is_empty() && api->is_track_saved(playback.item.id, true))
+    auto *library = api->get_library();
+    if (!playback.is_empty() && library->is_track_saved(playback.item.id, true))
     {
         dic->Colors->ForegroundColor = colors::black;
     }
@@ -852,7 +854,8 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
     if (auto api = api_proxy.lock())
     {
         const auto &state = api->get_playback_state();
-        update_like_btn(!state.is_empty() && api->is_track_saved(state.item.id, true));
+        auto *library = api->get_library();
+        update_like_btn(!state.is_empty() && library->is_track_saved(state.item.id, true));
     }
 }
 

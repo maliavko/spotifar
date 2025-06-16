@@ -1,5 +1,7 @@
 #include "auth.hpp"
 #include "lng.hpp"
+#include "requesters.hpp"
+#include "observer_protocols.hpp"
 
 namespace spotifar { namespace spotify {
 

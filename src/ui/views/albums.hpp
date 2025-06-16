@@ -4,10 +4,7 @@
 
 #include "stdafx.h"
 #include "view.hpp"
-#include "spotify/common.hpp"
-#include "spotify/history.hpp"
-#include "spotify/releases.hpp"
-#include "spotify/collection.hpp"
+#include "spotify/observer_protocols.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -167,7 +164,7 @@ class recently_saved_albums_view: public albums_base_view
 public:
     recently_saved_albums_view(HANDLE panel, api_weak_ptr_t api);
 protected:
-    bool repopulate() { return collection->fetch(false, true, 3); }
+    bool repopulate();
     
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;

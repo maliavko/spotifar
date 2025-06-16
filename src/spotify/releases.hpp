@@ -2,9 +2,7 @@
 #define RELEASES_HPP_DFCA9F47_33C0_4CF0_8C6B_11103CA6E2FB
 #pragma once
 
-#include "stdafx.h"
-#include "common.hpp"
-#include "items.hpp"
+#include "interfaces.hpp"
 #include "cache.hpp"
 
 namespace spotifar { namespace spotify {
@@ -51,12 +49,6 @@ private:
 
     bool is_in_sync = false; // a syncing procedure is in action flag
     followed_artists_ptr artists; // collection of followed artists to go over
-};
-
-struct releases_observer: public BaseObserverProtocol
-{
-    /// @brief The event is thrown when the recent releases seach procedure is finished
-    virtual void on_releases_sync_finished(const recent_releases_t releases) {}
 };
 
 } // namespace spotify

@@ -1,4 +1,6 @@
 #include "playback.hpp"
+#include "requesters.hpp"
+#include "observer_protocols.hpp"
 
 namespace spotifar { namespace spotify {
 

@@ -2,7 +2,7 @@
 #define AUTH_HPP_EB78B9BD_C144_43F0_9A9F_EB678C5C23AA
 #pragma once
 
-#include "common.hpp"
+#include "interfaces.hpp"
 #include "cache.hpp"
 
 namespace spotifar { namespace spotify {
@@ -38,13 +38,6 @@ private:
 
     httplib::Server auth_server;
     api_interface *api_proxy;
-};
-
-struct auth_observer: public BaseObserverProtocol
-{
-    /// @brief An auth status has been changed. For the first login `is_renewal` flag
-    /// will be `false`
-    virtual void on_auth_status_changed(const auth_t &auth, bool is_renewal) {}
 };
 
 } // namespace spotify

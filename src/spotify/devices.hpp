@@ -2,9 +2,9 @@
 #define DEVICES_HPP_C39A5DF6_0432_4CF0_ADA2_10DA51FB40DC
 #pragma once
 
-#include "common.hpp"
 #include "items.hpp"
 #include "cache.hpp"
+#include "interfaces.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -22,12 +22,6 @@ protected:
 
 private:
     api_interface *api_proxy;
-};
-
-struct devices_observer: public BaseObserverProtocol
-{
-    /// @brief A list of available devices has been changed
-    virtual void on_devices_changed(const devices_t &devices) {}
 };
 
 } // namespace spotify

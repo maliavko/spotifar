@@ -1,7 +1,7 @@
 #include "tracks.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
-#include "spotify/api.hpp"
+#include "spotify/requesters.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -50,9 +50,10 @@ const view::items_t& tracks_base_view::get_items()
         if (auto api = api_proxy.lock())
         {
             const auto &pstate = api->get_playback_state();
+            auto *library = api->get_library();
             is_selected = pstate.item && pstate.item.id == track.id;
 
-            is_saved = api->is_track_saved(track.id);
+            is_saved = library->is_track_saved(track.id);
         }
         
         // column C0 - is explicit lyrics
@@ -218,12 +219,14 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
             const auto &ids = get_selected_items();
 
             if (auto api = api_proxy.lock(); !ids.empty())
+            {
                 // what to do - like or unlike - with the whole list  of items
                 // we decide based on the first item state
-                if (api->is_track_saved(ids[0], true))
-                    api->remove_saved_tracks(ids);
+                if (auto *library = api->get_library(); library->is_track_saved(ids[0], true))
+                    library->remove_saved_tracks(ids);
                 else
-                    api->save_tracks(ids);
+                    library->save_tracks(ids);
+            }
 
             return TRUE;
         }
@@ -360,7 +363,8 @@ const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
     auto *user_data = unpack_user_data(item->UserData);
     if (auto api = api_proxy.lock(); user_data != nullptr)
     {
-        if (api->is_track_saved(user_data->id))
+        auto *library = api->get_library();
+        if (library->is_track_saved(user_data->id))
             key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
         else
             key_bar[{ VK_F8, 0 }] = get_text(MLike);
@@ -649,7 +653,7 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
 {
     if (auto api = api_proxy.lock())
     {
-        collection = api->get_saved_tracks();
+        collection = api->get_library()->get_saved_tracks();
         repopulate();
     }
 
@@ -668,6 +672,11 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
 saved_tracks_view::~saved_tracks_view()
 {
     utils::events::stop_listening<playback_observer>(this);
+}
+
+bool saved_tracks_view::repopulate()
+{
+    return collection->fetch(false, true, 1);
 }
 
 config::settings::view_t saved_tracks_view::get_default_settings() const
@@ -828,7 +837,7 @@ recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_pt
 {
     if (auto api = api_proxy.lock())
     {
-        collection = api->get_saved_tracks();
+        collection = api->get_library()->get_saved_tracks();
         collection->fetch(false, true, 3);
     }
 

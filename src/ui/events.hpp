@@ -3,8 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "spotify/items.hpp"
-#include "spotify/common.hpp"
+#include "spotify/interfaces.hpp"
 #include "ui/views/view.hpp"
 
 namespace spotifar { namespace ui {

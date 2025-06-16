@@ -2,9 +2,7 @@
 #define PLAYER_DIALOG_HPP_C5FAC22D_B92B_41D1_80F0_B5A6F708F0C3
 
 #include "stdafx.h"
-#include "spotify/common.hpp"
-#include "spotify/playback.hpp"
-#include "spotify/devices.hpp"
+#include "spotify/observer_protocols.hpp"
 #include "controls.hpp"
 #include "playback_handler.hpp"
 

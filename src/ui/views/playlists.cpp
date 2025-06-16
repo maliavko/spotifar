@@ -1,6 +1,7 @@
 #include "playlists.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
+#include "spotify/requesters.hpp"
 
 namespace spotifar { namespace ui {
 
