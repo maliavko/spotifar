@@ -33,12 +33,13 @@ api::~api()
 
 bool api::start()
 {
+    // the order matters
     auth = std::make_unique<auth_cache>(this, config::get_client_id(), config::get_client_secret(), config::get_localhost_port());
+    collection = std::make_unique<spotify::collection>(this);
     devices = std::make_unique<devices_cache>(this);
     history = std::make_unique<play_history>(this);
     playback = std::make_unique<playback_cache>(this);
     releases = std::make_unique<recent_releases>(this);
-    collection = std::make_unique<spotify::collection>(this);
 
     caches.assign({ auth.get(), playback.get(), devices.get(), history.get(), releases.get(), collection.get() });
 
@@ -126,15 +127,9 @@ bool api::is_album_saved(const item_id_t &album_id, bool force_sync)
     return collection->is_album_saved(album_id, force_sync);
 }
 
-followed_artists_ptr api::get_followed_artists()
+bool api::is_artist_followed(const item_id_t &artist_id, bool force_sync)
 {
-    return followed_artists_ptr(new followed_artists_t(
-        get_ptr(),
-        "/v1/me/following", {
-            { "type", "artist" }
-        },
-        "artists"
-    ));
+    return collection->is_artist_followed(artist_id, force_sync);
 }
 
 artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)

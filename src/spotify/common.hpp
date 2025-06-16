@@ -88,12 +88,17 @@ public:
     virtual bool save_albums(const item_ids_t &ids) = 0;
 
     virtual bool remove_saved_albums(const item_ids_t &ids) = 0;
+    
+    virtual bool is_artist_followed(const item_id_t &album_id, bool force_sync = false) = 0;
+
+    virtual bool follow_artists(const item_ids_t &ids) = 0;
+
+    virtual bool unfollow_artists(const item_ids_t &ids) = 0;
+
+    virtual auto get_followed_artists() -> followed_artists_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/get-followed
-    virtual auto get_followed_artists() -> followed_artists_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artist
     virtual auto get_artist(const item_id_t &artist_id) -> artist_t = 0;

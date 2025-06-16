@@ -46,8 +46,12 @@ public:
     bool remove_saved_albums(const item_ids_t &ids) override { return collection->remove_saved_albums(ids); }
     auto get_saved_albums() -> saved_albums_ptr override { return collection->get_saved_albums(); }
     
+    bool is_artist_followed(const item_id_t &album_id, bool force_sync = false) override;
+    bool follow_artists(const item_ids_t &ids) override { return collection->follow_artists(ids); }
+    bool unfollow_artists(const item_ids_t &ids) override { return collection->unfollow_artists(ids); }
+    auto get_followed_artists() -> followed_artists_ptr override { return collection->get_followed_artists(); }
+    
     // library api interface
-    auto get_followed_artists() -> followed_artists_ptr override;
     auto get_artist(const item_id_t &artist_id) -> artist_t override;
     auto get_artists(const item_ids_t &ids) -> std::vector<artist_t> override;
     auto get_artist_albums(const item_id_t &artist_id) -> artist_albums_ptr override;
