@@ -2,15 +2,22 @@
 #define PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
 #pragma
 
-#include "abstract.hpp"
-#include "playback_handler.hpp"
-#include "spotify/api.hpp"
 #include "spotify/observer_protocols.hpp"
-#include "ui/player.hpp"
 #include "ui/events.hpp"
-#include "ui/notifications.hpp"
 
 namespace spotifar {
+
+// ideally, it should be in a separate file, but the usage of this class
+// is very limited, so not that many dependencies on the class, dose not
+// create a lot of hassle to recompile
+struct plugin_interface
+{
+    virtual ~plugin_interface() {}
+
+    virtual bool is_player_visible() const = 0;
+
+    virtual auto get_api() -> spotify::api_weak_ptr_t = 0;
+};
 
 class plugin:
     public plugin_interface,
@@ -24,8 +31,8 @@ public:
     plugin();
     ~plugin();
 
-    bool is_player_visible() const override { return player->is_visible(); }
-    spotify::api_weak_ptr_t get_api() override { return api; }
+    bool is_player_visible() const override;
+    auto get_api() -> spotify::api_weak_ptr_t override;
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
@@ -53,8 +60,8 @@ protected:
     void on_request_started(const string &url) override;
     void on_request_finished(const string &url) override;
     void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
-    void on_playback_command_failed(const string &message) override;
-    void on_collection_fetching_failed(const string &message) override;
+    void on_playback_command_failed(const string &msg) override;
+    void on_collection_fetching_failed(const string &msg) override;
 private:
     std::mutex sync_worker_mutex; // is locked all the way until worker is active
     std::atomic<bool> is_worker_listening = false;

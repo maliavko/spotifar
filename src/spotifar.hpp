@@ -3,7 +3,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include "abstract.hpp"
 
 namespace spotifar {
 

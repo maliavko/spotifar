@@ -50,6 +50,67 @@ namespace spotifar
     using std::string;
     using std::wstring;
     using namespace std::literals;
+
+    struct plugin_interface;
+
+    class plugin;
+    class playback_handler;
+    
+    using plugin_ptr_t = std::shared_ptr<plugin_interface>;
+    using plugin_weak_ptr_t = std::weak_ptr<plugin_interface>;
+
+    namespace spotify
+    {
+        // interfaces
+        struct collection_interface;
+        struct api_interface;
+        struct library_interface;
+        struct cached_data_abstract;
+
+        // classes
+        class http_cache;
+        struct data_item_t;
+        class library;
+        class playback_cache;
+        class devices_cache;
+        class auth_cache;
+        class play_history;
+        class recent_releases;
+        class api;
+
+        using api_ptr_t         = std::shared_ptr<api_interface>;
+        using api_weak_ptr_t    = std::weak_ptr<api_interface>;
+        using collection_ptr    = std::shared_ptr<collection_interface>;
+        using library_ptr       = std::shared_ptr<library_interface>;
+        using item_id_t         = string;
+        using item_ids_t        = std::vector<item_id_t>;
+    }
+
+    namespace ui
+    {
+        class player;
+        class notifications;
+    }
+
+    namespace utils
+    {
+        using clock_t = std::chrono::system_clock;
+
+        namespace json
+        {
+            using rapidjson::Document;
+            using rapidjson::Value;
+            using rapidjson::StringBuffer;
+            using rapidjson::Writer;
+            using rapidjson::SizeType;
+            using rapidjson::Pointer;
+            using rapidjson::PrettyWriter;
+            using rapidjson::kObjectType;
+            using rapidjson::kArrayType;
+            using rapidjson::ParseResult;
+            using Allocator = typename Document::AllocatorType;
+        }
+    }
 }
 
 #endif //STDAFX_H_1C7F58A6_19FE_42B6_BD4D_300A869FD713

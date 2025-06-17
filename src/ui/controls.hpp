@@ -2,8 +2,6 @@
 #define CONTROLS_HPP_574B4993_6004_411B_89E4_E49A4A067D54
 #pragma once
 
-#include "utils.hpp"
-
 namespace spotifar { namespace ui {
 
 using utils::clock_t;
@@ -55,15 +53,15 @@ struct slider_int_descriptor: public descriptor_abstract<int>
         value(0), offset(0), step(step), low(low), high(high)
         {}
 
-    virtual const int get_value() const { return value; }
-    virtual const int get_offset_value() const { return value + offset; }
+    virtual auto get_value() const -> const int { return value; }
+    virtual auto get_offset_value() const -> const int { return value + offset; }
     virtual void clear_offset() { offset = 0; }
 
-    virtual const int next() { return set_offset_value(step); }
-    virtual const int prev() { return set_offset_value(-step); }
+    virtual auto next() -> const int { return set_offset_value(step); }
+    virtual auto prev() -> const int { return set_offset_value(-step); }
     
     virtual void set_value(const int &v) { value = v; }
-    virtual const int set_offset_value(const int &s);
+    virtual auto set_offset_value(const int &s) -> const int;
 };
 
 
@@ -81,8 +79,8 @@ struct cycled_set_descriptor: public descriptor_abstract<T>
         value_idx = offset_idx = 0;
     }
 
-    virtual const T get_value() const { return values.at(value_idx); }
-    virtual const T get_offset_value() const { return values.at(offset_idx); }
+    virtual auto get_value() const -> const T { return values.at(value_idx); }
+    virtual auto get_offset_value() const -> const T { return values.at(offset_idx); }
     
     virtual void clear_offset() { offset_idx = value_idx; }
     virtual void set_value(const T &v)
@@ -128,12 +126,12 @@ public:
 public:
     delayed_control(T descr): descr(descr) {}
 
-    const value_t next(int steps = 1);
-    const value_t prev(int steps = 1);
+    auto next(int steps = 1) -> const value_t;
+    auto prev(int steps = 1) -> const value_t;
 
     bool is_waiting() const { return descr.is_waiting(); }
     void set_value(const value_t &v) { descr.set_value(v); }
-    const value_t get_offset_value() const { return descr.get_offset_value(); }
+    auto get_offset_value() const -> const value_t { return descr.get_offset_value(); }
 
     /// @brief Checks, whether the offset delay is expired and if so,
     /// applies the offset and calls the `delegate`

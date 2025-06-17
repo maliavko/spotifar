@@ -19,18 +19,6 @@ class sync_collection;
 template<class T, int N = 0, class C = utils::clock_t::duration>
 class async_collection;
 
-struct collection_interface;
-struct library_interface;
-struct api_interface;
-
-
-using collection_ptr = std::shared_ptr<collection_interface>;
-
-using library_ptr = std::shared_ptr<library_interface>;
-
-using api_ptr_t = std::shared_ptr<api_interface>;
-
-using api_weak_ptr_t = std::weak_ptr<api_interface>;
 
 using followed_artists_t = sync_collection<artist_t, -1>;
 using followed_artists_ptr = std::shared_ptr<followed_artists_t>;

@@ -1,5 +1,12 @@
 #include "api.hpp"
 #include "requesters.hpp"
+#include "library.hpp"
+#include "releases.hpp"
+#include "auth.hpp"
+#include "playback.hpp"
+#include "devices.hpp"
+#include "releases.hpp"
+#include "history.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -25,10 +32,12 @@ static auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::resul
 //----------------------------------------------------------------------------------------------
 api::api(): requests_pool(10), resyncs_pool(3)
 {
+    api_responses_cache = std::make_unique<http_cache>();
 }
 
 api::~api()
 {
+    api_responses_cache.reset();
     caches.clear();
 }
 
@@ -50,7 +59,7 @@ bool api::start()
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->read(*ctx); });
 
     // initializing http responses cache
-    api_responses_cache.start();
+    api_responses_cache->start();
 
     return true;
 }
@@ -64,7 +73,7 @@ void api::shutdown()
     requests_pool.purge();
     resyncs_pool.purge();
 
-    api_responses_cache.shutdown();
+    api_responses_cache->shutdown();
 }
 
 void api::tick()
@@ -74,6 +83,11 @@ void api::tick()
             caches[idx]->resync();
         }, BS::pr::high);
     future.get();
+}
+
+bool api::is_authenticated() const
+{
+    return auth->is_authenticated();
 }
 
 const auth_cache::data_t& api::get_auth_data(bool force_resync)
@@ -99,6 +113,11 @@ const devices_cache::data_t& api::get_available_devices(bool force_resync)
     devices->resync(force_resync);
     return devices->get();
 }
+
+library_interface* api::get_library()
+{
+    return library.get();
+};
 
 const play_history::data_t& api::get_play_history(bool force_resync)
 {
@@ -544,7 +563,7 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
 bool api::is_request_cached(const string &url) const
 {
     string u = http::trim_domain(url);
-    return api_responses_cache.is_cached(u) && api_responses_cache.get(u).is_valid();
+    return api_responses_cache->is_cached(u) && api_responses_cache->get(u).is_valid();
 }
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
@@ -553,9 +572,9 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
     string url = http::trim_domain(request_url);
 
     // we have a cache for the requested url and it is still valid
-    if (api_responses_cache.is_cached(url))
+    if (api_responses_cache->is_cached(url))
     {
-        const auto &cache = api_responses_cache.get(url);
+        const auto &cache = api_responses_cache->get(url);
         if (cache)
         {
             Result res(std::make_unique<Response>(), Error::Success);
@@ -576,11 +595,11 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
 
             // caching only requests which have ETag or `cache-for` instruction
             if (!etag.empty() || cache_for > clock_t::duration::zero())
-                api_responses_cache.store(url, res->body, etag, cache_for);
+                api_responses_cache->store(url, res->body, etag, cache_for);
         }
         else if (res->status == NotModified_304)
         {
-            const auto &cache = api_responses_cache.get(url);
+            const auto &cache = api_responses_cache->get(url);
 
             // replacing empty body with the cached one, so the client
             // does not see the difference
@@ -589,7 +608,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
             // the response is still valid, so caching for a session or any other
             // time if needed
             if (cache_for != clock_t::duration::zero())
-                api_responses_cache.store(url, cache.body, cache.etag, cache_for);
+                api_responses_cache->store(url, cache.body, cache.etag, cache_for);
         }
     }
     else if (res)
@@ -618,7 +637,7 @@ httplib::Result api::put(const string &request_url, const string &body)
     if (http::is_success(res))
     {
         // invalidate all cached GET responses with the same base url
-        api_responses_cache.invalidate(request_url);
+        api_responses_cache->invalidate(request_url);
     }
 
     return res;
@@ -631,7 +650,7 @@ httplib::Result api::del(const string &request_url, const string &body)
     if (http::is_success(res))
     {
         // invalidate all the cached repsonses with the same base urls
-        api_responses_cache.invalidate(request_url);
+        api_responses_cache->invalidate(request_url);
     }
 
     return res;
@@ -644,7 +663,7 @@ httplib::Result api::post(const string &request_url, const string &body)
     if (http::is_success(res))
     {
         // invalidate all the cached repsonses with the same base urls
-        api_responses_cache.invalidate(request_url);
+        api_responses_cache->invalidate(request_url);
     }
 
     return res;

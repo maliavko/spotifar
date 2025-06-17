@@ -1,6 +1,7 @@
 #include "ui/panel.hpp"
 #include "ui/dialogs/menus.hpp"
 #include "ui/views/root.hpp"
+#include "plugin.h"
 #include "lng.hpp"
 
 namespace spotifar { namespace ui {
