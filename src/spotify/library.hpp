@@ -46,7 +46,8 @@ public:
     bool resync(statuses_container_t& c);
 
     /// @brief Sets `status` saving flag to all the given `ids` items in cache
-    void update_saved_items(const item_ids_t &ids, bool status);
+    /// @param full_resync signals, that the list of `ids` is the full new amount of saved items
+    void update_saved_items(const item_ids_t &ids, bool status, bool full_resync = false);
 
     /// @brief Returns items `item_id` saving status if known, otherwise `false`
     /// and add `item_id` to the queue for requesting
