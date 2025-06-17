@@ -158,17 +158,25 @@ void http_cache::store(const string &url, const cache_entry &entry)
     cached_responses[url] = entry;
 }
 
-void http_cache::invalidate(const string &url_part)
+void http_cache::invalidate(const string &url)
 {
+    const auto &trimmed_url = utils::http::trim_params(url);
+
     std::lock_guard lock(guard);
-    for (auto it = cached_responses.begin(); it != cached_responses.end();)
+    for (auto it = cached_responses.begin(); it != cached_responses.end(); ++it)
     {
-        auto pos = it->first.find(url_part);
+        auto pos = it->first.find(trimmed_url);
         if (pos != string::npos)
-            cached_responses.erase(it++);
-        else
-            ++it;
+            it->second.cached_until = {};
     }
+    // for (auto it = cached_responses.begin(); it != cached_responses.end();)
+    // {
+    //     auto pos = it->first.find(trimmed_url);
+    //     if (pos != string::npos)
+    //         cached_responses.erase(it++);
+    //     else
+    //         ++it;
+    // }
 }
 
 void http_cache::clear_all()
