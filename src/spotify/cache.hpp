@@ -9,6 +9,9 @@
 namespace spotifar { namespace spotify {
 
 namespace json = utils::json;
+
+using clock_t = utils::clock_t;
+using time_point = clock_t::time_point;
 using config::persistent_data;
 using settings_ctx = config::settings_context;
 
@@ -25,6 +28,7 @@ struct cached_data_abstract: public config::persistent_data_abstract
     /// @brief Return true if the cache should not be resynced
     virtual bool is_active() const { return true; }
 };
+
 
 /// @brief A class to store a json value in the persistent storage
 /// @tparam T - an item type, which implements json serialization
@@ -49,9 +53,6 @@ protected:
 };
 
 
-using clock_t = utils::clock_t;
-using time_point = clock_t::time_point;
-
 /// @brief A class to hold a timestamp and store it in the far settings storage
 class timestamp_value: public persistent_data<time_point>
 {
@@ -70,6 +71,7 @@ protected:
         ctx.set_int64(key, data.time_since_epoch().count());
     }
 };
+
 
 /// @brief Class implements a functionality to sync, cache and store a json data.
 /// The interface provides a way to specify the data request method, caching interval,
@@ -121,7 +123,7 @@ public:
 
     /// @brief Sets the cache's expiration time to zero, which leads for the forced
     /// resync the next time the resync procedure is happening
-    void invalidate() { expires_at.set({}); }
+    void invalidate(const clock_t::duration &in = {});
 protected:
     /// @brief The class calls the method when the data should be resynced. An implementation
     /// should return true if the data was successfully resynced, and put the data to the 
@@ -244,6 +246,12 @@ void json_cache<T>::patch(json_cache<T>::patch_handler_t handler)
 }
 
 template<typename T>
+void json_cache<T>::invalidate(const clock_t::duration &in)
+{
+    expires_at.set(clock_t::now() + in);
+}
+
+template<typename T>
 void json_cache<T>::apply_patches(T &item)
 {
     if (patches.empty()) return;
@@ -266,6 +274,7 @@ void json_cache<T>::apply_patches(T &item)
     // unpacking the item back to the data
     from_json(doc, item);
 }
+
 
 /// @brief A class-helper for caching http responses from spotify server. Holds
 /// the information about ETags and validity time of the responses
@@ -312,7 +321,7 @@ public:
     auto get(const string &url) const -> const cache_entry&;
 
     /// @brief Invalidates stored data for the `url` or range of urls, matching given `url part`
-    void invalidate(const string &url_part);
+    void invalidate(const string &url);
 
     /// @brief Invalidates all the cache
     void clear_all();
