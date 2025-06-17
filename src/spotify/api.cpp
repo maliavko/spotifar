@@ -38,7 +38,6 @@ api::api(): requests_pool(10), resyncs_pool(3)
 api::~api()
 {
     api_responses_cache.reset();
-    caches.clear();
 }
 
 bool api::start()
@@ -67,7 +66,16 @@ bool api::start()
 void api::shutdown()
 {
     auto ctx = config::lock_settings();
-    std::for_each(caches.begin(), caches.end(), [ctx](auto &c) { c->shutdown(*ctx); });
+    std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
+    
+    caches.clear();
+
+    auth.reset();
+    library.reset();
+    devices.reset();
+    history.reset();
+    playback.reset();
+    releases.reset();
 
     // removing unfinished tasks from the queue
     requests_pool.purge();
