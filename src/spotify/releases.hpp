@@ -4,6 +4,7 @@
 
 #include "interfaces.hpp"
 #include "cache.hpp"
+#include "observer_protocols.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -17,7 +18,9 @@ namespace spotifar { namespace spotify {
 /// request depending on the activity/intensity of the plugin requests. There is no delay
 /// between requests, if the request's results was cached previously. If the process
 /// finishes successfully eventually, the list is cached for 24 hours.
-class recent_releases: public json_cache<recent_releases_t>
+class recent_releases:
+    public json_cache<recent_releases_t>,
+    public collection_observer
 {
 public:
     inline static const auto release_age = std::chrono::weeks{2};
@@ -25,11 +28,16 @@ public:
     recent_releases(api_interface *api);
     ~recent_releases();
 protected:
+    void queue_artists(const item_ids_t &);
+
     // json_cache's interface
     bool is_active() const override;
     bool request_data(data_t &data) override;
     auto get_sync_interval() const -> clock_t::duration override;
     void on_data_synced(const data_t &data, const data_t &prev_data) override;
+
+    // collections observer
+    void on_artists_statuses_changed(const item_ids_t &) override;
 private:
     api_interface *api_proxy;
     BS::light_thread_pool pool;
