@@ -63,6 +63,7 @@ public:
 
 protected:
     friend intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2);
+    
     bool handle_dlg_proc_event(intptr_t msg_id, intptr_t control_id, void *param);
     void update_track_bar(int duration, int progress);
     void update_volume_bar(int volume);

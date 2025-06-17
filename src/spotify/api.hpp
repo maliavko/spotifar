@@ -3,12 +3,6 @@
 #pragma once
 
 #include "interfaces.hpp"
-#include "playback.hpp"
-#include "devices.hpp"
-#include "auth.hpp"
-#include "history.hpp"
-#include "releases.hpp"
-#include "library.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -24,16 +18,16 @@ public:
     void shutdown();
     void tick();
 
-    bool is_authenticated() const override { return auth->is_authenticated(); }
+    bool is_authenticated() const override;
     
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
 
-    auto get_auth_data(bool force_resync = false) -> const auth_cache::data_t& override;
-    auto get_play_history(bool force_resync = false) -> const play_history::data_t& override;
-    auto get_available_devices(bool force_resync = false) -> const devices_cache::data_t& override;
-    auto get_playback_state(bool force_resync = false) -> const playback_cache::data_t& override;
-    auto get_recent_releases(bool force_resync = false) -> const recent_releases::data_t& override;
-    auto get_library() -> library_interface* override { return library.get(); };
+    auto get_auth_data(bool force_resync = false) -> const auth_t& override;
+    auto get_play_history(bool force_resync = false) -> const history_items_t& override;
+    auto get_available_devices(bool force_resync = false) -> const devices_t& override;
+    auto get_playback_state(bool force_resync = false) -> const playback_state_t& override;
+    auto get_recent_releases(bool force_resync = false) -> const recent_releases_t& override;
+    auto get_library() -> library_interface* override;
     
     // library api interface
 
@@ -86,9 +80,10 @@ protected:
 private:
     BS::light_thread_pool requests_pool;
     BS::light_thread_pool resyncs_pool;
-    http_cache api_responses_cache;
 
     // caches
+
+    std::unique_ptr<http_cache> api_responses_cache;
 
     std::unique_ptr<library> library;
     std::unique_ptr<playback_cache> playback;

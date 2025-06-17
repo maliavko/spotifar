@@ -1,6 +1,7 @@
 #include "playback_handler.hpp"
 #include "config.hpp"
 #include "lng.hpp"
+#include "spotify/interfaces.hpp"
 #include "ui/dialogs/menus.hpp"
 #include "ui/events.hpp"
 

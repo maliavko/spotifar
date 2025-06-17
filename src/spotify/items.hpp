@@ -12,17 +12,15 @@ namespace json = utils::json;
 
 using json::from_json;
 using json::to_json;
-using item_id_t = string;
-using item_ids_t = std::vector<item_id_t>;
 
 static const item_id_t invalid_id = "";
 
 /// @brief Returns spotify item's uri, like "spotify:track:6rqhFgbbKwnb9MLmUQDhG6"
 /// @param item_type_name e.g. "track", "album", "playlist"
 /// @param id spotify item id
-string make_item_uri(const string &item_type_name, const string &id);
+string make_item_uri(const string &item_type_name, const item_id_t &id);
 
-const string CollectionUri = "spotify:collection";
+const string COLLECTION_URI = "spotify:collection";
 
 struct data_item_t
 {

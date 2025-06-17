@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "view.hpp"
+#include "spotify/interfaces.hpp"
 #include "spotify/observer_protocols.hpp"
 
 namespace spotifar { namespace ui {
