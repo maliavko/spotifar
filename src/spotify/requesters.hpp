@@ -122,8 +122,7 @@ public:
     /// @param params get-request parameters to infuse into given `url`
     /// @param fieldname in case the data has a nested level, this is the field name
     /// to use on the parsed body
-    item_requester(const string &url, httplib::Params params = {},
-                   const string &fieldname = ""):
+    item_requester(const string &url, httplib::Params params = {}, const string &fieldname = ""):
         url(httplib::append_query_params(url, params)),
         fieldname(fieldname)
         {}
@@ -133,9 +132,12 @@ public:
 
     auto get_url() const -> const string& { return url; }
 
-    /// @brief Retuns the http-result object
+    /// @brief Returns the http-result object
     /// @note result is valid only after a proper request
     auto get_response() const -> const httplib::Result& { return response; }
+
+    /// @brief Tells, whether the response is different from the cached one
+    bool is_modified() const { return response && response->status != httplib::NotModified_304; }
 
     /// @brief Checks whether the requested result has already been cached and
     /// cab be obtained quickly without a delay
@@ -433,6 +435,11 @@ public:
     using base_t::requester_t;
     using base_t::requester_ptr;
     using base_t::collection_abstract;
+    
+    bool is_modified() const override
+    {
+        return modified;
+    }
 protected:
     bool fetch_items(api_weak_ptr_t api, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) override
@@ -449,9 +456,11 @@ protected:
                     get_fetching_error(requester));
                 return false;
             }
+
+            if (requester->is_modified())
+                modified = true;
             
             auto total = requester->get_total();
-
             if (pages_to_request > 0)
                 total = std::min(total, pages_to_request * max_limit);
 
@@ -480,6 +489,8 @@ protected:
     {
         return requester_ptr(new requester_t(this->url, this->params, this->fieldname));
     }
+private:
+    bool modified = false;
 };
 
 
@@ -497,6 +508,11 @@ public:
     using base_t::requester_t;
     using base_t::requester_ptr;
     using base_t::collection_abstract;
+    
+    bool is_modified() const override
+    {
+        return modified;
+    }
 protected:
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) override
@@ -511,6 +527,9 @@ protected:
                 get_fetching_error(requester));
             return false;
         }
+        
+        if (requester->is_modified())
+            modified = true;
 
         size_t total = requester->get_total();
         if (total == 0) // if there is no entries, the results is still valid
@@ -545,6 +564,9 @@ protected:
                 // library later
                 if (!requester->execute(api->get_ptr(), only_cached))
                     throw std::runtime_error(get_fetching_error(requester));
+                
+                if (requester->get_response()->status != httplib::NotModified_304)
+                    modified = true;
                 
                 result[idx] = requester->get();
 
@@ -589,6 +611,8 @@ protected:
 
         return requester_ptr(new requester_t(this->url, updated_params, this->fieldname));
     }
+private:
+    bool modified = false;
 };
 
 } // namespace spotify

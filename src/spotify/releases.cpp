@@ -10,15 +10,23 @@ recent_releases::recent_releases(api_interface *api):
     json_cache<data_t>(L"recent_releases"), api_proxy(api), pool(1)
 {
     artists = api_proxy->get_library()->get_followed_artists();
+
+    utils::events::start_listening<collection_observer>(this);
 }
 
 recent_releases::~recent_releases()
 {
-    stop_flag = true;
-    cv.notify_all();
+    utils::events::stop_listening<collection_observer>(this);
+
+    if (!stop_flag)
+    {
+        pool.purge();
+
+        stop_flag = true;
+        cv.notify_all();
+    }
     
     api_proxy = nullptr;
-    pool.purge();
 }
 
 bool recent_releases::is_active() const
@@ -30,6 +38,60 @@ clock_t::duration recent_releases::get_sync_interval() const
 {
     // the finally created cache is saved for one day
     return 24h;
+}
+
+void recent_releases::queue_artists(const item_ids_t &ids)
+{
+    pool.detach_sequence<size_t>(0, ids.size(),
+        [
+            this, ids,
+            time_treshold = utils::clock_t::now() - release_age
+        ]
+        (const std::size_t idx)
+        {
+            std::unique_lock<std::mutex> thread_lock(cv_m);
+
+            const auto artist_id = ids[idx];
+
+            // to the point when the task getting to its execution, the artist
+            // could have been removed from collection, so skipping it quickly
+            if (!api_proxy->get_library()->is_artist_followed(artist_id)) return;
+
+            auto albums = api_proxy->get_artist_albums(artist_id);
+            bool is_cached = albums->is_cached();
+
+            log::api->debug("Processing new artist's releases '{}', {} left",
+                artist_id, pool.get_tasks_total());
+            
+            if (albums->fetch(false, false))
+            {
+                for (const auto &album: *albums)
+                    if (album.get_release_date() > time_treshold)
+                    {
+                        log::api->info("A new release was found for the artist '{}' - {}",
+                            artist_id, album.id);
+                        
+                        interim_data.insert(album);
+                    }
+            }
+
+            // we put the thread to sleep to avoid spamming spotify API; in case
+            // the result was obtained from the cache, there is no need to do that
+            if (!is_cached)
+            {
+                auto is_playback_active = utils::events::has_observers<playback_observer>();
+
+                // the delay value depends on the playback state, which creates a heavy workload to the API;
+                // by default if the response was brand-new, we delay thread longer, than if the response
+                // was with 304 NotModified reponse and the data was taken from local cache
+                auto delay_time = is_playback_active ? 30s : 10s;
+                
+                if (!albums->is_modified())
+                    delay_time = is_playback_active ? 5s : 2s;
+
+                cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
+            }
+        });
 }
 
 bool recent_releases::request_data(data_t &data)
@@ -46,6 +108,8 @@ bool recent_releases::request_data(data_t &data)
         if (pool.get_tasks_total() == 0)
         {
             data.assign(interim_data.begin(), interim_data.end());
+            interim_data.clear();
+
             is_in_sync = false;
         }
         
@@ -54,48 +118,15 @@ bool recent_releases::request_data(data_t &data)
         return !is_in_sync;
     }
 
-    interim_data.clear();
-
     if (artists->fetch(false, false))
     {
-        auto time_treshold = utils::clock_t::now() - release_age;
-        
-        pool.detach_sequence<size_t>(0, artists->size(),
-            [this, time_treshold](const std::size_t idx)
-            {
-                std::unique_lock<std::mutex> thread_lock(cv_m);
-
-                const auto &artist = (*artists)[idx];
-
-                auto albums = api_proxy->get_artist_albums(artist.id);
-                bool is_cached = albums->is_cached();
-
-                log::api->debug("Processing new artist's releases '{}' [{}], {} left",
-                    utils::to_string(artist.name), artist.id, pool.get_tasks_total());
-                
-                if (albums->fetch(false, false))
-                {
-                    for (const auto &album: *albums)
-                        if (album.get_release_date() > time_treshold)
-                        {
-                            log::api->info("A new release was found for the artist '{}' [{}]: {} [{}]",
-                                utils::to_string(artist.name), artist.id,
-                                utils::to_string(album.name), album.id);
-                            
-                            interim_data.insert(album);
-                        }
-                }
-
-                // we put the thread to sleep to avoid spamming spotify API; in case
-                // the result was obtained from the cache, there is no need to do that
-                if (!is_cached)
-                {
-                    auto delay_time = utils::events::has_observers<playback_observer>() ? 30s : 15s;
-                    cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
-                }
-            });
-        
         is_in_sync = true;
+
+        item_ids_t ids;
+        std::transform(artists->cbegin(), artists->cend(), std::back_inserter(ids),
+            [](const auto &t) { return t.id; });
+
+        queue_artists(ids);
     }
 
     return false;
@@ -116,6 +147,29 @@ void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data
     if (result.size() > 0)
         dispatch_event(&releases_observer::on_releases_sync_finished, result);
 }
-    
+
+void recent_releases::on_artists_statuses_changed(const item_ids_t &ids)
+{
+    if (is_in_sync)
+    {
+        // enqueueing all the changed items, if the sync process is still ongoing
+        item_ids_t added_ids;
+        for (const auto &id: ids)
+            if (api_proxy->get_library()->is_artist_followed(id))
+                added_ids.push_back(id);
+        
+        // NOTE: we cannot remove the tasks enqueued for the removed artists, so the task itself
+        // checks this particular case and skip if needed
+
+        queue_artists(ids);
+    }
+    else
+    {
+        // ... or invalidating current cache, and forcing it to get resync, though
+        // the cached items should get resynced very quickly
+        invalidate();
+    }
+}
+
 } // namespace spotify
 } // namespace spotifar
