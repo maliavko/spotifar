@@ -20,12 +20,12 @@ static auto get_builder(ArgsT... args) -> view_builder_t
         };
 }
 
-static void show_view(view_builder_t &&builder, view::return_callback_t callback)
+static void show_view(view_builder_t &&builder, return_callback_t callback)
 {
     ObserverManager::notify(&ui_events_observer::show_view, PANEL_ACTIVE, builder, callback);
 }
 
-static void show_multiview(mv_builder_t &&builders, view::return_callback_t callback)
+static void show_multiview(mv_builder_t &&builders, return_callback_t callback)
 {
     ObserverManager::notify(&ui_events_observer::show_multiview, PANEL_ACTIVE, builders, callback);
 }
@@ -130,7 +130,7 @@ void show_playlist(api_weak_ptr_t api, const playlist_t &playlist)
 }
 
 void show_artist(api_weak_ptr_t api, const artist_t &artist, int page_idx,
-    view::return_callback_t callback)
+    return_callback_t callback)
 {
     auto settings = config::get_multiview_settings("artist", { mv_builder_t::albums_idx });
 
@@ -151,7 +151,7 @@ void show_artist(api_weak_ptr_t api, const artist_t &artist, int page_idx,
 }
 
 void show_album_tracks(api_weak_ptr_t api_proxy, const simplified_album_t &album,
-    view::return_callback_t callback)
+    return_callback_t callback)
 {
     if (!callback)
     {

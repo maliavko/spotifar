@@ -143,7 +143,7 @@ protected:
     void rebuild_items();
 
     // view interface
-    auto get_sort_modes() const -> const view::sort_modes_t& override;
+    auto get_sort_modes() const -> const sort_modes_t& override;
     auto get_default_settings() const -> config::settings::view_t override;
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 

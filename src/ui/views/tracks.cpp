@@ -5,7 +5,7 @@
 
 namespace spotifar { namespace ui {
 
-using PM = view::panel_mode_t;
+using PM = panel_mode_t;
 using utils::far3::get_text;
 using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
@@ -23,7 +23,7 @@ tracks_base_view::~tracks_base_view()
     items.clear();
 }
 
-const view::sort_modes_t& tracks_base_view::get_sort_modes() const
+const sort_modes_t& tracks_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
@@ -36,7 +36,7 @@ const view::sort_modes_t& tracks_base_view::get_sort_modes() const
     return modes;
 }
 
-const view::items_t& tracks_base_view::get_items()
+const items_t& tracks_base_view::get_items()
 {
     items.clear();
 
@@ -104,9 +104,9 @@ const view::items_t& tracks_base_view::get_items()
     return items;
 }
 
-const view::panel_modes_t* tracks_base_view::get_panel_modes() const
+const panel_modes_t* tracks_base_view::get_panel_modes() const
 {
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         Name        { L"NON",   get_text(MSortColName),         L"0" },
         NameFixed   { L"NON",   get_text(MSortColName),         L"30" },
         IsExplicit  { L"C0",    get_text(MSortColExplicit),     L"3" },
@@ -347,7 +347,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-const view::key_bar_info_t* tracks_base_view::get_key_bar_info()
+const key_bar_info_t* tracks_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{};
 
@@ -398,7 +398,7 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
     utils::events::start_listening<playback_observer>(this);
     rebuild_items();
 
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         TxNumber    { L"C8",    get_text(MSortColTrackNum),         L"4" },
         TxMultNumber{ L"C8",    get_text(MSortColTrackMultiNum),    L"7" };
 
@@ -445,7 +445,7 @@ config::settings::view_t album_tracks_view::get_default_settings() const
     return { 7, false, 3 };
 }
 
-const view::sort_modes_t& album_tracks_view::get_sort_modes() const
+const sort_modes_t& album_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -528,7 +528,7 @@ recent_tracks_view::recent_tracks_view(HANDLE panel, api_weak_ptr_t api):
     utils::events::start_listening<play_history_observer>(this);
     rebuild_items();
 
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         PlayedAt { L"C8", get_text(MSortColPlayedAt), L"13" };
 
     panel_modes = *tracks_base_view::get_panel_modes();
@@ -549,7 +549,7 @@ config::settings::view_t recent_tracks_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-const view::sort_modes_t& recent_tracks_view::get_sort_modes() const
+const sort_modes_t& recent_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -657,7 +657,7 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
         repopulate();
     }
 
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         SavedAt { L"C8", get_text(MSortColSavedAt), L"13" };
 
     panel_modes = *tracks_base_view::get_panel_modes();
@@ -685,7 +685,7 @@ config::settings::view_t saved_tracks_view::get_default_settings() const
     return { 0, true, 3 };
 }
 
-const view::sort_modes_t& saved_tracks_view::get_sort_modes() const
+const sort_modes_t& saved_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -812,7 +812,7 @@ std::generator<const track_t&> playing_queue_view::get_tracks()
     }
 }
 
-const view::sort_modes_t& playing_queue_view::get_sort_modes() const
+const sort_modes_t& playing_queue_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
@@ -865,7 +865,7 @@ bool recently_liked_tracks_view::start_playback(const track_t &track)
     return false;
 }
 
-const view::sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
+const sort_modes_t& recently_liked_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -918,7 +918,7 @@ config::settings::view_t user_top_tracks_view::get_default_settings() const
     return { 0, false, 1 };
 }
 
-const view::sort_modes_t& user_top_tracks_view::get_sort_modes() const
+const sort_modes_t& user_top_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F9, LEFT_CTRL_PRESSED } },
@@ -969,7 +969,7 @@ config::settings::view_t artist_top_tracks_view::get_default_settings() const
     return { 5, false, 7 };
 }
 
-const view::sort_modes_t& artist_top_tracks_view::get_sort_modes() const
+const sort_modes_t& artist_top_tracks_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -1015,7 +1015,7 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
     
     utils::events::start_listening<playback_observer>(this);
 
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         AddedAt { L"C8", get_text(MSortColAddedAt), L"13" };
 
     panel_modes = *tracks_base_view::get_panel_modes();
@@ -1035,7 +1035,7 @@ config::settings::view_t playlist_view::get_default_settings() const
     return { 0, true, 3 };
 }
 
-const view::sort_modes_t& playlist_view::get_sort_modes() const
+const sort_modes_t& playlist_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())

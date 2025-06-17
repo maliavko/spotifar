@@ -6,7 +6,7 @@
 namespace spotifar { namespace ui {
 
 using mv_build_t = multiview_builder_t;
-using PM = view::panel_mode_t;
+using PM = panel_mode_t;
 using utils::far3::get_text;
 using namespace spotify;
 namespace panels = utils::far3::panels;
@@ -24,7 +24,7 @@ artists_base_view::~artists_base_view()
     api_proxy.reset();
 }
 
-const view::items_t& artists_base_view::get_items()
+const items_t& artists_base_view::get_items()
 {
     items.clear();
 
@@ -99,7 +99,7 @@ bool artists_base_view::request_extra_info(const data_item_t *data)
     return false;
 }
 
-const view::sort_modes_t& artists_base_view::get_sort_modes() const
+const sort_modes_t& artists_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
@@ -130,9 +130,9 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
     return -2;
 }
 
-const view::panel_modes_t* artists_base_view::get_panel_modes() const
+const panel_modes_t* artists_base_view::get_panel_modes() const
 {
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         Followers   { L"C0",    get_text(MSortColFollow),       L"9" },
         Popularity  { L"C1",    get_text(MSortColPopularity),   L"5" },
         MainGenre   { L"C2",    get_text(MSortColGenre),        L"25" },
@@ -216,7 +216,7 @@ intptr_t artists_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-const view::key_bar_info_t* artists_base_view::get_key_bar_info()
+const key_bar_info_t* artists_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{};
 
@@ -336,7 +336,7 @@ config::settings::view_t recent_artists_view::get_default_settings() const
     return { 1, false, 6 };
 }
 
-const view::sort_modes_t& recent_artists_view::get_sort_modes() const
+const sort_modes_t& recent_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -421,7 +421,7 @@ config::settings::view_t user_top_artists_view::get_default_settings() const
     return { 1, false, 1 };
 }
 
-const view::sort_modes_t& user_top_artists_view::get_sort_modes() const
+const sort_modes_t& user_top_artists_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarUnsorted), SM_UNSORTED, { VK_F7, LEFT_CTRL_PRESSED } },
