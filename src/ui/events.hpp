@@ -3,8 +3,9 @@
 #pragma once
 
 #include "stdafx.h"
+#include "config.hpp"
 #include "spotify/interfaces.hpp"
-#include "ui/views/view.hpp"
+#include "ui/types.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -30,19 +31,17 @@ namespace events {
 
     void show_playlist(api_weak_ptr_t, const spotify::playlist_t &);
 
-    void show_artist(api_weak_ptr_t, const spotify::artist_t&, int page_idx = -1,
-        view::return_callback_t = {});
+    void show_artist(api_weak_ptr_t, const spotify::artist_t &, int page_idx = -1, return_callback_t = {});
 
-    void show_album_tracks(api_weak_ptr_t, const spotify::simplified_album_t &,
-        view::return_callback_t = {});
+    void show_album_tracks(api_weak_ptr_t, const spotify::simplified_album_t &, return_callback_t = {});
 
     void show_playing_queue(api_weak_ptr_t);
     
     void show_player();
 
     /// @brief Forcing the active panel to redraw and to try to find and
-    /// set the given `item_id` under cursur
-    void select_item(const item_id_t &item_id);
+    /// set the given `item_id` under cursor
+    void select_item(const spotify::item_id_t &);
 
     /// @brief Forcing the given `panel` to redraw
     /// @param panel could be a panel handle, PANEL_ACTIVE or PANEL_PASSIVE
@@ -119,9 +118,9 @@ struct ui_events_observer: public BaseObserverProtocol
     /// on the panel after operation is finished
     virtual void refresh_panels(HANDLE panel, const spotify::item_id_t &) {}
 
-    virtual void show_view(HANDLE panel, view_builder_t, view::return_callback_t = {}) {}
+    virtual void show_view(HANDLE panel, view_builder_t, return_callback_t = {}) {}
 
-    virtual void show_multiview(HANDLE panel, multiview_builder_t, view::return_callback_t = {}) {}
+    virtual void show_multiview(HANDLE panel, multiview_builder_t, return_callback_t = {}) {}
 
     virtual void close_panel(HANDLE panel) {}
 
