@@ -167,7 +167,7 @@ void recent_releases::on_artists_statuses_changed(const item_ids_t &ids)
     {
         // ... or invalidating current cache, and forcing it to get resync, though
         // the cached items should get resynced very quickly
-        invalidate();
+        invalidate(10s);
     }
 }
 
