@@ -59,6 +59,10 @@ struct collection_interface
     /// @note checks only the first request in the collection fetching sequence, possibly faulty
     /// in case only some of them have been cached
     virtual bool is_cached() const = 0;
+    
+    /// @brief Returns a flag, whether the collection was modified in the contrary to
+    /// the cached one, and was resynced successfully
+    virtual bool is_modified() const = 0;
 
     /// @brief A public interface method to populate the collection fully
     /// @param only_cached flag, telling the logic, that the method wa called
