@@ -2,7 +2,6 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
-#include "ui/events.hpp"
 #include "ui/dialogs/menus.hpp"
 
 namespace spotifar {

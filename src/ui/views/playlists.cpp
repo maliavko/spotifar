@@ -5,14 +5,14 @@
 
 namespace spotifar { namespace ui {
 
-using PM = view::panel_mode_t;
+using PM = panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
 //-----------------------------------------------------------------------------------------------------------
-const view::items_t& playlists_base_view::get_items()
+const items_t& playlists_base_view::get_items()
 {
-    static view::items_t items; items.clear();
+    static items_t items; items.clear();
 
     for (const auto &playlist: get_playlists())
     {
@@ -58,7 +58,7 @@ const view::items_t& playlists_base_view::get_items()
     return items;
 }
 
-const view::sort_modes_t& playlists_base_view::get_sort_modes() const
+const sort_modes_t& playlists_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarName),           SM_NAME,    { VK_F3, LEFT_CTRL_PRESSED } },
@@ -81,9 +81,9 @@ intptr_t playlists_base_view::select_item(const data_item_t* data)
     return FALSE;
 }
 
-const view::panel_modes_t* playlists_base_view::get_panel_modes() const
+const panel_modes_t* playlists_base_view::get_panel_modes() const
 {
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         Name        { L"NON",   get_text(MSortColName),         L"0" },
         NameFixed   { L"NON",   get_text(MSortColName),         L"30" },
         TracksCount { L"C0",    get_text(MSortColTracksCount),  L"6" },
@@ -225,7 +225,7 @@ config::settings::view_t recent_playlists_view::get_default_settings() const
     return { 0, false, 3 };
 }
 
-const view::sort_modes_t& recent_playlists_view::get_sort_modes() const
+const sort_modes_t& recent_playlists_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())

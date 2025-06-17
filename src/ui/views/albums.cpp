@@ -6,7 +6,7 @@
 namespace spotifar { namespace ui {
 
 using mv_build_t = multiview_builder_t;
-using PM = view::panel_mode_t;
+using PM = panel_mode_t;
 using utils::far3::get_text;
 namespace panels = utils::far3::panels;
 
@@ -24,7 +24,7 @@ albums_base_view::~albums_base_view()
     items.clear();
 }
 
-const view::items_t& albums_base_view::get_items()
+const items_t& albums_base_view::get_items()
 {
     items.clear();
 
@@ -90,9 +90,9 @@ const view::items_t& albums_base_view::get_items()
     return items;
 }
 
-const view::panel_modes_t* albums_base_view::get_panel_modes() const
+const panel_modes_t* albums_base_view::get_panel_modes() const
 {
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         ReleaseYear     { L"C0",    get_text(MSortColYear),         L"6" },
         Type            { L"C1",    get_text(MSortColType),         L"6" },
         TracksCount     { L"C2",    get_text(MSortColTracksCount),  L"4" },
@@ -121,7 +121,7 @@ const view::panel_modes_t* albums_base_view::get_panel_modes() const
     return &modes;
 }
 
-const view::sort_modes_t& albums_base_view::get_sort_modes() const
+const sort_modes_t& albums_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
@@ -278,7 +278,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-const view::key_bar_info_t* albums_base_view::get_key_bar_info()
+const key_bar_info_t* albums_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{};
 
@@ -377,7 +377,7 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
         collection->fetch();
     }
 
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         SavedAt { L"C8", get_text(MSortColSavedAt), L"12" };
 
     panel_modes = *albums_base_view::get_panel_modes();
@@ -400,7 +400,7 @@ std::generator<const album_t&> saved_albums_view::get_albums()
         for (const auto &a: *collection) co_yield a;
 }
 
-const view::sort_modes_t& saved_albums_view::get_sort_modes() const
+const sort_modes_t& saved_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -534,7 +534,7 @@ config::settings::view_t recent_albums_view::get_default_settings() const
     return { 1, false, 6 };
 }
 
-const view::sort_modes_t& recent_albums_view::get_sort_modes() const
+const sort_modes_t& recent_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())
@@ -621,7 +621,7 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
         repopulate();
     }
 
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         SavedAt { L"C8", get_text(MSortColSavedAt), L"12" };
 
     panel_modes = *albums_base_view::get_panel_modes();
@@ -642,7 +642,7 @@ config::settings::view_t recently_saved_albums_view::get_default_settings() cons
     return { 1, false, 6 };
 }
 
-const view::sort_modes_t& recently_saved_albums_view::get_sort_modes() const
+const sort_modes_t& recently_saved_albums_view::get_sort_modes() const
 {
     static sort_modes_t modes;
     if (!modes.size())

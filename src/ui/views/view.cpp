@@ -6,7 +6,7 @@ namespace spotifar { namespace ui {
 namespace panels = utils::far3::panels;
 
 //-------------------------------------------------------------------------------------------------
-view::panel_mode_t::panel_mode_t(std::vector<const column_t*> &&cols, bool is_wide)
+panel_mode_t::panel_mode_t(std::vector<const column_t*> &&cols, bool is_wide)
 {
     columns = std::move(cols);
 
@@ -16,13 +16,13 @@ view::panel_mode_t::panel_mode_t(std::vector<const column_t*> &&cols, bool is_wi
     rebuild();
 }
 
-view::panel_mode_t::panel_mode_t(int copy_of_idx, bool is_wide): copy_of_idx(copy_of_idx)
+panel_mode_t::panel_mode_t(int copy_of_idx, bool is_wide): copy_of_idx(copy_of_idx)
 {
     if (is_wide)
         flags |= PMFLAGS_FULLSCREEN;
 }
 
-void view::panel_mode_t::insert_column(const column_t *col, size_t idx)
+void panel_mode_t::insert_column(const column_t *col, size_t idx)
 {
     if (idx > columns.size())
     {
@@ -36,7 +36,7 @@ void view::panel_mode_t::insert_column(const column_t *col, size_t idx)
     rebuild();
 }
 
-void view::panel_mode_t::rebuild()
+void panel_mode_t::rebuild()
 {
     titles.clear();
     std::vector<const wchar_t*> all_types, all_widths;
@@ -55,12 +55,12 @@ void view::panel_mode_t::rebuild()
     }
 }
 
-view::panel_modes_t::panel_modes_t(std::initializer_list<panel_mode_t> il): base_type_t(il)
+panel_modes_t::panel_modes_t(std::initializer_list<panel_mode_t> il): base_type_t(il)
 {
     rebuild();
 }
 
-void view::panel_modes_t::rebuild()
+void panel_modes_t::rebuild()
 {
     for (size_t i = 0; i < MODES_COUNT; i++)
     {

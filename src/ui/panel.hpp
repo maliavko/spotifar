@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "abstract.hpp"
 #include "spotify/interfaces.hpp"
-#include "ui/views/view.hpp" // view
+#include "ui/types.hpp"
 #include "ui/events.hpp" // ui_events_observer
 
 namespace spotifar { namespace ui {
@@ -29,7 +29,7 @@ public:
 protected:
     /// @brief Sets the given view as the current one, registers given callback
     /// as the one, which will be used once the view is closed, redraws panel
-    void set_view(view_ptr_t, view::return_callback_t = {});
+    void set_view(view_ptr_t, return_callback_t = {});
 
     /// @brief Does panel contain Far cursor
     bool is_active() const;
@@ -43,8 +43,8 @@ protected:
     
     // global ui events
     void refresh_panels(HANDLE panel, const spotify::item_id_t &item_id = "") override;
-    void show_view(HANDLE panel, view_builder_t, view::return_callback_t = nullptr) override;
-    void show_multiview(HANDLE panel, multiview_builder_t, view::return_callback_t = nullptr) override;
+    void show_view(HANDLE panel, view_builder_t, return_callback_t = nullptr) override;
+    void show_multiview(HANDLE panel, multiview_builder_t, return_callback_t = nullptr) override;
     void close_panel(HANDLE panel) override;
     void show_filters_menu() override;
 private:

@@ -4,12 +4,12 @@
 
 namespace spotifar { namespace ui {
 
-using PM = view::panel_mode_t;
+using PM = panel_mode_t;
 using utils::far3::get_text;
 using namespace events;
 
 //-------------------------------------------------------------------------------------------------------------
-const view::info_lines_t* root_base_view::get_info_lines()
+const info_lines_t* root_base_view::get_info_lines()
 {
     static info_lines_t lines{
         // example data
@@ -20,7 +20,7 @@ const view::info_lines_t* root_base_view::get_info_lines()
     return &lines;
 }
 
-const view::sort_modes_t& root_base_view::get_sort_modes() const
+const sort_modes_t& root_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
         { get_text(MSortBarName),      SM_NAME,        { VK_F3, LEFT_CTRL_PRESSED } },
@@ -34,7 +34,7 @@ config::settings::view_t root_base_view::get_default_settings() const
     return { 1, false, 3 };
 }
 
-const view::items_t& root_base_view::get_items()
+const items_t& root_base_view::get_items()
 {
     static items_t items; items.clear();
     
@@ -96,9 +96,9 @@ intptr_t root_base_view::process_key_input(int combined_key)
     return FALSE;
 }
 
-const view::panel_modes_t* root_base_view::get_panel_modes() const
+const panel_modes_t* root_base_view::get_panel_modes() const
 {
-    static const view::panel_mode_t::column_t
+    static const panel_mode_t::column_t
         Name        { L"NON",   get_text(MSortColName),     L"0" },
         NameFixed   { L"NON",   get_text(MSortColName),     L"30" },
         Descr       { L"Z",     get_text(MSortColDescr),    L"0" };

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "../dialog.hpp"
+#include "ui/dialogs/dialog.hpp"
 
 namespace spotifar { namespace ui { namespace settings {
 
