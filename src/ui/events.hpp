@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "config.hpp"
-#include "spotify/interfaces.hpp"
+#include "spotify/items.hpp"
 #include "ui/types.hpp"
 
 namespace spotifar { namespace ui {

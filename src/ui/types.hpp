@@ -2,8 +2,6 @@
 #define TYPES_HPP_3D4B2974_24D0_48E9_B3A3_4BD005CC78D5
 #pragma once
 
-#include "spotify/interfaces.hpp"
-
 namespace spotifar { namespace ui {
 
 struct sort_mode_t
@@ -12,7 +10,7 @@ struct sort_mode_t
     OPENPANELINFO_SORTMODES far_sort_mode;
     FarKey far_key;
 
-    int get_combined_key() const { return utils::keys::make_combined(far_key); }
+    int get_combined_key() const;
 };
 
 /// @brief a proxy item, used for passing data from controllers to FAR panels api

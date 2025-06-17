@@ -4,7 +4,6 @@
 
 #include "stdafx.h"
 #include "utils.hpp"
-#include "config.hpp"
 #include "interfaces.hpp"
 #include "observer_protocols.hpp"
 

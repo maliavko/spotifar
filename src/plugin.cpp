@@ -2,7 +2,11 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
+#include "playback_handler.hpp"
+#include "spotify/api.hpp"
+#include "ui/player.hpp"
 #include "ui/dialogs/menus.hpp"
+#include "ui/notifications.hpp"
 
 namespace spotifar {
 
@@ -76,6 +80,16 @@ plugin::~plugin()
         log::global->warn("There is an error while shutting down the "
             "plugin: {}", ex.what());
     }
+}
+
+bool plugin::is_player_visible() const
+{
+    return player->is_visible();
+}
+
+spotify::api_weak_ptr_t plugin::get_api()
+{ 
+    return api;
 }
 
 void plugin::launch_sync_worker()

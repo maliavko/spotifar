@@ -76,7 +76,7 @@ struct playback_observer: public BaseObserverProtocol
     /// @brief A track has changed
     /// @param track a new track, which jsut started playing
     /// @param prev_track a previous track, which was playing before
-    virtual void on_track_changed(const track_t &track, const spotify::track_t &prev_track) {}
+    virtual void on_track_changed(const track_t &current, const track_t &previous) {}
 
     /// @brief A track's progress has changed
     /// @param duration a total track duration in seconds

@@ -26,6 +26,7 @@ add_library(${PROJECT_NAME} SHARED
 	spotify/requesters.cpp
 	spotify/releases.cpp
 	spotify/library.cpp
+	ui/types.cpp
 	ui/notifications.cpp
 	ui/panel.cpp
 	ui/player.cpp

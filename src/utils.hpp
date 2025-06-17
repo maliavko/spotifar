@@ -7,8 +7,6 @@
 
 namespace spotifar { namespace utils {
 
-using clock_t = std::chrono::system_clock;
-
 /// @brief Converts utf8 encoded string into wide-char one
 wstring utf8_decode(const string &s);
 
@@ -421,18 +419,6 @@ namespace far3
 
 namespace json
 {
-    using rapidjson::Document;
-    using rapidjson::Value;
-    using rapidjson::StringBuffer;
-    using rapidjson::Writer;
-    using rapidjson::SizeType;
-    using rapidjson::Pointer;
-    using rapidjson::PrettyWriter;
-    using rapidjson::kObjectType;
-    using rapidjson::kArrayType;
-    using rapidjson::ParseResult;
-    using Allocator = typename Document::AllocatorType;
-    
     /// @brief string support for rapidjson parse/pack
     void from_json(const Value &j, string &result);
     void to_json(Value &j, const string &result, Allocator &allocator);

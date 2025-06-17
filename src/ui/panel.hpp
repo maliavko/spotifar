@@ -3,8 +3,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include "abstract.hpp"
-#include "spotify/interfaces.hpp"
 #include "ui/types.hpp"
 #include "ui/events.hpp" // ui_events_observer
 
@@ -22,10 +20,10 @@ public:
     // Far API interface
     void update_panel_info(OpenPanelInfo *info);
     void free_panel_items(const FreeFindDataInfo *info);
-    intptr_t update_panel_items(GetFindDataInfo *info);
-    intptr_t select_directory(const SetDirectoryInfo *info);
-    intptr_t process_input(const ProcessPanelInputInfo *info);
-    intptr_t compare_items(const CompareInfo *info);
+    auto update_panel_items(GetFindDataInfo *info) -> intptr_t;
+    auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
+    auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
+    auto compare_items(const CompareInfo *info) -> intptr_t;
 protected:
     /// @brief Sets the given view as the current one, registers given callback
     /// as the one, which will be used once the view is closed, redraws panel
