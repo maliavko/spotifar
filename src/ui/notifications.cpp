@@ -1,8 +1,10 @@
 #include "notifications.hpp"
 #include "lng.hpp"
 #include "utils.hpp"
-#include "ui/events.hpp"
+#include "plugin.h"
 #include "spotifar.hpp"
+#include "ui/events.hpp"
+#include "spotify/interfaces.hpp"
 
 namespace spotifar { namespace ui {
 

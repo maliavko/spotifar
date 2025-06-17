@@ -2,7 +2,6 @@
 #define LIBRARY_HPP_92081AAB_EE4E_40B2_814E_83B712132465
 #pragma once
 
-#include "stdafx.h"
 #include "cache.hpp"
 #include "interfaces.hpp"
 

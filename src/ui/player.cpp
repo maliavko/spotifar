@@ -1,5 +1,6 @@
 #include "ui/player.hpp"
 #include "ui/events.hpp"
+#include "spotify/interfaces.hpp"
 #include "lng.hpp"
 
 namespace spotifar { namespace ui {

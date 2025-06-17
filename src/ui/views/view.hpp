@@ -2,10 +2,8 @@
 #define VIEW_HPP_BD8268F0_532D_4A60_9847_B08580783467
 #pragma once
 
-#include "utils.hpp"
 #include "config.hpp"
 #include "ui/types.hpp"
-#include "spotify/interfaces.hpp"
 
 namespace spotifar { namespace ui {
 

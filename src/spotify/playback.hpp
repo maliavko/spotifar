@@ -2,8 +2,8 @@
 #define PLAYBACK_HPP_1E84D5C4_F3BB_4BCA_8719_1995E4AF0ED7
 #pragma once
 
-#include "cache.hpp"
 #include "interfaces.hpp"
+#include "cache.hpp"
 
 namespace spotifar { namespace spotify {
 

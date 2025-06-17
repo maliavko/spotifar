@@ -4,7 +4,6 @@
 
 #include "items.hpp"
 #include "cache.hpp"
-#include "interfaces.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -14,7 +13,7 @@ public:
     devices_cache(api_interface *api): json_cache(), api_proxy(api) {}
     ~devices_cache() { api_proxy = nullptr; }
 protected:
-    // `json_cache` class interface
+    // json_cache interface
     bool is_active() const override;
     bool request_data(devices_t &data) override;
     void on_data_synced(const devices_t &data, const devices_t &prev_data) override;

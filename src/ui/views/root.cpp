@@ -86,7 +86,7 @@ intptr_t root_base_view::process_key_input(int combined_key)
                 if (auto *user_data = unpack_user_data(item->UserData); user_data->id == root_view::collection_id)
                 {
                     log::global->info("Starting collection playback");
-                    api->start_playback(CollectionUri);
+                    api->start_playback(COLLECTION_URI);
 
                     return TRUE;
                 }

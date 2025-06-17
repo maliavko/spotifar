@@ -715,7 +715,7 @@ bool saved_tracks_view::start_playback(const track_t &track)
     if (auto api = api_proxy.lock())
     {
         log::global->info("Starting saved tracks collection playback from track {}", track.get_uri());
-        api->start_playback(CollectionUri, track.get_uri());
+        api->start_playback(COLLECTION_URI, track.get_uri());
         return true;
     }
     return false;
@@ -859,7 +859,7 @@ bool recently_liked_tracks_view::start_playback(const track_t &track)
     if (auto api = api_proxy.lock())
     {
         log::global->info("Starting saved tracks collection playback from track {}", track.get_uri());
-        api->start_playback(CollectionUri, track.get_uri());
+        api->start_playback(COLLECTION_URI, track.get_uri());
         return true;
     }
     return false;
