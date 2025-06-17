@@ -29,7 +29,7 @@ public:
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
 
-            library->tracks.update_saved_items(ids, true);
+            library->tracks.update_saved_items(ids, true, pages_to_request == 0);
             return true;
         }
         return false;
@@ -57,7 +57,7 @@ public:
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
 
-            library->albums.update_saved_items(ids, true);
+            library->albums.update_saved_items(ids, true, pages_to_request == 0);
             return true;
         }
         return false;
@@ -84,8 +84,9 @@ public:
         {
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
+            
+            library->artists.update_saved_items(ids, true, pages_to_request == 0);
 
-            library->artists.update_saved_items(ids, true);
             return true;
         }
         return false;
@@ -169,6 +170,9 @@ bool saved_items_cache_t::resync(statuses_container_t &data)
         for (size_t i = 0; i < ids.size(); ++i)
             data.insert_or_assign(ids[i], result[i]);
 
+        // potential problem, as until the method returns 'true`, the cache
+        // does not save `data` into its container; if some subscriber, revceiving
+        // the event decides to access cache, it is outdated
         statuses_received_event(ids);
         return true;
     }
@@ -179,7 +183,7 @@ bool saved_items_cache_t::resync(statuses_container_t &data)
     return false;
 }
 
-void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
+void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status, bool full_resync)
 {
     item_ids_t changed_ids, received_ids;
     {
@@ -198,6 +202,18 @@ void saved_items_cache_t::update_saved_items(const item_ids_t &ids, bool status)
                 received_ids.push_back(id);
             }
             container[id] = status;
+        }
+
+        // the flag comes from the saved collections fetch method, specifying
+        // that the given `ids` are the full set of saved items
+        if (full_resync)
+        {
+            // ... in that case we are checking for the ones, removed from collection
+            const std::unordered_set<item_id_t> unique_ids(ids.begin(), ids.end());
+            for (auto &[id, value]: container)
+                // ... does not present in the incoming ids and was true in the container
+                if (!unique_ids.contains(id) && value == true)
+                    changed_ids.push_back(id);
         }
     }
     

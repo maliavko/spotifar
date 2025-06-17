@@ -159,7 +159,7 @@ void recent_releases::on_artists_statuses_changed(const item_ids_t &ids)
                 added_ids.push_back(id);
         
         // NOTE: we cannot remove the tasks enqueued for the removed artists, so the task itself
-        // checks this particular case and skip if needed
+        // checks this particular case and skips if needed
 
         queue_artists(ids);
     }
