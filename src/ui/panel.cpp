@@ -111,7 +111,7 @@ void panel::update_panel_info(OpenPanelInfo *info)
     info->KeyBar = &key_bar;
 
     // first, we collect all the key bindings into intermediate container
-    view::key_bar_info_t panel_key_bar{};
+    key_bar_info_t panel_key_bar{};
 
     // adding multiviews bar keys
     if (mview_builders.artists)
@@ -270,7 +270,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
                 if (modes.size() == 0)
                     return TRUE;
 
-                auto sort_modex_idx = (int)show_sort_dialog(*view);
+                auto sort_modex_idx = (int)show_sort_dialog(view);
                 if (sort_modex_idx > -1)
                     view->select_sort_mode(sort_modex_idx);
                 
@@ -316,7 +316,7 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
-void panel::set_view(view_ptr_t v, view::return_callback_t callback)
+void panel::set_view(view_ptr_t v, return_callback_t callback)
 {
     view = v; // setting up the new view
 
@@ -364,7 +364,7 @@ void panel::refresh(const string &item_id)
     }
 }
 
-void panel::show_view(HANDLE panel, view_builder_t builder, view::return_callback_t callback)
+void panel::show_view(HANDLE panel, view_builder_t builder, return_callback_t callback)
 {
     if (is_this_panel(panel))
     {
@@ -373,7 +373,7 @@ void panel::show_view(HANDLE panel, view_builder_t builder, view::return_callbac
     }
 }
 
-void panel::show_multiview(HANDLE panel, multiview_builder_t builders, view::return_callback_t callback)
+void panel::show_multiview(HANDLE panel, multiview_builder_t builders, return_callback_t callback)
 {
     if (is_this_panel(panel))
     {

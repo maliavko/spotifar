@@ -2,7 +2,8 @@
 #include "lng.hpp"
 #include "utils.hpp"
 #include "menus.hpp"
-#include "../events.hpp"
+#include "ui/events.hpp"
+#include "ui/views/view.hpp"
 #include "settings/hotkeys.hpp"
 #include "settings/general.hpp"
 #include "settings/backend.hpp"
@@ -57,10 +58,10 @@ intptr_t show_settings_menu()
     return TRUE;
 }
 
-intptr_t show_sort_dialog(const view &v)
+intptr_t show_sort_dialog(const view_ptr_t v)
 {
-    const auto &modes = v.get_sort_modes();
-    const auto &settings = v.get_settings();
+    const auto &modes = v->get_sort_modes();
+    const auto &settings = v->get_settings();
 
     std::vector<FarMenuItem> result;
     for (size_t idx = 0; idx < modes.size(); idx++)

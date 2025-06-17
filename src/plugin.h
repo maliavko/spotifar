@@ -2,13 +2,10 @@
 #define PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
 #pragma
 
-#include "stdafx.h"
 #include "abstract.hpp"
-#include "utils.hpp"
 #include "playback_handler.hpp"
 #include "spotify/api.hpp"
-#include "spotify/auth.hpp"
-#include "spotify/releases.hpp"
+#include "spotify/observer_protocols.hpp"
 #include "ui/player.hpp"
 #include "ui/events.hpp"
 #include "ui/notifications.hpp"
