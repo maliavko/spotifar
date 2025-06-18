@@ -76,8 +76,8 @@ void recent_releases::queue_artists(const item_ids_t &ids)
             auto albums = api_proxy->get_artist_albums(artist_id);
             bool is_cached = albums->is_cached();
 
-            log::api->debug("Processing new artist's releases '{}', {} left",
-                artist_id, pool.get_tasks_total());
+            // log::api->debug("Processing new artist's releases '{}', {} left",
+            //     artist_id, pool.get_tasks_total());
                             
             dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
             

@@ -7,9 +7,13 @@
 
 namespace spotifar { namespace spotify {
 
+extern const wstring auth_config_key;
+
 namespace json = utils::json;
 
-class auth_cache: public json_cache<auth_t>
+class auth_cache:
+    public json_cache<auth_t>,
+    public auth_cache_interface
 {
 public:
     auth_cache(api_interface *api, const string &client_id, const string &client_secret, int port);
@@ -17,8 +21,9 @@ public:
     
     void shutdown(config::settings_context &ctx) override;
 
-    bool is_authenticated() const { return is_logged_in; }
-    auto get_access_token() const -> const string& { return get().access_token; }
+    bool is_authenticated() const override;
+    auto get_access_token() const -> const string& override;
+    auto get_refresh_token() const -> const string& override;
 protected:
     string request_auth_code();
     auth_t auth_with_code(const string &auth_code);

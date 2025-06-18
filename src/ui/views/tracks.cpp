@@ -279,7 +279,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
 
                         // cmd << "C:\\Users\\malia\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\spotdl.exe download "
                         //     << track->urls.spotify
-                        //     << " --auth-token " << api->get_auth_data().access_token
+                        //     << " --auth-token " << api->get_auth_cache().get_access_token()
                         //     << " --generate-lrc";
 
                         // auto r = std::system(cmd.str().c_str());
@@ -287,7 +287,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
                         //std::wostringstream cmd;
                         // cmd << L"C:\\Users\\malia\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\spotdl.exe download "
                         //     << utils::to_wstring(track->urls.spotify)
-                        //     << L" --auth-token " << utils::to_wstring(api->get_auth_data().access_token)
+                        //     << L" --auth-token " << utils::to_wstring(api->get_auth_cache().get_access_token())
                         //     << L" --generate-lrc";
 
                         // HANDLE pipe_read = NULL;
