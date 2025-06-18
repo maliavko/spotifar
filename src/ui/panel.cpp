@@ -55,9 +55,8 @@ panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 {
     utils::events::start_listening<ui_events_observer>(this);
 
-    auto api_ptr = plugin_ptr->get_api().lock();
-    if (api_ptr && api_ptr->is_authenticated())
-        set_view(std::make_shared<root_view>(this, api_ptr));
+    if (auto api = plugin_ptr->get_api(); api && api->is_authenticated())
+        set_view(std::make_shared<root_view>(this, api));
     else
         set_view(std::make_shared<stub_view>(this));
 }
@@ -297,7 +296,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             // goto root (backslash/pipe key)
             case VK_OEM_5 + keys::mods::ctrl:
             {
-                if (auto api = plugin_proxy->get_api().lock())
+                if (auto api = plugin_proxy->get_api())
                 {
                     events::show_root(api);
                     return TRUE;
