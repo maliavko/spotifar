@@ -26,8 +26,9 @@ public:
     auto get_play_history(bool force_resync = false) -> const history_items_t& override;
     auto get_available_devices(bool force_resync = false) -> const devices_t& override;
     auto get_playback_state(bool force_resync = false) -> const playback_state_t& override;
-    auto get_recent_releases(bool force_resync = false) -> const recent_releases_t& override;
+
     auto get_library() -> library_interface* override;
+    auto get_releases() -> recent_releases_interface* override;
     
     // library api interface
 
