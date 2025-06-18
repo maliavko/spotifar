@@ -113,6 +113,9 @@ struct releases_observer: public BaseObserverProtocol
 {
     /// @brief The event is thrown when the recent releases seach procedure is finished
     virtual void on_releases_sync_finished(const recent_releases_t releases) {}
+
+    /// @brief Sends the event of the sync progress change
+    virtual void on_sync_progress_changed(size_t items_left) {}
 };
 
 } // namespace spotify
