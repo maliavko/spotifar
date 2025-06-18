@@ -7,6 +7,8 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
+extern const wstring auth_config_key = L"AccessToken";
+
 static const string
     spotify_auth_url = "https://accounts.spotify.com",
     scope =
@@ -43,7 +45,7 @@ static string generate_random_string(const int length)
 };
 
 auth_cache::auth_cache(api_interface *api, const string &client_id, const string &client_secret, int port):
-    json_cache(L"AccessToken"),
+    json_cache(auth_config_key),
     client_id(client_id),
     client_secret(client_secret),
     port(port),
@@ -57,6 +59,21 @@ void auth_cache::shutdown(config::settings_context &ctx)
 
     if (auth_server.is_running())
         auth_server.stop();
+}
+
+bool auth_cache::is_authenticated() const
+{
+    return is_logged_in;
+}
+
+const string& auth_cache::get_access_token() const
+{
+    return get().access_token;
+}
+
+const string& auth_cache::get_refresh_token() const
+{
+    return get().refresh_token;
 }
 
 clock_t::duration auth_cache::get_sync_interval() const

@@ -7,7 +7,8 @@ using namespace utils;
 
 string get_cache_filename()
 {
-    return std::format("{}\\responses.cache", utils::to_string(config::get_plugin_data_folder()));
+    return std::format("{}\\responses.cache", utils::to_string(
+        config::get_plugin_data_folder()));
 }
 
 void from_json(const json::Value &j, http_cache::cache_entry &e)

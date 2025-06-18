@@ -147,6 +147,16 @@ struct recent_releases_interface
 };
 
 
+struct auth_cache_interface
+{
+    virtual bool is_authenticated() const = 0;
+
+    virtual auto get_access_token() const -> const string& = 0;
+
+    virtual auto get_refresh_token() const -> const string& = 0;
+};
+
+
 struct api_interface
 {
     virtual ~api_interface() {}
@@ -157,9 +167,6 @@ struct api_interface
     /// @brief A public interface for obtaining a weak pointer to the API interface
     /// instance. Used in many helper classes, avoiding passing a direct pointer for safety reasons
     virtual auto get_ptr() -> std::weak_ptr<api_interface> = 0;
-
-    /// @brief Returns an auth data
-    virtual auto get_auth_data(bool force_resync = false) -> const auth_t& = 0;
 
     /// @brief Returns a played history list of items. If `force_resync` is true, the data
     /// is forcibly resynced before it is returned
@@ -179,6 +186,8 @@ struct api_interface
     
     /// @brief Returns a new releasese management interface: get, invalidate etc.
     virtual auto get_releases() -> recent_releases_interface* = 0;
+
+    virtual auto get_auth_cache() -> auth_cache_interface* = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
