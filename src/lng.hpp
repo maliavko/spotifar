@@ -63,6 +63,7 @@ namespace spotifar
         MCfgDlgMenuGeneral,
         MCfgDlgMenuBackend,
         MCfgDlgMenuHotkeys,
+        MCfgDlgMenuCaches,
 
         // general configuration dialog
         MCfgGeneralBoxTitle,

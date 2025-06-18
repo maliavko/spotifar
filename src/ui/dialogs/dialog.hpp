@@ -20,14 +20,16 @@ public:
     virtual ~modal_dialog();
 
     bool run();
+    void close();
 
     virtual void init() {};
     virtual void cleanup() {};
 
     bool handle_dlg_proc_event(intptr_t msg_id, int control_id, void *param);
 protected:
-    virtual intptr_t handle_result(intptr_t dialog_run_result) { return FALSE; };
+    virtual auto handle_result(intptr_t dialog_run_result) -> intptr_t { return FALSE; };
     virtual bool handle_key_pressed(int ctrl_id, int combined_key) { return FALSE; }
+    virtual bool handle_btn_clicked(int ctrl_id) { return FALSE; }
 protected:
     HANDLE hdlg;
 };

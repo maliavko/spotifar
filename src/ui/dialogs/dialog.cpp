@@ -48,19 +48,28 @@ bool modal_dialog::run()
     return handle_result(config::ps_info.DialogRun(hdlg)) == TRUE;
 }
 
+void modal_dialog::close()
+{
+    utils::far3::dialogs::close(hdlg);
+}
+
 bool modal_dialog::handle_dlg_proc_event(intptr_t msg_id, int control_id, void *param)
 {
     using utils::keys::make_combined;
         
     if (msg_id == DN_CONTROLINPUT)
     {
-        INPUT_RECORD *ir = reinterpret_cast<INPUT_RECORD*>(param);
+        const auto *ir = reinterpret_cast<INPUT_RECORD*>(param);
         switch (ir->EventType)
         {
             case KEY_EVENT:
                 if (ir->Event.KeyEvent.bKeyDown)
                     return handle_key_pressed(control_id, make_combined(ir->Event.KeyEvent));
         }
+    }
+    else if (msg_id == DN_BTNCLICK)
+    {
+        return handle_btn_clicked(control_id);
     }
 
     return false;
