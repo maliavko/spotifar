@@ -29,6 +29,22 @@ recent_releases::~recent_releases()
     api_proxy = nullptr;
 }
 
+void recent_releases::invalidate()
+{
+    json_cache::invalidate(1s);
+}
+
+size_t recent_releases::get_sync_tasks_left() const
+{
+    return pool.get_tasks_total();
+}
+
+const recent_releases_t& recent_releases::get_items(bool force_resync)
+{
+    resync(force_resync);
+    return get();
+}
+
 bool recent_releases::is_active() const
 {
     return api_proxy->is_authenticated();
@@ -62,6 +78,8 @@ void recent_releases::queue_artists(const item_ids_t &ids)
 
             log::api->debug("Processing new artist's releases '{}', {} left",
                 artist_id, pool.get_tasks_total());
+                            
+            dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
             
             if (albums->fetch(false, false))
             {
@@ -70,8 +88,6 @@ void recent_releases::queue_artists(const item_ids_t &ids)
                     {
                         log::api->info("A new release was found for the artist '{}' - {}",
                             artist_id, album.id);
-                            
-                        dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
                         
                         interim_data.insert(album);
                     }
@@ -148,6 +164,8 @@ void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data
 
     if (result.size() > 0)
         dispatch_event(&releases_observer::on_releases_sync_finished, result);
+
+    dispatch_event(&releases_observer::on_sync_progress_changed, 0);
 }
 
 void recent_releases::on_artists_statuses_changed(const item_ids_t &ids)
@@ -169,7 +187,7 @@ void recent_releases::on_artists_statuses_changed(const item_ids_t &ids)
     {
         // ... or invalidating current cache, and forcing it to get resync, though
         // the cached items should get resynced very quickly
-        invalidate(10s);
+        json_cache::invalidate(10s);
     }
 }
 

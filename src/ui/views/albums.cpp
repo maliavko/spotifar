@@ -505,7 +505,7 @@ void new_releases_view::rebuild_items()
 
     if (auto api = api_proxy.lock())
     {
-        const auto &releases = api->get_recent_releases();
+        const auto &releases = api->get_releases()->get_items();
         
         item_ids_t releases_ids;
         std::transform(releases.begin(), releases.end(), back_inserter(releases_ids),

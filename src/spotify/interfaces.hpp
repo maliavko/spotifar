@@ -133,6 +133,20 @@ public:
 };
 
 
+struct recent_releases_interface
+{
+    /// @brief Amount of sync tasks in the queue, 0 - sync is finished 
+    virtual auto get_sync_tasks_left() const -> size_t = 0;
+
+    /// @brief List of currently cached fresh releases, `force_resync` forces
+    /// the manager to resync data with server
+    virtual auto get_items(bool force_resync = false) -> const recent_releases_t& = 0;
+
+    /// @brief Invalidates the cache, automatically scheduling resync
+    virtual void invalidate() = 0;
+};
+
+
 struct api_interface
 {
     virtual ~api_interface() {}
@@ -159,12 +173,12 @@ struct api_interface
     /// is forcibly resynced before it is returned
     virtual auto get_playback_state(bool force_resync = false) -> const playback_state_t& = 0;
 
-    /// @brief Returns a cache of the recently released albums of the followed artists
-    virtual auto get_recent_releases(bool force_resync = false) -> const recent_releases_t& = 0;
-
     /// @brief Returns a collections library interface for changing user's saved items:
     /// artists, albums or tracks
     virtual auto get_library() -> library_interface* = 0;
+    
+    /// @brief Returns a new releasese management interface: get, invalidate etc.
+    virtual auto get_releases() -> recent_releases_interface* = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;

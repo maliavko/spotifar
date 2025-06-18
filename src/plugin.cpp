@@ -80,7 +80,7 @@ bool plugin::is_player_visible() const
     return player->is_visible();
 }
 
-spotify::api_weak_ptr_t plugin::get_api()
+spotify::api_ptr_t plugin::get_api()
 { 
     return api;
 }

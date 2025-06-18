@@ -16,7 +16,7 @@ struct plugin_interface
 
     virtual bool is_player_visible() const = 0;
 
-    virtual auto get_api() -> spotify::api_weak_ptr_t = 0;
+    virtual auto get_api() -> spotify::api_ptr_t = 0;
 };
 
 class plugin:
@@ -32,7 +32,7 @@ public:
     ~plugin();
 
     bool is_player_visible() const override;
-    auto get_api() -> spotify::api_weak_ptr_t override;
+    auto get_api() -> spotify::api_ptr_t override;
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();

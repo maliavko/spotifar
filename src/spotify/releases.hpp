@@ -20,13 +20,18 @@ namespace spotifar { namespace spotify {
 /// finishes successfully eventually, the list is cached for 24 hours.
 class recent_releases:
     public json_cache<recent_releases_t>,
-    public collection_observer
+    public collection_observer,
+    public recent_releases_interface
 {
 public:
     inline static const auto release_age = std::chrono::weeks{2};
 public:
     recent_releases(api_interface *api);
     ~recent_releases();
+    
+    void invalidate() override;
+    auto get_sync_tasks_left() const -> size_t override;
+    auto get_items(bool force_resync = false) -> const recent_releases_t& override;
 protected:
     void queue_artists(const item_ids_t &);
 

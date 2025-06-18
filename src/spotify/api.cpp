@@ -110,12 +110,6 @@ const playback_cache::data_t& api::get_playback_state(bool force_resync)
     return playback->get();
 }
 
-const recent_releases::data_t& api::get_recent_releases(bool force_resync)
-{
-    releases->resync(force_resync);
-    return releases->get();
-}
-
 const devices_cache::data_t& api::get_available_devices(bool force_resync)
 {
     devices->resync(force_resync);
@@ -125,6 +119,11 @@ const devices_cache::data_t& api::get_available_devices(bool force_resync)
 library_interface* api::get_library()
 {
     return library.get();
+};
+
+recent_releases_interface* api::get_releases()
+{
+    return releases.get();
 };
 
 const play_history::data_t& api::get_play_history(bool force_resync)

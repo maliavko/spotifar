@@ -3,6 +3,9 @@
 #include "utils.hpp"
 #include "lng.hpp"
 #include "spotifar.hpp"
+#include "plugin.h"
+#include "spotify/api.hpp"
+#include "spotify/releases.hpp"
 
 namespace spotifar { namespace ui { namespace settings {
 
@@ -96,6 +99,7 @@ void caches_dialog::set_releases_sync_status(size_t items_left)
         status = L"Finished";
 
     dialogs::set_text(hdlg, releases_status_value, status.c_str());
+    dialogs::enable(hdlg, releases_resync_button, items_left == 0);
 }
 
 string format_file_size(uintmax_t size)
@@ -126,7 +130,7 @@ void caches_dialog::init()
         }
     }
 
-    auto p = get_plugin();
+    auto plugin = get_plugin();
     
     dialogs::set_text(hdlg, dialog_box, L"Logs");
     dialogs::set_text(hdlg, logs_count_label, L"Logs count:");
@@ -145,9 +149,15 @@ void caches_dialog::init()
     
     dialogs::set_text(hdlg, releases_separator, L"Releases scan");
     dialogs::set_text(hdlg, releases_status_label, L"Sync status:");
+    dialogs::set_text(hdlg, releases_status_value, L"Finished");
     dialogs::set_text(hdlg, releases_resync_button, L"Resync");
+    dialogs::enable(hdlg, releases_resync_button, plugin != nullptr);
 
-    set_releases_sync_status();
+    if (plugin)
+    {
+        if (auto api = plugin->get_api(); auto releases = api->get_releases())
+            set_releases_sync_status(releases->get_sync_tasks_left());
+    }
 
     dialogs::set_text(hdlg, ok_button, get_text(MOk));
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
@@ -195,6 +205,11 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
         }
         case releases_resync_button:
         {
+            if (auto plugin = get_plugin())
+            {
+                if (auto api = plugin->get_api(); auto releases = api->get_releases())
+                    releases->invalidate();
+            }
             return true;
         }
     }
