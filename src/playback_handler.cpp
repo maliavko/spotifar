@@ -233,8 +233,8 @@ void playback_handler::tick()
         far3::synchro_tasks::push([this] {
             far3::show_far_error_dlg(MErrorLibrespotStoppedUnexpectedly, L"", MRelaunch, [this]
             {
-                if (auto api = api_proxy.lock())
-                    start(api->get_auth_data().access_token);
+                if (auto api = api_proxy.lock(); auto auth = api->get_auth_cache())
+                    start(auth->get_access_token());
             });
         }, "librespot-unexpected-stop, show error dialog task");
     }

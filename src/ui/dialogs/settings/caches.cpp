@@ -4,12 +4,15 @@
 #include "lng.hpp"
 #include "spotifar.hpp"
 #include "plugin.h"
+#include "spotify/cache.hpp"
+#include "spotify/auth.hpp"
 #include "spotify/api.hpp"
 #include "spotify/releases.hpp"
 
 namespace spotifar { namespace ui { namespace settings {
 
 using namespace utils::far3;
+namespace fs = std::filesystem;
 
 enum controls : int
 {
@@ -78,6 +81,27 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,          DIF_CENTERGROUP),
 };
 
+static bool remove_http_cache()
+{
+    const auto &filepath = fs::path(spotify::get_cache_filename());
+    
+    std::error_code ec;
+    if (!fs::remove(filepath, ec))
+    {
+        // TODO: show dialog?
+        return false;
+    }
+
+    return true;
+}
+
+static bool clear_credentials()
+{
+    auto ctx = config::lock_settings();
+    // recalculate the size
+    return ctx->delete_value(spotify::auth_config_key);
+}
+
 caches_dialog::caches_dialog():
     modal_dialog(&ConfigCachesDialogGuid, width, height, dlg_items_layout, L"ConfigCaches")
 {
@@ -130,6 +154,12 @@ void caches_dialog::init()
         }
     }
 
+    wstring http_btn_label = L"Clear";
+
+    auto cache_filepath = std::filesystem::path(spotify::get_cache_filename());
+    if (auto size = std::filesystem::file_size(cache_filepath, ec); !ec)
+        http_btn_label = std::format(L"Clear ({})", utils::to_wstring(format_file_size(size)));
+
     auto plugin = get_plugin();
     
     dialogs::set_text(hdlg, dialog_box, L"Logs");
@@ -144,7 +174,7 @@ void caches_dialog::init()
     dialogs::set_text(hdlg, auth_cache_label, L"Credentials");
     dialogs::set_text(hdlg, auth_clear_button, L"Clear");
     dialogs::set_text(hdlg, http_cache_label, L"Http reponses");
-    dialogs::set_text(hdlg, http_clear_button, L"Clear 80Mb");
+    dialogs::set_text(hdlg, http_clear_button, http_btn_label.c_str());
     dialogs::set_text(hdlg, clear_all_button, L"Clear All");
     
     dialogs::set_text(hdlg, releases_separator, L"Releases scan");
@@ -181,11 +211,11 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
         case logs_clear_button:
         {
             std::error_code ec;
-            for (auto &entry: std::filesystem::directory_iterator(utils::log::get_logs_folder()))
+            for (auto &entry: fs::directory_iterator(utils::log::get_logs_folder()))
             {
                 if (entry.is_regular_file(ec))
                 {
-                    if (!std::filesystem::remove(entry.path(), ec))
+                    if (!fs::remove(entry.path(), ec))
                         log::global->error("Could not remove file '{}': {}", utils::to_string(entry.path()), ec.message());
                 }
             }
@@ -193,14 +223,19 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
         }
         case auth_clear_button:
         {
+            clear_credentials();
             return true;
         }
         case http_clear_button:
         {
+            remove_http_cache();
             return true;
         }
         case clear_all_button:
         {
+            clear_credentials();
+            // clear library & releases
+            remove_http_cache();
             return true;
         }
         case releases_resync_button:

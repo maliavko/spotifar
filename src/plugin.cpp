@@ -210,8 +210,8 @@ void plugin::on_playback_backend_setting_changed(bool is_enabled)
 {
     if (is_enabled)
     {
-        if (const auto &auth = api->get_auth_data())
-            launch_playback_device(auth.access_token);
+        if (const auto &auth_cache = api->get_auth_cache())
+            launch_playback_device(auth_cache->get_access_token());
     }
     else
         shutdown_playback_device();
@@ -221,8 +221,8 @@ void plugin::on_playback_backend_configuration_changed()
 {
     log::global->debug("on_playback_backend_configuration_changed");
     
-    if (const auto &auth = api->get_auth_data(); playback_device)
-        playback_device->restart(auth.access_token);
+    if (const auto &auth_cache = api->get_auth_cache(); playback_device)
+        playback_device->restart(auth_cache->get_access_token());
 }
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
