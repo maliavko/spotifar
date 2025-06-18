@@ -70,6 +70,8 @@ void recent_releases::queue_artists(const item_ids_t &ids)
                     {
                         log::api->info("A new release was found for the artist '{}' - {}",
                             artist_id, album.id);
+                            
+                        dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
                         
                         interim_data.insert(album);
                     }

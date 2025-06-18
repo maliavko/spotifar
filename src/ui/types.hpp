@@ -2,6 +2,8 @@
 #define TYPES_HPP_3D4B2974_24D0_48E9_B3A3_4BD005CC78D5
 #pragma once
 
+#include "stdafx.h"
+
 namespace spotifar { namespace ui {
 
 struct sort_mode_t

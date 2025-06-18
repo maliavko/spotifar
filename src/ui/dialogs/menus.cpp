@@ -7,6 +7,7 @@
 #include "settings/hotkeys.hpp"
 #include "settings/general.hpp"
 #include "settings/backend.hpp"
+#include "settings/caches.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -21,6 +22,7 @@ intptr_t show_settings_menu()
         { MIF_NONE, get_text(MCfgDlgMenuGeneral) },
         { MIF_NONE, get_text(MCfgDlgMenuBackend) },
         { MIF_NONE, get_text(MCfgDlgMenuHotkeys) },
+        { MIF_NONE, get_text(MCfgDlgMenuCaches) },
     };
 
     while (1)
@@ -53,6 +55,10 @@ intptr_t show_settings_menu()
         else if (opt_idx == 2)
         {
             settings::hotkeys_dialog().run();
+        }
+        else if (opt_idx == 3)
+        {
+            settings::caches_dialog().run();
         }
     }
     return TRUE;

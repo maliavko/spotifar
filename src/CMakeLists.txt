@@ -43,6 +43,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/dialogs/settings/hotkeys.cpp
 	ui/dialogs/settings/general.cpp
 	ui/dialogs/settings/backend.cpp
+	ui/dialogs/settings/caches.cpp
 	../thirdparty/ObserverManager/ObserverManager/ObserverManager.cpp
 	../thirdparty/ObserverManager/ObserverManager/BaseObserverProtocol.cpp
 	spotifar.vc.def
