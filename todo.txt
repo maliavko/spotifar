@@ -8,7 +8,6 @@ application ideas
     - close plugin if another librespot device is being detected
 - new functional
     - download music via https://github.com/spotDL/spotify-downloader
-    - show somewhere in UI the fresh releases sync status
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
     - grab lyrics from here? https://lrclib.net/
     - concerts setlists: https://api.setlist.fm/docs/1.0/index.html

@@ -111,10 +111,12 @@ struct play_history_observer: public BaseObserverProtocol
 
 struct releases_observer: public BaseObserverProtocol
 {
-    /// @brief The event is thrown when the recent releases seach procedure is finished
+    /// @brief The event is thrown when the recent releases seach procedure is finished,
+    /// and there are some new releases found
     virtual void on_releases_sync_finished(const recent_releases_t releases) {}
 
-    /// @brief Sends the event of the sync progress change
+    /// @brief Sends the event of the sync progress change; the event is always called when
+    /// the progress is finished with `items_left` == 0
     virtual void on_sync_progress_changed(size_t items_left) {}
 };
 
