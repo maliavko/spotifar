@@ -15,6 +15,9 @@ using time_point = clock_t::time_point;
 using config::persistent_data;
 using settings_ctx = config::settings_context;
 
+/// @brief Returns the filepath to the cache filename 
+string get_cache_filename();
+
 /// @brief An interface to the class, which implements the functionality to cache the data
 /// and store it in the local storage
 struct cached_data_abstract: public config::persistent_data_abstract

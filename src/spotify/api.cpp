@@ -98,12 +98,6 @@ bool api::is_authenticated() const
     return auth->is_authenticated();
 }
 
-const auth_cache::data_t& api::get_auth_data(bool force_resync)
-{
-    auth->resync(force_resync);
-    return auth->get();
-}
-
 const playback_cache::data_t& api::get_playback_state(bool force_resync)
 {
     playback->resync(force_resync);
@@ -124,6 +118,12 @@ library_interface* api::get_library()
 recent_releases_interface* api::get_releases()
 {
     return releases.get();
+};
+
+
+auth_cache_interface* api::get_auth_cache()
+{
+    return auth.get();
 };
 
 const play_history::data_t& api::get_play_history(bool force_resync)
