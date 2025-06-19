@@ -267,9 +267,9 @@ namespace far3
         }
         
         intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                                void *data, size_t data_size, bool is_selected)
+                                void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
         {
-            FarListItem item{ LIF_NONE, label.c_str(), NULL, NULL };
+            FarListItem item{ flags, label.c_str(), NULL, NULL };
             if (is_selected)
                 item.Flags |= LIF_SELECTED;
                 
@@ -499,6 +499,13 @@ namespace far3
         intptr_t synchro(void *user_data)
         {
             return config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, user_data);
+        }
+
+        SMALL_RECT get_far_rect()
+        {
+            SMALL_RECT rect;
+            config::ps_info.AdvControl(&MainGuid, ACTL_GETFARRECT, 0, &rect);
+            return rect;
         }
 
         bool is_wnd_in_focus()

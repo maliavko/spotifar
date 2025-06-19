@@ -57,6 +57,7 @@ protected:
     
     // ui events handlers
     void show_player() override;
+    void show_search_dialog() override;
     void on_request_started(const string &url) override;
     void on_request_finished(const string &url) override;
     void on_request_progress_changed(const string &url, size_t progress, size_t total) override;

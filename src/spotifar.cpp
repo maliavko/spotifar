@@ -5,6 +5,7 @@
 #include "ui/dialogs/menus.hpp"
 #include "ui/events.hpp"
 #include "ui/panel.hpp"
+#include "ui/dialogs/search.hpp"
 
 namespace spotifar {
 
@@ -172,16 +173,24 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
     const auto &key_event = info->Rec.Event.KeyEvent;
     if (key_event.bKeyDown)
     {
+        // the method is being called even when the plugin is not created yet,
+        // just loaded into Far; we need only active state
+        if (auto plugin = plugin_weak_ptr.lock(); plugin == nullptr)
+            return FALSE;
+        
         switch (keys::make_combined(key_event))
         {
             case keys::i + keys::mods::ctrl:
             {
-                // process handlers only in case the plugin is loaded into panel
-                if (auto plugin = plugin_weak_ptr.lock())
-                {
-                    ui::events::show_filters_menu();
-                    return TRUE;
-                }
+                ui::events::show_filters_menu();
+                return TRUE;
+            }
+            case VK_F7 + keys::mods::alt:
+            {
+                
+                ui::events::show_search_dialog();
+                //ui::search_dialog().run();
+                return TRUE;
             }
         }
     }

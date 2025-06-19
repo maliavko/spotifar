@@ -21,6 +21,9 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
+- after changing device in player UI, for some time is shown the old one
+- console input received is being caught when the panel is active, even if cursor is out of the spotifar panel
+- search does not show waiting
 
 to finish for alpha release
 - check all the default view settings and sort modes
