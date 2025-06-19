@@ -102,6 +102,25 @@ namespace spotifar
         MCfgVolumeDown,
         MCfgShowToast,
 
+        // caches & logs configuration dialog
+        MCfgLogs,
+        MCfgLogsCount,
+        MCfgLogsFolderSize,
+        MCfgShowLogsBtn,
+        MCfgClearLogsBtn,
+        MCfgCaches,
+        MCfgCredentials,
+        MCfgCredentialsClearBtn,
+        MCfgHttpCache,
+        MCfgHttpCacheClearBtn,
+        MCfgClearAllCaches,
+        MCfgReleases,
+        MCfgReleasesSyncStatus,
+        MCfgReleasesStatusFinished,
+        MCfgReleasesStatusLeft,
+        MCfgReleasesResyncBtn,
+
+        // panlels & ui
         MPanelCollection,
         MPanelCollectionDescr,
         MPanelArtists,
@@ -160,6 +179,7 @@ namespace spotifar
         MCopyrightUnknown,
 
         // warnings & errors
+        MFarMessageWarningTitle,
         MFarMessageErrorTitle,
         MErrorPluginStartupUnexpected,
         MErrorPluginStartupNoClientID,
@@ -171,6 +191,7 @@ namespace spotifar
         MErrorPlaybackCmdFailed,
         MErrorCollectionFetchFailed,
         MErrorConfigMigrationError,
+        MErrorRemoveFile,
 
         // notifications
         MToastNewReleasesFoundTitle,

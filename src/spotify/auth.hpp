@@ -24,6 +24,7 @@ public:
     bool is_authenticated() const override;
     auto get_access_token() const -> const string& override;
     auto get_refresh_token() const -> const string& override;
+    void clear_credentials() override;
 protected:
     string request_auth_code();
     auth_t auth_with_code(const string &auth_code);

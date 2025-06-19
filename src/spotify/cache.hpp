@@ -16,7 +16,7 @@ using config::persistent_data;
 using settings_ctx = config::settings_context;
 
 /// @brief Returns the filepath to the cache filename 
-string get_cache_filename();
+std::filesystem::path get_cache_filename();
 
 /// @brief An interface to the class, which implements the functionality to cache the data
 /// and store it in the local storage

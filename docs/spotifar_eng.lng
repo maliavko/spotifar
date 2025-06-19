@@ -96,6 +96,25 @@
 "volume down"
 "show toast"
 
+// caches & logs configuration dialog
+"Logs"
+"Logs count:"
+"Folder size:"
+"&Show logs"
+"&Clear logs"
+"Caches"
+"Credentials"
+"Clear"
+"Http reponses"
+"Clear ({})"
+"Clear all"
+"Releases scan"
+"Sync status:"
+"Finished"
+"{} left"
+"&Resync"
+
+// panlels & ui
 "Collection"
 "Your followed artists, saved albums, tracks and playlists"
 "Artists"
@@ -154,6 +173,7 @@
 "Unknown label"
 
 // warnings & errors
+"Warning"
 "Critical error"
 "An error has occured while initializing plugin."
 "An error has occured while initializing plugin: Spotify client ID is not specified."
@@ -165,6 +185,7 @@
 "A playback error."
 "An error occured while fetching the collection."
 "There is an error occured while migrating Spotifar config"
+"Could not remove file '{}': {}"
 
 // notifications
 "New releases found"
