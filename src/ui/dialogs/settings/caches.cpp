@@ -81,25 +81,122 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,          DIF_CENTERGROUP),
 };
 
+/// @brief Simple helper to calculate files and its total size in the given `folder_path`.
+/// In case of errors of getting stats on the individual files, just skip entries and
+/// count only valid ones
+/// @return std::pair<files_count, files_total_size>
+static std::pair<size_t, std::uintmax_t> get_folder_stats(const wstring &folder_path)
+{
+    size_t logs_count = 0;
+    std::uintmax_t total_size = 0;
+
+    std::error_code ec;
+    for (auto &entry: fs::directory_iterator(folder_path))
+    {
+        if (entry.is_regular_file(ec))
+        {
+            total_size += entry.file_size(ec);
+            ++logs_count;
+        }
+    }
+    return std::make_pair(logs_count, total_size);
+}
+
+static void update_logs_block(HANDLE hdlg)
+{
+    static wstring logs_count, logs_size;
+    
+    auto stats = get_folder_stats(utils::log::get_logs_folder());
+
+    logs_count = std::to_wstring(stats.first);
+    logs_size = utils::to_wstring(utils::format_file_size(stats.second));
+    
+    dialogs::set_text(hdlg, dialog_box, get_text(MCfgLogs));
+    dialogs::set_text(hdlg, logs_count_label, get_text(MCfgLogsCount));
+    dialogs::set_text(hdlg, logs_count_value, logs_count.c_str());
+    dialogs::set_text(hdlg, logs_size_label, get_text(MCfgLogsFolderSize));
+    dialogs::set_text(hdlg, logs_size_value, logs_size.c_str());
+    dialogs::set_text(hdlg, logs_show_button, get_text(MCfgShowLogsBtn));
+    dialogs::set_text(hdlg, logs_clear_button, get_text(MCfgClearLogsBtn));
+}
+
+static void update_caches_block(HANDLE hdlg)
+{
+    static wstring http_btn_label;
+
+    std::error_code ec;
+    auto size = fs::file_size(spotify::get_cache_filename(), ec);
+
+    // ignore errors, just show 0B size on the buttong
+    http_btn_label = get_vtext(MCfgHttpCacheClearBtn,
+        utils::to_wstring(utils::format_file_size(ec ? 0 : size)));
+    
+    dialogs::set_text(hdlg, caches_separator, get_text(MCfgCaches));
+    dialogs::set_text(hdlg, auth_cache_label, get_text(MCfgCredentials));
+    dialogs::set_text(hdlg, auth_clear_button, get_text(MCfgCredentialsClearBtn));
+    dialogs::set_text(hdlg, http_cache_label, get_text(MCfgHttpCache));
+    dialogs::set_text(hdlg, http_clear_button, http_btn_label.c_str());
+    dialogs::set_text(hdlg, clear_all_button, get_text(MCfgClearAllCaches));
+}
+
+void set_releases_sync_status(HANDLE hdlg, size_t items_left, bool is_plugin_launched)
+{
+    static wstring status;
+
+    if (items_left > 0)
+        status = get_vtext(MCfgReleasesStatusLeft, items_left);
+    else
+        status = get_text(MCfgReleasesStatusFinished);
+
+    dialogs::set_text(hdlg, releases_status_value, status.c_str());
+    dialogs::enable(hdlg, releases_resync_button, items_left == 0 && is_plugin_launched);
+}
+
+static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
+{
+    static wstring status;
+
+    dialogs::set_text(hdlg, releases_separator, get_text(MCfgReleases));
+    dialogs::set_text(hdlg, releases_status_label, get_text(MCfgReleasesSyncStatus));
+    dialogs::set_text(hdlg, releases_status_value, get_text(MCfgReleasesStatusFinished));
+    dialogs::set_text(hdlg, releases_resync_button, get_text(MCfgReleasesResyncBtn));
+
+    if (plugin)
+    {
+        if (auto api = plugin->get_api(); auto releases = api->get_releases())
+        {
+            set_releases_sync_status(hdlg, releases->get_sync_tasks_left(), true);
+            return;
+        }
+    }
+    set_releases_sync_status(hdlg, 0, false);
+}
+
 static bool remove_http_cache()
 {
-    const auto &filepath = fs::path(spotify::get_cache_filename());
+    const auto &filepath = spotify::get_cache_filename();
     
     std::error_code ec;
     if (!fs::remove(filepath, ec))
     {
-        // TODO: show dialog?
+        show_far_error_dlg(MFarMessageWarningTitle,
+            get_vtext(MErrorRemoveFile, filepath.c_str(), utils::to_wstring(ec.message())));
         return false;
     }
 
     return true;
 }
 
-static bool clear_credentials()
+static void clear_credentials()
 {
     auto ctx = config::lock_settings();
-    // recalculate the size
-    return ctx->delete_value(spotify::auth_config_key);
+    ctx->delete_value(spotify::auth_config_key);
+
+    if (auto plugin = get_plugin())
+    {
+        if (auto api = plugin->get_api())
+            api->get_auth_cache()->clear_credentials();
+    }
 }
 
 caches_dialog::caches_dialog():
@@ -113,89 +210,14 @@ caches_dialog::~caches_dialog()
     utils::events::stop_listening<spotify::releases_observer>(this);
 }
 
-void caches_dialog::set_releases_sync_status(size_t items_left)
-{
-    static wstring status;
-
-    if (items_left > 0)
-        status = std::format(L"{} left", items_left);
-    else
-        status = L"Finished";
-
-    dialogs::set_text(hdlg, releases_status_value, status.c_str());
-    dialogs::enable(hdlg, releases_resync_button, items_left == 0);
-}
-
-string format_file_size(uintmax_t size)
-{
-    std::ostringstream os;
-
-    int o{};
-    if (size == 0) return "0B";
-
-    double mantissa = (double)size;
-    for (; mantissa >= 1024.; mantissa /= 1024., ++o);
-    os << std::ceil(mantissa * 10.) / 10. << "BKMGTPE"[o];
-    return os.str();
-}
-
 void caches_dialog::init()
 {
-    int logs_count = 0;
-    size_t file_size = 0;
-
-    std::error_code ec;
-    for (auto &entry: std::filesystem::directory_iterator(utils::log::get_logs_folder()))
-    {
-        if (entry.is_regular_file(ec))
-        {
-            file_size += entry.file_size(ec);
-            ++logs_count;
-        }
-    }
-
-    wstring http_btn_label = L"Clear";
-
-    auto cache_filepath = std::filesystem::path(spotify::get_cache_filename());
-    if (auto size = std::filesystem::file_size(cache_filepath, ec); !ec)
-        http_btn_label = std::format(L"Clear ({})", utils::to_wstring(format_file_size(size)));
-
-    auto plugin = get_plugin();
-    
-    dialogs::set_text(hdlg, dialog_box, L"Logs");
-    dialogs::set_text(hdlg, logs_count_label, L"Logs count:");
-    dialogs::set_text(hdlg, logs_count_value, std::to_wstring(logs_count));
-    dialogs::set_text(hdlg, logs_size_label, L"Folder size:");
-    dialogs::set_text(hdlg, logs_size_value, utils::to_wstring(format_file_size(file_size)).c_str());
-    dialogs::set_text(hdlg, logs_show_button, L"Show logs");
-    dialogs::set_text(hdlg, logs_clear_button, L"Clear logs");
-    
-    dialogs::set_text(hdlg, caches_separator, L"Caches");
-    dialogs::set_text(hdlg, auth_cache_label, L"Credentials");
-    dialogs::set_text(hdlg, auth_clear_button, L"Clear");
-    dialogs::set_text(hdlg, http_cache_label, L"Http reponses");
-    dialogs::set_text(hdlg, http_clear_button, http_btn_label.c_str());
-    dialogs::set_text(hdlg, clear_all_button, L"Clear All");
-    
-    dialogs::set_text(hdlg, releases_separator, L"Releases scan");
-    dialogs::set_text(hdlg, releases_status_label, L"Sync status:");
-    dialogs::set_text(hdlg, releases_status_value, L"Finished");
-    dialogs::set_text(hdlg, releases_resync_button, L"Resync");
-    dialogs::enable(hdlg, releases_resync_button, plugin != nullptr);
-
-    if (plugin)
-    {
-        if (auto api = plugin->get_api(); auto releases = api->get_releases())
-            set_releases_sync_status(releases->get_sync_tasks_left());
-    }
+    update_logs_block(hdlg);
+    update_caches_block(hdlg);
+    update_releases_scan_block(hdlg, get_plugin());
 
     dialogs::set_text(hdlg, ok_button, get_text(MOk));
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
-}
-
-intptr_t caches_dialog::handle_result(intptr_t dialog_run_result)
-{
-    return FALSE;
 }
 
 bool caches_dialog::handle_btn_clicked(int ctrl_id)
@@ -205,7 +227,6 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
         case logs_show_button:
         {
             panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
-            close();
             return true;
         }
         case logs_clear_button:
@@ -219,23 +240,26 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
                         log::global->error("Could not remove file '{}': {}", utils::to_string(entry.path()), ec.message());
                 }
             }
+            update_logs_block(hdlg);
             return true;
         }
         case auth_clear_button:
         {
             clear_credentials();
+            update_caches_block(hdlg);
             return true;
         }
         case http_clear_button:
         {
             remove_http_cache();
+            update_caches_block(hdlg);
             return true;
         }
         case clear_all_button:
         {
             clear_credentials();
-            // clear library & releases
             remove_http_cache();
+            update_caches_block(hdlg);
             return true;
         }
         case releases_resync_button:
@@ -245,6 +269,11 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
                 if (auto api = plugin->get_api(); auto releases = api->get_releases())
                     releases->invalidate();
             }
+            else
+            {
+                log::global->warn("No plugin is launched, while received a request to "
+                    "resync releases cache");
+            }
             return true;
         }
     }
@@ -253,7 +282,7 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id)
 
 void caches_dialog::on_sync_progress_changed(size_t items_left)
 {
-    set_releases_sync_status(items_left);
+    set_releases_sync_status(hdlg, items_left, true);
 }
 
 } // namespace settings

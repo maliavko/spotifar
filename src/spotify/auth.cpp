@@ -76,6 +76,12 @@ const string& auth_cache::get_refresh_token() const
     return get().refresh_token;
 }
 
+void auth_cache::clear_credentials()
+{
+    auto accessor = lock_data();
+    accessor.data = {};
+}
+
 clock_t::duration auth_cache::get_sync_interval() const
 {
     // 60 seconds gap to overlap the old and the new tokens seemlessly

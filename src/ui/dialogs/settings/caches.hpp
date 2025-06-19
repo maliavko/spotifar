@@ -16,11 +16,8 @@ public:
     caches_dialog();
     ~caches_dialog();
 protected:
-    void set_releases_sync_status(size_t items_left = 0);
-
     // modal_dialog
     void init() override;
-    auto handle_result(intptr_t dialog_run_result) -> intptr_t override;
     bool handle_btn_clicked(int ctrl_id) override;
 
     // releases_observer handlers

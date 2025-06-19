@@ -5,10 +5,10 @@ namespace spotifar { namespace spotify {
 
 using namespace utils;
 
-string get_cache_filename()
+std::filesystem::path get_cache_filename()
 {
-    return std::format("{}\\responses.cache", utils::to_string(
-        config::get_plugin_data_folder()));
+    return std::filesystem::path(std::format("{}\\responses.cache", utils::to_string(
+        config::get_plugin_data_folder())));
 }
 
 void from_json(const json::Value &j, http_cache::cache_entry &e)
@@ -37,9 +37,9 @@ void http_cache::start()
 {
     try
     {
-        string filepath = get_cache_filename();
+        auto filepath = get_cache_filename();
 
-        HANDLE file = CreateFileA(filepath.c_str(), GENERIC_READ, FILE_SHARE_READ, 0,
+        HANDLE file = CreateFileW(filepath.c_str(), GENERIC_READ, FILE_SHARE_READ, 0,
             OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, 0);
         
         // there is no cache for reading
@@ -87,12 +87,12 @@ void http_cache::shutdown()
 
     try
     {
-        string filepath = get_cache_filename();
+        auto filepath = get_cache_filename();
 
         auto sbuffer = json::dump(cached_responses);
         DWORD totalSize = (DWORD)sbuffer->GetLength();
 
-        HANDLE file = CreateFileA(filepath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, 0,
+        HANDLE file = CreateFileW(filepath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, 0,
             CREATE_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, 0);
             
         if (file == INVALID_HANDLE_VALUE)
