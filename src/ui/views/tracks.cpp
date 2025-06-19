@@ -191,6 +191,8 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
                 {
                     if (auto *user_data = unpack_user_data(item->UserData))
                     {
+                        // TODO: sometimes starting playback on ".." item makes sense, like launch it for
+                        // the parent item
                         if (const auto &track = static_cast<const track_t&>(*user_data))
                             start_playback(track); // each derived view decides on the launching context
                     }
