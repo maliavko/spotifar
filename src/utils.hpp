@@ -301,7 +301,8 @@ namespace far3
         auto get_list_current_pos(HANDLE hdlg, int ctrl_id) -> size_t;
         auto open_list(HANDLE hdlg, int ctrl_id, bool is_opened) -> intptr_t;
         auto add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                           void *data = nullptr, size_t data_size = 0, bool is_selected = false) -> intptr_t;
+                           void *data = nullptr, size_t data_size = 0, bool is_selected = false,
+                           LISTITEMFLAGS flags = LIF_NONE) -> intptr_t;
 
         /// @brief Get data from the list item
         /// @param hdlg dialog handle
@@ -369,6 +370,7 @@ namespace far3
         auto get_far_hwnd() -> HWND;
         auto quit(intptr_t exit_code) -> intptr_t;
         auto synchro(void *user_data) -> intptr_t;
+        auto get_far_rect() -> SMALL_RECT;
 
         /// @brief Is Far window in focus or not 
         auto is_wnd_in_focus() -> bool;
@@ -446,8 +448,11 @@ namespace json
     {
         result.resize(j.Size());
 
+        // NOTE: turned out, spotify can send null's instead of some its
+        // hidden playlists e.g.
         for (SizeType i = 0; i < j.Size(); i++)
-            from_json(j[i], result[i]);
+            if (!j[i].IsNull())
+                from_json(j[i], result[i]);
     }
 
     template<class T>

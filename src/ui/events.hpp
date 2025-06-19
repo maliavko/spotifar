@@ -61,6 +61,8 @@ namespace events {
     /// filters menu dialog
     void show_filters_menu();
 
+    void show_search_dialog();
+
 } // namespace events
 
 using view_builder_t = std::function<view_ptr_t(HANDLE)>;
@@ -125,6 +127,8 @@ struct ui_events_observer: public BaseObserverProtocol
     virtual void close_panel(HANDLE panel) {}
 
     virtual void show_filters_menu() {}
+
+    virtual void show_search_dialog() {}
 };
 
 } // namespace ui
