@@ -154,6 +154,8 @@ struct auth_cache_interface
     virtual auto get_access_token() const -> const string& = 0;
 
     virtual auto get_refresh_token() const -> const string& = 0;
+
+    virtual void clear_credentials() = 0;
 };
 
 

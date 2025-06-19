@@ -15,6 +15,19 @@ bool operator==(const FarKey &lhs, const FarKey &rhs)
 
 namespace spotifar { namespace utils {
 
+string format_file_size(uintmax_t size)
+{
+    std::ostringstream os;
+
+    int o{};
+    if (size == 0) return "0B";
+
+    double mantissa = (double)size;
+    for (; mantissa >= 1024.; mantissa /= 1024., ++o);
+    os << std::ceil(mantissa * 10.) / 10. << "BKMGTPE"[o];
+    return os.str();
+}
+
 HINSTANCE open_web_browser(const string &address)
 { 
     log::global->debug("Redirecting to the external browser, {}", address);

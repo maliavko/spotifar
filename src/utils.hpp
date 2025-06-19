@@ -98,6 +98,10 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
+/// @brief Formats given file `size` into human readable version with
+/// one digit after dot and resolution letter: 4128 -> 4.1K
+string format_file_size(uintmax_t size);
+
 HINSTANCE open_web_browser(const string &address);
 
 class tasks_queue
