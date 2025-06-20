@@ -9,6 +9,7 @@
 
 namespace spotifar { namespace ui {
 
+using no_redraw_search = no_redraw<search_dialog>;
 using namespace utils::far3;
 namespace fs = std::filesystem;
 
@@ -108,6 +109,8 @@ search_dialog::~search_dialog()
 
 void search_dialog::init()
 {
+    no_redraw_search nr(hdlg);
+
     dialogs::set_text(hdlg, dialog_box, L"Search");
 
     dialogs::set_text(hdlg, types_sep, L"Types");

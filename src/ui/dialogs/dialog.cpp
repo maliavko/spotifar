@@ -11,6 +11,7 @@ FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x
     return FarDialogItem(type, x1, y1, x2, y2, {}, history, nullptr, flags, data);
 }
 
+
 static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 {
     auto d = far3::dialogs::get_dlg_data<modal_dialog>(hdlg);
