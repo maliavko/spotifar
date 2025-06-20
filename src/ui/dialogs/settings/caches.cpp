@@ -11,6 +11,7 @@
 
 namespace spotifar { namespace ui { namespace settings {
 
+using no_redraw_caches = no_redraw<caches_dialog>;
 using namespace utils::far3;
 namespace fs = std::filesystem;
 
@@ -104,6 +105,8 @@ static std::pair<size_t, std::uintmax_t> get_folder_stats(const wstring &folder_
 
 static void update_logs_block(HANDLE hdlg)
 {
+    no_redraw_caches nr(hdlg);
+
     static wstring logs_count, logs_size;
     
     auto stats = get_folder_stats(utils::log::get_logs_folder());
@@ -122,6 +125,8 @@ static void update_logs_block(HANDLE hdlg)
 
 static void update_caches_block(HANDLE hdlg)
 {
+    no_redraw_caches nr(hdlg);
+
     static wstring http_btn_label;
 
     std::error_code ec;
@@ -141,6 +146,8 @@ static void update_caches_block(HANDLE hdlg)
 
 void set_releases_sync_status(HANDLE hdlg, size_t items_left, bool is_plugin_launched)
 {
+    no_redraw_caches nr(hdlg);
+
     static wstring status;
 
     if (items_left > 0)
@@ -154,6 +161,8 @@ void set_releases_sync_status(HANDLE hdlg, size_t items_left, bool is_plugin_lau
 
 static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
 {
+    no_redraw_caches nr(hdlg);
+
     static wstring status;
 
     dialogs::set_text(hdlg, releases_separator, get_text(MCfgReleases));
