@@ -88,8 +88,14 @@ struct multiview_builder_t
 
     view_builder_t switch_builder(size_t idx)
     {
-        settings->idx = idx;
-        return get_builder();
+        std::vector<view_builder_t> builders{ artists, albums, tracks, playlists };
+
+        if (idx < builders.size() && builders[idx])
+        {
+            settings->idx = idx;
+            return get_builder();
+        }
+        return nullptr;
     }
 
     view_builder_t get_builder()

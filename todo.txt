@@ -16,15 +16,12 @@ application ideas
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support: export, flush caches, resync fresh releases
-    - sort order on the panel does not have any impact on the playing order, consider of having possibility of playing albums, playlists and etc. in the order, they are sorted on the panels
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
 - after changing device in player UI, for some time is shown the old one
 - console input received is being caught when the panel is active, even if cursor is out of the spotifar panel
-- search does not show waiting
-- on the artist page shift+f5 works
 - closing far by cross-button, while search dialog (or any other?) is opened, hangs process quite often
 
 to finish for alpha release
