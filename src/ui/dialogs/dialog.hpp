@@ -5,9 +5,10 @@
 #include "stdafx.h"
 
 namespace spotifar { namespace ui {
-    
+
+/// @brief https://api.farmanager.com/ru/structures/fardialogitem.html 
 FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
-    FARDIALOGITEMFLAGS flags, const wchar_t *data = L"");
+    FARDIALOGITEMFLAGS flags, const wchar_t *data = L"", const wchar_t *history = NULL);
 
 /// @brief A base class-helper for creating custom modal dialogs
 class modal_dialog

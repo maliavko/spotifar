@@ -98,6 +98,8 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
+wstring trunc(const wstring &str, size_t size_to_cut);
+
 /// @brief Formats given file `size` into human readable version with
 /// one digit after dot and resolution letter: 4128 -> 4.1K
 string format_file_size(uintmax_t size);
@@ -300,9 +302,8 @@ namespace far3
         auto clear_list(HANDLE hdlg, int ctrl_id) -> intptr_t;
         auto get_list_current_pos(HANDLE hdlg, int ctrl_id) -> size_t;
         auto open_list(HANDLE hdlg, int ctrl_id, bool is_opened) -> intptr_t;
-        auto add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                           void *data = nullptr, size_t data_size = 0, bool is_selected = false,
-                           LISTITEMFLAGS flags = LIF_NONE) -> intptr_t;
+        auto add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index, void *data = nullptr, size_t data_size = 0, bool is_selected = false, LISTITEMFLAGS flags = LIF_NONE) -> intptr_t;
+        auto update_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index, void *data = nullptr, size_t data_size = 0, bool is_selected = false, LISTITEMFLAGS flags = LIF_NONE) -> intptr_t;
 
         /// @brief Get data from the list item
         /// @param hdlg dialog handle
