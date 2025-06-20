@@ -166,6 +166,8 @@ public:
     {
         if (api_proxy.expired()) return false;
 
+        requester_progress_notifier notifier(url);
+
         auto response = api_proxy.lock()->get(url);
         if (!utils::http::is_success(response))
         {
@@ -183,10 +185,17 @@ public:
             json::Document doc;
             doc.Parse(response->body);
             
-            from_json(doc["tracks"]["items"], tracks);
-            from_json(doc["artists"]["items"], artists);
-            from_json(doc["albums"]["items"], albums);
-            from_json(doc["playlists"]["items"], playlists);
+            if (doc.HasMember("tracks"))
+                from_json(doc["tracks"]["items"], tracks);
+            
+            if (doc.HasMember("artists"))
+                from_json(doc["artists"]["items"], artists);
+
+            if (doc.HasMember("albums"))
+                from_json(doc["albums"]["items"], albums);
+
+            if (doc.HasMember("playlists"))
+                from_json(doc["playlists"]["items"], playlists);
 
             return true;
         }

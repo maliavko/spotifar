@@ -7,6 +7,7 @@
 
 namespace spotifar { namespace ui {
 
+using no_redraw_search = no_redraw<search_results_dialog>;
 using namespace utils::far3;
 namespace fs = std::filesystem;
 
@@ -18,6 +19,7 @@ enum controls : int
     results_list,
 
     buttons_sep,
+    new_search_btn,
     ok_btn,
     cancel_btn,
 };
@@ -36,6 +38,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     
     // buttons block
     ctrl(DI_TEXT,       -1, view_y2-1, view_x2, 1,                  DIF_SEPARATOR2),
+    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,               DIF_CENTERGROUP),
     ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,               DIF_CENTERGROUP | DIF_DEFAULTBUTTON),
     ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,               DIF_CENTERGROUP),
 };
@@ -119,102 +122,120 @@ void search_results_dialog::rebuild_items()
     auto api = plugin->get_api();
 
     // artists block
-    items.push_back({ L"Artists", LIF_SEPARATOR });
-    items.push_back({ std::format(L"{:67}│{:3}│{: ^10}│{: ^7}", L"Name", L"[+]", L"Followers", L"Pop %"), LIF_DISABLE });
-    items.push_back({ L"", LIF_SEPARATOR });
-    for (const auto &artist: requester.artists)
+    if (requester.artists.size() > 0)
     {
-        auto followers = artist.followers_total;
-        wstring followers_lbl = L"";
-        if (followers < 1000000)
-            followers_lbl = std::format(L"{:9}", followers);
-        else if (followers < 1000000000)
-            followers_lbl = std::format(L"{:7.2f} M", followers / 1000000.0);
-        else if (followers < 1000000000000)
-            followers_lbl = std::format(L"{:7.2f} B", followers / 1000000000.0);
+        items.push_back({ L"Artists", LIF_SEPARATOR });
+        items.push_back({ std::format(L"{:37}│{:30}│{:3}│{: ^10}│{: ^7}", L"Name", L"Genre", L"[+]", L"Followers", L"Pop %"), LIF_DISABLE });
+        items.push_back({ L"", LIF_SEPARATOR });
+        for (const auto &artist: requester.artists)
+        {
+            auto followers = artist.followers_total;
+            wstring followers_lbl = L"";
+            if (followers < 1000000)
+                followers_lbl = std::format(L"{:9}", followers);
+            else if (followers < 1000000000)
+                followers_lbl = std::format(L"{:7.2f} M", followers / 1000000.0);
+            else if (followers < 1000000000000)
+                followers_lbl = std::format(L"{:7.2f} B", followers / 1000000000.0);
 
-        bool is_saved = api->get_library()->is_artist_followed(artist.id);
+            bool is_saved = api->get_library()->is_artist_followed(artist.id);
 
-        wstring label = std::format(
-            L"{:67}│{:3}│{:10}│{:7}",
-            utils::trunc(artist.name, 67), is_saved ? L" + " : L"", followers_lbl, artist.popularity
-        );
+            auto genre = utils::trunc(artist.get_main_genre(), 30);
 
-        items.push_back({
-            label, LIF_NONE, &artist, show_artist_page, start_artist_playback
-        });
+            wstring label = std::format(
+                L"{:37}│{:30}│{:3}│{:10}│{:7}",
+                utils::trunc(artist.name, 37), genre, is_saved ? L" + " : L"", followers_lbl, artist.popularity
+            );
+
+            items.push_back({
+                label, LIF_NONE, &artist, show_artist_page, start_artist_playback
+            });
+        }
     }
 
     // albums block
-    items.push_back({ L"", LIF_DISABLE });
-    items.push_back({ L"Albums", LIF_SEPARATOR });
-    items.push_back({ std::format(L"{: ^6}│{:40}│{:27}│{:3}│{: ^4}│{: ^6}", L"Year", L"Name", L"Artist", L"[+]", L"Tx", L"Type"), LIF_DISABLE });
-    items.push_back({ L"", LIF_SEPARATOR });
-    for (const auto &album: requester.albums)
+    if (requester.albums.size() > 0)
     {
-        bool is_saved = api->get_library()->is_album_saved(album.id);
+        items.push_back({ L"", LIF_DISABLE });
+        items.push_back({ L"Albums", LIF_SEPARATOR });
+        items.push_back({ std::format(L"{: ^6}│{:40}│{:27}│{:3}│{: ^4}│{: ^6}", L"Year", L"Name", L"Artist", L"[+]", L"Tx", L"Type"), LIF_DISABLE });
+        items.push_back({ L"", LIF_SEPARATOR });
+        for (const auto &album: requester.albums)
+        {
+            bool is_saved = api->get_library()->is_album_saved(album.id);
 
-        wstring label = std::format(
-            L"{: ^6}│{:40}│{:27}│{:3}│{:4}│{: ^6}",
-            utils::to_wstring(album.get_release_year()),
-            utils::trunc(album.name, 40),
-            utils::trunc(album.get_artist().name, 27),
-            is_saved ? L" + " : L"",
-            album.total_tracks,
-            album.get_type_abbrev()
-        );
+            wstring label = std::format(
+                L"{: ^6}│{:40}│{:27}│{:3}│{:4}│{: ^6}",
+                utils::to_wstring(album.get_release_year()),
+                utils::trunc(album.name, 40),
+                utils::trunc(album.get_artist().name, 27),
+                is_saved ? L" + " : L"",
+                album.total_tracks,
+                album.get_type_abbrev()
+            );
 
-        items.push_back({
-            label, LIF_NONE, &album, show_album_page, start_album_playback
-        });
+            items.push_back({
+                label, LIF_NONE, &album, show_album_page, start_album_playback
+            });
+        }
     }
 
     // tracks block
-    items.push_back({ L"", LIF_DISABLE });
-    items.push_back({ L"Tracks", LIF_SEPARATOR });
-    items.push_back({ std::format(L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}", L"Year", L"Name", L"Artist", L"Album", L"[+]", L"[E]", L"Duration"), LIF_DISABLE });
-    items.push_back({ L"", LIF_SEPARATOR });
-    for (const auto &track: requester.tracks)
+    if (requester.tracks.size() > 0)
     {
-        bool is_saved = api->get_library()->is_track_saved(track.id);
-        
-        auto duration = std::chrono::milliseconds(track.duration_ms);
-        wstring track_length;
-        if (duration < 1h)
-            track_length = std::format(L"{:%M:%S}", duration);
-        else
-            track_length = std::format(L"{:%Hh%M}", duration);
+        items.push_back({ L"", LIF_DISABLE });
+        items.push_back({ L"Tracks", LIF_SEPARATOR });
+        items.push_back({ std::format(L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}", L"Year", L"Name", L"Artist", L"Album", L"[+]", L"[E]", L"Duration"), LIF_DISABLE });
+        items.push_back({ L"", LIF_SEPARATOR });
+        for (const auto &track: requester.tracks)
+        {
+            bool is_saved = api->get_library()->is_track_saved(track.id);
+            
+            auto duration = std::chrono::milliseconds(track.duration_ms);
+            wstring track_length;
+            if (duration < 1h)
+                track_length = std::format(L"{:%M:%S}", duration);
+            else
+                track_length = std::format(L"{:%Hh%M}", duration);
 
-        wstring label = std::format(
-            L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}",
-            utils::to_wstring(track.album.get_release_year()),
-            utils::trunc(track.name, 25),
-            utils::trunc(track.get_artist().name, 20),
-            utils::trunc(track.album.name, 20),
-            is_saved ? L" + " : L"",
-            track.is_explicit ? L" * " : L"",
-            track_length.substr(0, 5)
-        );
+            wstring label = std::format(
+                L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}",
+                utils::to_wstring(track.album.get_release_year()),
+                utils::trunc(track.name, 25),
+                utils::trunc(track.get_artist().name, 20),
+                utils::trunc(track.album.name, 20),
+                is_saved ? L" + " : L"",
+                track.is_explicit ? L" * " : L"",
+                track_length.substr(0, 5)
+            );
 
-        items.push_back({
-            label, LIF_NONE, &track, show_track_page, start_track_playback
-        });
+            items.push_back({
+                label, LIF_NONE, &track, show_track_page, start_track_playback
+            });
+        }
     }
 }
 
 void search_results_dialog::refresh_list(const std::unordered_set<spotify::item_id_t> &ids)
-{   
+{
+    no_redraw_search nr(hdlg);
+
+    // saving index of the item under cursor to recover it later
+    auto cur_pos = dialogs::get_list_current_pos(hdlg, results_list);
+
     for (size_t idx = 0; idx < items.size(); idx++)
     {
         const auto &item = items[idx];
         if (item.data && ids.contains(item.data->id))
             dialogs::update_list_item(hdlg, results_list, item.label, (int)idx,
-                (void*)&item, sizeof(item), false, item.flags);
+                (void*)&item, sizeof(item), idx == cur_pos, item.flags);
     }
 }
 
 void search_results_dialog::init()
 {
+    no_redraw_search nr(hdlg);
+    
     dialogs::set_text(hdlg, dialog_box, L"Search Results");
     
     for (size_t idx = 0; idx < items.size(); idx++)

@@ -1,5 +1,6 @@
 #include "ui/player.hpp"
 #include "ui/events.hpp"
+#include "ui/dialogs/dialog.hpp"
 #include "spotify/interfaces.hpp"
 #include "lng.hpp"
 
@@ -9,6 +10,8 @@ namespace far3 = utils::far3;
 namespace keys = utils::keys;
 namespace colors = far3::colors;
 namespace synchro_tasks = far3::synchro_tasks;
+
+using no_redraw_player = no_redraw<player>;
 
 /// @brief a helper class to suppress `dlg_proc` function from handling incoming events,
 /// while the instance of the class exists in the particular scope
@@ -28,27 +31,6 @@ struct [[nodiscard]] dlg_events_supressor
     
     bool were_events_suppressed;
     player *dialog;
-};
-
-/// @brief A helper class to avoid redrawing in the function scope,
-/// usually while the object exists
-struct [[nodiscard]] no_redraw
-{
-    no_redraw(HANDLE h): hdlg(h)
-    {
-        assert(hdlg);
-        std::lock_guard lock(mutex);
-        far3::dialogs::enable_redraw(hdlg, false);
-    }
-
-    ~no_redraw()
-    {
-        std::lock_guard lock(mutex);
-        far3::dialogs::enable_redraw(hdlg, true);
-    }
-    
-    HANDLE hdlg;
-    inline static std::mutex mutex{};
 };
 
 static FarDialogItem control(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
@@ -345,7 +327,7 @@ bool player::is_expanded() const
 
 void player::expand(bool is_unfolded)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
     dlg_events_supressor s(this);
 
     if (is_unfolded)
@@ -820,7 +802,7 @@ bool player::on_play_btn_click(void *empty)
 
 void player::on_devices_changed(const devices_t &devices)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
     dlg_events_supressor s(this);
 
     far3::dialogs::clear_list(hdlg, controls::devices_combo);
@@ -841,7 +823,7 @@ void player::on_running_state_changed(bool is_running)
 
 void player::on_track_changed(const track_t &track, const track_t &prev_track)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
 
     static wstring track_total_time_str;
     track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track.duration));
@@ -862,7 +844,7 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
 
 void player::update_track_bar(int duration, int progress)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
 
     static wstring track_bar, track_time_str;
 
@@ -896,7 +878,7 @@ void player::on_track_progress_changed(int duration, int progress)
 
 void player::update_volume_bar(int volume)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
 
     static wstring volume_label;
     
@@ -928,7 +910,7 @@ void player::on_shuffle_state_changed(bool state)
 
 void player::update_shuffle_btn(bool is_shuffling)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
     set_control_text(controls::shuffle_btn, far3::get_text(MPlayerShuffleBtn));
 }
 
@@ -950,7 +932,7 @@ void player::update_repeat_btn(const string &repeate_state)
         { playback_state_t::repeat_context, far3::get_text(MPlayerRepeatAllBtn) },
     };
 
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
 
     static wstring repeat_label;
     
@@ -962,7 +944,7 @@ void player::update_repeat_btn(const string &repeate_state)
 
 void player::update_like_btn(bool is_saved)
 {
-    no_redraw nr(hdlg);
+    no_redraw_player nr(hdlg);
     set_control_text(controls::like_btn, like_btn_label);
 }
 
