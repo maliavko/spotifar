@@ -24,6 +24,8 @@ bugs
 - after changing device in player UI, for some time is shown the old one
 - console input received is being caught when the panel is active, even if cursor is out of the spotifar panel
 - search does not show waiting
+- on the artist page shift+f5 works
+- closing far by cross-button, while search dialog (or any other?) is opened, hangs process quite often
 
 to finish for alpha release
 - check all the default view settings and sort modes

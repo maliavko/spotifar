@@ -6,9 +6,9 @@ namespace spotifar { namespace ui {
 namespace far3 = utils::far3;
 
 FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
-    FARDIALOGITEMFLAGS flags, const wchar_t *data)
+    FARDIALOGITEMFLAGS flags, const wchar_t *data, const wchar_t *history)
 {
-    return FarDialogItem(type, x1, y1, x2, y2, {}, nullptr, nullptr, flags, data);
+    return FarDialogItem(type, x1, y1, x2, y2, {}, history, nullptr, flags, data);
 }
 
 static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
