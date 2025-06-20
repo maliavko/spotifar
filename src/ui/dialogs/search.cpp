@@ -63,7 +63,7 @@ static const int
 static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_DOUBLEBOX,  box_x1, box_y1, box_x2, box_y2,                   DIF_NONE),
 
-    ctrl(DI_EDIT,       view_x1, view_y1, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       view_x1, view_y1, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"spotifar-search-query-ip"),
 
     ctrl(DI_TEXT,        -1, types_box_y, view_x2, 1,                      DIF_SEPARATOR),
     ctrl(DI_CHECKBOX,   center_x-14, types_box_y+1, center_x, 1,                       DIF_NONE),
@@ -73,19 +73,19 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     
     ctrl(DI_TEXT,       -1, filters_box_y, view_x2, 1,                      DIF_SEPARATOR),
     ctrl(DI_TEXT,       view_x1, filters_box_y+1, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+1, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+1, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"album_filter_ip"),
     ctrl(DI_TEXT,       view_x1, filters_box_y+2, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+2, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+2, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"artist_filter_ip"),
     ctrl(DI_TEXT,       view_x1, filters_box_y+3, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+3, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+3, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"track_filter_ip"),
     ctrl(DI_TEXT,       view_x1, filters_box_y+4, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+4, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+4, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"year_filter_ip"),
     ctrl(DI_TEXT,       view_x1, filters_box_y+5, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+5, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+5, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"genre_filter_ip"),
     ctrl(DI_TEXT,       view_x1, filters_box_y+6, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+6, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+6, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"upc_filter_ip"),
     ctrl(DI_TEXT,       view_x1, filters_box_y+7, 14, 1,                    DIF_RIGHTTEXT),
-    ctrl(DI_EDIT,       16, filters_box_y+7, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY),
+    ctrl(DI_EDIT,       16, filters_box_y+7, view_x2, 1,                    DIF_HISTORY | DIF_USELASTHISTORY, L"", L"isrc_filter_ip"),
     ctrl(DI_CHECKBOX,   center_x-14, filters_box_y+8, center_x, 1,                       DIF_NONE),
     ctrl(DI_CHECKBOX,   center_x+2, filters_box_y+8, view_x2, 1,                       DIF_NONE),
     

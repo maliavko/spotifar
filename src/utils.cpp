@@ -28,6 +28,13 @@ string format_file_size(uintmax_t size)
     return os.str();
 }
 
+wstring trunc(const wstring &str, size_t size_to_cut)
+{
+    if (str.size() > size_to_cut)
+        return str.substr(0, size_to_cut-1) + L'…';
+    return str;
+}
+
 HINSTANCE open_web_browser(const string &address)
 { 
     log::global->debug("Redirecting to the external browser, {}", address);
@@ -282,6 +289,21 @@ namespace far3
                 send(hdlg, DM_LISTSETDATA, ctrl_id, &item_data);
             }
             return r;
+        }
+        
+        intptr_t update_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
+                                 void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
+        {
+            FarListItem item{ flags, label.c_str(), NULL, NULL };
+            if (is_selected)
+                item.Flags |= LIF_SELECTED;
+            
+            if (data != nullptr)
+            {
+                FarListUpdate item_data{ sizeof(FarListUpdate), index, item };
+                return send(hdlg, DM_LISTUPDATE, ctrl_id, &item_data);
+            }
+            return FALSE;
         }
 
         template<>

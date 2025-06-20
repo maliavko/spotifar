@@ -156,7 +156,7 @@ public:
         httplib::Params params{
             { "q", utils::string_join(query, ",") },
             { "type", utils::string_join(types, ",") },
-            { "limit", "10" },
+            { "limit", "15" },
         };
 
         url = httplib::append_query_params("/v1/search", params);
