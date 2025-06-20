@@ -98,15 +98,20 @@
         {
             "label": "Install Spotifar to Far",
             "type": "shell",
-            "command": "mklink",
-            "args": [
-                "/j",
-                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\Spotifar\\",
-                "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\"
-            ],
-            "presentation": {
-                "reveal": "silent"
+            "options": {
+                "env": {
+                    "dest_folder": "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\Spotifar\\",
+                    "target_folder": "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\"
+                }
             },
+            "command": "cmd",
+            "args": [
+                "/C",
+                {
+                    "value": "if not exist \"%dest_folder%\" mklink /J \"%dest_folder%\" \"%target_folder%\"",
+                    "quoting": "weak"
+                }
+            ],
             "dependsOn": ["Create Spotifar plugin folder"],
             "group": {
                 "kind": "build"
@@ -117,7 +122,7 @@
             "type": "shell",
             "command": "xcopy",
             "args": [
-                "${workspaceFolder}\\thirdparty\\librespot\\target\\${input:buildType}\\librespot.exe",
+                "${workspaceFolder}\\thirdparty\\librespot\\target\\x${input:buildType}\\librespot.exe",
                 "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\librespot.exe*",
                 "/y",
             ],
@@ -131,9 +136,18 @@
         {
             "label": "Create Spotifar plugin folder",
             "type": "shell",
-            "command": "mkdir",
+            "options": {
+                "env": {
+                    "plugin_folder": "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
+                }
+            },
+            "command": "cmd",
             "args": [
-                "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
+                "/C",
+                {
+                    "value": "if not exist \"%plugin_folder%\" mkdir \"%plugin_folder%\"",
+                    "quoting": "weak"
+                }
             ],
             "group": {
                 "kind": "build"
