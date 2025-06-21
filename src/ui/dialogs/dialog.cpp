@@ -70,7 +70,7 @@ bool modal_dialog::handle_dlg_proc_event(intptr_t msg_id, int control_id, void *
     }
     else if (msg_id == DN_BTNCLICK)
     {
-        return handle_btn_clicked(control_id);
+        return handle_btn_clicked(control_id, reinterpret_cast<std::uintptr_t>(param));
     }
 
     return false;

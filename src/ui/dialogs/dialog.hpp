@@ -57,7 +57,8 @@ public:
 protected:
     virtual auto handle_result(intptr_t dialog_run_result) -> intptr_t { return FALSE; };
     virtual bool handle_key_pressed(int ctrl_id, int combined_key) { return FALSE; }
-    virtual bool handle_btn_clicked(int ctrl_id) { return FALSE; }
+    /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dn_btnclick.html 
+    virtual bool handle_btn_clicked(int ctrl_id, std::uintptr_t param) { return FALSE; }
 protected:
     HANDLE hdlg;
 };

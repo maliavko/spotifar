@@ -107,55 +107,59 @@ protected:
 };
 
 
+/// @brief Search requester
+/// https://developer.spotify.com/documentation/web-api/reference/search
 class search_requester
 {
 public:
-    search_requester(
-        const string &search,
-        const std::vector<string> &types,
-        const string &album_filter = "",
-        const string &artist_filter = "",
-        const string &track_filter = "",
-        const string &year_filter = "",
-        const string &genre_filter = "",
-        const string &upc_filter = "",
-        const string &isrc_filter = "",
-        bool is_fresh = false,
-        bool is_low = false
-    )
+    struct filters_t
+    {
+        std::vector<string> types;
+        string album = "";
+        string artist = "";
+        string track = "";
+        string year = "";
+        string genre = "";
+        string upc = "";
+        string isrc = "";
+        bool is_fresh = false;
+        bool is_low = false;
+    };
+public:
+    search_requester(const string &search, const filters_t &filters)
     {
         std::vector<string> query{ search };
 
-        if (auto f = utils::trim(album_filter); !f.empty())
+        if (auto f = utils::trim(filters.album); !f.empty())
             query.push_back(std::format("album={}", f));
 
-        if (auto f = utils::trim(artist_filter); !f.empty())
+        if (auto f = utils::trim(filters.artist); !f.empty())
             query.push_back(std::format("artist={}", f));
 
-        if (auto f = utils::trim(track_filter); !f.empty())
+        if (auto f = utils::trim(filters.track); !f.empty())
             query.push_back(std::format("track={}", f));
 
-        if (auto f = utils::trim(year_filter); !f.empty())
+        if (auto f = utils::trim(filters.year); !f.empty())
             query.push_back(std::format("year={}", f));
 
-        if (auto f = utils::trim(genre_filter); !f.empty())
+        if (auto f = utils::trim(filters.genre); !f.empty())
             query.push_back(std::format("genre={}", f));
 
-        if (auto f = utils::trim(upc_filter); !f.empty())
+        if (auto f = utils::trim(filters.upc); !f.empty())
             query.push_back(std::format("upc={}", f));
 
-        if (auto f = utils::trim(isrc_filter); !f.empty())
+        if (auto f = utils::trim(filters.isrc); !f.empty())
             query.push_back(std::format("isrc={}", f));
 
-        if (is_fresh)
+        if (filters.is_fresh)
             query.push_back(std::format("tag:new"));
 
-        if (is_low)
+        if (filters.is_low)
             query.push_back(std::format("tag:hipster"));
 
         httplib::Params params{
             { "q", utils::string_join(query, ",") },
-            { "type", utils::string_join(types, ",") },
+            { "type", utils::string_join(filters.types, ",") },
             { "limit", "15" },
         };
 

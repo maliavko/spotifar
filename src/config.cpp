@@ -53,6 +53,7 @@ static const wchar_t
     *verbose_logging_enabled_opt = L"EnableVerboseLogging",
     *views_settings_opt = L"ViewsSettings",
     *multi_views_settings_opt = L"MultiViewsSettings",
+    *search_dialog_settings_opt = L"SearchDialogSettings",
     *spotify_client_id_opt = L"SpotifyClientID",
     *spotify_client_secret_opt = L"SpotifyClientSecret",
     *localhost_service_port_opt = L"LocalhostServicePort",
@@ -126,6 +127,24 @@ void to_json(json::Value &result, const settings::multiview_t &v, json::Allocato
     result = json::Value(json::kObjectType);
 
     result.AddMember("idx", json::Value(v.idx), allocator);
+}
+
+void from_json(const json::Value &j, settings::search_dialog_t &v)
+{
+    v.is_albums = j["is_albums"].GetBool();
+    v.is_artists = j["is_artists"].GetBool();
+    v.is_tracks = j["is_tracks"].GetBool();
+    v.is_playlists = j["is_playlists"].GetBool();
+}
+
+void to_json(json::Value &result, const settings::search_dialog_t &v, json::Allocator &allocator)
+{
+    result = json::Value(json::kObjectType);
+
+    result.AddMember("is_albums", json::Value(v.is_albums), allocator);
+    result.AddMember("is_artists", json::Value(v.is_artists), allocator);
+    result.AddMember("is_tracks", json::Value(v.is_tracks), allocator);
+    result.AddMember("is_playlists", json::Value(v.is_playlists), allocator);
 }
 
 settings_context::settings_context(const wstring &subkey):
@@ -353,6 +372,10 @@ void read(const PluginStartupInfo *info)
     auto mviews_json = ctx->get_str(multi_views_settings_opt, "");
     if (!mviews_json.empty())
         json::parse_to(mviews_json, _settings.mviews);
+    
+    auto search_dialog_json = ctx->get_str(search_dialog_settings_opt, "");
+    if (!search_dialog_json.empty())
+        json::parse_to(search_dialog_json, _settings.search_dialog);
 
     // hotkeys
     _settings.is_global_hotkeys_enabled = ctx->get_bool(activate_global_hotkeys_opt, true);
@@ -404,6 +427,10 @@ void write()
     // multiviews
     auto mviews_buffer = json::dump(_settings.mviews);
     ctx->set_str(multi_views_settings_opt, mviews_buffer->GetString());
+
+    // search dialog
+    auto search_dialog_buffer = json::dump(_settings.search_dialog);
+    ctx->set_str(search_dialog_settings_opt, search_dialog_buffer->GetString());
 
     // global hotkeys
     ctx->set_bool(activate_global_hotkeys_opt, _settings.is_global_hotkeys_enabled);
