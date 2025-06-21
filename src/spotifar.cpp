@@ -170,12 +170,14 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 {
     namespace keys = utils::keys;
 
-    const auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
+    if (const auto &key_event = info->Rec.Event.KeyEvent; key_event.bKeyDown)
     {
         // the method is being called even when the plugin is not created yet,
         // just loaded into Far; we need only active state
         if (auto plugin = plugin_weak_ptr.lock(); plugin == nullptr)
+            return FALSE;
+
+        if (auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE); pinfo.OwnerGuid != MainGuid)
             return FALSE;
         
         switch (keys::make_combined(key_event))
@@ -201,8 +203,7 @@ intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
     namespace keys = utils::keys;
 
-    const auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
+    if (const auto &key_event = info->Rec.Event.KeyEvent; key_event.bKeyDown)
     {
         switch (keys::make_combined(key_event))
         {
