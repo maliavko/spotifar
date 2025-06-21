@@ -85,10 +85,10 @@ bool playback_handler::start(const string &access_token)
     if (!config::is_playback_cache_enabled())
         cmd << L" --disable-audio-cache";
 
+    cmd << L" --access-token " << utils::to_wstring(access_token);
+
     /// logging Librespot's command line arguments for debugging purposes
     log::global->info("Starting Librespot process, {}", utils::to_string(cmd.str()));
-
-    cmd << L" --access-token " << utils::to_wstring(access_token);
 
     // while verbocity is extended, the process freezes and stutter heavily for some reason
     // if (config::is_verbose_logging_enabled())

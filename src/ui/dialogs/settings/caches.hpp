@@ -18,7 +18,7 @@ public:
 protected:
     // modal_dialog
     void init() override;
-    bool handle_btn_clicked(int ctrl_id) override;
+    bool handle_btn_clicked(int ctrl_id, std::uintptr_t param) override;
 
     // releases_observer handlers
     void on_sync_progress_changed(size_t items_left) override;

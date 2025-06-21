@@ -6,6 +6,7 @@
 #include "spotify/api.hpp"
 #include "ui/player.hpp"
 #include "ui/dialogs/menus.hpp"
+#include "ui/dialogs/search.hpp"
 #include "ui/notifications.hpp"
 
 namespace spotifar {
@@ -244,6 +245,11 @@ void plugin::on_releases_sync_finished(const spotify::recent_releases_t releases
 void plugin::show_player()
 {
     player->show();
+}
+
+void plugin::show_search_dialog()
+{
+    ui::search_dialog().run();
 }
 
 void plugin::process_win_messages_queue()

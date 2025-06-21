@@ -114,6 +114,19 @@
 "{} left"
 "&Resync"
 
+// search dialog
+"Search"
+"Artists"
+"Albums"
+"Tracks"
+"Playlists"
+"Year"
+"Genre"
+"Fresh release"
+"Low rating"
+"Search Results"
+"&New Search"
+
 // panlels & ui
 "Collection"
 "Your followed artists, saved albums, tracks and playlists"

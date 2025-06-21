@@ -6,10 +6,11 @@ namespace spotifar { namespace ui {
 namespace far3 = utils::far3;
 
 FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
-    FARDIALOGITEMFLAGS flags, const wchar_t *data)
+    FARDIALOGITEMFLAGS flags, const wchar_t *data, const wchar_t *history)
 {
-    return FarDialogItem(type, x1, y1, x2, y2, {}, nullptr, nullptr, flags, data);
+    return FarDialogItem(type, x1, y1, x2, y2, {}, history, nullptr, flags, data);
 }
+
 
 static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
 {
@@ -69,7 +70,7 @@ bool modal_dialog::handle_dlg_proc_event(intptr_t msg_id, int control_id, void *
     }
     else if (msg_id == DN_BTNCLICK)
     {
-        return handle_btn_clicked(control_id);
+        return handle_btn_clicked(control_id, reinterpret_cast<std::uintptr_t>(param));
     }
 
     return false;

@@ -206,6 +206,11 @@ void show_filters_menu()
     dispatch_event(&ui_events_observer::show_filters_menu);
 }
 
+void show_search_dialog()
+{
+    dispatch_event(&ui_events_observer::show_search_dialog);
+}
+
 } // namespace events
 } // namespace ui
 } // namespace spotiar

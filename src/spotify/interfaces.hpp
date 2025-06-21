@@ -186,7 +186,7 @@ struct api_interface
     /// artists, albums or tracks
     virtual auto get_library() -> library_interface* = 0;
     
-    /// @brief Returns a new releasese management interface: get, invalidate etc.
+    /// @brief Returns a fresh releases management interface: get, invalidate etc.
     virtual auto get_releases() -> recent_releases_interface* = 0;
 
     virtual auto get_auth_cache() -> auth_cache_interface* = 0;
@@ -285,7 +285,7 @@ struct api_interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
     virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
-protected:
+//protected:
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the response for the given amount of time
     virtual httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
@@ -319,6 +319,8 @@ private:
 
     template<class T, int N, class C>
     friend class async_collection;
+
+    friend class search_requester;
 };
 
 } // namespace spotify

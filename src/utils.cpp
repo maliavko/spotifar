@@ -15,17 +15,24 @@ bool operator==(const FarKey &lhs, const FarKey &rhs)
 
 namespace spotifar { namespace utils {
 
-string format_file_size(uintmax_t size)
+string format_number(uintmax_t num, float divider, const char units[8], float precision)
 {
+    if (num == 0) return "0" + units[0];
+
     std::ostringstream os;
 
     int o{};
-    if (size == 0) return "0B";
-
-    double mantissa = (double)size;
-    for (; mantissa >= 1024.; mantissa /= 1024., ++o);
-    os << std::ceil(mantissa * 10.) / 10. << "BKMGTPE"[o];
+    double mantissa = (double)num;
+    for (; mantissa >= divider; mantissa /= divider, ++o);
+    os << std::ceil(mantissa * precision) / precision << units[o];
     return os.str();
+}
+
+wstring trunc(const wstring &str, size_t size_to_cut)
+{
+    if (str.size() > size_to_cut)
+        return str.substr(0, size_to_cut-1) + L'…';
+    return str;
 }
 
 HINSTANCE open_web_browser(const string &address)
@@ -267,9 +274,9 @@ namespace far3
         }
         
         intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                                void *data, size_t data_size, bool is_selected)
+                                void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
         {
-            FarListItem item{ LIF_NONE, label.c_str(), NULL, NULL };
+            FarListItem item{ flags, label.c_str(), NULL, NULL };
             if (is_selected)
                 item.Flags |= LIF_SELECTED;
                 
@@ -282,6 +289,21 @@ namespace far3
                 send(hdlg, DM_LISTSETDATA, ctrl_id, &item_data);
             }
             return r;
+        }
+        
+        intptr_t update_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
+                                 void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
+        {
+            FarListItem item{ flags, label.c_str(), NULL, NULL };
+            if (is_selected)
+                item.Flags |= LIF_SELECTED;
+            
+            if (data != nullptr)
+            {
+                FarListUpdate item_data{ sizeof(FarListUpdate), index, item };
+                return send(hdlg, DM_LISTUPDATE, ctrl_id, &item_data);
+            }
+            return FALSE;
         }
 
         template<>
@@ -499,6 +521,13 @@ namespace far3
         intptr_t synchro(void *user_data)
         {
             return config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, user_data);
+        }
+
+        SMALL_RECT get_far_rect()
+        {
+            SMALL_RECT rect;
+            config::ps_info.AdvControl(&MainGuid, ACTL_GETFARRECT, 0, &rect);
+            return rect;
         }
 
         bool is_wnd_in_focus()

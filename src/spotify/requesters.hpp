@@ -107,6 +107,118 @@ protected:
 };
 
 
+/// @brief Search requester
+/// https://developer.spotify.com/documentation/web-api/reference/search
+class search_requester
+{
+public:
+    struct filters_t
+    {
+        std::vector<string> types;
+        string album = "";
+        string artist = "";
+        string track = "";
+        string year = "";
+        string genre = "";
+        string upc = "";
+        string isrc = "";
+        bool is_fresh = false;
+        bool is_low = false;
+    };
+public:
+    search_requester(const string &search, const filters_t &filters)
+    {
+        std::vector<string> query{ search };
+
+        if (auto f = utils::trim(filters.album); !f.empty())
+            query.push_back(std::format("album={}", f));
+
+        if (auto f = utils::trim(filters.artist); !f.empty())
+            query.push_back(std::format("artist={}", f));
+
+        if (auto f = utils::trim(filters.track); !f.empty())
+            query.push_back(std::format("track={}", f));
+
+        if (auto f = utils::trim(filters.year); !f.empty())
+            query.push_back(std::format("year={}", f));
+
+        if (auto f = utils::trim(filters.genre); !f.empty())
+            query.push_back(std::format("genre={}", f));
+
+        if (auto f = utils::trim(filters.upc); !f.empty())
+            query.push_back(std::format("upc={}", f));
+
+        if (auto f = utils::trim(filters.isrc); !f.empty())
+            query.push_back(std::format("isrc={}", f));
+
+        if (filters.is_fresh)
+            query.push_back(std::format("tag:new"));
+
+        if (filters.is_low)
+            query.push_back(std::format("tag:hipster"));
+
+        httplib::Params params{
+            { "q", utils::string_join(query, ",") },
+            { "type", utils::string_join(filters.types, ",") },
+            { "limit", "15" },
+        };
+
+        url = httplib::append_query_params("/v1/search", params);
+    }
+
+    bool execute(api_weak_ptr_t api_proxy)
+    {
+        if (api_proxy.expired()) return false;
+
+        requester_progress_notifier notifier(url);
+
+        auto response = api_proxy.lock()->get(url);
+        if (!utils::http::is_success(response))
+        {
+            log::api->error("There is an error while executing API fetching request: '{}', "
+                "url '{}'", utils::http::get_status_message(response), url);
+            return false;
+        }
+        
+        try
+        {
+            // there is no content, no need to parse anything
+            if (response->status == httplib::NoContent_204)
+                return true;
+            
+            json::Document doc;
+            doc.Parse(response->body);
+            
+            if (doc.HasMember("tracks"))
+                from_json(doc["tracks"]["items"], tracks);
+            
+            if (doc.HasMember("artists"))
+                from_json(doc["artists"]["items"], artists);
+
+            if (doc.HasMember("albums"))
+                from_json(doc["albums"]["items"], albums);
+
+            if (doc.HasMember("playlists"))
+                from_json(doc["playlists"]["items"], playlists);
+
+            return true;
+        }
+        catch (const std::exception &ex)
+        {
+            log::api->error("There is an error while parsing api data response: {}. "
+                "Request '{}', data '{}'", ex.what(), url, response->body);
+            return false;
+        }
+    }
+    
+    std::vector<spotify::track_t> tracks;
+    std::vector<spotify::artist_t> artists;
+    std::vector<spotify::simplified_album_t> albums;
+    std::vector<spotify::simplified_playlist_t> playlists;
+    string url;
+};
+
+
 /// @brief A helper-class for requesting data from spotify api. Incapsulates
 /// a logic for performing a request, parsing and holding final result
 /// @tparam T a final result's type

@@ -3,11 +3,39 @@
 #pragma once
 
 #include "stdafx.h"
+#include "utils.hpp"
 
 namespace spotifar { namespace ui {
     
+/// @brief https://api.farmanager.com/ru/structures/fardialogitem.html 
 FarDialogItem ctrl(FARDIALOGITEMTYPES type, intptr_t x1, intptr_t y1, intptr_t x2, intptr_t y2,
-    FARDIALOGITEMFLAGS flags, const wchar_t *data = L"");
+    FARDIALOGITEMFLAGS flags, const wchar_t *data = L"", const wchar_t *history = NULL);
+
+
+/// @brief A helper class to avoid redrawing in the function scope,
+/// usually while the object exists
+/// @tparam T stub-used, for separating static mutex for different classes
+template<class T>
+struct [[nodiscard]] no_redraw
+{
+    no_redraw(HANDLE h): hdlg(h)
+    {
+        assert(hdlg);
+        std::lock_guard lock(mutex);
+        utils::far3::dialogs::enable_redraw(hdlg, false);
+    }
+
+    ~no_redraw()
+    {
+        std::lock_guard lock(mutex);
+        utils::far3::dialogs::enable_redraw(hdlg, true);
+    }
+    
+private:
+    HANDLE hdlg;
+    inline static std::mutex mutex{};
+};
+
 
 /// @brief A base class-helper for creating custom modal dialogs
 class modal_dialog
@@ -29,7 +57,8 @@ public:
 protected:
     virtual auto handle_result(intptr_t dialog_run_result) -> intptr_t { return FALSE; };
     virtual bool handle_key_pressed(int ctrl_id, int combined_key) { return FALSE; }
-    virtual bool handle_btn_clicked(int ctrl_id) { return FALSE; }
+    /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dn_btnclick.html 
+    virtual bool handle_btn_clicked(int ctrl_id, std::uintptr_t param) { return FALSE; }
 protected:
     HANDLE hdlg;
 };

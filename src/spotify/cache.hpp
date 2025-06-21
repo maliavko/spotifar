@@ -216,6 +216,7 @@ void json_cache<T>::resync(bool force)
     T new_data;
     if (request_data(new_data))
     {
+        // TODO: had a crash here, looks like memory racing, playback_cache
         auto old_data = value.extract();
         apply_patches(new_data);
 
