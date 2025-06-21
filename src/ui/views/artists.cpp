@@ -11,6 +11,11 @@ using utils::far3::get_text;
 using namespace spotify;
 namespace panels = utils::far3::panels;
 
+static wstring format_followers(uintmax_t followers)
+{
+    return utils::to_wstring(utils::format_number(followers, 1000, " KMGTPE", 100.));
+}
+
 //-----------------------------------------------------------------------------------------------------------
 artists_base_view::artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
     view(panel, title, dir_name), api_proxy(api)
@@ -37,13 +42,7 @@ const items_t& artists_base_view::get_items()
             is_followed = library->is_artist_followed(artist.id);
 
         // column C0 - followers count
-        auto followers = artist.followers_total;
-        if (followers < 1000000)
-            columns.push_back(std::format(L"{:9}", followers));
-        else if (followers < 1000000000)
-            columns.push_back(std::format(L"{:7.2f} M", followers / 1000000.0));
-        else if (followers < 1000000000000)
-            columns.push_back(std::format(L"{:7.2f} B", followers / 1000000000.0));
+        columns.push_back(std::format(L"{: >9}", format_followers(artist.followers_total)));
 
         // column C1 - popularity
         columns.push_back(std::format(L"{:5}", artist.popularity));

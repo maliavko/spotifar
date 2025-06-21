@@ -189,7 +189,6 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
             {
                 
                 ui::events::show_search_dialog();
-                //ui::search_dialog().run();
                 return TRUE;
             }
         }

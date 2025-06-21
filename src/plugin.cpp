@@ -249,7 +249,7 @@ void plugin::show_player()
 
 void plugin::show_search_dialog()
 {
-    auto r = ui::search_dialog().run();
+    ui::search_dialog().run();
 }
 
 void plugin::process_win_messages_queue()

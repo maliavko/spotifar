@@ -100,9 +100,13 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
 
 wstring trunc(const wstring &str, size_t size_to_cut);
 
-/// @brief Formats given file `size` into human readable version with
-/// one digit after dot and resolution letter: 4128 -> 4.1K
-string format_file_size(uintmax_t size);
+/// @brief Formats given number `num` into user-friendly string. Appends
+/// units letter, in accordance to the number of times, it is divided by
+/// `divider`.
+///
+/// example: format_size(num, 1024., "BKMGTPE", 10.)
+/// example: format_followers(num, 1000., " KMGTPE", 100.)
+string format_number(uintmax_t num, float divider, const char units[8], float precision = 10.);
 
 HINSTANCE open_web_browser(const string &address);
 

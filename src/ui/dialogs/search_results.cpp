@@ -1,4 +1,5 @@
 #include "search_results.hpp"
+#include "search.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
 #include "spotifar.hpp"
@@ -9,7 +10,6 @@ namespace spotifar { namespace ui {
 
 using no_redraw_search = no_redraw<search_results_dialog>;
 using namespace utils::far3;
-namespace fs = std::filesystem;
 
 enum controls : int
 {
@@ -32,15 +32,16 @@ static const int
     view_x1 = box_x1 + 2, view_y1 = box_y1 + 1, view_x2 = box_x2 - 2, view_y2 = box_y2 - 1;
 
 static const std::vector<FarDialogItem> dlg_items_layout{
-    ctrl(DI_DOUBLEBOX,  box_x1, box_y1, box_x2, box_y2,             DIF_NONE),
+    ctrl(DI_DOUBLEBOX,  box_x1, box_y1, box_x2, box_y2,         DIF_NONE),
 
-    ctrl(DI_LISTBOX,       view_x1, view_y1, view_x2, view_y2-2,    DIF_LISTNOBOX),
+    // listbox
+    ctrl(DI_LISTBOX,    view_x1, view_y1, view_x2, view_y2-2,   DIF_LISTNOBOX),
     
     // buttons block
-    ctrl(DI_TEXT,       -1, view_y2-1, view_x2, 1,                  DIF_SEPARATOR2),
-    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,               DIF_CENTERGROUP),
-    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,               DIF_CENTERGROUP | DIF_DEFAULTBUTTON),
-    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,               DIF_CENTERGROUP),
+    ctrl(DI_TEXT,       -1, view_y2-1, view_x2, 1,              DIF_SEPARATOR2),
+    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,           DIF_CENTERGROUP),
+    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,           DIF_CENTERGROUP | DIF_DEFAULTBUTTON),
+    ctrl(DI_BUTTON,     view_x1, view_y2, view_x2, 1,           DIF_CENTERGROUP),
 };
 
 static void show_artist_page(api_weak_ptr_t api_proxy, const spotify::data_item_t &item)
@@ -100,8 +101,20 @@ static void start_track_playback(api_weak_ptr_t api_proxy, const spotify::data_i
     }
 }
 
+template<typename... Args>
+static inline wstring format(const wstring &fmt, Args&&... args)
+{
+    return std::vformat(fmt, std::make_wformat_args(args...));
+}
+
+static wstring format_followers(uintmax_t followers)
+{
+    return utils::to_wstring(utils::format_number(followers, 1000, " KMGTPE", 100.));
+}
+
+//-----------------------------------------------------------------------------------------------
 search_results_dialog::search_results_dialog(const spotify::search_requester &r):
-    modal_dialog(&ConfigHotkeysDialogGuid, width, height, dlg_items_layout, L"SearchResultsDialog"),
+    modal_dialog(&SearchResultsDialogGuid, width, height, dlg_items_layout, L"SearchResultsDialog"),
     requester(r)
 {
     rebuild_items();
@@ -124,27 +137,30 @@ void search_results_dialog::rebuild_items()
     // artists block
     if (requester.artists.size() > 0)
     {
-        items.push_back({ L"Artists", LIF_SEPARATOR });
-        items.push_back({ std::format(L"{:37}│{:30}│{:3}│{: ^10}│{: ^7}", L"Name", L"Genre", L"[+]", L"Followers", L"Pop %"), LIF_DISABLE });
+        static const wstring
+            artist_tpl = L"{:37}│{:30}│{:3}│{: >10}│{: ^7}",
+            artists_title = format(
+                artist_tpl,
+                get_text(MSortColName),
+                get_text(MSortColGenre),
+                get_text(MSortColSaved),
+                get_text(MSortColFollow),
+                get_text(MSortColPopularity));
+
+        items.push_back({ get_text(MSearchArtists), LIF_SEPARATOR });
+        items.push_back({ artists_title, LIF_DISABLE });
         items.push_back({ L"", LIF_SEPARATOR });
         for (const auto &artist: requester.artists)
         {
-            auto followers = artist.followers_total;
-            wstring followers_lbl = L"";
-            if (followers < 1000000)
-                followers_lbl = std::format(L"{:9}", followers);
-            else if (followers < 1000000000)
-                followers_lbl = std::format(L"{:7.2f} M", followers / 1000000.0);
-            else if (followers < 1000000000000)
-                followers_lbl = std::format(L"{:7.2f} B", followers / 1000000000.0);
-
             bool is_saved = api->get_library()->is_artist_followed(artist.id);
 
-            auto genre = utils::trunc(artist.get_main_genre(), 30);
-
-            wstring label = std::format(
-                L"{:37}│{:30}│{:3}│{:10}│{:7}",
-                utils::trunc(artist.name, 37), genre, is_saved ? L" + " : L"", followers_lbl, artist.popularity
+            wstring label = format(
+                artist_tpl,
+                utils::trunc(artist.name, 37),
+                utils::trunc(artist.get_main_genre(), 30),
+                is_saved ? L" + " : L"",
+                format_followers(artist.followers_total),
+                artist.popularity
             );
 
             items.push_back({
@@ -156,16 +172,27 @@ void search_results_dialog::rebuild_items()
     // albums block
     if (requester.albums.size() > 0)
     {
+        static const wstring
+            albums_tpl = L"{: ^6}│{:40}│{:27}│{:3}│{: >4}│{: ^6}",
+            albums_title = format(
+                albums_tpl,
+                get_text(MSortColYear),
+                get_text(MSortColName),
+                get_text(MSortColArtist),
+                get_text(MSortColSaved),
+                get_text(MSortColTracksCount),
+                get_text(MSortColType));
+
         items.push_back({ L"", LIF_DISABLE });
-        items.push_back({ L"Albums", LIF_SEPARATOR });
-        items.push_back({ std::format(L"{: ^6}│{:40}│{:27}│{:3}│{: ^4}│{: ^6}", L"Year", L"Name", L"Artist", L"[+]", L"Tx", L"Type"), LIF_DISABLE });
+        items.push_back({ get_text(MSearchAlbums), LIF_SEPARATOR });
+        items.push_back({ albums_title, LIF_DISABLE });
         items.push_back({ L"", LIF_SEPARATOR });
         for (const auto &album: requester.albums)
         {
             bool is_saved = api->get_library()->is_album_saved(album.id);
 
-            wstring label = std::format(
-                L"{: ^6}│{:40}│{:27}│{:3}│{:4}│{: ^6}",
+            wstring label = format(
+                albums_tpl,
                 utils::to_wstring(album.get_release_year()),
                 utils::trunc(album.name, 40),
                 utils::trunc(album.get_artist().name, 27),
@@ -183,9 +210,21 @@ void search_results_dialog::rebuild_items()
     // tracks block
     if (requester.tracks.size() > 0)
     {
+        static const wstring
+            tracks_tpl = L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}",
+            tracks_title = format(
+                tracks_tpl,
+                get_text(MSortColYear),
+                get_text(MSortColName),
+                get_text(MSortColArtist),
+                get_text(MSortColAlbum),
+                get_text(MSortColSaved),
+                get_text(MSortColExplicit),
+                get_text(MSortColDuration));
+                
         items.push_back({ L"", LIF_DISABLE });
-        items.push_back({ L"Tracks", LIF_SEPARATOR });
-        items.push_back({ std::format(L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}", L"Year", L"Name", L"Artist", L"Album", L"[+]", L"[E]", L"Duration"), LIF_DISABLE });
+        items.push_back({ get_text(MSearchTracks), LIF_SEPARATOR });
+        items.push_back({ tracks_title, LIF_DISABLE });
         items.push_back({ L"", LIF_SEPARATOR });
         for (const auto &track: requester.tracks)
         {
@@ -198,8 +237,8 @@ void search_results_dialog::rebuild_items()
             else
                 track_length = std::format(L"{:%Hh%M}", duration);
 
-            wstring label = std::format(
-                L"{: ^6}│{:25}│{:20}│{:20}│{:3}│{:3}│{: ^7}",
+            wstring label = format(
+                tracks_tpl,
                 utils::to_wstring(track.album.get_release_year()),
                 utils::trunc(track.name, 25),
                 utils::trunc(track.get_artist().name, 20),
@@ -236,7 +275,7 @@ void search_results_dialog::init()
 {
     no_redraw_search nr(hdlg);
     
-    dialogs::set_text(hdlg, dialog_box, L"Search Results");
+    dialogs::set_text(hdlg, dialog_box, get_text(MSearchResultsTitle));
     
     for (size_t idx = 0; idx < items.size(); idx++)
     {
@@ -245,6 +284,7 @@ void search_results_dialog::init()
             (void*)&item, sizeof(item), false, item.flags);
     }
 
+    dialogs::set_text(hdlg, new_search_btn, get_text(MSearchResultsNewBtn));
     dialogs::set_text(hdlg, ok_btn, get_text(MOk));
     dialogs::set_text(hdlg, cancel_btn, get_text(MCancel));
 }
@@ -259,6 +299,11 @@ intptr_t search_results_dialog::handle_result(intptr_t dialog_run_result)
         if (auto item = dialogs::get_list_current_item_data<const item_entry*>(hdlg, results_list))
             item->show_handler(api->get_ptr(), *item->data);
 
+        return TRUE;
+    }
+    else if (dialog_run_result == new_search_btn)
+    {
+        search_dialog().run();
         return TRUE;
     }
     return FALSE;
