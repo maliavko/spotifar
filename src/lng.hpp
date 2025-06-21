@@ -120,7 +120,20 @@ namespace spotifar
         MCfgReleasesStatusLeft,
         MCfgReleasesResyncBtn,
 
-        // panlels & ui
+        // search dialog
+        MSearchTitle,
+        MSearchArtists,
+        MSearchAlbums,
+        MSearchTracks,
+        MSearchPlaylists,
+        MSearchYear,
+        MSearchGenre,
+        MSearchFreshRelease,
+        MSearchLowRating,
+        MSearchResultsTitle,
+        MSearchResultsNewBtn,
+
+        // panels & ui
         MPanelCollection,
         MPanelCollectionDescr,
         MPanelArtists,
@@ -166,6 +179,7 @@ namespace spotifar
 		MPanelArtistTopTracks,
 		MPanelArtistTopTracksDescr,
 
+        // player dialog
         MPlayerSourceLabel,
         MPlayerSourceCollection,
         MPlayerRepeatNoneBtn,

@@ -82,6 +82,11 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_BUTTON,      box_x1, buttons_box_y+1, box_x2, box_y2,          DIF_CENTERGROUP),
 };
 
+static string format_size(uintmax_t size)
+{
+    return utils::format_number(size, 1024, "BKMGTPE");
+}
+
 /// @brief Simple helper to calculate files and its total size in the given `folder_path`.
 /// In case of errors of getting stats on the individual files, just skip entries and
 /// count only valid ones
@@ -112,7 +117,7 @@ static void update_logs_block(HANDLE hdlg)
     auto stats = get_folder_stats(utils::log::get_logs_folder());
 
     logs_count = std::to_wstring(stats.first);
-    logs_size = utils::to_wstring(utils::format_file_size(stats.second));
+    logs_size = utils::to_wstring(format_size(stats.second));
     
     dialogs::set_text(hdlg, dialog_box, get_text(MCfgLogs));
     dialogs::set_text(hdlg, logs_count_label, get_text(MCfgLogsCount));
@@ -134,7 +139,7 @@ static void update_caches_block(HANDLE hdlg)
 
     // ignore errors, just show 0B size on the buttong
     http_btn_label = get_vtext(MCfgHttpCacheClearBtn,
-        utils::to_wstring(utils::format_file_size(ec ? 0 : size)));
+        utils::to_wstring(format_size(ec ? 0 : size)));
     
     dialogs::set_text(hdlg, caches_separator, get_text(MCfgCaches));
     dialogs::set_text(hdlg, auth_cache_label, get_text(MCfgCredentials));
@@ -229,7 +234,7 @@ void caches_dialog::init()
     dialogs::set_text(hdlg, cancel_button, get_text(MCancel));
 }
 
-bool caches_dialog::handle_btn_clicked(int ctrl_id)
+bool caches_dialog::handle_btn_clicked(int ctrl_id, std::uintptr_t param)
 {
     switch (ctrl_id)
     {

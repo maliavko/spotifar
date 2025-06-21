@@ -15,16 +15,16 @@ bool operator==(const FarKey &lhs, const FarKey &rhs)
 
 namespace spotifar { namespace utils {
 
-string format_file_size(uintmax_t size)
+string format_number(uintmax_t num, float divider, const char units[8], float precision)
 {
+    if (num == 0) return "0" + units[0];
+
     std::ostringstream os;
 
     int o{};
-    if (size == 0) return "0B";
-
-    double mantissa = (double)size;
-    for (; mantissa >= 1024.; mantissa /= 1024., ++o);
-    os << std::ceil(mantissa * 10.) / 10. << "BKMGTPE"[o];
+    double mantissa = (double)num;
+    for (; mantissa >= divider; mantissa /= divider, ++o);
+    os << std::ceil(mantissa * precision) / precision << units[o];
     return os.str();
 }
 

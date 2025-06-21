@@ -121,6 +121,17 @@ struct settings
 
     using multiviews_t = std::unordered_map<string, multiview_t>;
 
+    struct search_dialog_t
+    {
+        bool is_albums = true;
+        bool is_artists = true;
+        bool is_tracks = true;
+        bool is_playlists = true;
+        
+        friend void from_json(const json::Value &j, search_dialog_t &v);
+        friend void to_json(json::Value &j, const search_dialog_t &v, json::Allocator &allocator);
+    };
+
     // general settings
     bool add_to_disk_menu;
     bool verbose_logging;
@@ -155,6 +166,7 @@ struct settings
     multiviews_t mviews;
     wstring plugin_startup_folder;
     wstring plugin_data_folder;
+    search_dialog_t search_dialog;
 };
 
 struct config_observer: public BaseObserverProtocol
