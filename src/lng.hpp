@@ -118,6 +118,7 @@ namespace spotifar
         MCfgReleasesSyncStatus,
         MCfgReleasesStatusFinished,
         MCfgReleasesStatusLeft,
+        MCfgReleasesNext,
         MCfgReleasesResyncBtn,
 
         // search dialog
