@@ -71,7 +71,7 @@ protected:
     
     void start_playback_base(const string &body, const item_id_t &device_id);
     
-    httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}) override;
+    httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) override;
     httplib::Result put(const string &url, const string &body = "") override;
     httplib::Result del(const string &url, const string &body = "") override;
     httplib::Result post(const string &url, const string &body = "") override;
@@ -81,6 +81,10 @@ protected:
 private:
     BS::light_thread_pool requests_pool;
     BS::light_thread_pool resyncs_pool;
+    
+    std::condition_variable retry_cv;
+    std::mutex retry_cv_guard;
+    bool stop_flag = false;
 
     // caches
 
