@@ -91,14 +91,10 @@ public:
     /// for changes outside of the class 
     struct accessor_t
     {
-        //std::lock_guard<std::mutex> lock;
+        std::lock_guard<std::mutex> lock;
         T &data;
 
-        //accessor_t(T &data, std::mutex &m): data(data), lock(m) {}
-
-        // TODO: uncertain about necessity of this class, introduced it to prevent data racing,
-        // never occured before, at the same time started getting deadlocks with it
-        accessor_t(T &data, std::mutex &m): data(data) {}
+        accessor_t(T &data, std::mutex &m): data(data), lock(m) {}
     };
 public:
     /// @param storage_key A storage key name to save the data to. If key is empty, so
@@ -211,16 +207,18 @@ void json_cache<T>::resync(bool force)
     // is invalid or resync is forced
     if (!force && (!is_active() || is_valid())) return;
 
-    std::lock_guard lock(data_access_guard);
-
     T new_data;
     if (request_data(new_data))
     {
-        // TODO: had a crash here, looks like memory racing, playback_cache
-        auto old_data = value.extract();
-        apply_patches(new_data);
+        T old_data;
+        {  
+            std::lock_guard lock(data_access_guard);
+            
+            old_data = value.extract();
+            apply_patches(new_data);
 
-        value.set(std::move(new_data));
+            value.set(std::move(new_data));
+        }
 
         expires_at.set(sync_time + get_sync_interval());
         on_data_synced(value.get(), old_data);
