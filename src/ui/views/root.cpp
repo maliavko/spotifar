@@ -83,8 +83,8 @@ intptr_t root_base_view::process_key_input(int combined_key)
             auto item = utils::far3::panels::get_current_item(get_panel_handle());
             if (auto api = api_proxy.lock(); item && api)
             {
-                // TODO: bug, crash then hitting F4 over ".." in root menu
-                if (auto *user_data = unpack_user_data(item->UserData); user_data->id == root_view::collection_id)
+                auto *user_data = unpack_user_data(item->UserData);
+                if (user_data && user_data->id == root_view::collection_id)
                 {
                     log::global->info("Starting collection playback");
                     api->start_playback(COLLECTION_URI);

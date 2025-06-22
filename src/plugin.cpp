@@ -181,7 +181,7 @@ void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
 
             if (is_enabled) // then reinitialize those, which are enabled
             {
-                if (auto *hotkey = config::get_hotkey(hotkey_id); hotkey->first != utils::keys::none)
+                if (auto *hotkey = config::get_hotkey(hotkey_id); hotkey && hotkey->first != utils::keys::none)
                 {
                     if (!RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
                     {

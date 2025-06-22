@@ -177,8 +177,9 @@ static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
 
     if (plugin)
     {
-        if (auto api = plugin->get_api(); auto releases = api->get_releases())
+        if (auto api = plugin->get_api())
         {
+            auto releases = api->get_releases();
             set_releases_sync_status(hdlg, releases->get_sync_tasks_left(), true);
             return;
         }
@@ -280,8 +281,8 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id, std::uintptr_t param)
         {
             if (auto plugin = get_plugin())
             {
-                if (auto api = plugin->get_api(); auto releases = api->get_releases())
-                    releases->invalidate();
+                if (auto api = plugin->get_api())
+                    api->get_releases()->invalidate();
             }
             else
             {
