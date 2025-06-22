@@ -397,7 +397,7 @@ items types for the same view. For the different views a different range of swit
 
     #Hotkeys#
 
-    #Alt + Q                # &show player dialog
+    #Alt + ~                # &show player dialog
 
     #Ctrl + F12             # &show sort modes dialog
 
