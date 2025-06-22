@@ -44,9 +44,10 @@ protected:
 };
 
 
-/// TODO: once the artists are added to the collection worker,
-/// subscribe to the appropriate events and rebuild items on changing
 /// @brief A class-view, representing a list of followed artists
+/// @note the view is not updated once the list of followed artists
+/// is changed, it continues showing the old list, just quickly refreshes
+/// the statuses
 class followed_artists_view: public artists_base_view
 {
 public:
