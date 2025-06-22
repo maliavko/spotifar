@@ -618,7 +618,6 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
                 std::chrono::seconds(retry_after)));
         }
     }
-
     return res;
 }
 
