@@ -212,7 +212,7 @@ intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
     {
         switch (keys::make_combined(key_event))
         {
-            case keys::q + keys::mods::alt:
+            case keys::tilde + keys::mods::alt:
             {
                 ui::events::show_player();
                 return TRUE;
