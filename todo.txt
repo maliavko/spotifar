@@ -20,9 +20,7 @@ application ideas
     - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-- after changing device in player UI, for some time is shown the old one
-- closing far by cross-button, while search dialog (or any other?) is opened, hangs process quite often
-- collection -> artists -> adema -> ready to die -> F4 - far freezes and eats memory as hell
+- opening fresh releases album and returning back, opens your collection
 
 to finish for alpha release
 - check all the default view settings and sort modes
