@@ -174,8 +174,7 @@ intptr_t view::process_input(const ProcessPanelInputInfo *info)
 {
     namespace keys = utils::keys;
 
-    const auto &key_event = info->Rec.Event.KeyEvent;
-    if (key_event.bKeyDown)
+    if (const auto &key_event = info->Rec.Event.KeyEvent; key_event.bKeyDown)
     {
         auto key = keys::make_combined(key_event);
         

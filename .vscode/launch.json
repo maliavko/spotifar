@@ -8,7 +8,7 @@
         // NOTE: Far and dependencies should be built in advance,
         // launch a task (Ctrl+Shift+P): "Far + Spotifar build and configure" Debug x64
         {
-            "name": "Far run (x64 debug)",
+            "name": "Far run Debug.x64",
             "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Debug.x64/Far.exe",
             "type":"cppvsdbg",
             "request": "launch",
@@ -20,6 +20,20 @@
                 "engineLogging": false,
                 "programOutput": true,
             }
-        }
+        },
+        {
+            "name": "Far run Release.x64",
+            "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Far.exe",
+            "type":"cppvsdbg",
+            "request": "launch",
+            //"cwd": "${fileDirname}",
+            "console": "externalTerminal",
+            "logging": {
+                "exceptions": true,
+                "moduleLoad": false,
+                "engineLogging": false,
+                "programOutput": true,
+            }
+        },
     ]
 }
