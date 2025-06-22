@@ -144,6 +144,9 @@ struct recent_releases_interface
 
     /// @brief Invalidates the cache, automatically scheduling resync
     virtual void invalidate() = 0;
+
+    /// @brief Returns the next sync time
+    virtual auto get_next_sync_time() const -> const utils::clock_t::time_point = 0;
 };
 
 

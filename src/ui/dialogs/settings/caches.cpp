@@ -37,6 +37,8 @@ enum controls : int
     releases_separator,
     releases_status_label,
     releases_status_value,
+    releases_next_sync_lbl,
+    releases_next_sync_value,
     releases_resync_button,
 
     buttons_separator,
@@ -48,7 +50,7 @@ static const int
     logs_box_y = 2, // y position of a panel with logs settings
     caches_box_y = logs_box_y + 5,
     releases_box_y = caches_box_y + 6,
-    buttons_box_y = releases_box_y + 4, // y position of a buttons panel
+    buttons_box_y = releases_box_y + 6, // y position of a buttons panel
     width = 52, height = buttons_box_y + 4, // overall dialog height is a summ of all the panels included
     center_x = width / 2,
     box_x1 = 3, box_y1 = 1, box_x2 = width - 4, box_y2 = height - 2,
@@ -74,7 +76,9 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_TEXT,        -1, releases_box_y, box_x2, 1,                    DIF_SEPARATOR),
     ctrl(DI_TEXT,        view_x1, releases_box_y+1, center_x-2, 1,         DIF_RIGHTTEXT),
     ctrl(DI_TEXT,        center_x, releases_box_y+1, box_x2-center_x, 1,   DIF_NONE),
-    ctrl(DI_BUTTON,      view_x1, releases_box_y+3, box_x2, 1,             DIF_CENTERGROUP),
+    ctrl(DI_TEXT,        view_x1, releases_box_y+2, center_x-2, 1,         DIF_RIGHTTEXT),
+    ctrl(DI_TEXT,        center_x, releases_box_y+2, box_x2-center_x, 1,   DIF_NONE),
+    ctrl(DI_BUTTON,      view_x1, releases_box_y+4, box_x2, 1,             DIF_CENTERGROUP),
     
     // buttons block
     ctrl(DI_TEXT,        box_x1, buttons_box_y, box_x2, box_y2,            DIF_SEPARATOR),
@@ -173,6 +177,8 @@ static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
     dialogs::set_text(hdlg, releases_separator, get_text(MCfgReleases));
     dialogs::set_text(hdlg, releases_status_label, get_text(MCfgReleasesSyncStatus));
     dialogs::set_text(hdlg, releases_status_value, get_text(MCfgReleasesStatusFinished));
+    dialogs::set_text(hdlg, releases_next_sync_lbl, get_text(MCfgReleasesNext));
+    dialogs::set_text(hdlg, releases_next_sync_value, L"-----");
     dialogs::set_text(hdlg, releases_resync_button, get_text(MCfgReleasesResyncBtn));
 
     if (plugin)
@@ -181,6 +187,11 @@ static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
         {
             auto releases = api->get_releases();
             set_releases_sync_status(hdlg, releases->get_sync_tasks_left(), true);
+
+            static wstring next_sync_time;
+            next_sync_time = std::format(L"{:%d %b, %H:%M}", releases->get_next_sync_time());
+            dialogs::set_text(hdlg, releases_next_sync_value, next_sync_time.c_str());
+
             return;
         }
     }

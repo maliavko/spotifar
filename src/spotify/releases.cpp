@@ -45,6 +45,11 @@ const recent_releases_t& recent_releases::get_items(bool force_resync)
     return get();
 }
 
+const utils::clock_t::time_point recent_releases::get_next_sync_time() const
+{
+    return this->get_expires_at();
+}
+
 bool recent_releases::is_active() const
 {
     return api_proxy->is_authenticated();

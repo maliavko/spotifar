@@ -6,7 +6,6 @@ refactor
 application ideas
 - small improvements
     - close plugin if another librespot device is being detected
-    - settings -> caches: to add next resync time
     - after launch there is no way to see the device is connected, not clear enough
 - new functional
     - download music via https://github.com/spotDL/spotify-downloader
@@ -19,10 +18,8 @@ application ideas
         - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support: export, flush caches, resync fresh releases
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
-    - handling properly 429 error: it is detected by API separately for all the requests, so no need to throw runtime_error I think. For caches I can postpone resync for the retry-after time, notifying user with some message of outage e.g.
 
 bugs
-- opening fresh releases album and returning back, opens your collection
 - if playback is paused for a while, it losses the device, using hotkeys of watever to resume - hit the error; consider of forcibly using Librespot if possible
 
 to finish for alpha release
