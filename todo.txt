@@ -23,6 +23,7 @@ application ideas
 
 bugs
 - opening fresh releases album and returning back, opens your collection
+- if playback is paused for a while, it losses the device, using hotkeys of watever to resume - hit the error; consider of forcibly using Librespot if possible
 
 to finish for alpha release
 - check all the default view settings and sort modes

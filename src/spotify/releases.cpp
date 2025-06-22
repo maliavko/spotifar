@@ -23,7 +23,7 @@ recent_releases::~recent_releases()
         pool.purge();
 
         stop_flag = true;
-        cv.notify_all();
+        sleep_cv.notify_all();
     }
     
     api_proxy = nullptr;
@@ -65,7 +65,7 @@ void recent_releases::queue_artists(const item_ids_t &ids)
         ]
         (const std::size_t idx)
         {
-            std::unique_lock<std::mutex> thread_lock(cv_m);
+            std::unique_lock<std::mutex> thread_lock(sleep_cv_guard);
 
             const auto artist_id = ids[idx];
 
@@ -75,9 +75,6 @@ void recent_releases::queue_artists(const item_ids_t &ids)
 
             auto albums = api_proxy->get_artist_albums(artist_id);
             bool is_cached = albums->is_cached();
-
-            // log::api->debug("Processing new artist's releases '{}', {} left",
-            //     artist_id, pool.get_tasks_total());
                             
             dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
             
@@ -107,7 +104,7 @@ void recent_releases::queue_artists(const item_ids_t &ids)
                 if (!albums->is_modified())
                     delay_time = is_playback_active ? 5s : 2s;
 
-                cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
+                sleep_cv.wait_for(thread_lock, delay_time, [this]{ return stop_flag; });
             }
         });
 }
