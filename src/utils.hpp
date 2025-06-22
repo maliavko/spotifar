@@ -275,38 +275,84 @@ namespace far3
 
     namespace dialogs
     {
-        // dialog
+        /// found this trick somewhere on the forum
         void flush_vbuffer();
+
+        /// @brief https://api.farmanager.com/ru/service_functions/senddlgmessage.html
         auto send(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_getdlgrect.html
         auto get_dialog_rect(HANDLE hdlg) -> SMALL_RECT;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_enableredraw.html
         auto enable_redraw(HANDLE hdlg, bool is_enable) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_close.html
         auto close(HANDLE hdlg) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_resizedialog.html
         auto resize_dialog(HANDLE hdlg, SHORT width, SHORT height) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_movedialog.html
         auto move_dialog_to(HANDLE hdlg, SHORT x = -1, SHORT y = -1) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_movedialog.html
         auto move_dialog_by(HANDLE hdlg, SHORT distance_x, SHORT distance_y) -> intptr_t;
 
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_getdlgdata.html
+        /// @tparam T a type the obtained data will be converted to
         template<class T>
         auto get_dlg_data(HANDLE hdlg) -> T*
         {
             return reinterpret_cast<T*>(send(hdlg, DM_GETDLGDATA, 0, 0));
         }
 
-        // controls
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_enable.html
         auto enable(HANDLE hdlg, int ctrl_id, bool is_enabled) -> intptr_t;
-        auto is_enabled(HANDLE hdlg, int ctrl_id) -> bool;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_enable.html
+        bool is_enabled(HANDLE hdlg, int ctrl_id);
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_setfocus.html
         auto set_focus(HANDLE hdlg, int ctrl_id) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_showitem.html
         auto set_visible(HANDLE hdlg, int ctrl_id, bool is_visible) -> intptr_t;
-        auto is_visible(HANDLE hdlg, int ctrl_id) -> bool;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_showitem.html
+        bool is_visible(HANDLE hdlg, int ctrl_id);
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_setcheck.html
         auto set_checked(HANDLE hdlg, int ctrl_id, bool is_checked) -> intptr_t;
-        auto is_checked(HANDLE hdlg, int ctrl_id) -> bool;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_getcheck.html
+        bool is_checked(HANDLE hdlg, int ctrl_id);
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_settext.html
         auto set_text(HANDLE hdlg, int ctrl_id, const wstring &text) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_settext.html
         auto set_text(HANDLE hdlg, int ctrl_id, const string &text) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_gettext.html
         auto get_text(HANDLE hdlg, int ctrl_id) -> wstring;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_resizedialog.html
         auto resize_item(HANDLE hdlg, int ctrl_id, SMALL_RECT rect) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_listdelete.html
         auto clear_list(HANDLE hdlg, int ctrl_id) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_listgetcurpos.html
         auto get_list_current_pos(HANDLE hdlg, int ctrl_id) -> size_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_setdropdownopened.html
         auto open_list(HANDLE hdlg, int ctrl_id, bool is_opened) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_listadd.html
         auto add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index, void *data = nullptr, size_t data_size = 0, bool is_selected = false, LISTITEMFLAGS flags = LIF_NONE) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_listupdate.html
         auto update_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index, void *data = nullptr, size_t data_size = 0, bool is_selected = false, LISTITEMFLAGS flags = LIF_NONE) -> intptr_t;
 
         /// @brief Get data from the list item
@@ -314,6 +360,7 @@ namespace far3
         /// @param ctrl_id control id
         /// @param item_idx item index in the list
         /// @tparam T type of the data to be returned
+        /// https://api.farmanager.com/ru/dialogapi/dmsg/dm_enable.html
         template<class T>
         T get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx)
         {
@@ -322,8 +369,10 @@ namespace far3
             return reinterpret_cast<T>(item_data);
         }
 
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_listgetdata.html
         template<> string get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
 
+        /// @brief https://api.farmanager.com/ru/dialogapi/dmsg/dm_listgetdata.html
         template<> wstring get_list_item_data(HANDLE hdlg, int ctrl_id, size_t item_idx);
 
         template<class T>
@@ -336,49 +385,94 @@ namespace far3
 
     namespace panels
     {
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html
         auto control(HANDLE panel, FILE_CONTROL_COMMANDS cmd, intptr_t param1 = 0, void *param2 = nullptr) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_REDRAWPANEL
         auto redraw(HANDLE panel, size_t current_item_idx, size_t top_item_idx) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_REDRAWPANEL
         auto redraw(HANDLE panel) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_UPDATEPANEL
         auto update(HANDLE panel, bool reset_selection) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_ISACTIVEPANEL
         bool is_active(HANDLE panel);
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_CHECKPANELSEXIST
         bool does_exist(HANDLE panel);
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_SETACTIVEPANEL
         auto set_active(HANDLE panel) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_SETVIEWMODE
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_SETSORTORDER
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_GETPANELINFO
         auto get_info(HANDLE panel) -> std::shared_ptr<PanelInfo>;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_GETPANELDIRECTORY
         auto get_directory(HANDLE panel) -> std::shared_ptr<FarPanelDirectory>;
-        void quit(HANDLE panel);
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_CLOSEPANEL
+        void close(HANDLE panel);
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_GETCURRENTPANELITEM
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;
-        bool select_item(HANDLE panel, size_t item_idx);
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_SETSELECTION
+        void select_items(HANDLE panel, const std::vector<size_t> &indicies);
+
+        /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_CLEARSELECTION
         void clear_selection(HANDLE panel);
 
         /// @brief Sets the given `folder` path to the `panel`
+        /// https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_SETPANELDIRECTORY
         auto set_directory(HANDLE panel, const wstring &folder) -> intptr_t;
 
         /// @brief Returns the items, currently placed on the `panel`.
         /// @param filter_selected returns only selected items, in case there is no selected items - returns
         /// the one under cursor, or none if the itme under cursor is `..`
+        /// https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_GETPANELITEM
         auto get_items(HANDLE panel, bool filter_selected = false) -> std::vector<std::shared_ptr<PluginPanelItem>>;
     }
 
     /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html
     namespace plugins
     {
+        /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html 
         auto get_handle() -> HANDLE;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html#PCTL_GETPLUGININFORMATION
         auto get_info() -> std::shared_ptr<FarGetPluginInformation>;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/pluginscontrol.html#PCTL_UNLOADPLUGIN
         auto unload() -> bool;
     }
 
     namespace actl
     {
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_REDRAWALL 
         auto redraw_all() -> intptr_t;
+        
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_GETFARHWND
         auto get_far_hwnd() -> HWND;
+        
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_QUIT
         auto quit(intptr_t exit_code) -> intptr_t;
+        
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_SYNCHRO
         auto synchro(void *user_data) -> intptr_t;
+        
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_GETFARRECT
         auto get_far_rect() -> SMALL_RECT;
 
-        /// @brief Is Far window in focus or not 
-        auto is_wnd_in_focus() -> bool;
+        /// @brief Is Far window in focus or not
+        bool is_wnd_in_focus();
     }
     
     /// @brief Localize given far string id
@@ -529,7 +623,7 @@ namespace json
         }
     }
 
-    /// @brief Dumps a given serialization supporting object to string. Returns a shared_ptr to StringBuffer
+    /// @brief Dumps a given object supporting serialization to string. Returns a shared_ptr to StringBuffer
     /// @tparam T `value` object type, must support jsong serialization (from_json/to_json methods)
     template<class T>
     auto dump(const T &value) -> std::shared_ptr<StringBuffer>

@@ -387,7 +387,7 @@ void panel::show_multiview(HANDLE panel, multiview_builder_t builders, return_ca
 void panel::close_panel(HANDLE panel)
 {
     if (panel == NULL || is_this_panel(panel))
-        far3::panels::quit(this);
+        far3::panels::close(this);
 }
 
 void panel::show_filters_menu()
