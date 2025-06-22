@@ -265,14 +265,14 @@ public:
     /// the cache is still valid
     /// @returns `true` in case of: no errors, 204 No Content response, `only_cached` is true, but
     /// no cache exists
-    bool execute(api_weak_ptr_t api_proxy, bool only_cached = false)
+    bool execute(api_weak_ptr_t api_proxy, bool only_cached = false, bool retry_429 = false)
     {
         if (only_cached && !is_cached(api_proxy))
             return true;
 
         if (api_proxy.expired()) return false;
 
-        response = api_proxy.lock()->get(url, C{ N });
+        response = api_proxy.lock()->get(url, C{ N }, retry_429);
         if (!is_success(response))
         {
             log::api->error("There is an error while executing API fetching request: '{}', "
@@ -562,7 +562,7 @@ protected:
         while (requester != nullptr)
         {
             // if some of the pages were not requested well, all the operation is aborted
-            if (!requester->execute(api, only_cached))
+            if (!requester->execute(api, only_cached, true))
             {
                 dispatch_event(&api_requests_observer::on_collection_fetching_failed,
                     get_fetching_error(requester));
@@ -633,7 +633,7 @@ protected:
 
         auto requester = make_requester(0);
         // performing the first request to obtain a total number fo items
-        if (!requester->execute(api_proxy, only_cached))
+        if (!requester->execute(api_proxy, only_cached, true))
         {
             dispatch_event(&api_requests_observer::on_collection_fetching_failed,
                 get_fetching_error(requester));
@@ -674,7 +674,7 @@ protected:
 
                 // all the exceptions are being accumulated and rethrown by thread-pool
                 // library later
-                if (!requester->execute(api->get_ptr(), only_cached))
+                if (!requester->execute(api->get_ptr(), only_cached, true))
                     throw std::runtime_error(get_fetching_error(requester));
                 
                 if (requester->get_response()->status != httplib::NotModified_304)

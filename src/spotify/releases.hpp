@@ -48,10 +48,10 @@ private:
     BS::light_thread_pool pool;
 
     // each request is slowed down to avoid API spamming by putting a thread into sleep;
-    // to make it controllable and avoid blociking of application during closing e.g.,
+    // to make it controllable and avoid blocking of application during closing e.g.,
     // the sleeping is done via conditional variable
-    std::condition_variable cv;
-    std::mutex cv_m;
+    std::condition_variable sleep_cv;
+    std::mutex sleep_cv_guard;
     bool stop_flag = false;
     
     /// @brief a container, accumulates the interim requested data
