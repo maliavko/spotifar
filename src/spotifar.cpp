@@ -167,7 +167,7 @@ intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 
 static bool is_plugin_active()
 {
-    if (auto plugin = plugin_weak_ptr.lock(); plugin != nullptr)
+    if (auto plugin = plugin_weak_ptr.lock())
     {
         if (auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE))
             return pinfo->OwnerGuid == MainGuid;

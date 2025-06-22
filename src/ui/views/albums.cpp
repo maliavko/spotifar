@@ -233,14 +233,17 @@ intptr_t albums_base_view::process_key_input(int combined_key)
         {
             const auto &ids = get_selected_items();
 
-            if (auto api = api_proxy.lock(); !ids.empty())
+            if (auto api = api_proxy.lock(); api && !ids.empty())
             {
                 // what to do - like or unlike - with the whole list of items
                 // we decide based on the first item state
-                if (auto *library = api->get_library(); library->is_album_saved(ids[0], true))
-                    library->remove_saved_albums(ids);
-                else
-                    library->save_albums(ids);
+                if (auto *library = api->get_library())
+                {
+                    if (library->is_album_saved(ids[0], true))
+                        library->remove_saved_albums(ids);
+                    else
+                        library->save_albums(ids);
+                }
             }
 
             return TRUE;
@@ -266,11 +269,14 @@ intptr_t albums_base_view::process_key_input(int combined_key)
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
             {
-                if (auto *user_data = unpack_user_data(item->UserData); *user_data)
+                if (auto *user_data = unpack_user_data(item->UserData))
                 {
-                    const album_t *album = static_cast<const album_t*>(user_data);
-                    if (auto api = api_proxy.lock(); const auto &a = api->get_artist(album->get_artist().id))
-                        events::show_artist(api_proxy, a);
+                    if (auto api = api_proxy.lock())
+                    {
+                        const album_t *album = static_cast<const album_t*>(user_data);
+                        if (const auto &artist = api->get_artist(album->get_artist().id))
+                            events::show_artist(api_proxy, artist);
+                    }
                 }
             }
             return TRUE;
@@ -291,13 +297,15 @@ const key_bar_info_t* albums_base_view::get_key_bar_info()
     // when the panel is refreshed eventually and we can be sure the item is valid
     if (item->CRC32 != view_crc32) return nullptr;
 
-    if (auto *user_data = unpack_user_data(item->UserData); auto api = api_proxy.lock())
+    if (auto api = api_proxy.lock())
     {
-        auto *library = api->get_library();
-        if (library->is_album_saved(user_data->id))
-            key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
-        else
-            key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        if (auto *user_data = unpack_user_data(item->UserData))
+        {
+            if (api->get_library()->is_album_saved(user_data->id))
+                key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+            else
+                key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        }
     }
 
     return &key_bar;
@@ -483,14 +491,8 @@ void new_releases_view::show_tracks_view(const album_t &album) const
     const auto &simple_artist = album.get_artist();
     if (auto api = api_proxy.lock(); api && simple_artist)
     {
-        const auto &artist = api->get_artist(simple_artist.id);
         events::show_album_tracks(
-            api_proxy, album,
-            [api = api_proxy, artist = artist, this]
-            {
-                // TODO: caugth some crashes here, perhaps `get_return_callback` is not valid already
-                events::show_artist(api, artist, mv_build_t::albums_idx, get_return_callback());
-            });
+            api_proxy, album, [api_proxy = api_proxy] { events::show_new_releases(api_proxy); });
     }
 }
 
