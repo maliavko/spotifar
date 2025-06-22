@@ -482,16 +482,7 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
             });
 
             if (auto res = put("/v1/me/player", body.str()); http::is_success(res))
-            {
-                // patching local devices cache as the device is active now; patch exists only for
-                // short time during which the real request and response should happen and rewrite
-                // 'fake data'. If there are no listeners, it will not happen, so we execute resync
-                // manually
-                cache.patch([dev_idx](auto &d) {
-                    json::Pointer(std::format("/{}/is_active", dev_idx)).Set(d, true);
-                });
                 this->devices->resync();
-            }
             else
                 playback_cmd_error(http::get_status_message(res));
         });

@@ -398,10 +398,9 @@ namespace far3
         
         void clear_selection(HANDLE panel)
         {
-            auto panel_info = get_info(panel);
-            if (panel_info.SelectedItemsNumber > 0)
+            if (auto pinfo = get_info(panel); pinfo && pinfo->SelectedItemsNumber > 0)
             {
-                for (size_t i = 0; i < panel_info.SelectedItemsNumber; i++)
+                for (size_t i = 0; i < pinfo->SelectedItemsNumber; i++)
                     control(panel, FCTL_CLEARSELECTION, i, NULL);
                 redraw(panel);
             }
@@ -417,15 +416,21 @@ namespace far3
         {
             std::vector<std::shared_ptr<PluginPanelItem>> result;
 
-            auto panel_info = get_info(panel);
+            size_t items_number = 0;
+            FILE_CONTROL_COMMANDS cmd;
 
-            FILE_CONTROL_COMMANDS cmd = FCTL_GETPANELITEM;
-            size_t items_number = panel_info.ItemsNumber;
-
-            if (filter_selected)
+            if (auto pinfo = get_info(panel))
             {
-                cmd = FCTL_GETSELECTEDPANELITEM;
-                items_number = panel_info.SelectedItemsNumber;
+                if (filter_selected)
+                {
+                    cmd = FCTL_GETSELECTEDPANELITEM;
+                    items_number = pinfo->SelectedItemsNumber;
+                }
+                else
+                {
+                    cmd = FCTL_GETPANELITEM;
+                    items_number = pinfo->ItemsNumber;
+                }
             }
 
             for (size_t i = 0; i < items_number; i++)
@@ -442,11 +447,12 @@ namespace far3
             return result;
         }
         
-        PanelInfo get_info(HANDLE panel)
+        std::shared_ptr<PanelInfo> get_info(HANDLE panel)
         {
-            PanelInfo pinfo;
-            control(panel, FCTL_GETPANELINFO, 0, &pinfo);
-            return pinfo;
+            auto pinfo = std::make_shared<PanelInfo>(sizeof(PanelInfo));
+            if (pinfo && control(panel, FCTL_GETPANELINFO, 0, pinfo.get()))
+                return pinfo;
+            return nullptr;
         }
         
         std::shared_ptr<FarPanelDirectory> get_directory(HANDLE panel)
