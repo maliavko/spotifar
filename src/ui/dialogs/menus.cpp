@@ -86,12 +86,15 @@ intptr_t show_sort_dialog(const view_ptr_t v)
         result.push_back({ flags, _wcsdup(label.c_str()) });
     }
 
-    auto info = far3::panels::get_info(PANEL_ACTIVE);
+    intptr_t pos_x = -1;
+
+    if (auto info = far3::panels::get_info(PANEL_ACTIVE))
+        pos_x = info->PanelRect.left + 5; // horizontally alligned to the active panel left
 
     auto sort_idx = config::ps_info.Menu(
         &MainGuid,
         &SortDialogGuid,
-        info.PanelRect.left + 5, -1, 0, // horizontally alligned to the active panel left
+        pos_x, -1, 0, // x, y, max height
         FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
         get_text(MSortDlgTitle), L"", L"SortDialog", // title, bottom, helptopic
         {}, {}, // no break codes

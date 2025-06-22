@@ -345,7 +345,7 @@ namespace far3
         auto set_active(HANDLE panel) -> intptr_t;
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
         auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
-        auto get_info(HANDLE panel) -> PanelInfo;
+        auto get_info(HANDLE panel) -> std::shared_ptr<PanelInfo>;
         auto get_directory(HANDLE panel) -> std::shared_ptr<FarPanelDirectory>;
         void quit(HANDLE panel);
         auto get_current_item(HANDLE panel) -> std::shared_ptr<PluginPanelItem>;

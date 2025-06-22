@@ -165,6 +165,16 @@ intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
     return FALSE;
 }
 
+static bool is_plugin_active()
+{
+    if (auto plugin = plugin_weak_ptr.lock(); plugin != nullptr)
+    {
+        if (auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE))
+            return pinfo->OwnerGuid == MainGuid;
+    }
+    return false;
+}
+
 /// @brief https://api.farmanager.com/ru/exported_functions/processconsoleinputw.html
 intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 {
@@ -172,24 +182,19 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 
     if (const auto &key_event = info->Rec.Event.KeyEvent; key_event.bKeyDown)
     {
-        // the method is being called even when the plugin is not created yet,
-        // just loaded into Far; we need only active state
-        if (auto plugin = plugin_weak_ptr.lock(); plugin == nullptr)
-            return FALSE;
-
-        if (auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE); pinfo.OwnerGuid != MainGuid)
-            return FALSE;
-        
-        switch (keys::make_combined(key_event))
+        auto key = keys::make_combined(key_event);
+        if (key == keys::i + keys::mods::ctrl)
         {
-            case keys::i + keys::mods::ctrl:
+            if (is_plugin_active())
             {
                 ui::events::show_filters_menu();
                 return TRUE;
             }
-            case VK_F7 + keys::mods::alt:
+        }
+        else if (key == VK_F7 + keys::mods::alt)
+        {
+            if (is_plugin_active())
             {
-                
                 ui::events::show_search_dialog();
                 return TRUE;
             }

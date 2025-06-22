@@ -200,8 +200,9 @@ intptr_t albums_base_view::process_key_input(int combined_key)
                     api->start_playback(album_t::make_uri(ids[0]));
                 }
             }
-            else
+            else if (ids.size() > 1)
             {
+                // TODO: not tested, finish after https://github.com/librespot-org/librespot/pull/1509
                 log::global->info("Launching several albums playback {}", utils::string_join(ids, ","));
                 if (auto api = api_proxy.lock())
                 {
