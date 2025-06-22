@@ -132,6 +132,7 @@ namespace events
 
 namespace far3
 {
+    /// @brief A helper to create shared_ptrs for Far structs of a custom size 
     template<class T>
     static std::shared_ptr<T> make_sized_shared(size_t size)
     {
@@ -256,15 +257,15 @@ namespace far3
         {
             return send(hdlg, DM_SETITEMPOSITION, ctrl_id, &rect);
         }
-        
-        size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
-        {
-            return send(hdlg, DM_LISTGETCURPOS, ctrl_id, NULL);
-        }
 
         intptr_t clear_list(HANDLE hdlg, int ctrl_id)
         {
             return send(hdlg, DM_LISTDELETE, ctrl_id, NULL);
+        }
+        
+        size_t get_list_current_pos(HANDLE hdlg, int ctrl_id)
+        {
+            return send(hdlg, DM_LISTGETCURPOS, ctrl_id, NULL);
         }
         
         intptr_t open_list(HANDLE hdlg, int ctrl_id, bool is_opened)
@@ -274,7 +275,7 @@ namespace far3
         }
         
         intptr_t add_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                                void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
+                               void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
         {
             FarListItem item{ flags, label.c_str(), NULL, NULL };
             if (is_selected)
@@ -292,7 +293,7 @@ namespace far3
         }
         
         intptr_t update_list_item(HANDLE hdlg, int ctrl_id, const wstring &label, int index,
-                                 void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
+                                  void *data, size_t data_size, bool is_selected, LISTITEMFLAGS flags)
         {
             FarListItem item{ flags, label.c_str(), NULL, NULL };
             if (is_selected)
@@ -368,9 +369,7 @@ namespace far3
         
         intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc)
         {
-            auto r = control(panel, FCTL_SETSORTMODE, sort_mode, 0);
-            control(panel, FCTL_SETSORTORDER, is_desc ? TRUE : FALSE, 0);
-            return r;
+            return control(panel, FCTL_SETSORTMODE, sort_mode, 0) || control(panel, FCTL_SETSORTORDER, is_desc ? TRUE : FALSE, 0);
         }
         
         std::shared_ptr<PluginPanelItem> get_current_item(HANDLE panel)
@@ -386,29 +385,34 @@ namespace far3
             return nullptr;
         }
         
-        bool select_item(HANDLE panel, size_t item_idx)
+        void select_items(HANDLE panel, const std::vector<size_t> &indicies)
         {
-            if (control(panel, FCTL_SETSELECTION, item_idx, (void*)TRUE) == TRUE)
-            {
-                redraw(panel);
-                return true;
-            }
-            return false;
+            control(panel, FCTL_BEGINSELECTION, 0, NULL);
+
+            for (auto &idx: indicies)
+                control(PANEL_ACTIVE,FCTL_SETSELECTION, idx, (void*)TRUE);
+            
+            control(panel, FCTL_ENDSELECTION, 0, NULL);
+            redraw(panel);
         }
         
         void clear_selection(HANDLE panel)
         {
             if (auto pinfo = get_info(panel); pinfo && pinfo->SelectedItemsNumber > 0)
             {
+                control(panel, FCTL_BEGINSELECTION, 0, NULL);
+
                 for (size_t i = 0; i < pinfo->SelectedItemsNumber; i++)
                     control(panel, FCTL_CLEARSELECTION, i, NULL);
+
+                control(panel, FCTL_ENDSELECTION, 0, NULL);
                 redraw(panel);
             }
         }
         
         intptr_t set_directory(HANDLE panel, const wstring &folder)
         {
-            FarPanelDirectory dirInfo = {sizeof(FarPanelDirectory), folder.c_str(), nullptr, {0}, nullptr};
+            FarPanelDirectory dirInfo{sizeof(FarPanelDirectory), folder.c_str(), nullptr, {0}, nullptr};
             return control(panel, FCTL_SETPANELDIRECTORY, 0, &dirInfo);
         }
         
@@ -457,19 +461,18 @@ namespace far3
         
         std::shared_ptr<FarPanelDirectory> get_directory(HANDLE panel)
         {
-            size_t size = control(panel, FCTL_GETPANELDIRECTORY, NULL, NULL);
-            if (size == 0)
-                return nullptr;
-
-            if (auto pdir = make_sized_shared<FarPanelDirectory>(size))
+            if (size_t size = control(panel, FCTL_GETPANELDIRECTORY, NULL, NULL))
             {
-                control(panel, FCTL_GETPANELDIRECTORY, size, pdir.get());
-                return pdir;
+                if (auto pdir = make_sized_shared<FarPanelDirectory>(size))
+                {
+                    control(panel, FCTL_GETPANELDIRECTORY, size, pdir.get());
+                    return pdir;
+                }
             }
             return nullptr;
         }
         
-        void quit(HANDLE panel)
+        void close(HANDLE panel)
         {
             control(panel, FCTL_CLOSEPANEL, 0, NULL);
         }
