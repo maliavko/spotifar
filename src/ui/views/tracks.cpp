@@ -677,7 +677,7 @@ saved_tracks_view::~saved_tracks_view()
 
 bool saved_tracks_view::repopulate()
 {
-    return collection->fetch(false, true, 1);
+    return collection->fetch(false, true);
 }
 
 config::settings::view_t saved_tracks_view::get_default_settings() const

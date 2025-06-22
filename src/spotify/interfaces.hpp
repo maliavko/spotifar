@@ -288,7 +288,7 @@ struct api_interface
 //protected:
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the response for the given amount of time
-    virtual httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}) = 0;
+    virtual httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) = 0;
 
     /// @brief Performs an HTTP PUT request
     virtual httplib::Result put(const string &url, const string &body = {}) = 0;

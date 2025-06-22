@@ -68,6 +68,12 @@ void api::shutdown()
     auto ctx = config::lock_settings();
     std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
     
+    if (!stop_flag)
+    {
+        stop_flag = true;
+        retry_cv.notify_all();
+    }
+    
     caches.clear();
 
     auth.reset();
@@ -89,7 +95,7 @@ void api::tick()
     auto future = resyncs_pool.submit_loop<size_t>(0, caches.size(),
         [&caches = this->caches](const std::size_t idx) {
             caches[idx]->resync();
-        }, BS::pr::high);
+        });
     future.get();
 }
 
@@ -564,7 +570,7 @@ bool api::is_request_cached(const string &url) const
     return api_responses_cache->is_cached(u) && api_responses_cache->get(u).is_valid();
 }
 
-httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
+httplib::Result api::get(const string &request_url, clock_t::duration cache_for, bool retry_429)
 {
     string cached_etag = "";
     string url = http::trim_domain(request_url);
@@ -584,39 +590,59 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for)
         cached_etag = cache.etag;
     }
 
-    auto res = get_client()->Get(url, {{ "If-None-Match", cached_etag }});
-    if (http::is_success(res))
+    httplib::Result res;
+    clock_t::duration delay = 0s;
+
+    while (1)
     {
-        if (res->status == OK_200)
+        if (delay > clock_t::duration::zero())
         {
-            auto etag = res->get_header_value("etag", "");
+            log::api->warn("The request was rate-limited, postponing for {} seconds: {}",
+                std::chrono::duration_cast<std::chrono::seconds>(delay).count(), request_url);
+            //std::this_thread::sleep_for(delay);
 
-            // caching only requests which have ETag or `cache-for` instruction
-            if (!etag.empty() || cache_for > clock_t::duration::zero())
-                api_responses_cache->store(url, res->body, etag, cache_for);
+            std::unique_lock<std::mutex> thread_lock(retry_cv_guard);
+            retry_cv.wait_for(thread_lock, delay, [this]{ return stop_flag; });
+
+            // if the thread is woken up already after the plugin is shutdown, just return
+            if (stop_flag) return res;
         }
-        else if (res->status == NotModified_304)
+        
+        // in some rare cases res could not contain any response object, just finish execution in such case
+        if (res = get_client()->Get(url, {{ "If-None-Match", cached_etag }}); !res)
+            return res;
+
+        // in case we were rate-limited, we retry the request a bit postponed
+        if (res->status == TooManyRequests_429 && retry_429)
         {
-            const auto &cache = api_responses_cache->get(url);
-
-            // replacing empty body with the cached one, so the client
-            // does not see the difference
-            res->body = cache.body;
-
-            // the response is still valid, so caching for a session or any other
-            // time if needed
-            if (cache_for != clock_t::duration::zero())
-                api_responses_cache->store(url, cache.body, cache.etag, cache_for);
+            delay = std::chrono::seconds(std::stoi(res->get_header_value("retry-after", 0))) + 2s;
+            continue;
         }
+
+        // ...in all other cases - just process and return the result
+        break;
     }
-    else if (res)
+
+    if (res->status == OK_200)
     {
-        if (res->status == TooManyRequests_429)
-        {
-            auto retry_after = std::stoi(res->get_header_value("retry-after", 0));
-            throw std::runtime_error(std::format("The app has been rate limited, retry after {:%T}",
-                std::chrono::seconds(retry_after)));
-        }
+        auto etag = res->get_header_value("etag", "");
+
+        // caching only requests which have ETag or `cache-for` instruction
+        if (!etag.empty() || cache_for > clock_t::duration::zero())
+            api_responses_cache->store(url, res->body, etag, cache_for);
+    }
+    else if (res->status == NotModified_304)
+    {
+        const auto &cache = api_responses_cache->get(url);
+
+        // replacing empty body with the cached one, so the client
+        // does not see the difference
+        res->body = cache.body;
+
+        // the response is still valid, so caching for a session or any other
+        // time if needed
+        if (cache_for != clock_t::duration::zero())
+            api_responses_cache->store(url, cache.body, cache.etag, cache_for);
     }
     return res;
 }
