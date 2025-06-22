@@ -36,10 +36,17 @@ const items_t& artists_base_view::get_items()
     for (const auto &artist: get_artists())
     {
         std::vector<wstring> columns;
-        
+
+        wstring total_albums_str = L"";
         bool is_followed = false;
-        if (auto api = api_proxy.lock(); auto *library = api->get_library())
-            is_followed = library->is_artist_followed(artist.id);
+        
+        if (auto api = api_proxy.lock())
+        {
+            auto albums = api->get_artist_albums(artist.id);
+
+            total_albums_str = std::to_wstring(albums->peek_total());
+            is_followed = api->get_library()->is_artist_followed(artist.id);
+        }
 
         // column C0 - followers count
         columns.push_back(std::format(L"{: >9}", format_followers(artist.followers_total)));
@@ -51,19 +58,11 @@ const items_t& artists_base_view::get_items()
         columns.push_back(artist.get_main_genre());
         
         // column C3 - total albums
-        wstring albums_count = L"";
-        if (auto api = api_proxy.lock())
-        {
-            auto albums = api->get_artist_albums(artist.id);
-            if (auto total_albums = albums->peek_total())
-                albums_count = std::format(L"{: >6}", total_albums);
-        }
-        columns.push_back(albums_count);
+        columns.push_back(std::format(L"{: >6}", total_albums_str));
 
         // column C4 - is saved in collection status
         columns.push_back(is_followed ? L" + " : L"");
         
-
         items.push_back({
             artist.id,
             artist.name,
@@ -177,8 +176,6 @@ intptr_t artists_base_view::process_key_input(int combined_key)
                     return TRUE;
                 }
             }
-            
-            log::global->error("There is an error occured while getting a current panel item");
             return TRUE;
         }
 
@@ -187,7 +184,7 @@ intptr_t artists_base_view::process_key_input(int combined_key)
         {
             const auto &ids = get_selected_items();
 
-            if (auto api = api_proxy.lock(); !ids.empty())
+            if (auto api = api_proxy.lock(); api && !ids.empty())
                 // what to do - like or unlike - with the whole list of items
                 // we decide based on the first item state
                 if (auto *library = api->get_library(); library->is_artist_followed(ids[0], true))
@@ -228,14 +225,15 @@ const key_bar_info_t* artists_base_view::get_key_bar_info()
     // when the panel is refreshed eventually and we can be sure the item is valid
     if (item->CRC32 != view_uid) return nullptr;
 
-    auto *user_data = unpack_user_data(item->UserData);
-    if (auto api = api_proxy.lock(); user_data != nullptr)
+    if (auto api = api_proxy.lock())
     {
-        auto *library = api->get_library();
-        if (library->is_artist_followed(user_data->id))
-            key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
-        else
-            key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        if (auto *user_data = unpack_user_data(item->UserData))
+        {
+            if (api->get_library()->is_artist_followed(user_data->id))
+                key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+            else
+                key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        }
     }
 
     return &key_bar;

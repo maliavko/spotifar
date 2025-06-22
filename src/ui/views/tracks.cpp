@@ -220,7 +220,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
         {
             const auto &ids = get_selected_items();
 
-            if (auto api = api_proxy.lock(); !ids.empty())
+            if (auto api = api_proxy.lock(); api && !ids.empty())
             {
                 // what to do - like or unlike - with the whole list  of items
                 // we decide based on the first item state
@@ -254,7 +254,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
             {
-                if (auto *user_data = unpack_user_data(item->UserData); user_data != nullptr)
+                if (auto *user_data = unpack_user_data(item->UserData))
                 {
                     if (auto api = api_proxy.lock())
                     {
@@ -271,7 +271,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
             {
-                if (auto *user_data = unpack_user_data(item->UserData); user_data != nullptr)
+                if (auto *user_data = unpack_user_data(item->UserData))
                 {
                     if (auto api = api_proxy.lock())
                     {
@@ -361,15 +361,16 @@ const key_bar_info_t* tracks_base_view::get_key_bar_info()
     // returns the `item` from  the previous directory. Checking crc32 helps to identify
     // when the panel is refreshed eventually and we can be sure the item is valid
     if (item->CRC32 != view_uid) return nullptr;
-
-    auto *user_data = unpack_user_data(item->UserData);
-    if (auto api = api_proxy.lock(); user_data != nullptr)
+    
+    if (auto api = api_proxy.lock())
     {
-        auto *library = api->get_library();
-        if (library->is_track_saved(user_data->id))
-            key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
-        else
-            key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        if (auto *user_data = unpack_user_data(item->UserData))
+        {
+            if (api->get_library()->is_track_saved(user_data->id))
+                key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+            else
+                key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        }
     }
 
     return &key_bar;
@@ -1004,7 +1005,6 @@ void artist_top_tracks_view::on_track_changed(const track_t &track, const track_
 }
 
 
-// TODO: once the playlist management is added, to subscibe the class for the appropriate events
 //--------------------------------------------------------------------------------------------------------
 playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playlist_t &p):
     tracks_base_view(panel, api_proxy, p.name, p.name), playlist(p)

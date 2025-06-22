@@ -410,7 +410,7 @@ namespace far3
         auto set_view_mode(HANDLE panel, size_t view_mode_idx) -> intptr_t;
 
         /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_SETSORTORDER
-        auto set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false) -> intptr_t;
+        void set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc = false);
 
         /// @brief https://api.farmanager.com/ru/service_functions/panelcontrol.html#FCTL_GETPANELINFO
         auto get_info(HANDLE panel) -> std::shared_ptr<PanelInfo>;

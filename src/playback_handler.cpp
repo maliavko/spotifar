@@ -233,8 +233,8 @@ void playback_handler::tick()
         far3::synchro_tasks::push([this] {
             far3::show_far_error_dlg(MErrorLibrespotStoppedUnexpectedly, L"", MRelaunch, [this]
             {
-                if (auto api = api_proxy.lock(); auto auth = api->get_auth_cache())
-                    start(auth->get_access_token());
+                if (auto api = api_proxy.lock())
+                    start(api->get_auth_cache()->get_access_token());
             });
         }, "librespot-unexpected-stop, show error dialog task");
     }
@@ -346,7 +346,7 @@ bool playback_handler::pick_up_any()
             FMENU_AUTOHIGHLIGHT, NULL, NULL, NULL, NULL, NULL,
             &items[0], items.size());
         
-        if (auto api = api_proxy.lock(); dev_idx > -1)
+        if (auto api = api_proxy.lock(); api && dev_idx > -1)
         {
             const auto &dev = devices[dev_idx];
             log::librespot->info("Transferring playback to device `{}`", utils::to_string(dev.name));

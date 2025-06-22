@@ -367,9 +367,10 @@ namespace far3
             return control(panel, FCTL_SETVIEWMODE, view_mode_idx, 0);
         }
         
-        intptr_t set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc)
+        void set_sort_mode(HANDLE panel, OPENPANELINFO_SORTMODES sort_mode, bool is_desc)
         {
-            return control(panel, FCTL_SETSORTMODE, sort_mode, 0) || control(panel, FCTL_SETSORTORDER, is_desc ? TRUE : FALSE, 0);
+            control(panel, FCTL_SETSORTMODE, sort_mode, 0);
+            control(panel, FCTL_SETSORTORDER, is_desc ? TRUE : FALSE, 0);
         }
         
         std::shared_ptr<PluginPanelItem> get_current_item(HANDLE panel)
