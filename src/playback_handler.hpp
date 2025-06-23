@@ -3,37 +3,39 @@
 #pragma once
 
 #include "stdafx.h"
+#include "librespot.hpp"
+#include "config.hpp"
 #include "spotify/observer_protocols.hpp"
 
 namespace spotifar {
 
 class playback_handler:
-    public spotify::devices_observer
+    public spotify::devices_observer,
+    public spotify::auth_observer,
+    public config::config_observer
 {
 public:
-    playback_handler(spotify::api_weak_ptr_t api):  api_proxy(api) {}
-
-    bool start(const string &access_token);
-    void restart(const string &access_token);
-    void shutdown();
+    playback_handler(spotify::api_weak_ptr_t api);
+    ~playback_handler();
 
     void tick();
-    bool is_started() const { return is_running; }
     bool pick_up_any();
 protected:
-    void subscribe();
-    void unsubscribe();
+    bool launch_librespot_process(const string &access_token);
+    void shutdown_librespot_process();
 
+    // auth handlers
+    void on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal) override;
+
+    // devices handlers
     void on_devices_changed(const spotify::devices_t &devices) override;
+    
+    // config observer handlers
+    void on_playback_backend_setting_changed(bool is_enabled) override;
+    void on_playback_backend_configuration_changed() override;
 private:
     spotify::api_weak_ptr_t api_proxy;
-    std::atomic<bool> is_running = false;
-    bool is_listening_devices = false;
-
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    HANDLE pipe_read = NULL;
-    HANDLE pipe_write = NULL;
+    librespot librespot;
 };
 
 struct playback_device_observer: public BaseObserverProtocol
