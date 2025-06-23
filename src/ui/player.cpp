@@ -70,11 +70,9 @@ static const wchar_t
     *like_btn_label = L"[+]";
 
 static const int
-    width = 60, height = 11, expanded_height = 34,
+    width = 60, height = 11,
     view_x1 = 2, view_y1 = 2, view_x2 = width - 2, view_y2 = height - 2,
-    view_center_x = (view_x2 + view_x1)/2, view_center_y = (view_y2 + view_y1)/2,
-    qbox_x1 = 0, qbox_y1 = height, qbox_x2 = width, qbox_y2 = expanded_height,
-    qview_x1 = qbox_x1 + 2, qview_y1 = qbox_y1, qview_x2 = qbox_x2 - 3, qview_y2 = qbox_y2 - 2;
+    view_center_x = (view_x2 + view_x1)/2, view_center_y = (view_y2 + view_y1)/2;
 
 static const auto
     btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE,
@@ -230,8 +228,6 @@ bool player::show()
 
         if (hdlg != NULL)
         {
-            expand(false);
-            
             static wstring title(std::format(L" {} ", far3::get_text(MPluginUserName)));
             set_control_text(controls::title, title);
 
@@ -319,50 +315,27 @@ void player::tick()
     });
 }
 
-bool player::is_expanded() const
-{
-    auto r = far3::dialogs::get_dialog_rect(hdlg);
-    return r.Bottom - r.Top > height;
-}
-
-void player::expand(bool is_unfolded)
-{
-    no_redraw_player nr(hdlg);
-    dlg_events_supressor s(this);
-
-    if (is_unfolded)
-    {
-        far3::dialogs::resize_dialog(hdlg, width, expanded_height);
-        far3::dialogs::resize_item(hdlg, controls::box, { 0, 0, width, expanded_height - 1 });
-    }
-    else
-    {
-        far3::dialogs::resize_dialog(hdlg, width, height);
-        far3::dialogs::resize_item(hdlg, controls::box, { 0, 0, width, height - 1 });
-    }
-
-    // keep the same horizontal position, but center by vertical one
-    auto rect = far3::dialogs::get_dialog_rect(hdlg);
-    far3::dialogs::move_dialog_to(hdlg, rect.Left, -1);
-}
-
 void player::on_seek_forward_btn_clicked()
 {
+    // TODO: check enabled btn status
     update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
 }
 
 void player::on_seek_backward_btn_clicked()
 {
+    // TODO: check enabled btn status
     update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
 }
 
 void player::on_volume_up_btn_clicked()
 {
+    // TODO: check enabled btn status
     update_volume_bar(volume.next());
 }
 
 void player::on_volume_down_btn_clicked()
 {
+    // TODO: check enabled btn status
     update_volume_bar(volume.prev());
 }
 
@@ -807,10 +780,12 @@ void player::on_devices_changed(const devices_t &devices)
 
     far3::dialogs::clear_list(hdlg, controls::devices_combo);
 
+    far3::dialogs::add_list_item(hdlg, controls::devices_combo, L"<no device>", 0, NULL, 0, false);
+
     for (size_t i = 0; i < devices.size(); i++)
     {
         const auto &dev = devices[i];
-        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, (int)i,
+        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, (int)i + 1,
             (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
 }

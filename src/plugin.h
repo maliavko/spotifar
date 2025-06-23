@@ -2,8 +2,8 @@
 #define PLUGIN_HPP_2419C0DE_F1AD_4D6F_B388_25CC7C8D402A
 #pragma
 
-#include "spotify/observer_protocols.hpp"
 #include "ui/events.hpp"
+#include "spotify/observer_protocols.hpp"
 
 namespace spotifar {
 
@@ -36,9 +36,6 @@ public:
 protected:
     void launch_sync_worker();
     void shutdown_sync_worker();
-
-    void launch_playback_device(const string &access_token);
-    void shutdown_playback_device();
     
     void process_win_messages_queue();
 
@@ -46,8 +43,6 @@ protected:
     void on_global_hotkeys_setting_changed(bool is_enabled) override;
     void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys) override;
     void on_logging_verbocity_changed(bool is_verbose) override;
-    void on_playback_backend_setting_changed(bool is_enabled) override;
-    void on_playback_backend_configuration_changed() override;
 
     // auth handler
     void on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal) override;

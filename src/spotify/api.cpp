@@ -7,6 +7,7 @@
 #include "devices.hpp"
 #include "releases.hpp"
 #include "history.hpp"
+#include "playback_handler.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -290,19 +291,16 @@ void api::resume_playback(const item_id_t &device_id)
 
 void api::toggle_playback(const item_id_t &device_id)
 {
-    // if we're not transferring playback to a specific device, we need
-    // to make sure there are some already active one at least
-    if (device_id.empty())
-    {
-        devices->resync(true);
-        
-        const auto &available_devices = devices->get();
-        auto active_dev_it = std::find_if(available_devices.begin(), available_devices.end(),
-            [](const auto &d) { return d.is_active; });
+    item_id_t device_to_transfer = device_id;
 
-        if (active_dev_it == available_devices.end())
-            return playback_cmd_error("No playback device is currently active");
-    }
+    // if not device is specified, we check first if any is already active,
+    // or try to find a Librespot one
+    if (device_to_transfer.empty())
+        device_to_transfer = get_recommended_device();
+
+    // send an error, if we do not know which device to use
+    if (device_to_transfer.empty())
+        return playback_cmd_error("No playback device is currently active");
 
     // making sure we have a last updates playback state
     playback->resync(true);
@@ -516,6 +514,30 @@ void api::start_playback_base(const string &body, const item_id_t &device_id)
             else
                 playback_cmd_error(http::get_status_message(res));
         });
+}
+
+item_id_t api::get_recommended_device()
+{
+    const auto &devices = get_available_devices(true);
+
+    // if we have already some active device -> using it
+    auto active_dev_it = std::find_if(devices.begin(), devices.end(),
+        [](const auto &d) { return d.is_active; });
+
+    if (active_dev_it != devices.end())
+        return active_dev_it->id;
+
+    // ...or checking if there some any built-int playback backend device on
+    auto libre_it = std::find_if(devices.begin(), devices.end(),
+        [device_name = playback_handler::get_device_name()]
+        (const auto &d) {
+            return d.name == device_name;
+        });
+
+    if (libre_it != devices.end())
+        return libre_it->id;
+
+    return invalid_id;
 }
 
 wstring api::get_image(const image_t &image, const item_id_t &item_id)

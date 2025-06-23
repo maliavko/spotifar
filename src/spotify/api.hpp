@@ -69,6 +69,7 @@ protected:
     /// fills up all the default attributes and token, and returns it
     auto get_client() const -> std::shared_ptr<httplib::Client>;
     
+    auto get_recommended_device() -> item_id_t;
     void start_playback_base(const string &body, const item_id_t &device_id);
     
     httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) override;

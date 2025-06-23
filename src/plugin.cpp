@@ -58,12 +58,10 @@ plugin::~plugin()
         ui::show_waiting(MWaitingFiniSpotify);
         {
             api->shutdown();
-            notifications->shutdown();   
+            notifications->shutdown();
         }
 
         shutdown_sync_worker();
-        
-        shutdown_playback_device();
     
         events::stop_listening<spotify::releases_observer>(this);
         events::stop_listening<spotify::auth_observer>(this);
@@ -149,31 +147,6 @@ void plugin::shutdown_sync_worker()
     log::api->info("Plugin's background thread has been stopped");
 }
 
-void plugin::launch_playback_device(const string &access_token)
-{
-    if (config::is_playback_backend_enabled())
-    {
-        if (!playback_device->start(access_token))
-        {
-            shutdown_playback_device(); // cleaning up the allocated resources if any
-
-            far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
-            {
-                far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
-            });
-        }
-    }
-
-    // if playback is not started for any reason, trying to pick up any available device
-    if (!playback_device->is_started())
-        playback_device->pick_up_any();
-}
-
-void plugin::shutdown_playback_device()
-{
-    playback_device->shutdown();
-}
-
 void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
 {
     // the definition of the global hotkeys must be performed in the
@@ -214,31 +187,10 @@ void plugin::on_logging_verbocity_changed(bool is_verbose)
     log::enable_verbose_logs(is_verbose);
 }
 
-void plugin::on_playback_backend_setting_changed(bool is_enabled)
-{
-    if (is_enabled)
-    {
-        if (const auto &auth_cache = api->get_auth_cache())
-            launch_playback_device(auth_cache->get_access_token());
-    }
-    else
-        shutdown_playback_device();
-}
-
-void plugin::on_playback_backend_configuration_changed()
-{
-    log::global->debug("on_playback_backend_configuration_changed");
-    
-    if (const auto &auth_cache = api->get_auth_cache(); playback_device)
-        playback_device->restart(auth_cache->get_access_token());
-}
-
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
 {
     if (auth && !is_renewal) // only if it is not token renewal
     {
-        launch_playback_device(auth.access_token);
-        
         // after first valid authentication we show root view
         ui::events::show_root(api);
     }
@@ -273,9 +225,9 @@ void plugin::process_win_messages_queue()
 
                 switch (LOWORD(msg.wParam))
                 {
-                    case hotkeys::play: return api->toggle_playback();
-                    case hotkeys::skip_next: return api->skip_to_next();
-                    case hotkeys::skip_previous: return api->skip_to_previous();
+                    case hotkeys::play: player->on_play_btn_click(); return;
+                    case hotkeys::skip_next: player->on_skip_to_next_btn_click(); return;
+                    case hotkeys::skip_previous: player->on_skip_to_previous_btn_click(); return;
                     case hotkeys::seek_forward: return player->on_seek_forward_btn_clicked();
                     case hotkeys::seek_backward: return player->on_seek_backward_btn_clicked();
                     case hotkeys::volume_up: return player->on_volume_up_btn_clicked();

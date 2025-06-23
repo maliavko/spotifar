@@ -27,8 +27,6 @@ public:
     void tick();
 
     bool is_visible() const { return visible; }
-    bool is_expanded() const;
-    void expand(bool is_unfolded);
 
     // a set of public methods used globally 
     void on_seek_forward_btn_clicked();
@@ -87,8 +85,8 @@ protected:
     void on_permissions_changed(const actions_t &actions) override;
 
     // helpers
-    intptr_t set_control_text(int control_id, const wstring &text);
-    intptr_t set_control_enabled(int control_id, bool is_enabled);
+    auto set_control_text(int control_id, const wstring &text) -> intptr_t;
+    auto set_control_enabled(int control_id, bool is_enabled) -> intptr_t;
     bool is_control_enabled(int control_id);
 
 private:
