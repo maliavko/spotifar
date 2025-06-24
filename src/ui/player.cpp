@@ -224,7 +224,7 @@ bool player::show()
         
         utils::events::start_listening<playback_observer>(this);
         utils::events::start_listening<devices_observer>(this);
-        utils::events::start_listening<playback_device_observer>(this);
+        utils::events::start_listening<librespot_observer>(this);
 
         if (hdlg != NULL)
         {
@@ -271,7 +271,7 @@ void player::cleanup()
 {
     utils::events::stop_listening<playback_observer>(this);
     utils::events::stop_listening<devices_observer>(this);
-    utils::events::stop_listening<playback_device_observer>(this);
+    utils::events::stop_listening<librespot_observer>(this);
     
     hdlg = NULL;
     visible = false;
@@ -769,10 +769,9 @@ void player::on_devices_changed(const devices_t &devices)
     }
 }
 
-void player::on_running_state_changed(bool is_running)
+void player::on_librespot_stopped(bool emergency)
 {
-    if (!is_running)
-        hide();
+    hide();
 }
 
 void player::on_track_changed(const track_t &track, const track_t &prev_track)

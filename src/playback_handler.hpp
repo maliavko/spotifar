@@ -12,7 +12,8 @@ namespace spotifar {
 class playback_handler:
     public spotify::devices_observer,
     public spotify::auth_observer,
-    public config::config_observer
+    public config::config_observer,
+    public librespot_observer
 {
 public:
     playback_handler(spotify::api_weak_ptr_t api);
@@ -21,7 +22,7 @@ public:
     void tick();
     bool pick_up_any();
 protected:
-    bool launch_librespot_process(const string &access_token);
+    void launch_librespot_process(const string &access_token);
     void shutdown_librespot_process();
 
     // auth handlers
@@ -33,14 +34,15 @@ protected:
     // config observer handlers
     void on_playback_backend_setting_changed(bool is_enabled) override;
     void on_playback_backend_configuration_changed() override;
+
+    // librespot observer handlers
+    void on_librespot_stopped(bool emergency) override;
 private:
     spotify::api_weak_ptr_t api_proxy;
-    librespot librespot;
-};
+    const spotify::device_t *active_device = nullptr;
 
-struct playback_device_observer: public BaseObserverProtocol
-{
-    virtual void on_running_state_changed(bool is_running) {}
+    librespot librespot;
+    bool wait_for_discovery = false;
 };
 
 } // namespace spotifar

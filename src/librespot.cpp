@@ -7,6 +7,8 @@
 namespace spotifar {
 
 using namespace utils;
+using utils::far3::synchro_tasks::dispatch_event;
+
 
 #ifdef _DEBUG
     static const wstring device_name = L"librespot-debug";
@@ -21,7 +23,7 @@ librespot::librespot()
 
 bool librespot::start(const string &access_token)
 {
-    if (is_running) return true;
+    if (running) return true;
     
     ui::scoped_waiting waiting(MWaitingInitLibrespot);
 
@@ -112,7 +114,9 @@ bool librespot::start(const string &access_token)
     DWORD dw_mode = PIPE_READMODE_BYTE | PIPE_NOWAIT;
     SetNamedPipeHandleState(pipe_read, &dw_mode, NULL, NULL);
 
-    is_running = true;
+    running = true;
+    
+    dispatch_event(&librespot_observer::on_librespot_started);
 
     return false;
 }
@@ -126,11 +130,11 @@ void librespot::restart(const string &access_token)
     start(access_token);
 }
 
-void librespot::stop()
+void librespot::stop(bool emergency)
 {
-    if (!is_running) return;
+    if (!running) return;
 
-    is_running = false;
+    running = false;
     
     ui::scoped_waiting waiting(MWaitingFiniLibrespot);
     
@@ -159,11 +163,13 @@ void librespot::stop()
         CloseHandle(pi.hThread);
         pi.hThread = NULL;
     }
+    
+    dispatch_event(&librespot_observer::on_librespot_stopped, emergency);
 }
 
 void librespot::tick()
 {
-    if (!is_running) return;
+    if (!running) return;
     
     // the algo below parses all the accumulated Librespot process messages and propagates
     // them into regular plugin's log file
@@ -216,20 +222,10 @@ void librespot::tick()
     DWORD exit_code;
     GetExitCodeProcess(pi.hProcess, &exit_code);
 
+    // the process is shut down unexpectedly, cleaning up the resources and
+    // preparing for a relaunch
     if (exit_code != STILL_ACTIVE && exit_code != STATUS_CONTROL_C_EXIT)
-    {
-        // the process is shut down unexpectedly, cleaning up the resources and
-        // preparing for a relaunch
-        stop();
-
-        far3::synchro_tasks::push([this] {
-            far3::show_far_error_dlg(MErrorLibrespotStoppedUnexpectedly, L"", MRelaunch, [this]
-            {
-                if (auto api = api_proxy.lock())
-                    start(api->get_auth_cache()->get_access_token());
-            });
-        }, "librespot-unexpected-stop, show error dialog task");
-    }
+        stop(true);
 }
 
 const wstring& librespot::get_device_name()
