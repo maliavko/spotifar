@@ -529,7 +529,7 @@ item_id_t api::get_recommended_device()
 
     // ...or checking if there some any built-int playback backend device on
     auto libre_it = std::find_if(devices.begin(), devices.end(),
-        [device_name = playback_handler::get_device_name()]
+        [device_name = librespot::get_device_name()]
         (const auto &d) {
             return d.name == device_name;
         });
