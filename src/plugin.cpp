@@ -26,7 +26,7 @@ plugin::plugin(): api(new spotify::api())
 {
     player = std::make_unique<ui::player>(api);
     notifications = std::make_unique<ui::notifications>(api);
-    playback_device = std::make_unique<playback_handler>(api);
+    playback_handler = std::make_unique<spotifar::playback_handler>(api);
 
     events::start_listening<config::config_observer>(this);
     events::start_listening<spotify::auth_observer>(this);
@@ -71,7 +71,7 @@ plugin::~plugin()
 
         player.reset();
         api.reset();
-        playback_device.reset();
+        playback_handler.reset();
         notifications.reset();
     }
     catch (const std::exception &ex)
@@ -109,7 +109,7 @@ void plugin::launch_sync_worker()
 
                 api->tick();
                 player->tick();
-                playback_device->tick();
+                playback_handler->tick();
 
                 background_tasks.process_all(); // ticking background tasks if any
 

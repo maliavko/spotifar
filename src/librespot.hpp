@@ -13,22 +13,28 @@ public:
 
     bool start(const string &access_token);
     void restart(const string &access_token);
-    void stop();
+    void stop(bool emergency = false);
 
     void tick();
 
-    bool is_alive() const { return is_running; }
+    bool is_running() const { return running; }
 
     /// @brief Returns the name of the Librespot device 
     static const wstring& get_device_name();
-protected:
 private:
-    bool is_running = false;
+    bool running = false;
     
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     HANDLE pipe_read = NULL;
     HANDLE pipe_write = NULL;
+};
+
+struct librespot_observer: public BaseObserverProtocol
+{
+    virtual void on_librespot_started() {}
+
+    virtual void on_librespot_stopped(bool emergency) {}
 };
 
 } // namespace spotifar

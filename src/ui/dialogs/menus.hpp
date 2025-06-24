@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ui/types.hpp"
+#include "config.hpp"
 
 namespace spotifar { namespace ui {
 
