@@ -66,7 +66,7 @@ private:
     // background thread, like hotkeys check etc.
     utils::tasks_queue background_tasks;
 
-    std::unique_ptr<playback_handler> playback_device;
+    std::unique_ptr<playback_handler> playback_handler;
     std::unique_ptr<ui::notifications> notifications;
     std::unique_ptr<ui::player> player;
     std::shared_ptr<spotify::api> api;

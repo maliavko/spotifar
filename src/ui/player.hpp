@@ -13,7 +13,7 @@ using namespace spotify;
 class player:
     public playback_observer, // represent timely playback changes in UI
     public devices_observer, // to keep up to date the list of available devices
-    public playback_device_observer // to update the player visual when playback state is changed
+    public librespot_observer // to update the player visual when playback state is changed
 {
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases
@@ -71,7 +71,7 @@ protected:
     void update_playing_queue(bool is_visible);
 
     // librespot handlers
-    void on_running_state_changed(bool is_running) override;
+    void on_librespot_stopped(bool emergency) override;
 
     // api even handlers
     void on_devices_changed(const devices_t &devices) override;
