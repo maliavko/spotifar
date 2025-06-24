@@ -4,7 +4,7 @@
 # Sources
 Checkout the recent stable sources from the master branch including all the third-party submodules.
 ```
-git clone --recurse-submodules https://github.com/maliavko/spotifar.git spotifar-test
+git clone --recurse-submodules https://github.com/maliavko/spotifar.git
 ```
 > [!NOTE]
 > Besides the necessary libraries for plugin compiling, the repo contains a Far Manager submodule for convenient debugging
@@ -16,7 +16,6 @@ git clone --recurse-submodules https://github.com/maliavko/spotifar.git spotifar
   - MSVC v143 VS 2022
   - C++ core features
   - Windows 10 SDK
-  - Windows Universal C Runtime
   - [optional] [Rust](https://www.rust-lang.org/tools/install) for building librespot
 - Download and install [CMake](https://cmake.org/download/). The latest recommended version is 3.31
 ### Compiling
