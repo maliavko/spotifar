@@ -396,7 +396,7 @@ void tracks_base_view::on_tracks_statuses_received(const item_ids_t &ids)
 album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const simplified_album_t &album):
     tracks_base_view(panel, api_proxy, album.name), album(album)
 {
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
     rebuild_items();
 
     static const panel_mode_t::column_t
@@ -413,7 +413,7 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
 
 album_tracks_view::~album_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
     album_tracks.clear();
 }
 
@@ -667,12 +667,12 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
 
     panel_modes.rebuild();
     
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 saved_tracks_view::~saved_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 bool saved_tracks_view::repopulate()
@@ -759,12 +759,12 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
     tracks_base_view(panel, api, get_text(MPanelPlayingQueue))
 {
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 playing_queue_view::~playing_queue_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t playing_queue_view::get_default_settings() const
@@ -842,12 +842,12 @@ recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_pt
         collection->fetch(false, true, 3);
     }
 
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 recently_liked_tracks_view::~recently_liked_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t recently_liked_tracks_view::get_default_settings() const
@@ -957,12 +957,12 @@ artist_top_tracks_view::artist_top_tracks_view(HANDLE panel, api_weak_ptr_t api_
     if (auto api = api_proxy.lock())
         tracks = api->get_artist_top_tracks(artist.id);
     
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 artist_top_tracks_view::~artist_top_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t artist_top_tracks_view::get_default_settings() const
@@ -1013,7 +1013,7 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
         collection->fetch();
     }
     
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 
     static const panel_mode_t::column_t
         AddedAt { L"C8", get_text(MSortColAddedAt), L"13" };
@@ -1027,7 +1027,7 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
 
 playlist_view::~playlist_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t playlist_view::get_default_settings() const
