@@ -27,6 +27,7 @@ bugs
 - no possibility to like/unlike artist from new releases
 
 to finish for alpha release
+- add gallery of schreenshots
 - check all the default view settings and sort modes
 + to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch

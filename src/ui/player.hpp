@@ -9,6 +9,7 @@
 namespace spotifar { namespace ui {
 
 using namespace spotify;
+using ph_weak_ptr_t = playback_handler_weak_ptr_t;
 
 class player:
     public playback_observer, // represent timely playback changes in UI
@@ -18,7 +19,7 @@ class player:
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases
 public:
-    player(api_weak_ptr_t api);
+    player(api_weak_ptr_t api, playback_handler_weak_ptr_t handler);
     ~player();
 
     bool show();
@@ -88,9 +89,10 @@ protected:
     auto set_control_text(int control_id, const wstring &text) -> intptr_t;
     auto set_control_enabled(int control_id, bool is_enabled) -> intptr_t;
     bool is_control_enabled(int control_id);
-
 private:
     api_weak_ptr_t api_proxy;
+    ph_weak_ptr_t play_handler;
+
     HANDLE hdlg;
     std::atomic<bool> visible = false;
     bool are_dlg_events_suppressed = true;

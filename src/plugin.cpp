@@ -15,11 +15,12 @@ namespace hotkeys = config::hotkeys;
 using namespace utils;
 using namespace utils::http;
 
-plugin::plugin(): api(new spotify::api())
+plugin::plugin():
+    api(new spotify::api()),
+    playback_handler(new spotifar::playback_handler(api))
 {
-    player = std::make_unique<ui::player>(api);
     notifications = std::make_unique<ui::notifications>(api);
-    playback_handler = std::make_unique<spotifar::playback_handler>(api);
+    player = std::make_unique<ui::player>(api->get_ptr(), playback_handler);
 
     events::start_listening<config::config_observer>(this);
     events::start_listening<spotify::auth_observer>(this);
@@ -218,7 +219,7 @@ void plugin::process_win_messages_queue()
 
                 switch (LOWORD(msg.wParam))
                 {
-                    case hotkeys::play: player->on_play_btn_click(); return;
+                    case hotkeys::play: return playback_handler->toggle_playback();
                     case hotkeys::skip_next: player->on_skip_to_next_btn_click(); return;
                     case hotkeys::skip_previous: player->on_skip_to_previous_btn_click(); return;
                     case hotkeys::seek_forward: return player->on_seek_forward_btn_clicked();

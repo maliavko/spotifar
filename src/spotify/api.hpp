@@ -55,7 +55,6 @@ public:
     void start_playback(const simplified_album_t &album, const simplified_track_t &track) override;
     void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) override;
     void resume_playback(const item_id_t &device_id = "") override;
-    void toggle_playback(const item_id_t &device_id = "") override;
     void pause_playback(const item_id_t &device_id = "") override;
     void skip_to_next(const item_id_t &device_id = "") override;
     void skip_to_previous(const item_id_t &device_id = "") override;
