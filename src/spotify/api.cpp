@@ -289,28 +289,6 @@ void api::resume_playback(const item_id_t &device_id)
     return start_playback_base("", device_id);
 }
 
-void api::toggle_playback(const item_id_t &device_id)
-{
-    item_id_t device_to_transfer = device_id;
-
-    // if not device is specified, we check first if any is already active,
-    // or try to find a Librespot one
-    if (device_to_transfer.empty())
-        device_to_transfer = get_recommended_device();
-
-    // send an error, if we do not know which device to use
-    if (device_to_transfer.empty())
-        return playback_cmd_error("No playback device is currently active");
-
-    // making sure we have a last updates playback state
-    playback->resync(true);
-
-    if (const auto &state = playback->get(); !state.is_playing)
-        return resume_playback(device_id);
-    else
-        return pause_playback(device_id);
-}
-
 void api::pause_playback(const item_id_t &device_id)
 {
     requests_pool.detach_task(

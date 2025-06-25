@@ -280,7 +280,6 @@ struct context_t
 
 struct device_t: public data_item_t
 {
-    string id = "";
     bool is_active = false;
     wstring name;
     string type;
