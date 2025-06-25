@@ -7,6 +7,7 @@
 namespace spotifar {
 
 using namespace utils;
+using namespace spotify;
 using utils::far3::synchro_tasks::dispatch_event;
 
 
@@ -16,10 +17,6 @@ using utils::far3::synchro_tasks::dispatch_event;
     static const wstring device_name = L"librespot";
 #endif
 
-
-librespot::librespot()
-{
-}
 
 bool librespot::start(const string &access_token)
 {
@@ -115,7 +112,11 @@ bool librespot::start(const string &access_token)
     SetNamedPipeHandleState(pipe_read, &dw_mode, NULL, NULL);
 
     running = true;
-    
+
+    subscribe();
+
+    //ui::show_waiting(MWaitingInitLibrespot);
+
     dispatch_event(&librespot_observer::on_librespot_started);
 
     return false;
@@ -134,7 +135,10 @@ void librespot::stop(bool emergency)
 {
     if (!running) return;
 
+    unsubscribe();
+
     running = false;
+    device = device_t{};
     
     ui::scoped_waiting waiting(MWaitingFiniLibrespot);
     
@@ -231,6 +235,48 @@ void librespot::tick()
 const wstring& librespot::get_device_name()
 {
     return device_name;
+}
+
+void librespot::subscribe()
+{
+    if (!wait_for_discovery)
+    {
+        wait_for_discovery = true;
+        utils::events::start_listening<devices_observer>(this);
+    }
+}
+
+void librespot::unsubscribe()
+{
+    if (wait_for_discovery)
+    {
+        wait_for_discovery = false;
+        utils::events::stop_listening<devices_observer>(this);
+    }
+}
+
+void librespot::on_devices_changed(const devices_t &devices)
+{
+    device_t active_dev;
+
+    // we're waiting for our `device_name` device
+    // and trying to pick it up and transfer playback to
+    for (const auto &d: devices)
+    {
+        if (d.name == device_name)
+            device = d;
+
+        if (d.is_active)
+            active_dev = d;
+    }
+
+    if (wait_for_discovery && device)
+    {
+        log::librespot->info("The Librespot device is discovered {}", device.id);
+
+        unsubscribe();
+        dispatch_event(&librespot_observer::on_librespot_discovered, device, active_dev);
+    }
 }
 
 } // namespace spotifar
