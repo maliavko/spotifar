@@ -736,7 +736,7 @@ string utf8_encode(const wstring &ws)
 {
     int len = WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), NULL, 0, NULL, NULL);
     string out(len, 0);
-    WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), NULL, len, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, ws.c_str(), (int)ws.size(), &out[0], len, NULL, NULL);
     return out;
 }
 
