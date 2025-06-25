@@ -58,6 +58,8 @@ namespace spotifar
     
     using plugin_ptr_t = std::shared_ptr<plugin_interface>;
     using plugin_weak_ptr_t = std::weak_ptr<plugin_interface>;
+    using playback_handler_ptr_t = std::shared_ptr<playback_handler>;
+    using playback_handler_weak_ptr_t = std::weak_ptr<playback_handler>;
 
     namespace spotify
     {

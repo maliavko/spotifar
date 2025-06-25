@@ -2,6 +2,7 @@
 #include "ui/events.hpp"
 #include "ui/dialogs/dialog.hpp"
 #include "spotify/interfaces.hpp"
+#include "playback_handler.hpp"
 #include "lng.hpp"
 
 namespace spotifar { namespace ui {
@@ -156,8 +157,9 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
 };
 
-player::player(api_weak_ptr_t api):
+player::player(api_weak_ptr_t api, ph_weak_ptr_t handler):
     api_proxy(api),
+    play_handler(handler),
     volume(0, 100, 1),
     track_progress(0, 0, 5),
     shuffle_state({ true, false }),
@@ -168,6 +170,7 @@ player::~player()
 {
     hide();
 
+    play_handler.reset();
     api_proxy.reset();
 }
 
@@ -760,14 +763,9 @@ bool player::on_repeat_btn_click(void *empty)
 
 bool player::on_play_btn_click(void *empty)
 {
-    if (!is_control_enabled(play_btn)) return false;
-
-    if (auto api = api_proxy.lock())
+    if (auto handler = play_handler.lock(); handler && is_control_enabled(play_btn))
     {
-        auto device_id = far3::dialogs::get_list_current_item_data<string>(
-            hdlg, controls::devices_combo);
-    
-        api->toggle_playback(device_id);
+        handler->toggle_playback();
         return true;
     }
     return false;

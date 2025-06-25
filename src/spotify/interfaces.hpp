@@ -261,9 +261,6 @@ struct api_interface
     /// @brief Resumes suspended playback
     virtual void resume_playback(const item_id_t &device_id = "") = 0;
 
-    /// @brief Toggles playback state to the opposite one, depending on the current state: play/pause
-    virtual void toggle_playback(const item_id_t &device_id = "") = 0;
-
     /// @brief https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback
     virtual void pause_playback(const item_id_t &device_id = "") = 0;
 

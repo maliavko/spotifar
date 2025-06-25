@@ -8,6 +8,7 @@
 namespace spotifar {
 
 using namespace utils;
+using namespace spotify;
 using utils::far3::get_text;
 using utils::far3::get_vtext;
 using utils::far3::synchro_tasks::dispatch_event;
@@ -15,18 +16,16 @@ using utils::events::start_listening;
 using utils::events::stop_listening;
 
 
-playback_handler::playback_handler(spotify::api_weak_ptr_t api):  api_proxy(api)
+playback_handler::playback_handler(api_weak_ptr_t api):  api_proxy(api)
 {
-    start_listening<spotify::devices_observer>(this);
-    start_listening<spotify::auth_observer>(this);
+    start_listening<auth_observer>(this);
     start_listening<config::config_observer>(this);
     start_listening<librespot_observer>(this);
 }
 
 playback_handler::~playback_handler()
 {
-    stop_listening<spotify::devices_observer>(this);
-    stop_listening<spotify::auth_observer>(this);
+    stop_listening<auth_observer>(this);
     stop_listening<config::config_observer>(this);
     stop_listening<librespot_observer>(this);
 }
@@ -36,12 +35,38 @@ void playback_handler::tick()
     librespot.tick();
 }
 
+void playback_handler::toggle_playback()
+{
+    if (auto api = api_proxy.lock())
+    {
+        const auto &devices = api->get_available_devices();
+        const auto *active_device = get_active_device(devices);
+
+        item_id_t device_id = spotify::invalid_id;
+
+        if (active_device)
+        {
+            device_id = active_device->id;
+        }
+        else if (librespot.is_running())
+        {
+            device_id = librespot.get_device().id;
+        }
+
+        if (device_id == invalid_id)
+            return pick_up_any();
+
+        if (const auto &pstate = api->get_playback_state(true); !pstate.is_playing)
+            return api->resume_playback(device_id);
+        else
+            return api->pause_playback(device_id);
+    }
+}
+
 void playback_handler::launch_librespot_process(const string &access_token)
 {
     if (config::is_playback_backend_enabled())
     {
-        wait_for_discovery = true;
-
         if (!librespot.start(access_token))
         {
             shutdown_librespot_process(); // cleaning up the allocated resources if any
@@ -53,68 +78,32 @@ void playback_handler::launch_librespot_process(const string &access_token)
         }
     }
 
-    // if playback backend is not started for any reason, trying to pick up any available device
+    // if playback backend is not started for any reason,
+    // offering user to pick up any available one
     if (!librespot.is_running())
         pick_up_any();
 }
 
 void playback_handler::shutdown_librespot_process()
 {
-    wait_for_discovery = false;
     librespot.stop();
 }
 
-void playback_handler::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
+const device_t* playback_handler::get_active_device(const devices_t &devices) const
 {
-    if (auth && !is_renewal) // only if it is not token renewal
-        librespot.start(auth.access_token);
-}
-
-void playback_handler::on_devices_changed(const spotify::devices_t &devices)
-{
-    // searching for an active device
     auto active_dev_it = std::find_if(
         devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
 
-    // updating a currently active device pointer
     if (active_dev_it != devices.end())
-        active_device = &*active_dev_it;
+        return &*active_dev_it;
 
-    if (wait_for_discovery)
-    {
-        const auto &device_name = librespot.get_device_name();
+    return nullptr;
+}
 
-        // we're waiting for our `device_name` device
-        // and trying to pick it up and transfer playback to
-        for (const auto &device: devices)
-        {
-            if (device.name == device_name)
-            {
-                wait_for_discovery = false;
-
-                // some other device is already active
-                if (!device.is_active)
-                {
-                    // ...let's provide a choice for the user to pick it up or leave the active one untouched
-                    const auto &message = get_vtext(MTransferPlaybackMessage, active_dev_it->name, device_name);
-                    const wchar_t* msgs[] = {
-                        get_text(MTransferPlaybackTitle), message.c_str()
-                    };
-
-                    if (config::ps_info.Message(
-                        &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
-                    ) != 0) // "would you like to transfer a playback?"
-                        return;
-                }
-
-                log::librespot->info("A librespot process is found, trasferring playback...");
-                
-                // if (auto api = api_proxy.lock())
-                //     api->transfer_playback(device.id, true);
-                return;
-            }
-        }
-    }
+void playback_handler::on_auth_status_changed(const auth_t &auth, bool is_renewal)
+{
+    if (auth && !is_renewal) // only if it is not token renewal
+        librespot.start(auth.access_token);
 }
 
 void playback_handler::on_playback_backend_setting_changed(bool is_enabled)
@@ -154,21 +143,42 @@ void playback_handler::on_librespot_stopped(bool emergency)
     }
 }
 
-bool playback_handler::pick_up_any()
+void playback_handler::on_librespot_discovered(const device_t &dev, const device_t &active_dev)
 {
-    if (api_proxy.expired()) return false;
+    // there is some active device and it is not Librespot
+    if (active_dev && active_dev.id != dev.id)
+    {
+        // ...let's provide a choice for the user to pick it up or leave the active one untouched
+        const auto &message = get_vtext(MTransferPlaybackMessage, active_dev.name, dev.name);
+        const wchar_t* msgs[] = {
+            get_text(MTransferPlaybackTitle), message.c_str()
+        };
+
+        if (config::ps_info.Message(
+            &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+        ) != 0) // "would you like to transfer a playback?" "Ok" button is "0"
+            return;
+    }
+
+    log::librespot->info("A librespot process is found, trasferring playback...");
+    
+    if (auto api = api_proxy.lock())
+        api->transfer_playback(dev.id, true);
+}
+
+void playback_handler::pick_up_any()
+{
+    if (api_proxy.expired()) return;
 
     auto api = api_proxy.lock();
+    
     const auto &devices = api->get_available_devices(true);
-
-    // searching for an active device if any
-    auto active_dev_it = std::find_if(
-        devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
+    const auto &active_device = get_active_device(devices);
     
     // if there is an active device already - no need to do anything
-    if (active_dev_it != devices.end()) return false;
+    if (!active_device) return;
 
-    // no available device found, warning the user
+    // no available device found, warn the user
     if (devices.empty())
     {
         const wchar_t* msgs[] = {
@@ -176,7 +186,7 @@ bool playback_handler::pick_up_any()
             get_text(MTransferNoAvailableDevices),
         };
         config::ps_info.Message(&MainGuid, &FarMessageGuid, FMSG_MB_OK, nullptr, msgs, std::size(msgs), 0);
-        return false;
+        return;
     }
 
     std::vector<FarMenuItem> items;
@@ -196,21 +206,21 @@ bool playback_handler::pick_up_any()
 
     if (should_transfer)
     {
-        // offering user a choice to pick up a device from the list of available
+        // offering user a choice to pick up some device from the list of available
         auto dev_idx = config::ps_info.Menu(
             &MainGuid, &FarMessageGuid, -1, -1, 0,
             FMENU_AUTOHIGHLIGHT, NULL, NULL, NULL, NULL, NULL,
             &items[0], items.size());
         
-        if (auto api = api_proxy.lock(); api && dev_idx > -1)
+        if (api && dev_idx > -1)
         {
             const auto &dev = devices[dev_idx];
             log::librespot->info("Transferring playback to device `{}`", utils::to_string(dev.name));
             api->transfer_playback(dev.id, true);
-            return true;
+            return;
         }
     }
-    return false;
+    return;
 }
 
 } // namespace spotifar
