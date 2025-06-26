@@ -402,6 +402,10 @@ bool player::on_input_received(void *input_record)
                     case VK_DOWN:
                         on_volume_down_btn_clicked();
                         return true;
+
+                    case VK_F8:
+                        on_like_btn_input_received(NULL);
+                        return true;
                     
                     case keys::r:
                         on_repeat_btn_click();
@@ -610,9 +614,12 @@ bool player::on_inactive_control_style_applied(void *dialog_item_colors)
 
 bool player::on_like_btn_input_received(void *input_record)
 {
-    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
-    if (ir->EventType == KEY_EVENT)
-        return false;
+    if (input_record)
+    {
+        const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+        if (ir->EventType == KEY_EVENT)
+            return false;
+    }
 
     if (api_proxy.expired()) return false;
 
