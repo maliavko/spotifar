@@ -228,7 +228,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             return TRUE;
         }
 
-        // saved/remove from collection
+        // saved/remove from albums collection
         case VK_F8:
         {
             const auto &ids = get_selected_items();
@@ -339,6 +339,37 @@ artist_albums_view::artist_albums_view(HANDLE panel, api_weak_ptr_t api, const a
 config::settings::view_t artist_albums_view::get_default_settings() const
 {
     return { 1, true, 3 };
+}
+
+intptr_t artist_albums_view::process_key_input(int combined_key)
+{
+    using namespace utils::keys;
+
+    switch (combined_key)
+    {
+        // saved/remove from albums collection
+        case VK_F8:
+        {
+            // special case, the clicked happened on the '..' item, which means we need
+            // to save/remove album's artist
+            if (const auto &data = utils::far3::panels::get_current_item(get_panel_handle());
+                data && wcscmp(data->FileName, L"..") == 0)
+            {   
+                if (auto api = api_proxy.lock(); api && artist)
+                {
+                    if (auto *library = api->get_library())
+                    {
+                        if (library->is_artist_followed(artist.id, true))
+                            library->unfollow_artists({ artist.id });
+                        else
+                            library->follow_artists({ artist.id });
+                    }
+                }
+                return TRUE;
+            }
+        }
+    }
+    return albums_base_view::process_key_input(combined_key);
 }
 
 std::generator<const album_t&> artist_albums_view::get_albums()
@@ -514,7 +545,8 @@ void new_releases_view::rebuild_items()
         std::transform(releases.begin(), releases.end(), back_inserter(releases_ids),
             [](const auto &r) { return r.id; });
 
-        recent_releases = api->get_albums(releases_ids);
+        if (releases_ids.size() > 0)
+            recent_releases = api->get_albums(releases_ids);
     }
 }
 
