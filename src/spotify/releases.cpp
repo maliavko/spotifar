@@ -34,6 +34,11 @@ void recent_releases::invalidate()
     json_cache::invalidate(1s);
 }
 
+bool recent_releases::is_cache_running() const
+{
+    return is_in_sync;
+}
+
 size_t recent_releases::get_sync_tasks_left() const
 {
     return pool.get_tasks_total();
