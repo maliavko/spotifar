@@ -402,6 +402,10 @@ bool player::on_input_received(void *input_record)
                     case VK_DOWN:
                         on_volume_down_btn_clicked();
                         return true;
+
+                    case VK_F8:
+                        on_like_btn_input_received(NULL);
+                        return true;
                     
                     case keys::r:
                         on_repeat_btn_click();
