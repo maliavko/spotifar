@@ -30,6 +30,7 @@ public:
     ~recent_releases();
     
     void invalidate() override;
+    bool is_cache_running() const override;
     auto get_sync_tasks_left() const -> size_t override;
     auto get_items(bool force_resync = false) -> const recent_releases_t& override;
     auto get_next_sync_time() const -> const utils::clock_t::time_point override;
