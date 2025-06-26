@@ -135,6 +135,8 @@ public:
 
 struct recent_releases_interface
 {
+    virtual bool is_cache_running() const = 0;
+
     /// @brief Amount of sync tasks in the queue, 0 - sync is finished 
     virtual auto get_sync_tasks_left() const -> size_t = 0;
 
