@@ -65,6 +65,8 @@ void playback_handler::toggle_playback()
 
 void playback_handler::launch_librespot_process(const string &access_token)
 {
+    ui::show_waiting(MWaitingInitLibrespot);
+
     if (config::is_playback_backend_enabled())
     {
         if (!librespot.start(access_token))
@@ -81,7 +83,10 @@ void playback_handler::launch_librespot_process(const string &access_token)
     // if playback backend is not started for any reason,
     // offering user to pick up any available one
     if (!librespot.is_running())
+    {
         pick_up_any();
+        ui::hide_waiting();
+    }
 }
 
 void playback_handler::shutdown_librespot_process()
@@ -103,7 +108,7 @@ const device_t* playback_handler::get_active_device(const devices_t &devices) co
 void playback_handler::on_auth_status_changed(const auth_t &auth, bool is_renewal)
 {
     if (auth && !is_renewal) // only if it is not token renewal
-        librespot.start(auth.access_token);
+        launch_librespot_process(auth.access_token);
 }
 
 void playback_handler::on_playback_backend_setting_changed(bool is_enabled)
@@ -137,7 +142,7 @@ void playback_handler::on_librespot_stopped(bool emergency)
             far3::show_far_error_dlg(MErrorLibrespotStoppedUnexpectedly, L"", MRelaunch, [this]
             {
                 if (auto api = api_proxy.lock())
-                    librespot.start(api->get_auth_cache()->get_access_token());
+                    launch_librespot_process(api->get_auth_cache()->get_access_token());
             });
         }, "librespot-unexpected-stop, show error dialog task");
     }
@@ -145,10 +150,15 @@ void playback_handler::on_librespot_stopped(bool emergency)
 
 void playback_handler::on_librespot_discovered(const device_t &dev, const device_t &active_dev)
 {
-    // there is some active device and it is not Librespot
-    if (active_dev && active_dev.id != dev.id)
+    ui::hide_waiting();
+
+    if (active_dev)
     {
-        // ...let's provide a choice for the user to pick it up or leave the active one untouched
+        // we are done if the current active device is already Librespot
+        if (active_dev.id == dev.id) return;
+
+        // ... if it is some other device - we provide a choice for the user to pick it up or
+        // leave the active one untouched
         const auto &message = get_vtext(MTransferPlaybackMessage, active_dev.name, dev.name);
         const wchar_t* msgs[] = {
             get_text(MTransferPlaybackTitle), message.c_str()

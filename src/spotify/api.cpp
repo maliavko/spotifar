@@ -31,7 +31,7 @@ static auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::resul
 }
 
 //----------------------------------------------------------------------------------------------
-api::api(): requests_pool(10), resyncs_pool(3)
+api::api(): requests_pool(5), resyncs_pool(3)
 {
     api_responses_cache = std::make_unique<http_cache>();
 }
@@ -66,36 +66,41 @@ bool api::start()
 
 void api::shutdown()
 {
-    auto ctx = config::lock_settings();
-    std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
+    if (auto ctx = config::lock_settings())
+        std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
     
     if (!stop_flag)
     {
         stop_flag = true;
         retry_cv.notify_all();
     }
-    
-    caches.clear();
-
-    auth.reset();
-    library.reset();
-    devices.reset();
-    history.reset();
-    playback.reset();
-    releases.reset();
 
     // removing unfinished tasks from the queue
     requests_pool.purge();
     resyncs_pool.purge();
 
     api_responses_cache->shutdown();
+    
+    caches.clear();
+
+    // NOTE: there is a feeling, that killing the obejcts here leads
+    // to hanging process, due to the caches access data mutex dying,
+    // but the main thread wait for all of them to finish properly
+    /*auth.reset();
+    library.reset();
+    devices.reset();
+    history.reset();
+    playback.reset();
+    releases.reset();*/
 }
 
 void api::tick()
 {
     auto future = resyncs_pool.submit_loop<size_t>(0, caches.size(),
-        [&caches = this->caches](const std::size_t idx) {
-            caches[idx]->resync();
+        [&caches = this->caches](const std::size_t idx)
+        {
+            if (idx < caches.size() && caches[idx])
+                caches[idx]->resync();
         });
     future.get();
 }
