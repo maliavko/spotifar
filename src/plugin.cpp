@@ -36,10 +36,8 @@ plugin::plugin(): api(new spotify::api())
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
     
     ui::show_waiting(MWaitingInitSpotify);
-    {
-        api->start();
-        notifications->start();
-    }
+    api->start();
+    notifications->start();
 
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
     
@@ -53,14 +51,15 @@ plugin::~plugin()
         player->hide();
 
         background_tasks.clear_tasks();
+        
+        shutdown_sync_worker();
 
-        ui::show_waiting(MWaitingFiniSpotify);
         {
+            ui::show_waiting(MWaitingFiniSpotify);
+
             api->shutdown();
             notifications->shutdown();
         }
-
-        shutdown_sync_worker();
     
         events::stop_listening<spotify::releases_observer>(this);
         events::stop_listening<spotify::auth_observer>(this);
@@ -115,6 +114,7 @@ void plugin::launch_sync_worker()
                 process_win_messages_queue();
 
                 log::tick(delta);
+                ui::waiting::tick(delta);
 
                 std::this_thread::sleep_for(50ms);
                 last_tick = now;
@@ -266,7 +266,8 @@ void plugin::on_request_finished(const string &url)
     // which gets hidden once all the received panel items are set, but FAR redraws only
     // the active panel, so half of the splash screen stays on the screen. Forcing the
     // passive panel to redraw as well
-    far3::panels::redraw(PANEL_PASSIVE);
+    //far3::panels::redraw(PANEL_PASSIVE);
+    ui::hide_waiting();
 }
 
 void plugin::on_request_progress_changed(const string &url, size_t progress, size_t total)
