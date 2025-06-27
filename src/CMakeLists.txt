@@ -43,6 +43,7 @@ add_library(${PROJECT_NAME} SHARED
 	ui/dialogs/dialog.cpp
 	ui/dialogs/search.cpp
 	ui/dialogs/search_results.cpp
+	ui/dialogs/waiting.cpp
 	ui/dialogs/settings/hotkeys.cpp
 	ui/dialogs/settings/general.cpp
 	ui/dialogs/settings/backend.cpp
