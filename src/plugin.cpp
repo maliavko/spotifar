@@ -220,8 +220,8 @@ void plugin::process_win_messages_queue()
                 switch (LOWORD(msg.wParam))
                 {
                     case hotkeys::play: return playback_handler->toggle_playback();
-                    case hotkeys::skip_next: player->on_skip_to_next_btn_click(); return;
-                    case hotkeys::skip_previous: player->on_skip_to_previous_btn_click(); return;
+                    case hotkeys::skip_next: return playback_handler->skip_to_next();
+                    case hotkeys::skip_previous: return playback_handler->skip_to_prev();
                     case hotkeys::seek_forward: return player->on_seek_forward_btn_clicked();
                     case hotkeys::seek_backward: return player->on_seek_backward_btn_clicked();
                     case hotkeys::volume_up: return player->on_volume_up_btn_clicked();

@@ -54,6 +54,7 @@ namespace spotifar
     struct plugin_interface;
 
     class plugin;
+    class librespot;
     class playback_handler;
     
     using plugin_ptr_t = std::shared_ptr<plugin_interface>;

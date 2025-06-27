@@ -21,6 +21,8 @@ public:
     void tick();
 
     void toggle_playback();
+    void skip_to_next();
+    void skip_to_prev();
 
     void pick_up_any();
 protected:
