@@ -63,6 +63,34 @@ void playback_handler::toggle_playback()
     }
 }
 
+void playback_handler::skip_to_next()
+{
+    if (auto api = api_proxy.lock())
+    {
+        const auto &devices = api->get_available_devices();
+        const auto *active_device = get_active_device(devices);
+
+        if (const auto *active_device = get_active_device(devices); !active_device)
+            return;
+
+        return api->skip_to_next();
+    }
+}
+
+void playback_handler::skip_to_prev()
+{
+    if (auto api = api_proxy.lock())
+    {
+        const auto &devices = api->get_available_devices();
+        const auto *active_device = get_active_device(devices);
+
+        if (const auto *active_device = get_active_device(devices); !active_device)
+            return;
+
+        return api->skip_to_previous();
+    }
+}
+
 void playback_handler::launch_librespot_process(const string &access_token)
 {
     ui::show_waiting(MWaitingInitLibrespot);
