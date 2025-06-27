@@ -712,9 +712,9 @@ bool player::on_skip_to_next_btn_click(void *empty)
 {
     if (!is_control_enabled(next_btn)) return false;
 
-    if (auto api = api_proxy.lock())
+    if (auto handler = play_handler.lock())
     {
-        api->skip_to_next();
+        handler->skip_to_next();
         return true;
     }
     return false;
@@ -722,11 +722,11 @@ bool player::on_skip_to_next_btn_click(void *empty)
 
 bool player::on_skip_to_previous_btn_click(void *empty)
 {
-    if (!is_control_enabled(prev_btn)) return false;
+    if (!is_control_enabled(next_btn)) return false;
 
-    if (auto api = api_proxy.lock())
+    if (auto handler = play_handler.lock())
     {
-        api->skip_to_previous();
+        handler->skip_to_prev();
         return true;
     }
     return false;

@@ -8,6 +8,7 @@ application ideas
     - close plugin if another librespot device is being detected
     - F8 in player to mark as liked
     - after two days of listening in a row, out of a sudden spotify started cutting http responses with 429 error for /player endpoint; stop/resume commands also did not work; to simulate the situation and rethink players behaviour
+    - make sure big collections which hit 429 during fetching are processed well
 - new functional
     - download music via https://github.com/spotDL/spotify-downloader
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
