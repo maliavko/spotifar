@@ -1,5 +1,4 @@
 #include "librespot.hpp"
-#include "ui/dialogs/menus.hpp"
 #include "lng.hpp"
 #include "utils.hpp"
 #include "config.hpp"
@@ -21,8 +20,6 @@ using utils::far3::synchro_tasks::dispatch_event;
 bool librespot::start(const string &access_token)
 {
     if (running) return true;
-    
-    ui::scoped_waiting waiting(MWaitingInitLibrespot);
 
     SECURITY_ATTRIBUTES sa_attrs;
     ZeroMemory(&sa_attrs, sizeof(sa_attrs));
@@ -115,11 +112,9 @@ bool librespot::start(const string &access_token)
 
     subscribe();
 
-    //ui::show_waiting(MWaitingInitLibrespot);
-
     dispatch_event(&librespot_observer::on_librespot_started);
 
-    return false;
+    return true;
 }
 
 void librespot::restart(const string &access_token)
@@ -139,8 +134,6 @@ void librespot::stop(bool emergency)
 
     running = false;
     device = device_t{};
-    
-    ui::scoped_waiting waiting(MWaitingFiniLibrespot);
     
     // sending a control stop event to the librespot process
     //GenerateConsoleCtrlEvent(CTRL_C_EVENT, pi.dwProcessId);

@@ -25,6 +25,13 @@ static const FarKey overriden_bindings[] = {
     { VK_F11, LEFT_CTRL_PRESSED },
 };
 
+static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
+{
+    // as we do not allocate any memory for user data, we do not free it, just nulify
+    user_data = nullptr;
+}
+
+
 /// @brief A stub-view used for the first panel initialization, before any other
 /// view to be shown. Purposely visible when the user is not yet authorized
 class stub_view: public view
@@ -50,6 +57,7 @@ protected:
         return items;
     }
 };
+
 
 panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 {
@@ -150,12 +158,6 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     // allowing view to customize OpenPanelInfo struct
     view->update_panel_info(info);
-}
-
-static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
-{
-    // as we do not allocate any memory for user data, we do not free it, just nulify
-    user_data = nullptr;
 }
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
