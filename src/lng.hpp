@@ -24,6 +24,7 @@ namespace spotifar
         MSortColYear,
         MSortColRelease,
         MSortColArtist,
+        MSortColArtists,
         MSortColPopularity,
         MSortColAlbum,
         MSortColType,
