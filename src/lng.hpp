@@ -117,6 +117,7 @@ namespace spotifar
         MCfgReleases,
         MCfgReleasesSyncStatus,
         MCfgReleasesStatusFinished,
+        MCfgReleasesStatusRunning,
         MCfgReleasesStatusLeft,
         MCfgReleasesNext,
         MCfgReleasesResyncBtn,

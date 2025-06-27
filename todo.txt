@@ -6,7 +6,6 @@ refactor
 application ideas
 - small improvements
     - close plugin if another librespot device is being detected
-    - F8 in player to mark as liked
     - after two days of listening in a row, out of a sudden spotify started cutting http responses with 429 error for /player endpoint; stop/resume commands also did not work; to simulate the situation and rethink players behaviour
 - new functional
     - download music via https://github.com/spotDL/spotify-downloader
@@ -22,8 +21,6 @@ application ideas
 
 bugs
 - if playback is paused for a while, it losses the device, using hotkeys of watever to resume - hit the error; consider of forcibly using Librespot if possible
-- next sync time of fresh releases is shown in the UTC time
-- no possibility to like/unlike artist from new releases
 
 to finish for alpha release
 - add gallery of schreenshots
