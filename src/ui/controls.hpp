@@ -2,6 +2,8 @@
 #define CONTROLS_HPP_574B4993_6004_411B_89E4_E49A4A067D54
 #pragma once
 
+#include "utils.hpp"
+
 namespace spotifar { namespace ui {
 
 using utils::clock_t;
@@ -34,11 +36,12 @@ struct descriptor_abstract
     /// @brief Whether the descriptor holds changed offset and waiting for it to be applied
     bool is_waiting() const { return get_value() != get_offset_value(); };
 
-    /// @brief Apply currently holding offset to the value, clears it and returns the result value
+    /// @brief Apply currently holding offset to the value, clears it and returns the result
     value_t apply_offset()
     {
         set_value(get_offset_value());
         clear_offset();
+        log::global->debug("zzzzzzzzzzzzzzzzzzzzz");
         return get_value();
     }
 };
@@ -179,10 +182,11 @@ bool delayed_control<T>::check(delayed_control<T>::delegate_t delegate)
 {
     if (descr.is_waiting())
     {
-        // if there is an accumulated volume value offset and the last changed of it
+        // if there is an accumulated value offset and the last change of it
         // was more than a threshold, so we apply it
         if (last_change_time + delay < clock_t::now())
         {
+            // applying resets offset, therefor we do not trap here twice
             delegate(descr.apply_offset());
             return true;
         }

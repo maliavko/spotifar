@@ -312,6 +312,7 @@ struct playback_state_t
     context_t context;
 
     inline bool is_empty() const { return item.id == ""; }
+    operator bool() const { return !is_empty(); }
     
     friend void from_json(const json::Value &j, playback_state_t &p);
     friend void to_json(json::Value &j, const playback_state_t &p, json::Allocator &allocator);

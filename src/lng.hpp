@@ -229,6 +229,7 @@ namespace spotifar
         MWaitingInitSpotify,
         MWaitingInitSyncWorker,
         MWaitingInitLibrespot,
+        MWaitingLibrespotDiscover,
         MWaitingFiniSpotify,
         MWaitingFiniSyncWorker,
         MWaitingFiniLibrespot,
