@@ -192,9 +192,6 @@ struct api_interface
 {
     virtual ~api_interface() {}
 
-    /// @brief Checks the spotify authorizations status
-    virtual bool is_authenticated() const = 0;
-
     /// @brief A public interface for obtaining a weak pointer to the API interface
     /// instance. Used in many helper classes, avoiding passing a direct pointer for safety reasons
     virtual auto get_ptr() -> std::weak_ptr<api_interface> = 0;

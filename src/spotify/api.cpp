@@ -105,11 +105,6 @@ void api::tick()
     future.get();
 }
 
-bool api::is_authenticated() const
-{
-    return auth->is_authenticated();
-}
-
 const playback_cache::data_t& api::get_playback_state(bool force_resync)
 {
     playback->resync(force_resync);
