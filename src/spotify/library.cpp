@@ -20,6 +20,7 @@ public:
         saved_tracks_t(api->get_ptr(), "/v1/me/tracks"),
         library(library)
         {}
+    
     ~saved_tracks_collection() { library = nullptr; }
 
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override

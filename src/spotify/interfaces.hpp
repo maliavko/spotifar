@@ -154,13 +154,37 @@ struct recent_releases_interface
 
 struct auth_cache_interface
 {
+    /// @brief Is successfully authenticated to Spotify API
     virtual bool is_authenticated() const = 0;
 
+    /// @brief Returns a current session access token string
     virtual auto get_access_token() const -> const string& = 0;
 
+    /// @brief Returns a current session refresh token string
     virtual auto get_refresh_token() const -> const string& = 0;
 
+    /// @brief Clears current credentials and deletes caches as well,
+    /// however does not break current session
     virtual void clear_credentials() = 0;
+};
+
+
+struct devices_cache_interface
+{
+    /// @brief Returns the list of all available currently devices
+    virtual auto get_all() const -> const devices_t& = 0;
+
+    /// @brief Returns a currently active device if any
+    virtual auto get_active_device() const -> const device_t* = 0;
+
+    /// @brief Returns a device by given id or nullptr
+    virtual auto get_device_by_id(const item_id_t&) const -> const device_t* = 0;
+
+    /// @brief Returns a device by given name or nullptr
+    virtual auto get_device_by_name(const wstring&) const -> const device_t* = 0;
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
+    virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
 };
 
 
@@ -179,10 +203,6 @@ struct api_interface
     /// is forcibly resynced before it is returned
     virtual auto get_play_history(bool force_resync = false) -> const history_items_t& = 0;
 
-    /// @brief Returns a list of available playback devices. If `force_resync` is true, the data
-    /// is forcibly resynced before it is returned
-    virtual auto get_available_devices(bool force_resync = false) -> const devices_t& = 0;
-
     /// @brief Returns a currently playing state object. If `force_resync` is true, the data
     /// is forcibly resynced before it is returned
     virtual auto get_playback_state(bool force_resync = false) -> const playback_state_t& = 0;
@@ -194,7 +214,12 @@ struct api_interface
     /// @brief Returns a fresh releases management interface: get, invalidate etc.
     virtual auto get_releases() -> recent_releases_interface* = 0;
 
+    /// @brief An interface for managing authentication cache
     virtual auto get_auth_cache() -> auth_cache_interface* = 0;
+
+    /// @brief An interface for managing devices cache
+    /// @param resync forces cache to get resynced beforehand
+    virtual auto get_devices_cache(bool resync = false) -> devices_cache_interface* = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
@@ -284,9 +309,6 @@ struct api_interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
     virtual void set_playback_volume(int volume_percent, const item_id_t &device_id = "") = 0;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
-    virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
 //protected:
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the response for the given amount of time
