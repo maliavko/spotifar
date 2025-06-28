@@ -17,8 +17,6 @@ public:
     bool start();
     void shutdown();
     void tick();
-
-    bool is_authenticated() const override;
     
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
 
