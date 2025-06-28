@@ -236,8 +236,8 @@ bool player::show()
 
             if (auto api = api_proxy.lock())
             {
-                const auto *devices_cache = api->get_devices_cache(true);
-                const auto &state = api->get_playback_state(true);
+                const auto *devices_cache = api->get_devices_cache();
+                const auto &state = api->get_playback_state();
 
                 on_track_changed(state.item, track_t{});
                 on_track_progress_changed(state.item.duration, state.progress);
