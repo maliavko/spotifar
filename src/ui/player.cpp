@@ -236,6 +236,7 @@ bool player::show()
 
             if (auto api = api_proxy.lock())
             {
+                const auto *devices_cache = api->get_devices_cache(true);
                 const auto &state = api->get_playback_state(true);
 
                 on_track_changed(state.item, track_t{});
@@ -247,7 +248,7 @@ bool player::show()
                 on_repeat_state_changed(state.repeat_state);
                 on_permissions_changed(state.actions);
         
-                on_devices_changed(api->get_available_devices());
+                on_devices_changed(devices_cache->get_all());
 
                 visible = true;
                 
@@ -354,8 +355,11 @@ bool player::on_devices_item_selected(void *dialog_item)
 
     if (auto api = api_proxy.lock())
     {
-        const auto &state = api->get_playback_state();
-        api->transfer_playback(device_id, state.is_playing);
+        if (auto devices = api->get_devices_cache())
+        {
+            const auto &state = api->get_playback_state();
+            devices->transfer_playback(device_id, state.is_playing);
+        }
     }
     return true;
 }
@@ -804,7 +808,6 @@ void player::update_track_bar(int duration, int progress)
 {
     no_redraw_player nr(hdlg);
 
-    log::global->debug("aaaaaaaaaaaaaaaaa {} {}", progress, duration);
     static wstring track_bar, track_time_str;
 
     const auto &track_bar_layout = dlg_items_layout[controls::track_bar];

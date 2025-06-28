@@ -116,12 +116,6 @@ const playback_cache::data_t& api::get_playback_state(bool force_resync)
     return playback->get();
 }
 
-const devices_cache::data_t& api::get_available_devices(bool force_resync)
-{
-    devices->resync(force_resync);
-    return devices->get();
-}
-
 library_interface* api::get_library()
 {
     return library.get();
@@ -132,10 +126,15 @@ recent_releases_interface* api::get_releases()
     return releases.get();
 };
 
-
 auth_cache_interface* api::get_auth_cache()
 {
     return auth.get();
+};
+
+devices_cache_interface* api::get_devices_cache(bool resync)
+{
+    devices->resync(resync);
+    return devices.get();
 };
 
 const play_history::data_t& api::get_play_history(bool force_resync)
@@ -449,44 +448,6 @@ void api::set_playback_volume(int volume_percent, const item_id_t &device_id)
         });
 }
 
-void api::transfer_playback(const item_id_t &device_id, bool start_playing)
-{
-    const auto &devices = get_available_devices();
-    auto device_it = std::find_if(devices.begin(), devices.end(),
-        [&device_id](const auto &d) { return d.id == device_id; });
-
-    if (device_it == devices.end())
-        return playback_cmd_error("There is no devices with the given id={}", device_id);
-
-    if (device_it->is_active)
-        return playback_cmd_error("The given device is already active, {}", device_it->to_str());
-    
-    requests_pool.detach_task(
-        [
-            this, start_playing, dev_id = std::as_const(device_id), &cache = *this->devices,
-            dev_idx = std::distance(devices.begin(), device_it)
-        ]
-        {
-            http::json_body_builder body;
-
-            body.object([&]
-            {
-                body.insert("device_ids", { dev_id });
-                body.insert("play", start_playing);
-            });
-
-            if (auto res = put("/v1/me/player", body.str()); http::is_success(res))
-            {
-                cache.patch([dev_idx](auto &d) {
-                    json::Pointer(std::format("/{}/is_active", dev_idx)).Set(d, true);
-                });
-                cache.resync(true);
-            }
-            else
-                playback_cmd_error(http::get_status_message(res));
-        });
-}
-
 void api::start_playback_base(const string &body, const item_id_t &device_id)
 {
     Params params = {};
@@ -509,30 +470,6 @@ void api::start_playback_base(const string &body, const item_id_t &device_id)
             else
                 playback_cmd_error(http::get_status_message(res));
         });
-}
-
-item_id_t api::get_recommended_device()
-{
-    const auto &devices = get_available_devices(true);
-
-    // if we have already some active device -> using it
-    auto active_dev_it = std::find_if(devices.begin(), devices.end(),
-        [](const auto &d) { return d.is_active; });
-
-    if (active_dev_it != devices.end())
-        return active_dev_it->id;
-
-    // ...or checking if there some any built-int playback backend device on
-    auto libre_it = std::find_if(devices.begin(), devices.end(),
-        [device_name = librespot::get_device_name()]
-        (const auto &d) {
-            return d.name == device_name;
-        });
-
-    if (libre_it != devices.end())
-        return libre_it->id;
-
-    return invalid_id;
 }
 
 wstring api::get_image(const image_t &image, const item_id_t &item_id)
