@@ -419,6 +419,10 @@ bool player::on_input_received(void *input_record)
                         if (is_control_enabled(controls::devices_combo))
                             far3::dialogs::open_list(hdlg, controls::devices_combo, true);
                         return true;
+
+                    case keys::tilde + keys::mods::alt:
+                        hide();
+                        return true;
                 }
             }
             break;
@@ -690,11 +694,9 @@ bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
     return true;
 }
 
-bool player::on_skip_to_next_btn_click(void *empty)
+bool player::on_skip_to_next_btn_click(void*)
 {
-    if (!is_control_enabled(next_btn)) return false;
-
-    if (auto handler = play_handler.lock())
+    if (auto handler = play_handler.lock(); handler && is_control_enabled(next_btn))
     {
         handler->skip_to_next();
         return true;
@@ -702,11 +704,9 @@ bool player::on_skip_to_next_btn_click(void *empty)
     return false;
 }
 
-bool player::on_skip_to_previous_btn_click(void *empty)
+bool player::on_skip_to_previous_btn_click(void*)
 {
-    if (!is_control_enabled(next_btn)) return false;
-
-    if (auto handler = play_handler.lock())
+    if (auto handler = play_handler.lock(); handler && is_control_enabled(prev_btn))
     {
         handler->skip_to_prev();
         return true;
@@ -804,6 +804,7 @@ void player::update_track_bar(int duration, int progress)
 {
     no_redraw_player nr(hdlg);
 
+    log::global->debug("aaaaaaaaaaaaaaaaa {} {}", progress, duration);
     static wstring track_bar, track_time_str;
 
     const auto &track_bar_layout = dlg_items_layout[controls::track_bar];
@@ -828,10 +829,8 @@ void player::on_track_progress_changed(int duration, int progress)
 
     // prevents from updating, in case we are seeking a new track position,
     // which requires showing a virtual target track bar position
-    if (track_progress.is_waiting())
-        return;
-
-    return update_track_bar((int)duration, (int)progress);
+    if (!track_progress.is_waiting())
+        update_track_bar((int)duration, (int)progress);
 }
 
 void player::update_volume_bar(int volume)
@@ -840,7 +839,7 @@ void player::update_volume_bar(int volume)
 
     static wstring volume_label;
     
-    volume_label = std::format(L"[{}%]", volume);
+    volume_label = std::format(L"[{:<3}%]", volume);
     set_control_text(controls::volume_label, volume_label);
 }
 

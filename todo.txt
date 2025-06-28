@@ -21,7 +21,7 @@ application ideas
     - it is not clear what to do when a copy or cut operation is called on the track or album etc.
 
 bugs
-- if playback is paused for a while, it losses the device, using hotkeys of watever to resume - hit the error; consider of forcibly using Librespot if possible
+- changing track progress with arrow on the player dialog creates a visual bug, if we receive middle playback-state update: it shows choses track position, then old position, then applies finally and show chosen position again
 
 to finish for alpha release
 - add gallery of schreenshots

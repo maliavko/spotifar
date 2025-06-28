@@ -49,12 +49,8 @@ plugin::~plugin()
         
         shutdown_sync_worker();
 
-        {
-            ui::show_waiting(MWaitingFiniSpotify);
-
-            api->shutdown();
-            notifications->shutdown();
-        }
+        api->shutdown();
+        notifications->shutdown();
     
         events::stop_listening<spotify::releases_observer>(this);
         events::stop_listening<spotify::auth_observer>(this);
@@ -131,8 +127,6 @@ void plugin::launch_sync_worker()
 
 void plugin::shutdown_sync_worker()
 {
-    ui::show_waiting(MWaitingFiniSyncWorker);
-
     is_worker_listening = false;
     
     // trying to acquare a sync worker mutex, giving worker time to clean up
@@ -222,10 +216,10 @@ void plugin::process_win_messages_queue()
                     case hotkeys::play: return playback_handler->toggle_playback();
                     case hotkeys::skip_next: return playback_handler->skip_to_next();
                     case hotkeys::skip_previous: return playback_handler->skip_to_prev();
-                    case hotkeys::seek_forward: return player->on_seek_forward_btn_clicked();
-                    case hotkeys::seek_backward: return player->on_seek_backward_btn_clicked();
-                    case hotkeys::volume_up: return player->on_volume_up_btn_clicked();
-                    case hotkeys::volume_down: return player->on_volume_down_btn_clicked();
+                    case hotkeys::seek_forward: return playback_handler->seek_forward();
+                    case hotkeys::seek_backward: return playback_handler->seek_backward();
+                    case hotkeys::volume_up: return playback_handler->volume_up();
+                    case hotkeys::volume_down: return playback_handler->volume_down();
                     case hotkeys::show_toast:
                     {
                         const auto &pstate = api->get_playback_state(true);
