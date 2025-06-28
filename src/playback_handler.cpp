@@ -28,6 +28,8 @@ playback_handler::~playback_handler()
     stop_listening<auth_observer>(this);
     stop_listening<config::config_observer>(this);
     stop_listening<librespot_observer>(this);
+
+    shutdown_librespot_process();
 }
 
 void playback_handler::tick()
@@ -39,8 +41,7 @@ void playback_handler::toggle_playback()
 {
     if (auto api = api_proxy.lock())
     {
-        const auto &devices = api->get_available_devices();
-        const auto *active_device = get_active_device(devices);
+        const auto *active_device = get_active_device();
 
         item_id_t device_id = spotify::invalid_id;
 
@@ -66,29 +67,47 @@ void playback_handler::toggle_playback()
 void playback_handler::skip_to_next()
 {
     if (auto api = api_proxy.lock())
-    {
-        const auto &devices = api->get_available_devices();
-        const auto *active_device = get_active_device(devices);
-
-        if (const auto *active_device = get_active_device(devices); !active_device)
-            return;
-
-        return api->skip_to_next();
-    }
+        if (const auto *active_device = get_active_device())
+            return api->skip_to_next();
 }
 
 void playback_handler::skip_to_prev()
 {
     if (auto api = api_proxy.lock())
-    {
-        const auto &devices = api->get_available_devices();
-        const auto *active_device = get_active_device(devices);
+        if (const auto *active_device = get_active_device())
+            return api->skip_to_previous();
+}
 
-        if (const auto *active_device = get_active_device(devices); !active_device)
-            return;
+void playback_handler::volume_up()
+{
+    if (auto api = api_proxy.lock())
+        if (const auto *active_device = get_active_device())
+            if (const auto &pstate = api->get_playback_state())
+                return api->set_playback_volume(std::min(pstate.device.volume_percent + 5, 100));
+}
 
-        return api->skip_to_previous();
-    }
+void playback_handler::volume_down()
+{
+    if (auto api = api_proxy.lock())
+        if (const auto *active_device = get_active_device())
+            if (const auto &pstate = api->get_playback_state())
+                return api->set_playback_volume(std::max(pstate.device.volume_percent - 5, 0));
+}
+
+void playback_handler::seek_forward()
+{
+    if (auto api = api_proxy.lock())
+        if (const auto *active_device = get_active_device())
+            if (const auto &pstate = api->get_playback_state())
+                return api->seek_to_position(std::min(pstate.progress_ms + 15000, pstate.item.duration_ms));
+}
+
+void playback_handler::seek_backward()
+{
+    if (auto api = api_proxy.lock())
+        if (const auto *active_device = get_active_device())
+            if (const auto &pstate = api->get_playback_state())
+                return api->seek_to_position(std::max(pstate.progress_ms - 15000, 0));
 }
 
 void playback_handler::launch_librespot_process(const string &access_token)
@@ -115,6 +134,10 @@ void playback_handler::launch_librespot_process(const string &access_token)
         pick_up_any();
         ui::hide_waiting();
     }
+    else
+    {
+        ui::show_waiting(MWaitingLibrespotDiscover);
+    }
 }
 
 void playback_handler::shutdown_librespot_process()
@@ -122,14 +145,17 @@ void playback_handler::shutdown_librespot_process()
     librespot.stop();
 }
 
-const device_t* playback_handler::get_active_device(const devices_t &devices) const
+const device_t* playback_handler::get_active_device(bool is_forced) const
 {
-    auto active_dev_it = std::find_if(
-        devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
+    if (auto api = api_proxy.lock())
+    {
+        const auto &devices = api->get_available_devices(is_forced);
+        const auto &active_dev_it = std::find_if(
+            devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
 
-    if (active_dev_it != devices.end())
-        return &*active_dev_it;
-
+        if (active_dev_it != devices.end())
+            return &*active_dev_it;
+    }
     return nullptr;
 }
 
@@ -211,7 +237,7 @@ void playback_handler::pick_up_any()
     auto api = api_proxy.lock();
     
     const auto &devices = api->get_available_devices(true);
-    const auto &active_device = get_active_device(devices);
+    const auto &active_device = get_active_device();
     
     // if there is an active device already - no need to do anything
     if (!active_device) return;

@@ -353,7 +353,10 @@ void api::skip_to_previous(const item_id_t &device_id)
 void api::seek_to_position(int position_ms, const item_id_t &device_id)
 {
     requests_pool.detach_task(
-        [position_ms, &cache = *playback, dev_id = std::as_const(device_id), this]
+        [
+            position_ms, &cache = *playback,
+            dev_id = std::as_const(device_id), this
+        ]
         {
             Params params = {
                 { "position_ms", std::to_string(position_ms) },
@@ -363,13 +366,17 @@ void api::seek_to_position(int position_ms, const item_id_t &device_id)
                 params.insert({ "device_id", dev_id });
 
             if (auto res = put(append_query_params("/v1/me/player/seek", params)); http::is_success(res))
+            {
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([position_ms](auto &v) {
                     json::Pointer("/progress_ms").Set(v, position_ms);
                 });
+            }
             else
+            {
                 playback_cmd_error(http::get_status_message(res));
+            }
         });
 }
 
@@ -469,7 +476,12 @@ void api::transfer_playback(const item_id_t &device_id, bool start_playing)
             });
 
             if (auto res = put("/v1/me/player", body.str()); http::is_success(res))
-                this->devices->resync();
+            {
+                cache.patch([dev_idx](auto &d) {
+                    json::Pointer(std::format("/{}/is_active", dev_idx)).Set(d, true);
+                });
+                cache.resync(true);
+            }
             else
                 playback_cmd_error(http::get_status_message(res));
         });
