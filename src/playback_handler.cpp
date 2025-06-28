@@ -148,14 +148,8 @@ void playback_handler::shutdown_librespot_process()
 const device_t* playback_handler::get_active_device(bool is_forced) const
 {
     if (auto api = api_proxy.lock())
-    {
-        const auto &devices = api->get_available_devices(is_forced);
-        const auto &active_dev_it = std::find_if(
-            devices.begin(), devices.end(), [](const auto &d) { return d.is_active; });
-
-        if (active_dev_it != devices.end())
-            return &*active_dev_it;
-    }
+        if (auto devices = api->get_devices_cache())
+            return devices->get_active_device();
     return nullptr;
 }
 
@@ -227,7 +221,8 @@ void playback_handler::on_librespot_discovered(const device_t &dev, const device
     log::librespot->info("A librespot process is found, trasferring playback...");
     
     if (auto api = api_proxy.lock())
-        api->transfer_playback(dev.id, true);
+        if (auto devices = api->get_devices_cache())
+            devices->transfer_playback(dev.id, true);
 }
 
 void playback_handler::pick_up_any()
@@ -235,16 +230,15 @@ void playback_handler::pick_up_any()
     if (api_proxy.expired()) return;
 
     auto api = api_proxy.lock();
-    
-    const auto &devices = api->get_available_devices(true);
-    const auto &active_device = get_active_device();
+    auto devices_cache = api->get_devices_cache(true);
+    const auto &devices = devices_cache->get_all();
     
     // if there is an active device already - no need to do anything
-    if (!active_device) return;
+    if (!devices_cache->get_active_device()) return;
 
-    // no available device found, warn the user
     if (devices.empty())
     {
+        // no available device found, warn the user
         const wchar_t* msgs[] = {
             get_text(MTransferPlaybackTitle),
             get_text(MTransferNoAvailableDevices),
@@ -280,7 +274,7 @@ void playback_handler::pick_up_any()
         {
             const auto &dev = devices[dev_idx];
             log::librespot->info("Transferring playback to device `{}`", utils::to_string(dev.name));
-            api->transfer_playback(dev.id, true);
+            devices_cache->transfer_playback(dev.id, true);
             return;
         }
     }
