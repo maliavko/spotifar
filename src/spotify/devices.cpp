@@ -6,6 +6,7 @@
 namespace spotifar { namespace spotify {
 
 using namespace utils;
+using utils::events::has_observers;
 using utils::far3::synchro_tasks::dispatch_event;
 
 static const device_t* find_device(const devices_t &devices, std::function<bool(const device_t&)> predicate)
@@ -77,7 +78,9 @@ bool devices_cache::is_active() const
 {
     // the cache is actively synchronized only when the user is authenticated and there are
     // playback observers
-    return api_proxy->is_authenticated() && utils::events::has_observers<devices_observer>();
+    if (auto auth = api_proxy->get_auth_cache())
+        return auth->is_authenticated() && has_observers<devices_observer>();
+    return false;
 }
 
 clock_t::duration devices_cache::get_sync_interval() const

@@ -512,7 +512,9 @@ followed_artists_ptr library::get_followed_artists()
 
 bool library::is_active() const
 {
-    return api_proxy->is_authenticated();
+    if (auto auth = api_proxy->get_auth_cache())
+        return auth->is_authenticated();
+    return false;
 }
 
 clock_t::duration library::get_sync_interval() const

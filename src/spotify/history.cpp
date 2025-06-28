@@ -24,7 +24,9 @@ recently_played_tracks_ptr play_history::get_recently_played(std::int64_t after)
 
 bool play_history::is_active() const
 {
-    return api_proxy->is_authenticated();
+    if (auto auth = api_proxy->get_auth_cache())
+        return auth->is_authenticated();
+    return false;
 }
 
 clock_t::duration play_history::get_sync_interval() const

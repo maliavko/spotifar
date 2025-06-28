@@ -63,10 +63,14 @@ panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 {
     utils::events::start_listening<ui_events_observer>(this);
 
-    if (auto api = plugin_ptr->get_api(); api && api->is_authenticated())
-        set_view(std::make_shared<root_view>(this, api));
-    else
-        set_view(std::make_shared<stub_view>(this));
+    if (auto api = plugin_proxy->get_api())
+        if (auto auth = api->get_auth_cache(); auth && auth->is_authenticated())
+        {
+            set_view(std::make_shared<root_view>(this, api));
+            return;
+        }
+
+    set_view(std::make_shared<stub_view>(this));
 }
 
 panel::~panel()

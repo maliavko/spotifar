@@ -57,7 +57,9 @@ const utils::clock_t::time_point recent_releases::get_next_sync_time() const
 
 bool recent_releases::is_active() const
 {
-    return api_proxy->is_authenticated();
+    if (auto auth = api_proxy->get_auth_cache())
+        return auth->is_authenticated();
+    return false;
 }
 
 clock_t::duration recent_releases::get_sync_interval() const
