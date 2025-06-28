@@ -7,7 +7,7 @@
 #include "devices.hpp"
 #include "releases.hpp"
 #include "history.hpp"
-#include "playback_handler.hpp"
+#include "hotkeys_handler.hpp"
 
 namespace spotifar { namespace spotify {
 

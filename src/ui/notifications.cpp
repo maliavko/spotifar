@@ -11,6 +11,22 @@ namespace spotifar { namespace ui {
 using namespace WinToastLib;
 using namespace spotify;
 using utils::far3::get_text;
+using utils::far3::synchro_tasks::dispatch_event;
+
+
+namespace notifications
+{
+    void show_now_playing(const spotify::track_t &track, bool show_buttons)
+    {
+        dispatch_event(&notifications_observer::show_now_playing, track, show_buttons);
+    }
+
+    void show_releases_found(const spotify::recent_releases_t &releases)
+    {
+        dispatch_event(&notifications_observer::show_releases_found, releases);
+    }
+}
+
 
 /// @brief Toasts notifications handler-class, for handling actions
 /// performed on the track-changed toast notification
@@ -75,6 +91,7 @@ private:
     INT64 toast_id = -1;
 };
 
+
 class fresh_releases_handler: public WinToastLib::IWinToastHandler
 {
 public:
@@ -99,10 +116,14 @@ private:
     api_weak_ptr_t api_proxy;
 };
 
-bool notifications::start()
+
+//-----------------------------------------------------------------------------------------------------------------------
+bool notifications_handler::start()
 {
     // we mark the listener as a weak one, as it does not require frequent updates
     utils::events::start_listening<spotify::playback_observer>(this, true);
+    utils::events::start_listening<spotify::releases_observer>(this);
+    utils::events::start_listening<notifications_observer>(this);
 
     try
     {
@@ -127,13 +148,15 @@ bool notifications::start()
     return true;
 }
 
-bool notifications::shutdown()
+bool notifications_handler::shutdown()
 {
     try
     {
         WinToast::instance()->clear();
 
         utils::events::stop_listening<spotify::playback_observer>(this, true);
+        utils::events::stop_listening<spotify::releases_observer>(this);
+        utils::events::stop_listening<notifications_observer>(this);
     }
     catch (const std::exception &ex)
     {
@@ -144,7 +167,7 @@ bool notifications::shutdown()
     return true;
 }
 
-void notifications::on_track_changed(const track_t &track, const track_t &prev_track)
+void notifications_handler::on_track_changed(const track_t &track, const track_t &prev_track)
 {
     using utils::far3::actl::is_wnd_in_focus;
 
@@ -161,7 +184,12 @@ void notifications::on_track_changed(const track_t &track, const track_t &prev_t
     }
 }
 
-void notifications::show_now_playing(const spotify::track_t &track, bool show_buttons)
+void notifications_handler::on_releases_sync_finished(const spotify::recent_releases_t releases)
+{
+    show_releases_found(releases);
+}
+
+void notifications_handler::show_now_playing(const spotify::track_t &track, bool show_buttons)
 {
     if (!WinToast::instance()->isInitialized()) return;
 
@@ -218,7 +246,7 @@ void notifications::show_now_playing(const spotify::track_t &track, bool show_bu
     }
 }
 
-void notifications::show_recent_releases_found(const spotify::recent_releases_t &releases)
+void notifications_handler::show_releases_found(const spotify::recent_releases_t &releases)
 {
     if (!WinToast::instance()->isInitialized()) return;
 

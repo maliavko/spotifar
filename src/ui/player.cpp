@@ -2,7 +2,7 @@
 #include "ui/events.hpp"
 #include "ui/dialogs/dialog.hpp"
 #include "spotify/interfaces.hpp"
-#include "playback_handler.hpp"
+#include "hotkeys_handler.hpp"
 #include "lng.hpp"
 
 namespace spotifar { namespace ui {
@@ -157,9 +157,9 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
 };
 
-player::player(api_weak_ptr_t api, ph_weak_ptr_t handler):
+player::player(api_weak_ptr_t api, hotkeys_handler *hotkeys):
     api_proxy(api),
-    play_handler(handler),
+    hotkeys(hotkeys),
     volume(0, 100, 1),
     track_progress(0, 0, 5),
     shuffle_state({ true, false }),
@@ -170,14 +170,12 @@ player::~player()
 {
     hide();
 
-    play_handler.reset();
     api_proxy.reset();
 }
 
 bool player::handle_dlg_proc_event(intptr_t msg_id, intptr_t control_id, void *param)
 {
-    if (are_dlg_events_suppressed)
-        return false;
+    if (are_dlg_events_suppressed) return false;
 
     // first, trying to find a handler among the given control id event handers;
     // in negative scenario, trying to search for a handler among global handlers @NO_CONTROL id;
@@ -238,6 +236,9 @@ bool player::show()
             {
                 const auto *devices_cache = api->get_devices_cache();
                 const auto &state = api->get_playback_state();
+
+                // TODO: invalidate devices and playback caches? instead of making blocking request each time, just
+                // mark them invalidated, so the resync happens way faster
 
                 on_track_changed(state.item, track_t{});
                 on_track_progress_changed(state.item.duration, state.progress);
@@ -321,25 +322,21 @@ void player::tick()
 
 void player::on_seek_forward_btn_clicked()
 {
-    // TODO: check enabled btn status
     update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
 }
 
 void player::on_seek_backward_btn_clicked()
 {
-    // TODO: check enabled btn status
     update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
 }
 
 void player::on_volume_up_btn_clicked()
 {
-    // TODO: check enabled btn status
     update_volume_bar(volume.next());
 }
 
 void player::on_volume_down_btn_clicked()
 {
-    // TODO: check enabled btn status
     update_volume_bar(volume.prev());
 }
 
@@ -718,9 +715,9 @@ bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
 
 bool player::on_skip_to_next_btn_click(void*)
 {
-    if (auto handler = play_handler.lock(); handler && is_control_enabled(next_btn))
+    if (hotkeys && is_control_enabled(next_btn))
     {
-        handler->skip_to_next();
+        hotkeys->skip_to_next();
         return true;
     }
     return false;
@@ -728,9 +725,9 @@ bool player::on_skip_to_next_btn_click(void*)
 
 bool player::on_skip_to_previous_btn_click(void*)
 {
-    if (auto handler = play_handler.lock(); handler && is_control_enabled(prev_btn))
+    if (hotkeys && is_control_enabled(prev_btn))
     {
-        handler->skip_to_prev();
+        hotkeys->skip_to_prev();
         return true;
     }
     return false;
@@ -769,11 +766,11 @@ bool player::on_repeat_btn_click(void *empty)
     return false;
 }
 
-bool player::on_play_btn_click(void *empty)
+bool player::on_play_btn_click(void*)
 {
-    if (auto handler = play_handler.lock(); handler && is_control_enabled(play_btn))
+    if (hotkeys && is_control_enabled(play_btn))
     {
-        handler->toggle_playback();
+        hotkeys->toggle_playback();
         return true;
     }
     return false;

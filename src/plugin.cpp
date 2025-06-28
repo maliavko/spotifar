@@ -2,7 +2,7 @@
 #include "config.hpp"
 #include "utils.hpp"
 #include "lng.hpp"
-#include "playback_handler.hpp"
+#include "hotkeys_handler.hpp"
 #include "spotify/api.hpp"
 #include "ui/player.hpp"
 #include "ui/dialogs/menus.hpp"
@@ -14,6 +14,10 @@ namespace spotifar {
 namespace hotkeys = config::hotkeys;
 using namespace utils;
 using namespace utils::http;
+using namespace spotify;
+using utils::far3::get_text;
+using utils::far3::get_vtext;
+
 
 /// @brief The requests, which do not require showing splash screen, as they are processed
 /// in the background, hidden from user
@@ -24,22 +28,22 @@ static const std::set<string> no_splash_requests{
 
 plugin::plugin(): api(new spotify::api())
 {
-    notifications = std::make_unique<ui::notifications>(api);
-    player = std::make_unique<ui::player>(api->get_ptr(), playback_handler);
+    hotkeys = std::make_unique<hotkeys_handler>(api);
+    notifications = std::make_unique<ui::notifications_handler>(api);
+    player = std::make_unique<ui::player>(api, hotkeys.get());
+    librespot = std::make_unique<spotifar::librespot>();
 
     events::start_listening<config::config_observer>(this);
     events::start_listening<spotify::auth_observer>(this);
-    events::start_listening<spotify::releases_observer>(this);
     events::start_listening<spotify::api_requests_observer>(this);
     events::start_listening<ui::ui_events_observer>(this);
+    events::start_listening<librespot_observer>(this);
     
     log::global->info("Spotifar plugin has started, version {}", far3::get_plugin_version());
     
     ui::show_waiting(MWaitingInitSpotify);
     api->start();
     notifications->start();
-
-    on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
     
     launch_sync_worker();
 }
@@ -49,24 +53,24 @@ plugin::~plugin()
     try
     {
         player->hide();
-
-        background_tasks.clear_tasks();
         
         shutdown_sync_worker();
+
+        shutdown_librespot_process();
 
         api->shutdown();
         notifications->shutdown();
     
-        events::stop_listening<spotify::releases_observer>(this);
         events::stop_listening<spotify::auth_observer>(this);
         events::stop_listening<spotify::api_requests_observer>(this);
         events::stop_listening<config::config_observer>(this);
         events::stop_listening<ui::ui_events_observer>(this);
+        events::stop_listening<librespot_observer>(this);
 
         player.reset();
         api.reset();
-        playback_handler.reset();
         notifications.reset();
+        hotkeys.reset();
     }
     catch (const std::exception &ex)
     {
@@ -103,11 +107,8 @@ void plugin::launch_sync_worker()
 
                 api->tick();
                 player->tick();
-                playback_handler->tick();
-
-                background_tasks.process_all(); // ticking background tasks if any
-
-                process_win_messages_queue();
+                librespot->tick();
+                hotkeys->tick();
 
                 log::tick(delta);
                 ui::waiting::tick(delta);
@@ -140,58 +141,71 @@ void plugin::shutdown_sync_worker()
     log::api->info("Plugin's background thread has been stopped");
 }
 
-void plugin::on_global_hotkeys_setting_changed(bool is_enabled)
+void plugin::launch_librespot_process(const string &access_token)
 {
-    // the definition of the global hotkeys must be performed in the
-    // the same thread, where the keys check is happening. So, here we push
-    // enabling function to the background tasks queue
-    background_tasks.push_task([is_enabled] {
-        log::global->info("Changing global hotkeys state: {}", is_enabled);
+    ui::show_waiting(MWaitingInitLibrespot);
 
-        for (int hotkey_id = hotkeys::play; hotkey_id != hotkeys::last; hotkey_id++)
+    if (config::is_playback_backend_enabled())
+    {
+        if (!librespot->start(access_token))
         {
-            UnregisterHotKey(NULL, hotkey_id); // first, we unregister all the hotkeys
+            shutdown_librespot_process(); // cleaning up the allocated resources if any
 
-            if (is_enabled) // then reinitialize those, which are enabled
+            far3::show_far_error_dlg(MErrorLibrespotStartupUnexpected, L"", MShowLogs, []
             {
-                if (auto *hotkey = config::get_hotkey(hotkey_id); hotkey && hotkey->first != utils::keys::none)
-                {
-                    if (!RegisterHotKey(NULL, hotkey_id, hotkey->second | MOD_NOREPEAT, hotkey->first))
-                    {
-                        log::global->error("There is an error while registering a hotkey `{}`: {}",
-                            utils::to_string(keys::vk_to_string(hotkey->first)), utils::get_last_system_error());
-                        continue;
-                    }
-                    log::global->debug("A global hotkey is registered, {}, {}", hotkey->first, hotkey->second);
-                }
-            }
+                far3::panels::set_directory(PANEL_PASSIVE, log::get_logs_folder());
+            });
         }
-    });
+    }
+
+    // if playback backend is not started for any reason,
+    // offering user to pick up any available one
+    if (!librespot->is_running())
+    {
+        //pick_up_any();
+        ui::hide_waiting();
+    }
+    else
+    {
+        ui::show_waiting(MWaitingLibrespotDiscover);
+    }
 }
 
-void plugin::on_global_hotkey_changed(config::settings::hotkeys_t changed_keys)
+void plugin::shutdown_librespot_process()
 {
-    // reinitialize all hotkeys
-    on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+    librespot->stop();
 }
 
-void plugin::on_logging_verbocity_changed(bool is_verbose)
+void plugin::on_playback_backend_setting_changed(bool is_enabled)
 {
-    log::enable_verbose_logs(is_verbose);
+    if (is_enabled)
+    {
+        if (const auto &auth_cache = api->get_auth_cache())
+            launch_librespot_process(auth_cache->get_access_token());
+    }
+    else
+    {
+        shutdown_librespot_process();
+    }
+}
+
+void plugin::on_playback_backend_configuration_changed()
+{
+    log::global->debug("on_playback_backend_configuration_changed");
+    
+    if (const auto &auth_cache = api->get_auth_cache())
+        librespot->restart(auth_cache->get_access_token());
 }
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)
 {
     if (auth && !is_renewal) // only if it is not token renewal
     {
+        launch_librespot_process(auth.access_token);
+
         // after first valid authentication we show root view
         ui::events::show_root(api);
     }
-}
-
-void plugin::on_releases_sync_finished(const spotify::recent_releases_t releases)
-{
-    notifications->show_recent_releases_found(releases);
 }
 
 void plugin::show_player()
@@ -202,45 +216,6 @@ void plugin::show_player()
 void plugin::show_search_dialog()
 {
     ui::search_dialog().run();
-}
-
-void plugin::process_win_messages_queue()
-{
-    MSG msg = {0};
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-        switch (msg.message)
-        {
-            case WM_HOTKEY:
-            {            
-                if (!config::is_global_hotkeys_enabled())
-                    return;
-
-                switch (LOWORD(msg.wParam))
-                {
-                    case hotkeys::play: return playback_handler->toggle_playback();
-                    case hotkeys::skip_next: return playback_handler->skip_to_next();
-                    case hotkeys::skip_previous: return playback_handler->skip_to_prev();
-                    case hotkeys::seek_forward: return playback_handler->seek_forward();
-                    case hotkeys::seek_backward: return playback_handler->seek_backward();
-                    case hotkeys::volume_up: return playback_handler->volume_up();
-                    case hotkeys::volume_down: return playback_handler->volume_down();
-                    case hotkeys::show_toast:
-                    {
-                        const auto &pstate = api->get_playback_state(true);
-                        if (!pstate.is_empty() && notifications != nullptr)
-                        {
-                            far3::synchro_tasks::push([this, pstate] {
-                                notifications->show_now_playing(pstate.item, true);
-                            }, "notification, show_now_playing");
-                        }
-                        return;
-                    }
-                }
-                return;
-            }
-        }
-    }
 }
 
 void plugin::on_request_started(const string &url)
@@ -277,6 +252,48 @@ void plugin::on_playback_command_failed(const string &message)
 void plugin::on_collection_fetching_failed(const string &message)
 {
     utils::far3::show_far_error_dlg(MErrorCollectionFetchFailed, utils::to_wstring(message));
+}
+
+void plugin::on_librespot_stopped(bool emergency)
+{
+    if (emergency)
+    {
+        far3::synchro_tasks::push([this] {
+            far3::show_far_error_dlg(MErrorLibrespotStoppedUnexpectedly, L"", MRelaunch, [this]
+            {
+                if (auto auth = api->get_auth_cache())
+                    launch_librespot_process(auth->get_access_token());
+            });
+        }, "librespot-unexpected-stop, show error dialog task");
+    }
+}
+
+void plugin::on_librespot_discovered(const device_t &dev, const device_t &active_dev)
+{
+    ui::hide_waiting();
+
+    if (active_dev)
+    {
+        // we are done if the current active device is already Librespot
+        if (active_dev.id == dev.id) return;
+
+        // ... if it is some other device - we provide a choice for the user to pick it up or
+        // leave the active one untouched
+        const auto &message = get_vtext(MTransferPlaybackMessage, active_dev.name, dev.name);
+        const wchar_t* msgs[] = {
+            get_text(MTransferPlaybackTitle), message.c_str()
+        };
+
+        if (config::ps_info.Message(
+            &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+        ) != 0) // "would you like to transfer a playback?" "Ok" button is "0"
+            return;
+    }
+
+    log::librespot->info("A librespot process is found, trasferring playback...");
+    
+    if (auto devices = api->get_devices_cache())
+        devices->transfer_playback(dev.id, true);
 }
 
 } // namespace spotifar
