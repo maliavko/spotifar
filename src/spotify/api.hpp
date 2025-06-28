@@ -23,12 +23,12 @@ public:
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
 
     auto get_play_history(bool force_resync = false) -> const history_items_t& override;
-    auto get_available_devices(bool force_resync = false) -> const devices_t& override;
     auto get_playback_state(bool force_resync = false) -> const playback_state_t& override;
 
     auto get_library() -> library_interface* override;
     auto get_releases() -> recent_releases_interface* override;
     auto get_auth_cache() -> auth_cache_interface* override;
+    auto get_devices_cache(bool resync = false) -> devices_cache_interface* override;
     
     // library api interface
 
@@ -62,13 +62,11 @@ public:
     void toggle_shuffle(bool is_on, const item_id_t &device_id = "") override;
     void set_repeat_state(const string &mode, const item_id_t &device_id = "") override;
     void set_playback_volume(int volume_percent, const item_id_t &device_id = "") override;
-    void transfer_playback(const item_id_t &device_id, bool start_playing = false) override;
 protected:
     /// @brief Creates a new http-client instance with the Spotify web API domain address,
     /// fills up all the default attributes and token, and returns it
     auto get_client() const -> std::shared_ptr<httplib::Client>;
     
-    auto get_recommended_device() -> item_id_t;
     void start_playback_base(const string &body, const item_id_t &device_id);
     
     httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) override;
