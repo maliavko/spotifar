@@ -23,13 +23,17 @@ public:
     void toggle_playback();
     void skip_to_next();
     void skip_to_prev();
+    void volume_up();
+    void volume_down();
+    void seek_forward();
+    void seek_backward();
 
-    void pick_up_any();
 protected:
     void launch_librespot_process(const string &access_token);
     void shutdown_librespot_process();
 
-    auto get_active_device(const spotify::devices_t &) const -> const spotify::device_t*;
+    void pick_up_any();
+    auto get_active_device(bool is_forced = false) const -> const spotify::device_t*;
 
     // auth handlers
     void on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal) override;

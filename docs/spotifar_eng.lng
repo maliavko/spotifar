@@ -222,6 +222,7 @@
 "Initializing Spotify API"
 "Initializing sync worker"
 "Initializing Librespot"
+"Discovering Librespot"
 "Finalizing Spotify API"
 "Finalizing sync worker"
 "Finalizing Librespot"
