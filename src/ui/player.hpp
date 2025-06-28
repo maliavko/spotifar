@@ -4,12 +4,11 @@
 #include "stdafx.h"
 #include "spotify/observer_protocols.hpp"
 #include "controls.hpp"
-#include "playback_handler.hpp"
+#include "librespot.hpp"
 
 namespace spotifar { namespace ui {
 
 using namespace spotify;
-using ph_weak_ptr_t = playback_handler_weak_ptr_t;
 
 class player:
     public playback_observer, // represent timely playback changes in UI
@@ -19,7 +18,7 @@ class player:
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases
 public:
-    player(api_weak_ptr_t api, playback_handler_weak_ptr_t handler);
+    player(api_weak_ptr_t api, hotkeys_handler *hotkeys);
     ~player();
 
     bool show();
@@ -91,7 +90,7 @@ protected:
     bool is_control_enabled(int control_id);
 private:
     api_weak_ptr_t api_proxy;
-    ph_weak_ptr_t play_handler;
+    hotkeys_handler *hotkeys;
 
     HANDLE hdlg;
     std::atomic<bool> visible = false;
