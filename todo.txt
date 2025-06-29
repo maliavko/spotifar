@@ -21,6 +21,7 @@ application ideas
 
 bugs
 - changing track progress with arrow on the player dialog creates a visual bug, if we receive middle playback-state update: it shows choses track position, then old position, then applies finally and show chosen position again
+- turn on/off audio backend hangs waiting
 
 to finish for alpha release
 - add gallery of schreenshots
