@@ -45,6 +45,7 @@ public:
     auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr override;
     auto get_playing_queue() -> playing_queue_t override;
     auto get_image(const image_t &image, const item_id_t &item_id) -> wstring override;
+    auto get_lyrics(const track_t &) -> wstring override;
 
     // playback api interface
 

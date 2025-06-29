@@ -10,6 +10,17 @@ using utils::far3::get_text;
 using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
 
+static wstring get_track_duration(const track_t &track)
+{
+    auto duration = std::chrono::milliseconds(track.duration_ms);
+    wstring track_length;
+    if (duration < 1h)
+        track_length = std::format(L"{:%M:%S}", duration);
+    else
+        track_length = std::format(L"{:%Hh%M}", duration);
+    return track_length.substr(0, 5);
+}
+
 //-----------------------------------------------------------------------------------------------------------
 tracks_base_view::tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
     view(panel, title, dir_name), api_proxy(api)
@@ -60,13 +71,7 @@ const items_t& tracks_base_view::get_items()
         columns.push_back(track.is_explicit ? L" * " : L"");
 
         // column C1 - duration
-        auto duration = std::chrono::milliseconds(track.duration_ms);
-        wstring track_length;
-        if (duration < 1h)
-            track_length = std::format(L"{:%M:%S}", duration);
-        else
-            track_length = std::format(L"{:%Hh%M}", duration);
-        columns.push_back(std::format(L"{: ^7}", track_length.substr(0, 5)));
+        columns.push_back(std::format(L"{: ^7}", get_track_duration(track)));
         
         // column C2 - album's release year
         columns.push_back(std::format(L"{: ^6}",
@@ -138,6 +143,56 @@ const panel_modes_t* tracks_base_view::get_panel_modes() const
     };
     
     return &modes;
+}
+
+
+wstring tracks_base_view::get_quick_item_info(const data_item_t *data)
+{
+    using namespace std;
+
+    const auto *track = static_cast<const track_t*>(data);
+    if (auto api = api_proxy.lock(); api && track)
+    {
+        auto *library = api->get_library();
+
+        wostringstream oss;
+
+        static const auto space = setw(15);
+        oss << "  " << get_text(MQWDisclaimer) << endl
+            << endl
+            << space << get_text(MQWTrackName)      << " " << track->name << endl
+            << space << get_text(MQWArtistName)     << " " << track->get_artists_full_name() << endl
+            << endl
+            << space << get_text(MQWDuration)       << " " << get_track_duration(*track) << endl
+            << space << get_text(MQWPopularity)     << " " << track->popularity << "%" << endl
+            << space << get_text(MQWExplicit)       << " " << (track->is_explicit ? get_text(MQWYes) : get_text(MQWNo)) << endl
+            << space << get_text(MQWSaved)          << " " << (library->is_track_saved(track->id) ? get_text(MQWYes) : get_text(MQWNo)) << endl
+            << endl
+            << space << get_text(MQWAlbumName)      << " " << track->album.name << endl
+            << space << get_text(MQWReleaseType)    << " " << track->album.get_type_abbrev() << endl
+            << space << get_text(MQWReleaseYear)    << " " << utils::to_wstring(track->album.get_release_year()) << endl;
+
+        if (const auto album = api->get_album(track->album.id))
+        {
+            std::vector<wstring> copyrights;
+            std::transform(album.copyrights.cbegin(), album.copyrights.cend(), back_inserter(copyrights),
+                [](const auto &c) { return c.text; });
+
+            oss << space << get_text(MQWPopularity)     << " " << album.popularity << "%" << endl
+                << space << get_text(MQWLabelName)      << " " << album.recording_label << endl
+                << space << get_text(MQWCopyrights)     << " " << utils::string_join(copyrights, L", ") << endl;
+        }
+
+        oss << endl << endl;
+
+        if (const auto &lyrics = api->get_lyrics(*track); lyrics.empty())
+            oss << "  " << get_text(MQWNoLyrics) << endl;
+        else
+            oss << "  " << get_text(MQWLyricsDisclaimer) << endl << endl << lyrics << endl;
+        
+        return oss.str();
+    }
+    return L"";
 }
 
 intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,

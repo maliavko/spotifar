@@ -31,6 +31,7 @@ protected:
     auto process_key_input(int combined_key) -> intptr_t override;
     auto get_key_bar_info() -> const key_bar_info_t* override;
     auto get_panel_modes() const -> const panel_modes_t* override;
+    auto get_quick_item_info(const data_item_t *data) -> wstring override;
 
     // collection_observer
     void on_tracks_statuses_changed(const item_ids_t &ids) override;

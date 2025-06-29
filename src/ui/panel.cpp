@@ -322,6 +322,19 @@ intptr_t panel::compare_items(const CompareInfo *info)
     return view->compare_items(info);
 }
 
+std::vector<wstring> panel::get_items(const GetFilesInfo *info)
+{
+    std::vector<wstring> result{};
+
+    if (view)
+    {
+        for (size_t i = 0; i < info->ItemsNumber; i++)
+            result.push_back(view->get_quick_item_info(&info->PanelItem[i]));
+    }
+
+    return result;
+}
+
 void panel::set_view(view_ptr_t v, return_callback_t callback)
 {
     view = v; // setting up the new view

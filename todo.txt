@@ -12,14 +12,12 @@ application ideas
 - new functional
     - download music via https://github.com/spotDL/spotify-downloader
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
-    - grab lyrics from here? https://lrclib.net/
     - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
     - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
     - similar artists: https://www.music-map.com/
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support: export, flush caches, resync fresh releases
-    - it is not clear what to do when a copy or cut operation is called on the track or album etc.
 
 bugs
 - changing track progress with arrow on the player dialog creates a visual bug, if we receive middle playback-state update: it shows choses track position, then old position, then applies finally and show chosen position again

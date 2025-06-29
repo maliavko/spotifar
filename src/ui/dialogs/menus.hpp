@@ -33,6 +33,36 @@ static void hide_waiting()
     waiting::hide();
 }
 
+/// @brief Shows a splash loading screen with the formatted message of
+/// PsInfo.Text(msg_id) and given `args`. The message differes from the regular
+/// waiting dialog, being a simple PsInfo.Message, which will get closed
+/// automatically after the first screen refresh.
+/// @note ideal for the cases when an operation is blocking
+template<typename... Args>
+void show_simple_waiting(int msg_id, Args&&... args)
+{
+    static wstring message;
+    message = std::format(L"{: ^50}", utils::far3::get_vtext(msg_id, args...));
+    
+    static const wchar_t* msgs[] = { L"", L"", L"", L"" };
+    msgs[2] = message.c_str();
+
+    config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
+}
+
+struct scoped_waiting
+{
+    scoped_waiting(int msg_id, auto&&... args)
+    {
+        show_waiting(msg_id, std::forward<decltype(args)>(args)...);
+    }
+
+    ~scoped_waiting()
+    {
+        hide_waiting();
+    }
+};
+
 } // namespace ui
 } // namespace spotifar
 
