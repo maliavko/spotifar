@@ -101,6 +101,8 @@ struct simplified_album_t: public data_item_t
     /// @brief Returns a middle size image or stub object in case of any error 
     const image_t get_image() const noexcept;
 
+    const image_t get_image_big() const noexcept;
+
     /// @brief Returns a string, containing all the track's artists separated by comma 
     wstring get_artists_full_name() const;
     
@@ -183,7 +185,7 @@ struct album_t: public simplified_album_t
 {
     size_t popularity = 0;
     std::vector<copyrights_t> copyrights{};
-    string recording_label = "";
+    wstring recording_label = L"";
     //std::vector<simplified_track_t> tracks;
 
     copyrights_t get_main_copyright() const;

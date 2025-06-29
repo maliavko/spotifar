@@ -176,6 +176,25 @@
 "`{}` top tracks"
 ""
 
+// quick view
+"Track's data is provided by Spotify(R)"
+"Track:"
+"Artists:"
+"Duration:"
+"Popularity:"
+"Is explicit:"
+"Is saved:"
+"Album:"
+"Release type:"
+"Release year:"
+"Label:"
+"Copyrights:"
+"No lyrics found"
+"Lyrics is provided by https://lrclib.net/"
+"yes"
+"no"
+
+// player dialog
 "Source"
 "saved tracks"
 "Off"
@@ -226,3 +245,4 @@
 "Finalizing Spotify API"
 "Finalizing sync worker"
 "Finalizing Librespot"
+"Searching for lyrics"

@@ -238,6 +238,11 @@ intptr_t view::request_extra_info(const PluginPanelItem *data)
     return request_extra_info(unpack_user_data(data->UserData));
 }
 
+wstring view::get_quick_item_info(const PluginPanelItem *data)
+{
+    return get_quick_item_info(unpack_user_data(data->UserData));
+}
+
 size_t view::get_item_idx(const string &item_id)
 {
     const auto &items = panels::get_items(get_panel_handle());

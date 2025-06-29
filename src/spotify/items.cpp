@@ -162,6 +162,11 @@ const image_t simplified_album_t::get_image() const noexcept
     return images.size() > 1 ? images[1] : image_t{};
 }
 
+const image_t simplified_album_t::get_image_big() const noexcept
+{
+    return images.size() > 1 ? images[2] : image_t{};
+}
+
 wstring simplified_album_t::get_artists_full_name() const
 {
     std::vector<wstring> artists_names;
@@ -232,7 +237,7 @@ void from_json(const Value &j, album_t &a)
     // from_json(j["items"], a.tracks);
     
     a.popularity = j["popularity"].GetUint();
-    a.recording_label = j["label"].GetString();
+    a.recording_label = utils::utf8_decode(j["label"].GetString());
 }
 
 void to_json(Value &result, const album_t &a, json::Allocator &allocator)
@@ -249,7 +254,7 @@ void to_json(Value &result, const album_t &a, json::Allocator &allocator)
     // result.AddMember("items", tracks, allocator);
     result.AddMember("copyrights", copyrights, allocator);
     result.AddMember("popularity", Value(a.popularity), allocator);
-    result.AddMember("label", Value(a.recording_label, allocator), allocator);
+    result.AddMember("label", Value(utils::utf8_encode(a.recording_label), allocator), allocator);
 }
 
 void to_json(Value &result, saved_album_t &a, json::Allocator &allocator)
