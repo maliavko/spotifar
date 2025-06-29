@@ -796,8 +796,8 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
     if (auto api = api_proxy.lock())
     {
         const auto &state = api->get_playback_state();
-        auto *library = api->get_library();
-        update_like_btn(!state.is_empty() && library->is_track_saved(state.item.id, true));
+        if (auto *library = api->get_library())
+            update_like_btn(!state.is_empty() && library->is_track_saved(state.item.id, true));
     }
 }
 

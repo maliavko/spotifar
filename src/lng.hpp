@@ -182,6 +182,24 @@ namespace spotifar
 		MPanelArtistTopTracks,
 		MPanelArtistTopTracksDescr,
 
+        // quick view
+        MQWDisclaimer,
+        MQWTrackName,
+        MQWArtistName,
+        MQWDuration,
+        MQWPopularity,
+        MQWExplicit,
+        MQWSaved,
+        MQWAlbumName,
+        MQWReleaseYear,
+        MQWReleaseType,
+        MQWLabelName,
+        MQWCopyrights,
+        MQWNoLyrics,
+        MQWLyricsDisclaimer,
+        MQWYes,
+        MQWNo,
+
         // player dialog
         MPlayerSourceLabel,
         MPlayerSourceCollection,
@@ -233,6 +251,7 @@ namespace spotifar
         MWaitingFiniSpotify,
         MWaitingFiniSyncWorker,
         MWaitingFiniLibrespot,
+        MWaitingRequestLyrics,
     };
 }
 

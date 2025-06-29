@@ -11,6 +11,7 @@
 
 namespace spotifar { namespace spotify {
 
+namespace fs = std::filesystem;
 using namespace httplib;
 using namespace utils;
 
@@ -477,12 +478,13 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
         return L"";
     }
 
-    if (!std::filesystem::exists(cache_folder))
-        std::filesystem::create_directories(cache_folder);
+    if (!fs::exists(cache_folder))
+        fs::create_directories(cache_folder);
 
-    const wstring filepath = std::format(L"{}\\{}.{}.png", cache_folder, utils::to_wstring(item_id), image.width);
+    const wstring filepath = std::format(L"{}\\{}.{}.png",
+        cache_folder, utils::to_wstring(item_id), image.width);
     
-    if (!std::filesystem::exists(filepath))
+    if (!fs::exists(filepath))
     {
         std::ofstream file(filepath, std::ios_base::binary);
         if (!file.good())
@@ -511,6 +513,88 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
         }
     }
     return filepath;
+}
+
+wstring api::get_lyrics(const track_t &track)
+{
+    static const wstring cache_folder = std::format(L"{}\\lyrics", config::get_plugin_data_folder());
+
+    if (!track)
+    {
+        log::global->warn("Could not retrieve lyrics, the given track is invalid");
+        return L"";
+    }
+
+    if (!fs::exists(cache_folder))
+        fs::create_directories(cache_folder);
+
+    const wstring filename = utils::strip_invalid_filename_chars(std::format(
+        L"{} - {} - {} [{}]",
+        track.get_artist().name, track.album.name, track.name,
+        utils::to_wstring(track.id)));
+    
+    const wstring filepath = std::format(L"{}\\{}.lrc", cache_folder, filename);
+    
+    
+    if (fs::exists(filepath))
+    {
+        if (auto ifs = std::wifstream(filepath))
+            return wstring(std::istreambuf_iterator<wchar_t>(ifs), std::istreambuf_iterator<wchar_t>());
+    }
+
+    httplib::Client client("https://lrclib.net");
+
+    auto url = httplib::append_query_params("/api/get", {
+        { "artist_name", utils::utf8_encode(track.get_artist().name) },
+        { "album_name", utils::utf8_encode(track.album.name) },
+        { "track_name", utils::utf8_encode(track.name) },
+        { "duration", std::to_string(track.duration) },
+    });
+
+    if (auto res = client.Get(url); http::is_success(res))
+    {
+        try
+        {
+            json::Document doc;
+            doc.Parse(res->body);
+            
+            json::Value lyrics_node;
+            
+            // first, trying to find synced lyrics if possible
+            if (doc.HasMember("syncedLyrics") && !doc["syncedLyrics"].IsNull())
+                lyrics_node = doc["syncedLyrics"];
+            
+            // ... or trying to find just plain lyrics
+            else if (doc.HasMember("plainLyrics") && !doc["plainLyrics"].IsNull())
+                lyrics_node = doc["plainLyrics"];
+
+            if (!lyrics_node.IsNull())
+            {
+                auto lyrics = utils::utf8_decode(lyrics_node.GetString());
+
+                if (std::wofstream file(filepath); file.good())
+                {
+                    file << lyrics;
+                }
+                else
+                {
+                    log::api->error("Cound not create a file for downloading lyrics, {}. {}", utils::to_string(filepath),
+                        utils::get_last_system_error());
+                }
+                return lyrics;
+            }
+        }
+        catch (const std::exception &ex)
+        {
+            log::api->error("An error occured while getting lyrics for the track {}, {}", track.id, ex.what());
+        }
+    }
+    else
+    {
+        log::api->error("An error occured while downloading tyhe lyrics for the track: {}, url {}",
+            http::get_status_message(res), url);
+    }
+    return L"";
 }
 
 bool api::is_request_cached(const string &url) const

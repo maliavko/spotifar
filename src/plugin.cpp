@@ -156,6 +156,7 @@ void plugin::launch_librespot_process(const string &access_token)
     // offering user to pick up any available one
     if (!librespot->is_running())
     {
+        // TODO: this code is needed
         //pick_up_any();
         ui::hide_waiting();
     }

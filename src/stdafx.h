@@ -112,6 +112,8 @@ namespace spotifar
     {
         class player;
         class notifications_handler;
+        class panel;
+        class view;
     }
 
     namespace utils

@@ -2,9 +2,9 @@
 #include "lng.hpp"
 #include "config.hpp"
 #include "plugin.h"
-#include "ui/dialogs/menus.hpp"
 #include "ui/events.hpp"
 #include "ui/panel.hpp"
+#include "ui/dialogs/menus.hpp"
 #include "ui/dialogs/search.hpp"
 
 namespace spotifar {
@@ -268,19 +268,34 @@ HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 /// The function is also called when file on the panel is being copied to the other panel
 intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 {
-    // unfinished experiments, not for the alpha release
-    // spdlog::debug("intptr_t WINAPI GetFilesW(GetFilesInfo *info)");
-    
-    // // wchar_t FileName[MAX_PATH];
-    // // config::ps_info.fsf->MkTemp(FileName, std::size(FileName), L"");
+    if (auto panel = static_cast<ui::panel*>(info->hPanel))
+    {
+        // for some reason if I use here "show_waiting", on the `config::ps_info.DialogInit`
+        // it immediately runs a second execution of this method, which leads to hanging waiting;
+        // replaced it with a simple version of waiting splash dialog
+        ui::show_simple_waiting(MWaitingRequestLyrics);
 
-    // auto file = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[0].FileName);
-    // std::ofstream fout(file, std::ios::trunc);
-    // fout << "Test data" << std::endl;
-    // fout.close();
+        const auto &files = panel->get_items(info);
 
-    // return TRUE;
+        if (files.size() == info->ItemsNumber)
+        {
+            for (size_t i = 0; i < info->ItemsNumber; i++)
+            {
+                if (files[i].empty()) continue;
 
+                auto filepath = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[i].FileName);
+                if (auto fout = std::ofstream(filepath, std::ios::trunc))
+                    fout << utils::utf8_encode(files[i]);
+            }
+        }
+        else
+        {
+            log::global->warn("The list of files gotten does not match the list of "
+                "items requested: {}, {}", info->ItemsNumber, files.size());
+        }
+
+        return TRUE;
+    }
     return FALSE;
 }
 

@@ -73,8 +73,10 @@ protected:
     // librespot handlers
     void on_librespot_stopped(bool emergency) override;
 
-    // api even handlers
+    // devices cache handlers
     void on_devices_changed(const devices_t &devices) override;
+
+    // playback cache handlers
     void on_track_changed(const track_t &track, const track_t &prev_track) override;
     void on_track_progress_changed(int duration, int progress) override;
     void on_volume_changed(int volume) override;
