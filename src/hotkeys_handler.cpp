@@ -148,7 +148,7 @@ void hotkeys_handler::pick_up_any()
     const auto &devices = devices_cache->get_all();
     
     // if there is an active device already - no need to do anything
-    if (!devices_cache->get_active_device()) return;
+    if (devices_cache->get_active_device()) return;
 
     if (devices.empty())
     {

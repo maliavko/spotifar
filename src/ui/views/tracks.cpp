@@ -145,7 +145,6 @@ const panel_modes_t* tracks_base_view::get_panel_modes() const
     return &modes;
 }
 
-
 wstring tracks_base_view::get_quick_item_info(const data_item_t *data)
 {
     using namespace std;
