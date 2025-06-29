@@ -90,9 +90,12 @@ clock_t::duration devices_cache::get_sync_interval() const
 
 void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_data)
 {
-    bool has_devices_changed = !std::equal(
-        data.begin(), data.end(), prev_data.begin(), prev_data.end(),
-        [](const auto &a, const auto &b) { return a.id == b.id && a.is_active == b.is_active; });
+    bool has_devices_changed = true;
+
+    if (data.size() == prev_data.size())
+        has_devices_changed = !std::equal(
+            data.begin(), data.end(), prev_data.begin(), prev_data.end(),
+            [](const auto &a, const auto &b) { return a.id == b.id && a.is_active == b.is_active; });
     
     if (has_devices_changed)
         dispatch_event(&devices_observer::on_devices_changed, data);

@@ -41,7 +41,6 @@ struct descriptor_abstract
     {
         set_value(get_offset_value());
         clear_offset();
-        log::global->debug("zzzzzzzzzzzzzzzzzzzzz");
         return get_value();
     }
 };

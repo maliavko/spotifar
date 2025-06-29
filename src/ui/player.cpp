@@ -322,22 +322,30 @@ void player::tick()
 
 void player::on_seek_forward_btn_clicked()
 {
-    update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
 }
 
 void player::on_seek_backward_btn_clicked()
 {
-    update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
 }
 
 void player::on_volume_up_btn_clicked()
 {
-    update_volume_bar(volume.next());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_volume_bar(volume.next());
 }
 
 void player::on_volume_down_btn_clicked()
 {
-    update_volume_bar(volume.prev());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_volume_bar(volume.prev());
 }
 
 bool player::on_devices_item_selected(void *dialog_item)
