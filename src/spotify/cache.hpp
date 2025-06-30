@@ -151,7 +151,6 @@ private:
     timestamp_value expires_at;
     bool is_persistent;
 
-    std::mutex patch_guard;
     std::mutex data_access_guard;
     std::vector<std::pair<time_point, patch_handler_t>> patches;
 };
@@ -202,6 +201,13 @@ void json_cache<T>::clear(settings_ctx &ctx)
 template<typename T>
 void json_cache<T>::resync(bool force)
 {
+    static std::mutex resync_guard;
+
+    // used for preventing several thread coming in; not sure, possibly
+    // can use `data_access_guard` for the whole func, but have a feeling,
+    // it is a bad idea, wanted to keep the latter in the smallest possible scope
+    std::lock_guard lock(resync_guard);
+
     auto sync_time = clock_t::now();
     // no updates for disabled caches, otherwise only in case the data
     // is invalid or resync is forced
@@ -238,6 +244,8 @@ json_cache<T>::accessor_t json_cache<T>::lock_data()
 template<typename T>
 void json_cache<T>::patch(json_cache<T>::patch_handler_t handler)
 {
+    static std::mutex patch_guard;
+
     // patches are saved and applied next time data is resynced
     std::lock_guard lock(patch_guard);
     patches.push_back(std::make_pair(clock_t::now(), handler));

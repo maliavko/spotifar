@@ -865,7 +865,7 @@ void player::update_volume_bar(int volume)
 
     static wstring volume_label;
     
-    volume_label = std::format(L"[{:<3}%]", volume);
+    volume_label = std::format(L"[{:0>3}%]", volume);
     set_control_text(controls::volume_label, volume_label);
 }
 
@@ -875,8 +875,7 @@ void player::on_volume_changed(int vol)
 
     // prevents from updating, in case we are seeking a new volume value,
     // which requires showing a virtual target vlume bar value
-    if (volume.is_waiting())
-        return;
+    if (volume.is_waiting()) return;
 
     return update_volume_bar(vol);
 }
@@ -885,8 +884,7 @@ void player::on_shuffle_state_changed(bool state)
 {
     shuffle_state.set_value(state);
 
-    if (shuffle_state.is_waiting())
-        return;
+    if (shuffle_state.is_waiting()) return;
 
     return update_shuffle_btn(state);
 }
