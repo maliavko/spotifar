@@ -647,7 +647,7 @@ bool recent_tracks_view::start_playback(const track_t &track)
             {
                 log::global->warn("History context is not available, launching the standalone "
                     "track {}", history_track.id);
-                api->start_playback({ history_track.get_uri() });
+                api->start_playback(std::vector{ history_track.get_uri() });
             }
             else
             {
@@ -842,7 +842,7 @@ bool playing_queue_view::start_playback(const track_t &track)
         {
             log::global->warn("The context does not support offsetting, launching the standalone "
                 "track {}", track.id);
-            api->start_playback({ track.get_uri() });
+            api->start_playback(std::vector{ track.get_uri() });
         }
         return true;
     }
@@ -986,7 +986,14 @@ bool user_top_tracks_view::start_playback(const track_t &track)
     if (auto api = api_proxy.lock())
     {
         log::global->info("Starting standalone track from user's top {}", track.get_uri());
-        api->start_playback({ track.get_uri() });
+        
+        // API does not allow launching an artist's context with the specific track's offset;
+        // instead, we launch all the top tracks and specify the given `track` as the starting one
+        std::vector<string> tracks_uris;
+        std::transform(collection->cbegin(), collection->cend(), back_inserter(tracks_uris),
+            [](const auto &a) { return a.get_uri(); });
+        api->start_playback(tracks_uris, track.get_uri());
+
         return true;
     }
     return false;
