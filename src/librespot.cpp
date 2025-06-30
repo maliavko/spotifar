@@ -130,6 +130,8 @@ void librespot::stop(bool emergency)
 {
     if (!running) return;
 
+    log::global->info("Stopping Librespot process");
+
     unsubscribe();
 
     running = false;

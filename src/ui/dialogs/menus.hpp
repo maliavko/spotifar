@@ -25,6 +25,13 @@ intptr_t show_sort_dialog(const view_ptr_t v);
 template<typename... Args>
 static void show_waiting(int msg_id, Args&&... args)
 {
+    // waiting does not work if there are modal windows visible, we close them
+    // in such cases
+    auto wcount = utils::far3::actl::get_windows_count();
+    for (size_t idx = 0; idx < wcount; idx++)
+        if (auto winfo = utils::far3::actl::get_window_info(idx); winfo && winfo->Flags & WIF_MODAL)
+            utils::far3::dialogs::close((HANDLE)winfo->Id);
+
     waiting::show(utils::far3::get_vtext(msg_id, args...));
 }
 
