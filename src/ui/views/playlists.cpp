@@ -109,6 +109,33 @@ const panel_modes_t* playlists_base_view::get_panel_modes() const
     return &modes;
 }
 
+const key_bar_info_t* playlists_base_view::get_key_bar_info()
+{
+    static key_bar_info_t key_bar{};
+
+    auto view_uid = get_uid();
+
+    auto item = utils::far3::panels::get_current_item(get_panel_handle());
+
+    // right after switching the directory on the panel, when we trap here `panels::get_current_item`
+    // returns the `item` from  the previous directory. Checking crc32 helps to identify
+    // when the panel is refreshed eventually and we can be sure the item is valid
+    if (item->CRC32 != view_uid) return nullptr;
+    
+    if (auto api = api_proxy.lock())
+    {
+        // TODO: to implement a proper logic for saving playlists
+        /*if (auto *user_data = unpack_user_data(item->UserData))
+        {
+            if (api->get_library()->is_track_saved(user_data->id))
+                key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
+            else
+                key_bar[{ VK_F8, 0 }] = get_text(MLike);
+        }*/
+    }
+    return &key_bar;
+}
+
 intptr_t playlists_base_view::compare_items(const sort_mode_t &sort_mode,
     const data_item_t *data1, const data_item_t *data2)
 {
@@ -140,6 +167,7 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
     {
         case VK_F4:
         {
+        // starting playback for the item or list of selected items
             if (auto item = panels::get_current_item(get_panel_handle()))
             {
                 if (auto *user_data = unpack_user_data(item->UserData))
@@ -153,10 +181,13 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
                 }
             }
             else
+            {
                 log::global->error("There is an error occured while getting a current panel item");
-
+            }
             return TRUE;
         }
+
+        // redirect to Spotify WEB for the tracks under cursor
         case VK_RETURN + mods::shift:
         {
             if (const auto &item = panels::get_current_item(get_panel_handle()))
@@ -165,6 +196,44 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
                 {
                     if (const auto *pl = static_cast<const simplified_playlist_t*>(user_data); !pl->urls.spotify.empty())
                         utils::open_web_browser(pl->urls.spotify);
+                }
+            }
+            return TRUE;
+        }
+        
+        // saving/removing playlists
+        case VK_F8:
+        {
+            if (const auto &item = panels::get_current_item(get_panel_handle()))
+            {
+                if (auto *user_data = unpack_user_data(item->UserData))
+                {
+                    // special logic for saving and removing hidden playlists
+                    if (const auto *pl = static_cast<const simplified_playlist_t*>(user_data); pl && pl->is_hidden)
+                    {
+                        auto &playlists = config::get_hidden_playlists();
+                        if (auto it = playlists.find(pl->id); it != playlists.end())
+                        {
+                            // removing
+                            playlists.erase(it);
+                        }
+                        else
+                        {
+                            // adding
+                            wchar_t playlist_name[64];
+
+                            if (config::ps_info.InputBox(
+                                &MainGuid, &FarMessageGuid, L"Saving playlist", L"Input the name for the playlist to save",
+                                NULL, L"", playlist_name, 64, NULL, 0))
+                            {
+                                playlists[pl->id] = utils::utf8_encode(playlist_name);
+                            }
+                        }
+                        // TODO: all this logic should be moved somewhere to library and hidden there,
+                        // throwing the update events each time playlists saved into API or this
+                        // special hidden cases, so all the interested listeners can get updated
+                        // accordingly
+                    }
                 }
             }
             return TRUE;
@@ -201,8 +270,21 @@ config::settings::view_t saved_playlists_view::get_default_settings() const
 
 std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists()
 {
+    static std::vector<simplified_playlist_t> hidden_playlists;
+
+    hidden_playlists.clear();
+    for (const auto &[pid, pname]: config::get_hidden_playlists())
+        hidden_playlists.push_back({
+            { pid },
+            utils::utf8_decode(pname),
+            true,
+        });
+    
     if (collection)
         for (const auto &p: *collection) co_yield p;
+
+    for (const auto &pl: hidden_playlists)
+        co_yield pl;
 }
 
 
@@ -267,10 +349,23 @@ void recent_playlists_view::rebuild_items()
     for (const auto &[item_id, item]: unique_recent_playlists)
     {
         auto playlist = api->get_playlist(item_id);
+
+        // it is very likely that the playlists is created by Spotify and
+        // is hidden from API users
         if (!playlist)
         {
             playlist.id = item_id;
-            playlist.name = std::format(L"Hidden_{}", utils::to_wstring(item_id));
+            playlist.is_hidden = true;
+
+            auto hidden_playlists = config::get_hidden_playlists();
+            if (auto it = hidden_playlists.find(item_id); it != hidden_playlists.end())
+            {
+                playlist.name = utils::utf8_decode(it->second);
+            }
+            else
+            {
+                playlist.name = std::format(L"Hidden_{}", utils::to_wstring(item_id));
+            }
         }
 
         items.push_back(history_playlist_t{ {playlist}, item.played_at });

@@ -30,6 +30,7 @@ protected:
     auto process_key_input(int combined_key) -> intptr_t override;
     bool request_extra_info(const data_item_t *data) override;
     auto get_panel_modes() const -> const panel_modes_t* override;
+    auto get_key_bar_info() -> const key_bar_info_t* override;
 protected:
     api_weak_ptr_t api_proxy;
 };

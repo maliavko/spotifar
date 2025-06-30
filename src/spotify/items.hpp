@@ -204,9 +204,10 @@ struct saved_album_t: public album_t
 
 struct simplified_playlist_t: public data_item_t
 {
+    wstring name;
+    bool is_hidden = false;
     string href;
     string snapshot_id;
-    wstring name;
     wstring user_display_name;
     bool is_collaborative;
     bool is_public;
