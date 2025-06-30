@@ -17,18 +17,16 @@ public:
     bool start();
     void shutdown();
     void tick();
-
-    bool is_authenticated() const override;
     
     auto get_ptr() -> api_weak_ptr_t override { return shared_from_this(); }
 
     auto get_play_history(bool force_resync = false) -> const history_items_t& override;
-    auto get_available_devices(bool force_resync = false) -> const devices_t& override;
     auto get_playback_state(bool force_resync = false) -> const playback_state_t& override;
 
     auto get_library() -> library_interface* override;
     auto get_releases() -> recent_releases_interface* override;
     auto get_auth_cache() -> auth_cache_interface* override;
+    auto get_devices_cache(bool resync = false) -> devices_cache_interface* override;
     
     // library api interface
 
@@ -47,15 +45,15 @@ public:
     auto get_playlist_tracks(const item_id_t &playlist_id) -> saved_tracks_ptr override;
     auto get_playing_queue() -> playing_queue_t override;
     auto get_image(const image_t &image, const item_id_t &item_id) -> wstring override;
+    auto get_lyrics(const track_t &) -> wstring override;
 
     // playback api interface
 
     void start_playback(const string &context_uri, const string &track_uri = "", int position_ms = 0, const item_id_t &device_id = "") override;
-    void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") override;
+    void start_playback(const std::vector<string> &uris, const string &track_uri = "", const item_id_t &device_id = "") override;
     void start_playback(const simplified_album_t &album, const simplified_track_t &track) override;
     void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) override;
     void resume_playback(const item_id_t &device_id = "") override;
-    void toggle_playback(const item_id_t &device_id = "") override;
     void pause_playback(const item_id_t &device_id = "") override;
     void skip_to_next(const item_id_t &device_id = "") override;
     void skip_to_previous(const item_id_t &device_id = "") override;
@@ -63,7 +61,6 @@ public:
     void toggle_shuffle(bool is_on, const item_id_t &device_id = "") override;
     void set_repeat_state(const string &mode, const item_id_t &device_id = "") override;
     void set_playback_volume(int volume_percent, const item_id_t &device_id = "") override;
-    void transfer_playback(const item_id_t &device_id, bool start_playing = false) override;
 protected:
     /// @brief Creates a new http-client instance with the Spotify web API domain address,
     /// fills up all the default attributes and token, and returns it

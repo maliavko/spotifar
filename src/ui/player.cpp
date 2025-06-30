@@ -2,6 +2,7 @@
 #include "ui/events.hpp"
 #include "ui/dialogs/dialog.hpp"
 #include "spotify/interfaces.hpp"
+#include "hotkeys_handler.hpp"
 #include "lng.hpp"
 
 namespace spotifar { namespace ui {
@@ -70,11 +71,9 @@ static const wchar_t
     *like_btn_label = L"[+]";
 
 static const int
-    width = 60, height = 11, expanded_height = 34,
+    width = 60, height = 11,
     view_x1 = 2, view_y1 = 2, view_x2 = width - 2, view_y2 = height - 2,
-    view_center_x = (view_x2 + view_x1)/2, view_center_y = (view_y2 + view_y1)/2,
-    qbox_x1 = 0, qbox_y1 = height, qbox_x2 = width, qbox_y2 = expanded_height,
-    qview_x1 = qbox_x1 + 2, qview_y1 = qbox_y1, qview_x2 = qbox_x2 - 3, qview_y2 = qbox_y2 - 2;
+    view_center_x = (view_x2 + view_x1)/2, view_center_y = (view_y2 + view_y1)/2;
 
 static const auto
     btn_flags = DIF_NOBRACKETS | DIF_NOFOCUS | DIF_BTNNOCLOSE,
@@ -158,8 +157,9 @@ static const std::map<controls, std::map<FARMESSAGE, control_handler_t>> dlg_eve
     }},
 };
 
-player::player(api_weak_ptr_t api):
+player::player(api_weak_ptr_t api, hotkeys_handler *hotkeys):
     api_proxy(api),
+    hotkeys(hotkeys),
     volume(0, 100, 1),
     track_progress(0, 0, 5),
     shuffle_state({ true, false }),
@@ -175,8 +175,7 @@ player::~player()
 
 bool player::handle_dlg_proc_event(intptr_t msg_id, intptr_t control_id, void *param)
 {
-    if (are_dlg_events_suppressed)
-        return false;
+    if (are_dlg_events_suppressed) return false;
 
     // first, trying to find a handler among the given control id event handers;
     // in negative scenario, trying to search for a handler among global handlers @NO_CONTROL id;
@@ -226,18 +225,20 @@ bool player::show()
         
         utils::events::start_listening<playback_observer>(this);
         utils::events::start_listening<devices_observer>(this);
-        utils::events::start_listening<playback_device_observer>(this);
+        utils::events::start_listening<librespot_observer>(this);
 
         if (hdlg != NULL)
         {
-            expand(false);
-            
             static wstring title(std::format(L" {} ", far3::get_text(MPluginUserName)));
             set_control_text(controls::title, title);
 
             if (auto api = api_proxy.lock())
             {
-                const auto &state = api->get_playback_state(true);
+                const auto *devices_cache = api->get_devices_cache();
+                const auto &state = api->get_playback_state();
+
+                // TODO: invalidate devices and playback caches? instead of making blocking request each time, just
+                // mark them invalidated, so the resync happens way faster
 
                 on_track_changed(state.item, track_t{});
                 on_track_progress_changed(state.item.duration, state.progress);
@@ -248,7 +249,7 @@ bool player::show()
                 on_repeat_state_changed(state.repeat_state);
                 on_permissions_changed(state.actions);
         
-                on_devices_changed(api->get_available_devices());
+                on_devices_changed(devices_cache->get_all());
 
                 visible = true;
                 
@@ -275,7 +276,7 @@ void player::cleanup()
 {
     utils::events::stop_listening<playback_observer>(this);
     utils::events::stop_listening<devices_observer>(this);
-    utils::events::stop_listening<playback_device_observer>(this);
+    utils::events::stop_listening<librespot_observer>(this);
     
     hdlg = NULL;
     visible = false;
@@ -319,51 +320,32 @@ void player::tick()
     });
 }
 
-bool player::is_expanded() const
-{
-    auto r = far3::dialogs::get_dialog_rect(hdlg);
-    return r.Bottom - r.Top > height;
-}
-
-void player::expand(bool is_unfolded)
-{
-    no_redraw_player nr(hdlg);
-    dlg_events_supressor s(this);
-
-    if (is_unfolded)
-    {
-        far3::dialogs::resize_dialog(hdlg, width, expanded_height);
-        far3::dialogs::resize_item(hdlg, controls::box, { 0, 0, width, expanded_height - 1 });
-    }
-    else
-    {
-        far3::dialogs::resize_dialog(hdlg, width, height);
-        far3::dialogs::resize_item(hdlg, controls::box, { 0, 0, width, height - 1 });
-    }
-
-    // keep the same horizontal position, but center by vertical one
-    auto rect = far3::dialogs::get_dialog_rect(hdlg);
-    far3::dialogs::move_dialog_to(hdlg, rect.Left, -1);
-}
-
 void player::on_seek_forward_btn_clicked()
 {
-    update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_track_bar(track_progress.get_higher_boundary(), track_progress.next());
 }
 
 void player::on_seek_backward_btn_clicked()
 {
-    update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_track_bar(track_progress.get_higher_boundary(), track_progress.prev());
 }
 
 void player::on_volume_up_btn_clicked()
 {
-    update_volume_bar(volume.next());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_volume_bar(volume.next());
 }
 
 void player::on_volume_down_btn_clicked()
 {
-    update_volume_bar(volume.prev());
+    if (auto api = api_proxy.lock())
+        if (const auto &pstate = api->get_playback_state())
+            update_volume_bar(volume.prev());
 }
 
 bool player::on_devices_item_selected(void *dialog_item)
@@ -378,8 +360,11 @@ bool player::on_devices_item_selected(void *dialog_item)
 
     if (auto api = api_proxy.lock())
     {
-        const auto &state = api->get_playback_state();
-        api->transfer_playback(device_id, state.is_playing);
+        if (auto devices = api->get_devices_cache())
+        {
+            const auto &state = api->get_playback_state();
+            devices->transfer_playback(device_id, state.is_playing);
+        }
     }
     return true;
 }
@@ -426,6 +411,10 @@ bool player::on_input_received(void *input_record)
                     case VK_DOWN:
                         on_volume_down_btn_clicked();
                         return true;
+
+                    case VK_F8:
+                        on_like_btn_input_received(NULL);
+                        return true;
                     
                     case keys::r:
                         on_repeat_btn_click();
@@ -438,6 +427,10 @@ bool player::on_input_received(void *input_record)
                     case keys::d + keys::mods::alt:
                         if (is_control_enabled(controls::devices_combo))
                             far3::dialogs::open_list(hdlg, controls::devices_combo, true);
+                        return true;
+
+                    case keys::tilde + keys::mods::alt:
+                        hide();
                         return true;
                 }
             }
@@ -634,9 +627,12 @@ bool player::on_inactive_control_style_applied(void *dialog_item_colors)
 
 bool player::on_like_btn_input_received(void *input_record)
 {
-    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
-    if (ir->EventType == KEY_EVENT)
-        return false;
+    if (input_record)
+    {
+        const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+        if (ir->EventType == KEY_EVENT)
+            return false;
+    }
 
     if (api_proxy.expired()) return false;
 
@@ -707,25 +703,21 @@ bool player::on_repeat_btn_style_applied(void *dialog_item_colors)
     return true;
 }
 
-bool player::on_skip_to_next_btn_click(void *empty)
+bool player::on_skip_to_next_btn_click(void*)
 {
-    if (!is_control_enabled(next_btn)) return false;
-
-    if (auto api = api_proxy.lock())
+    if (hotkeys && is_control_enabled(next_btn))
     {
-        api->skip_to_next();
+        hotkeys->skip_to_next();
         return true;
     }
     return false;
 }
 
-bool player::on_skip_to_previous_btn_click(void *empty)
+bool player::on_skip_to_previous_btn_click(void*)
 {
-    if (!is_control_enabled(prev_btn)) return false;
-
-    if (auto api = api_proxy.lock())
+    if (hotkeys && is_control_enabled(prev_btn))
     {
-        api->skip_to_previous();
+        hotkeys->skip_to_prev();
         return true;
     }
     return false;
@@ -764,16 +756,11 @@ bool player::on_repeat_btn_click(void *empty)
     return false;
 }
 
-bool player::on_play_btn_click(void *empty)
+bool player::on_play_btn_click(void*)
 {
-    if (!is_control_enabled(play_btn)) return false;
-
-    if (auto api = api_proxy.lock())
+    if (hotkeys && is_control_enabled(play_btn))
     {
-        auto device_id = far3::dialogs::get_list_current_item_data<string>(
-            hdlg, controls::devices_combo);
-    
-        api->toggle_playback(device_id);
+        hotkeys->toggle_playback();
         return true;
     }
     return false;
@@ -786,18 +773,19 @@ void player::on_devices_changed(const devices_t &devices)
 
     far3::dialogs::clear_list(hdlg, controls::devices_combo);
 
+    far3::dialogs::add_list_item(hdlg, controls::devices_combo, L"<no device>", 0, NULL, 0, false);
+
     for (size_t i = 0; i < devices.size(); i++)
     {
         const auto &dev = devices[i];
-        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, (int)i,
+        far3::dialogs::add_list_item(hdlg, controls::devices_combo, dev.name, (int)i + 1,
             (void*)dev.id.c_str(), dev.id.size(), dev.is_active);
     }
 }
 
-void player::on_running_state_changed(bool is_running)
+void player::on_librespot_stopped(bool emergency)
 {
-    if (!is_running)
-        hide();
+    hide();
 }
 
 void player::on_track_changed(const track_t &track, const track_t &prev_track)
@@ -816,8 +804,8 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
     if (auto api = api_proxy.lock())
     {
         const auto &state = api->get_playback_state();
-        auto *library = api->get_library();
-        update_like_btn(!state.is_empty() && library->is_track_saved(state.item.id, true));
+        if (auto *library = api->get_library())
+            update_like_btn(!state.is_empty() && library->is_track_saved(state.item.id, true));
     }
 }
 
@@ -849,10 +837,8 @@ void player::on_track_progress_changed(int duration, int progress)
 
     // prevents from updating, in case we are seeking a new track position,
     // which requires showing a virtual target track bar position
-    if (track_progress.is_waiting())
-        return;
-
-    return update_track_bar((int)duration, (int)progress);
+    if (!track_progress.is_waiting())
+        update_track_bar((int)duration, (int)progress);
 }
 
 void player::update_volume_bar(int volume)
@@ -861,7 +847,7 @@ void player::update_volume_bar(int volume)
 
     static wstring volume_label;
     
-    volume_label = std::format(L"[{}%]", volume);
+    volume_label = std::format(L"[{:0>3}%]", volume);
     set_control_text(controls::volume_label, volume_label);
 }
 
@@ -871,8 +857,7 @@ void player::on_volume_changed(int vol)
 
     // prevents from updating, in case we are seeking a new volume value,
     // which requires showing a virtual target vlume bar value
-    if (volume.is_waiting())
-        return;
+    if (volume.is_waiting()) return;
 
     return update_volume_bar(vol);
 }
@@ -881,8 +866,7 @@ void player::on_shuffle_state_changed(bool state)
 {
     shuffle_state.set_value(state);
 
-    if (shuffle_state.is_waiting())
-        return;
+    if (shuffle_state.is_waiting()) return;
 
     return update_shuffle_btn(state);
 }

@@ -153,19 +153,44 @@ static void update_caches_block(HANDLE hdlg)
     dialogs::set_text(hdlg, clear_all_button, get_text(MCfgClearAllCaches));
 }
 
-void set_releases_sync_status(HANDLE hdlg, size_t items_left, bool is_plugin_launched)
+void set_releases_sync_status(HANDLE hdlg)
 {
     no_redraw_caches nr(hdlg);
 
-    static wstring status;
+    static wstring status_lbl, next_sync_time_lbl;
+
+    size_t items_left = 0;
+    bool is_resync_button_enabled = false;
+    utils::clock_t::time_point next_sync_time{};
+
+    if (auto plugin = get_plugin())
+        if (auto api = plugin->get_api())
+            if (auto releases = api->get_releases())
+            {
+                items_left = releases->get_sync_tasks_left();
+                next_sync_time = releases->get_next_sync_time();
+                is_resync_button_enabled = items_left == 0;
+            }
 
     if (items_left > 0)
-        status = get_vtext(MCfgReleasesStatusLeft, items_left);
+    {
+        status_lbl = get_text(MCfgReleasesStatusRunning);
+        next_sync_time_lbl = get_vtext(MCfgReleasesStatusLeft, items_left);
+    }
     else
-        status = get_text(MCfgReleasesStatusFinished);
+    {
+        status_lbl = get_text(MCfgReleasesStatusFinished);
 
-    dialogs::set_text(hdlg, releases_status_value, status.c_str());
-    dialogs::enable(hdlg, releases_resync_button, items_left == 0 && is_plugin_launched);
+        if (next_sync_time > utils::clock_t::now())
+            next_sync_time_lbl = std::format(L"{:%d %b, %H:%M}", std::chrono::current_zone()->to_local(next_sync_time));
+        else
+            next_sync_time_lbl = L"---------";
+    }
+
+    dialogs::set_text(hdlg, releases_status_value, status_lbl.c_str());
+    dialogs::set_text(hdlg, releases_next_sync_value, next_sync_time_lbl.c_str());
+
+    dialogs::enable(hdlg, releases_resync_button, is_resync_button_enabled);
 }
 
 static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
@@ -178,24 +203,10 @@ static void update_releases_scan_block(HANDLE hdlg, plugin_ptr_t plugin)
     dialogs::set_text(hdlg, releases_status_label, get_text(MCfgReleasesSyncStatus));
     dialogs::set_text(hdlg, releases_status_value, get_text(MCfgReleasesStatusFinished));
     dialogs::set_text(hdlg, releases_next_sync_lbl, get_text(MCfgReleasesNext));
-    dialogs::set_text(hdlg, releases_next_sync_value, L"-----");
+    dialogs::set_text(hdlg, releases_next_sync_value, L"------");
     dialogs::set_text(hdlg, releases_resync_button, get_text(MCfgReleasesResyncBtn));
 
-    if (plugin)
-    {
-        if (auto api = plugin->get_api())
-        {
-            auto releases = api->get_releases();
-            set_releases_sync_status(hdlg, releases->get_sync_tasks_left(), true);
-
-            static wstring next_sync_time;
-            next_sync_time = std::format(L"{:%d %b, %H:%M}", releases->get_next_sync_time());
-            dialogs::set_text(hdlg, releases_next_sync_value, next_sync_time.c_str());
-
-            return;
-        }
-    }
-    set_releases_sync_status(hdlg, 0, false);
+    set_releases_sync_status(hdlg);
 }
 
 static bool remove_http_cache()
@@ -308,7 +319,7 @@ bool caches_dialog::handle_btn_clicked(int ctrl_id, std::uintptr_t param)
 
 void caches_dialog::on_sync_progress_changed(size_t items_left)
 {
-    set_releases_sync_status(hdlg, items_left, true);
+    set_releases_sync_status(hdlg);
 }
 
 } // namespace settings

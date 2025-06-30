@@ -56,6 +56,7 @@ protected:
 
     // view interface
     auto get_default_settings() const -> config::settings::view_t override;
+    auto process_key_input(int combined_key) -> intptr_t override;
 
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;

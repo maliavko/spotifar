@@ -33,6 +33,7 @@ public:
     /// @brief a helper event from outside, its called right after the items
     /// are populated on the panel
     void on_items_updated();
+
     auto compare_items(const CompareInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto select_item(const SetDirectoryInfo *info) -> intptr_t;
@@ -40,6 +41,7 @@ public:
     auto get_dir_name() const -> const wstring& { return dir_name; }
     void update_panel_info(OpenPanelInfo *info);
     auto request_extra_info(const PluginPanelItem *item) -> intptr_t;
+    auto get_quick_item_info(const PluginPanelItem *item) -> wstring;
     
     /// @brief Returns a unique id for the object created
     auto get_uid() const -> uint32_t { return id; }
@@ -106,6 +108,8 @@ protected:
     /// calculations for the item under cursor with the given user `data`,
     /// return `true` if panel should be updated
     virtual bool request_extra_info(const data_item_t *data) { return false; }
+
+    virtual auto get_quick_item_info(const data_item_t *data) -> wstring { return L""; }
 
     /// @brief Called when the folder item is selected on the panel,
     /// usually the view redirects user to another view; return `TRUE` if

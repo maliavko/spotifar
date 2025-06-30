@@ -7,9 +7,11 @@
 #include "devices.hpp"
 #include "releases.hpp"
 #include "history.hpp"
+#include "hotkeys_handler.hpp"
 
 namespace spotifar { namespace spotify {
 
+namespace fs = std::filesystem;
 using namespace httplib;
 using namespace utils;
 
@@ -30,7 +32,7 @@ static auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::resul
 }
 
 //----------------------------------------------------------------------------------------------
-api::api(): requests_pool(10), resyncs_pool(3)
+api::api(): requests_pool(5), resyncs_pool(3)
 {
     api_responses_cache = std::make_unique<http_cache>();
 }
@@ -65,55 +67,49 @@ bool api::start()
 
 void api::shutdown()
 {
-    auto ctx = config::lock_settings();
-    std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
+    if (auto ctx = config::lock_settings())
+        std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
     
     if (!stop_flag)
     {
         stop_flag = true;
         retry_cv.notify_all();
     }
-    
-    caches.clear();
-
-    auth.reset();
-    library.reset();
-    devices.reset();
-    history.reset();
-    playback.reset();
-    releases.reset();
 
     // removing unfinished tasks from the queue
     requests_pool.purge();
     resyncs_pool.purge();
 
     api_responses_cache->shutdown();
+    
+    caches.clear();
+
+    // NOTE: there is a feeling, that killing the obejcts here leads
+    // to hanging process, due to the caches access data mutex dying,
+    // but the main thread wait for all of them to finish properly
+    /*auth.reset();
+    library.reset();
+    devices.reset();
+    history.reset();
+    playback.reset();
+    releases.reset();*/
 }
 
 void api::tick()
 {
     auto future = resyncs_pool.submit_loop<size_t>(0, caches.size(),
-        [&caches = this->caches](const std::size_t idx) {
-            caches[idx]->resync();
+        [&caches = this->caches](const std::size_t idx)
+        {
+            if (idx < caches.size() && caches[idx])
+                caches[idx]->resync();
         });
     future.get();
-}
-
-bool api::is_authenticated() const
-{
-    return auth->is_authenticated();
 }
 
 const playback_cache::data_t& api::get_playback_state(bool force_resync)
 {
     playback->resync(force_resync);
     return playback->get();
-}
-
-const devices_cache::data_t& api::get_available_devices(bool force_resync)
-{
-    devices->resync(force_resync);
-    return devices->get();
 }
 
 library_interface* api::get_library()
@@ -126,10 +122,15 @@ recent_releases_interface* api::get_releases()
     return releases.get();
 };
 
-
 auth_cache_interface* api::get_auth_cache()
 {
     return auth.get();
+};
+
+devices_cache_interface* api::get_devices_cache(bool resync)
+{
+    devices->resync(resync);
+    return devices.get();
 };
 
 const play_history::data_t& api::get_play_history(bool force_resync)
@@ -259,7 +260,7 @@ void api::start_playback(const string &context_uri, const string &track_uri,
     start_playback_base(body.str(), device_id);
 }
 
-void api::start_playback(const std::vector<string> &uris, const item_id_t &device_id)
+void api::start_playback(const std::vector<string> &uris, const string &track_uri, const item_id_t &device_id)
 {
     assert(uris.size() > 0);
 
@@ -268,6 +269,13 @@ void api::start_playback(const std::vector<string> &uris, const item_id_t &devic
     body.object([&]
     {
         body.insert("uris", uris);
+        if (!track_uri.empty())
+        {
+            body.object("offset", [&]
+            {
+                body.insert("uri", track_uri);
+            });
+        }
     });
 
     start_playback_base(body.str(), device_id);
@@ -286,31 +294,6 @@ void api::start_playback(const simplified_playlist_t &playlist, const simplified
 void api::resume_playback(const item_id_t &device_id)
 {
     return start_playback_base("", device_id);
-}
-
-void api::toggle_playback(const item_id_t &device_id)
-{
-    // if we're not transferring playback to a specific device, we need
-    // to make sure there are some already active one at least
-    if (device_id.empty())
-    {
-        devices->resync(true);
-        
-        const auto &available_devices = devices->get();
-        auto active_dev_it = std::find_if(available_devices.begin(), available_devices.end(),
-            [](const auto &d) { return d.is_active; });
-
-        if (active_dev_it == available_devices.end())
-            return playback_cmd_error("No playback device is currently active");
-    }
-
-    // making sure we have a last updates playback state
-    playback->resync(true);
-
-    if (const auto &state = playback->get(); !state.is_playing)
-        return resume_playback(device_id);
-    else
-        return pause_playback(device_id);
 }
 
 void api::pause_playback(const item_id_t &device_id)
@@ -372,7 +355,10 @@ void api::skip_to_previous(const item_id_t &device_id)
 void api::seek_to_position(int position_ms, const item_id_t &device_id)
 {
     requests_pool.detach_task(
-        [position_ms, &cache = *playback, dev_id = std::as_const(device_id), this]
+        [
+            position_ms, &cache = *playback,
+            dev_id = std::as_const(device_id), this
+        ]
         {
             Params params = {
                 { "position_ms", std::to_string(position_ms) },
@@ -382,13 +368,17 @@ void api::seek_to_position(int position_ms, const item_id_t &device_id)
                 params.insert({ "device_id", dev_id });
 
             if (auto res = put(append_query_params("/v1/me/player/seek", params)); http::is_success(res))
+            {
                 // patching the data in the cache, so the client represents a correct UI,
                 // while the updates still coming from the server
                 cache.patch([position_ms](auto &v) {
                     json::Pointer("/progress_ms").Set(v, position_ms);
                 });
+            }
             else
+            {
                 playback_cmd_error(http::get_status_message(res));
+            }
         });
 }
 
@@ -461,39 +451,6 @@ void api::set_playback_volume(int volume_percent, const item_id_t &device_id)
         });
 }
 
-void api::transfer_playback(const item_id_t &device_id, bool start_playing)
-{
-    const auto &devices = get_available_devices();
-    auto device_it = std::find_if(devices.begin(), devices.end(),
-        [&device_id](const auto &d) { return d.id == device_id; });
-
-    if (device_it == devices.end())
-        return playback_cmd_error("There is no devices with the given id={}", device_id);
-
-    if (device_it->is_active)
-        return playback_cmd_error("The given device is already active, {}", device_it->to_str());
-    
-    requests_pool.detach_task(
-        [
-            this, start_playing, dev_id = std::as_const(device_id), &cache = *this->devices,
-            dev_idx = std::distance(devices.begin(), device_it)
-        ]
-        {
-            http::json_body_builder body;
-
-            body.object([&]
-            {
-                body.insert("device_ids", { dev_id });
-                body.insert("play", start_playing);
-            });
-
-            if (auto res = put("/v1/me/player", body.str()); http::is_success(res))
-                this->devices->resync();
-            else
-                playback_cmd_error(http::get_status_message(res));
-        });
-}
-
 void api::start_playback_base(const string &body, const item_id_t &device_id)
 {
     Params params = {};
@@ -528,12 +485,13 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
         return L"";
     }
 
-    if (!std::filesystem::exists(cache_folder))
-        std::filesystem::create_directories(cache_folder);
+    if (!fs::exists(cache_folder))
+        fs::create_directories(cache_folder);
 
-    const wstring filepath = std::format(L"{}\\{}.{}.png", cache_folder, utils::to_wstring(item_id), image.width);
+    const wstring filepath = std::format(L"{}\\{}.{}.png",
+        cache_folder, utils::to_wstring(item_id), image.width);
     
-    if (!std::filesystem::exists(filepath))
+    if (!fs::exists(filepath))
     {
         std::ofstream file(filepath, std::ios_base::binary);
         if (!file.good())
@@ -562,6 +520,88 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
         }
     }
     return filepath;
+}
+
+wstring api::get_lyrics(const track_t &track)
+{
+    static const wstring cache_folder = std::format(L"{}\\lyrics", config::get_plugin_data_folder());
+
+    if (!track)
+    {
+        log::global->warn("Could not retrieve lyrics, the given track is invalid");
+        return L"";
+    }
+
+    if (!fs::exists(cache_folder))
+        fs::create_directories(cache_folder);
+
+    const wstring filename = utils::strip_invalid_filename_chars(std::format(
+        L"{} - {} - {} [{}]",
+        track.get_artist().name, track.album.name, track.name,
+        utils::to_wstring(track.id)));
+    
+    const wstring filepath = std::format(L"{}\\{}.lrc", cache_folder, filename);
+    
+    
+    if (fs::exists(filepath))
+    {
+        if (auto ifs = std::wifstream(filepath))
+            return wstring(std::istreambuf_iterator<wchar_t>(ifs), std::istreambuf_iterator<wchar_t>());
+    }
+
+    httplib::Client client("https://lrclib.net");
+
+    auto url = httplib::append_query_params("/api/get", {
+        { "artist_name", utils::utf8_encode(track.get_artist().name) },
+        { "album_name", utils::utf8_encode(track.album.name) },
+        { "track_name", utils::utf8_encode(track.name) },
+        { "duration", std::to_string(track.duration) },
+    });
+
+    if (auto res = client.Get(url); http::is_success(res))
+    {
+        try
+        {
+            json::Document doc;
+            doc.Parse(res->body);
+            
+            json::Value lyrics_node;
+            
+            // first, trying to find synced lyrics if possible
+            if (doc.HasMember("syncedLyrics") && !doc["syncedLyrics"].IsNull())
+                lyrics_node = doc["syncedLyrics"];
+            
+            // ... or trying to find just plain lyrics
+            else if (doc.HasMember("plainLyrics") && !doc["plainLyrics"].IsNull())
+                lyrics_node = doc["plainLyrics"];
+
+            if (!lyrics_node.IsNull())
+            {
+                auto lyrics = utils::utf8_decode(lyrics_node.GetString());
+
+                if (std::wofstream file(filepath); file.good())
+                {
+                    file << lyrics;
+                }
+                else
+                {
+                    log::api->error("Cound not create a file for downloading lyrics, {}. {}", utils::to_string(filepath),
+                        utils::get_last_system_error());
+                }
+                return lyrics;
+            }
+        }
+        catch (const std::exception &ex)
+        {
+            log::api->error("An error occured while getting lyrics for the track {}, {}", track.id, ex.what());
+        }
+    }
+    else
+    {
+        log::api->error("An error occured while downloading tyhe lyrics for the track {}: {}, url {}",
+            track.id, http::get_status_message(res), url);
+    }
+    return L"";
 }
 
 bool api::is_request_cached(const string &url) const

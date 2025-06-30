@@ -20,6 +20,7 @@ public:
         saved_tracks_t(api->get_ptr(), "/v1/me/tracks"),
         library(library)
         {}
+    
     ~saved_tracks_collection() { library = nullptr; }
 
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
@@ -511,7 +512,9 @@ followed_artists_ptr library::get_followed_artists()
 
 bool library::is_active() const
 {
-    return api_proxy->is_authenticated();
+    if (auto auth = api_proxy->get_auth_cache())
+        return auth->is_authenticated();
+    return false;
 }
 
 clock_t::duration library::get_sync_interval() const

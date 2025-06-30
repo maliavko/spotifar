@@ -25,6 +25,13 @@ static const FarKey overriden_bindings[] = {
     { VK_F11, LEFT_CTRL_PRESSED },
 };
 
+static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
+{
+    // as we do not allocate any memory for user data, we do not free it, just nulify
+    user_data = nullptr;
+}
+
+
 /// @brief A stub-view used for the first panel initialization, before any other
 /// view to be shown. Purposely visible when the user is not yet authorized
 class stub_view: public view
@@ -51,14 +58,19 @@ protected:
     }
 };
 
+
 panel::panel(plugin_ptr_t plugin_ptr): plugin_proxy(plugin_ptr)
 {
     utils::events::start_listening<ui_events_observer>(this);
 
-    if (auto api = plugin_ptr->get_api(); api && api->is_authenticated())
-        set_view(std::make_shared<root_view>(this, api));
-    else
-        set_view(std::make_shared<stub_view>(this));
+    if (auto api = plugin_proxy->get_api())
+        if (auto auth = api->get_auth_cache(); auth && auth->is_authenticated())
+        {
+            set_view(std::make_shared<root_view>(this, api));
+            return;
+        }
+
+    set_view(std::make_shared<stub_view>(this));
 }
 
 panel::~panel()
@@ -150,12 +162,6 @@ void panel::update_panel_info(OpenPanelInfo *info)
 
     // allowing view to customize OpenPanelInfo struct
     view->update_panel_info(info);
-}
-
-static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
-{
-    // as we do not allocate any memory for user data, we do not free it, just nulify
-    user_data = nullptr;
 }
 
 intptr_t panel::update_panel_items(GetFindDataInfo *info)
@@ -285,7 +291,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             {
                 // switch multiview
                 auto idx = key - VK_F5 - keys::mods::shift;
-                if (idx != mview_builders.settings->idx)
+                if (!mview_builders.is_empty() && idx != mview_builders.settings->idx)
                 {
                     if (auto builder = mview_builders.switch_builder(idx))
                         set_view(builder(this), view->get_return_callback());
@@ -314,6 +320,19 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
 intptr_t panel::compare_items(const CompareInfo *info)
 {
     return view->compare_items(info);
+}
+
+std::vector<wstring> panel::get_items(const GetFilesInfo *info)
+{
+    std::vector<wstring> result{};
+
+    if (view)
+    {
+        for (size_t i = 0; i < info->ItemsNumber; i++)
+            result.push_back(view->get_quick_item_info(&info->PanelItem[i]));
+    }
+
+    return result;
 }
 
 void panel::set_view(view_ptr_t v, return_callback_t callback)

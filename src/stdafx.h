@@ -54,7 +54,8 @@ namespace spotifar
     struct plugin_interface;
 
     class plugin;
-    class playback_handler;
+    class librespot;
+    class hotkeys_handler;
     
     using plugin_ptr_t = std::shared_ptr<plugin_interface>;
     using plugin_weak_ptr_t = std::weak_ptr<plugin_interface>;
@@ -69,7 +70,6 @@ namespace spotifar
 
         // classes
         class http_cache;
-        struct data_item_t;
         class library;
         class playback_cache;
         class devices_cache;
@@ -77,6 +77,28 @@ namespace spotifar
         class play_history;
         class recent_releases;
         class api;
+
+        struct data_item_t;
+        struct image_t;
+        struct external_urls_t;
+        struct copyrights_t;
+        struct simplified_artist_t;
+        struct simplified_album_t;
+        struct simplified_track_t;
+        struct artist_t;
+        struct track_t;
+        struct saved_track_t;
+        struct album_t;
+        struct saved_album_t;
+        struct simplified_playlist_t;
+        struct playlist_t;
+        struct actions_t;
+        struct context_t;
+        struct device_t;
+        struct playback_state_t;
+        struct history_item_t;
+        struct playing_queue_t;
+        struct auth_t;
 
         using api_ptr_t         = std::shared_ptr<api_interface>;
         using api_weak_ptr_t    = std::weak_ptr<api_interface>;
@@ -89,7 +111,9 @@ namespace spotifar
     namespace ui
     {
         class player;
-        class notifications;
+        class notifications_handler;
+        class panel;
+        class view;
     }
 
     namespace utils

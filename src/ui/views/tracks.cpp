@@ -10,6 +10,17 @@ using utils::far3::get_text;
 using utils::far3::get_vtext;
 namespace panels = utils::far3::panels;
 
+static wstring get_track_duration(const track_t &track)
+{
+    auto duration = std::chrono::milliseconds(track.duration_ms);
+    wstring track_length;
+    if (duration < 1h)
+        track_length = std::format(L"{:%M:%S}", duration);
+    else
+        track_length = std::format(L"{:%Hh%M}", duration);
+    return track_length.substr(0, 5);
+}
+
 //-----------------------------------------------------------------------------------------------------------
 tracks_base_view::tracks_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
     view(panel, title, dir_name), api_proxy(api)
@@ -60,13 +71,7 @@ const items_t& tracks_base_view::get_items()
         columns.push_back(track.is_explicit ? L" * " : L"");
 
         // column C1 - duration
-        auto duration = std::chrono::milliseconds(track.duration_ms);
-        wstring track_length;
-        if (duration < 1h)
-            track_length = std::format(L"{:%M:%S}", duration);
-        else
-            track_length = std::format(L"{:%Hh%M}", duration);
-        columns.push_back(std::format(L"{: ^7}", track_length.substr(0, 5)));
+        columns.push_back(std::format(L"{: ^7}", get_track_duration(track)));
         
         // column C2 - album's release year
         columns.push_back(std::format(L"{: ^6}",
@@ -138,6 +143,55 @@ const panel_modes_t* tracks_base_view::get_panel_modes() const
     };
     
     return &modes;
+}
+
+wstring tracks_base_view::get_quick_item_info(const data_item_t *data)
+{
+    using namespace std;
+
+    const auto *track = static_cast<const track_t*>(data);
+    if (auto api = api_proxy.lock(); api && track)
+    {
+        auto *library = api->get_library();
+
+        wostringstream oss;
+
+        static const auto space = setw(15);
+        oss << "  " << get_text(MQWDisclaimer) << endl
+            << endl
+            << space << get_text(MQWTrackName)      << " " << track->name << endl
+            << space << get_text(MQWArtistName)     << " " << track->get_artists_full_name() << endl
+            << endl
+            << space << get_text(MQWDuration)       << " " << get_track_duration(*track) << endl
+            << space << get_text(MQWPopularity)     << " " << track->popularity << "%" << endl
+            << space << get_text(MQWExplicit)       << " " << (track->is_explicit ? get_text(MQWYes) : get_text(MQWNo)) << endl
+            << space << get_text(MQWSaved)          << " " << (library->is_track_saved(track->id) ? get_text(MQWYes) : get_text(MQWNo)) << endl
+            << endl
+            << space << get_text(MQWAlbumName)      << " " << track->album.name << endl
+            << space << get_text(MQWReleaseType)    << " " << track->album.get_type_abbrev() << endl
+            << space << get_text(MQWReleaseYear)    << " " << utils::to_wstring(track->album.get_release_year()) << endl;
+
+        if (const auto album = api->get_album(track->album.id))
+        {
+            std::vector<wstring> copyrights;
+            std::transform(album.copyrights.cbegin(), album.copyrights.cend(), back_inserter(copyrights),
+                [](const auto &c) { return c.text; });
+
+            oss << space << get_text(MQWPopularity)     << " " << album.popularity << "%" << endl
+                << space << get_text(MQWLabelName)      << " " << album.recording_label << endl
+                << space << get_text(MQWCopyrights)     << " " << utils::string_join(copyrights, L", ") << endl;
+        }
+
+        oss << endl << endl;
+
+        if (const auto &lyrics = api->get_lyrics(*track); lyrics.empty())
+            oss << "  " << get_text(MQWNoLyrics) << endl;
+        else
+            oss << "  " << get_text(MQWLyricsDisclaimer) << endl << endl << lyrics << endl;
+        
+        return oss.str();
+    }
+    return L"";
 }
 
 intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
@@ -396,7 +450,7 @@ void tracks_base_view::on_tracks_statuses_received(const item_ids_t &ids)
 album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, const simplified_album_t &album):
     tracks_base_view(panel, api_proxy, album.name), album(album)
 {
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
     rebuild_items();
 
     static const panel_mode_t::column_t
@@ -413,7 +467,7 @@ album_tracks_view::album_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy, con
 
 album_tracks_view::~album_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
     album_tracks.clear();
 }
 
@@ -593,7 +647,7 @@ bool recent_tracks_view::start_playback(const track_t &track)
             {
                 log::global->warn("History context is not available, launching the standalone "
                     "track {}", history_track.id);
-                api->start_playback({ history_track.get_uri() });
+                api->start_playback(std::vector{ history_track.get_uri() });
             }
             else
             {
@@ -667,12 +721,12 @@ saved_tracks_view::saved_tracks_view(HANDLE panel, api_weak_ptr_t api_proxy):
 
     panel_modes.rebuild();
     
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 saved_tracks_view::~saved_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 bool saved_tracks_view::repopulate()
@@ -759,12 +813,12 @@ void saved_tracks_view::on_track_changed(const track_t &track, const track_t &pr
 playing_queue_view::playing_queue_view(HANDLE panel, api_weak_ptr_t api):
     tracks_base_view(panel, api, get_text(MPanelPlayingQueue))
 {
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 playing_queue_view::~playing_queue_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t playing_queue_view::get_default_settings() const
@@ -788,7 +842,7 @@ bool playing_queue_view::start_playback(const track_t &track)
         {
             log::global->warn("The context does not support offsetting, launching the standalone "
                 "track {}", track.id);
-            api->start_playback({ track.get_uri() });
+            api->start_playback(std::vector{ track.get_uri() });
         }
         return true;
     }
@@ -842,12 +896,12 @@ recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_pt
         collection->fetch(false, true, 3);
     }
 
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 recently_liked_tracks_view::~recently_liked_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t recently_liked_tracks_view::get_default_settings() const
@@ -932,7 +986,14 @@ bool user_top_tracks_view::start_playback(const track_t &track)
     if (auto api = api_proxy.lock())
     {
         log::global->info("Starting standalone track from user's top {}", track.get_uri());
-        api->start_playback({ track.get_uri() });
+        
+        // API does not allow launching an artist's context with the specific track's offset;
+        // instead, we launch all the top tracks and specify the given `track` as the starting one
+        std::vector<string> tracks_uris;
+        std::transform(collection->cbegin(), collection->cend(), back_inserter(tracks_uris),
+            [](const auto &a) { return a.get_uri(); });
+        api->start_playback(tracks_uris, track.get_uri());
+
         return true;
     }
     return false;
@@ -957,12 +1018,12 @@ artist_top_tracks_view::artist_top_tracks_view(HANDLE panel, api_weak_ptr_t api_
     if (auto api = api_proxy.lock())
         tracks = api->get_artist_top_tracks(artist.id);
     
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 }
 
 artist_top_tracks_view::~artist_top_tracks_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t artist_top_tracks_view::get_default_settings() const
@@ -986,7 +1047,13 @@ bool artist_top_tracks_view::start_playback(const track_t &track)
     if (auto api = api_proxy.lock())
     {
         log::global->info("Starting standalone track from artist's top {}", track.get_uri());
-        api->start_playback({ track.get_uri() });
+        
+        // API does not allow launching an artist's context with the specific track's offset;
+        // instead, we launch all the top tracks and specify the given `track` as the starting one
+        std::vector<string> tracks_uris;
+        std::transform(tracks.cbegin(), tracks.cend(), back_inserter(tracks_uris),
+            [](const auto &a) { return a.get_uri(); });
+        api->start_playback(tracks_uris, track.get_uri());
         return true;
     }
     return false;
@@ -1013,7 +1080,7 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
         collection->fetch();
     }
     
-    utils::events::start_listening<playback_observer>(this);
+    utils::events::start_listening<playback_observer>(this, true);
 
     static const panel_mode_t::column_t
         AddedAt { L"C8", get_text(MSortColAddedAt), L"13" };
@@ -1027,7 +1094,7 @@ playlist_view::playlist_view(HANDLE panel, api_weak_ptr_t api_proxy, const playl
 
 playlist_view::~playlist_view()
 {
-    utils::events::stop_listening<playback_observer>(this);
+    utils::events::stop_listening<playback_observer>(this, true);
 }
 
 config::settings::view_t playlist_view::get_default_settings() const

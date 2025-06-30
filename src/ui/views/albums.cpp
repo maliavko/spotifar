@@ -74,6 +74,9 @@ const items_t& albums_base_view::get_items()
         // column C7 - is saved in collection status
         columns.push_back(is_saved ? L" + " : L"");
 
+        // column C8 - all artists
+        columns.push_back(album.get_artists_full_name());
+
         // inherited views custom columns
         const auto &extra = get_extra_columns(album);
         columns.insert(columns.end(), extra.begin(), extra.end());
@@ -101,7 +104,8 @@ const panel_modes_t* albums_base_view::get_panel_modes() const
         Popularity      { L"C5",    get_text(MSortColPopularity),   L"5" },
         Artist          { L"C6",    get_text(MSortColArtist),       L"30" },
         Saved           { L"C7",    get_text(MSortColSaved),        L"3" },
-        SavedAt         { L"C8",    get_text(MSortColSavedAt),      L"12" },
+        FullArtists     { L"C8",    get_text(MSortColArtists),      L"30" },
+        SavedAt         { L"C9",    get_text(MSortColSavedAt),      L"12" },
         Name            { L"NON",   get_text(MSortColName),         L"0" },
         Copyrights      { L"Z",     get_text(MSortColCopyrights),   L"0" };
         
@@ -110,7 +114,7 @@ const panel_modes_t* albums_base_view::get_panel_modes() const
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
         /* 3 */ PM({ &ReleaseYear, &Name, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity }),
-        /* 4 */ PM({ &ReleaseYear, &Saved, &Name, &Artist }),
+        /* 4 */ PM({ &ReleaseYear, &Saved, &Name, &FullArtists }),
         /* 5 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity, &Copyrights }, true),
         /* 6 */ PM({ &ReleaseYear, &Name, &Saved, &Copyrights }),
         /* 7 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &Copyrights }, true),
@@ -228,7 +232,7 @@ intptr_t albums_base_view::process_key_input(int combined_key)
             return TRUE;
         }
 
-        // saved/remove from collection
+        // saved/remove from albums collection
         case VK_F8:
         {
             const auto &ids = get_selected_items();
@@ -341,6 +345,37 @@ config::settings::view_t artist_albums_view::get_default_settings() const
     return { 1, true, 3 };
 }
 
+intptr_t artist_albums_view::process_key_input(int combined_key)
+{
+    using namespace utils::keys;
+
+    switch (combined_key)
+    {
+        // saved/remove from albums collection
+        case VK_F8:
+        {
+            // special case, the clicked happened on the '..' item, which means we need
+            // to save/remove album's artist
+            if (const auto &data = utils::far3::panels::get_current_item(get_panel_handle());
+                data && wcscmp(data->FileName, L"..") == 0)
+            {   
+                if (auto api = api_proxy.lock(); api && artist)
+                {
+                    if (auto *library = api->get_library())
+                    {
+                        if (library->is_artist_followed(artist.id, true))
+                            library->unfollow_artists({ artist.id });
+                        else
+                            library->follow_artists({ artist.id });
+                    }
+                }
+                return TRUE;
+            }
+        }
+    }
+    return albums_base_view::process_key_input(combined_key);
+}
+
 std::generator<const album_t&> artist_albums_view::get_albums()
 {
     for (const auto &a: albums) co_yield a;
@@ -387,7 +422,7 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
     }
 
     static const panel_mode_t::column_t
-        SavedAt { L"C8", get_text(MSortColSavedAt), L"12" };
+        SavedAt { L"C9", get_text(MSortColSavedAt), L"12" };
 
     panel_modes = *albums_base_view::get_panel_modes();
     panel_modes[4].insert_column(&SavedAt, 0);
@@ -447,7 +482,7 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
     const auto &saved_at_str = std::format("{:^12}", saved_album.added_at.substr(0, 10));
 
     return {
-        utils::to_wstring(saved_at_str), // C8 - `added at` date
+        utils::to_wstring(saved_at_str), // C9 - `added at` date
     };
 }
 
@@ -514,7 +549,8 @@ void new_releases_view::rebuild_items()
         std::transform(releases.begin(), releases.end(), back_inserter(releases_ids),
             [](const auto &r) { return r.id; });
 
-        recent_releases = api->get_albums(releases_ids);
+        if (releases_ids.size() > 0)
+            recent_releases = api->get_albums(releases_ids);
     }
 }
 
@@ -625,7 +661,7 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
     }
 
     static const panel_mode_t::column_t
-        SavedAt { L"C8", get_text(MSortColSavedAt), L"12" };
+        SavedAt { L"C9", get_text(MSortColSavedAt), L"12" };
 
     panel_modes = *albums_base_view::get_panel_modes();
     panel_modes[4].insert_column(&SavedAt, 0);
@@ -690,7 +726,7 @@ std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t
     const auto &saved_at_str = std::format("{:^12}", saved_album.added_at.substr(0, 10));
 
     return {
-        utils::to_wstring(saved_at_str), // C8 - `added at` date
+        utils::to_wstring(saved_at_str), // C9 - `added at` date
     };
 }
 

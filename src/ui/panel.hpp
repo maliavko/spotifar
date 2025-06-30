@@ -24,6 +24,7 @@ public:
     auto select_directory(const SetDirectoryInfo *info) -> intptr_t;
     auto process_input(const ProcessPanelInputInfo *info) -> intptr_t;
     auto compare_items(const CompareInfo *info) -> intptr_t;
+    auto get_items(const GetFilesInfo *info) -> std::vector<wstring>;
 protected:
     /// @brief Sets the given view as the current one, registers given callback
     /// as the one, which will be used once the view is closed, redraws panel

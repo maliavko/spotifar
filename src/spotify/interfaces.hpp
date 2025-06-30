@@ -135,6 +135,8 @@ public:
 
 struct recent_releases_interface
 {
+    virtual bool is_cache_running() const = 0;
+
     /// @brief Amount of sync tasks in the queue, 0 - sync is finished 
     virtual auto get_sync_tasks_left() const -> size_t = 0;
 
@@ -152,22 +154,43 @@ struct recent_releases_interface
 
 struct auth_cache_interface
 {
+    /// @brief Is successfully authenticated to Spotify API
     virtual bool is_authenticated() const = 0;
 
+    /// @brief Returns a current session access token string
     virtual auto get_access_token() const -> const string& = 0;
 
+    /// @brief Returns a current session refresh token string
     virtual auto get_refresh_token() const -> const string& = 0;
 
+    /// @brief Clears current credentials and deletes caches as well,
+    /// however does not break current session
     virtual void clear_credentials() = 0;
+};
+
+
+struct devices_cache_interface
+{
+    /// @brief Returns the list of all available currently devices
+    virtual auto get_all() const -> const devices_t& = 0;
+
+    /// @brief Returns a currently active device if any
+    virtual auto get_active_device() const -> const device_t* = 0;
+
+    /// @brief Returns a device by given id or nullptr
+    virtual auto get_device_by_id(const item_id_t&) const -> const device_t* = 0;
+
+    /// @brief Returns a device by given name or nullptr
+    virtual auto get_device_by_name(const wstring&) const -> const device_t* = 0;
+    
+    /// @brief https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
+    virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
 };
 
 
 struct api_interface
 {
     virtual ~api_interface() {}
-
-    /// @brief Checks the spotify authorizations status
-    virtual bool is_authenticated() const = 0;
 
     /// @brief A public interface for obtaining a weak pointer to the API interface
     /// instance. Used in many helper classes, avoiding passing a direct pointer for safety reasons
@@ -176,10 +199,6 @@ struct api_interface
     /// @brief Returns a played history list of items. If `force_resync` is true, the data
     /// is forcibly resynced before it is returned
     virtual auto get_play_history(bool force_resync = false) -> const history_items_t& = 0;
-
-    /// @brief Returns a list of available playback devices. If `force_resync` is true, the data
-    /// is forcibly resynced before it is returned
-    virtual auto get_available_devices(bool force_resync = false) -> const devices_t& = 0;
 
     /// @brief Returns a currently playing state object. If `force_resync` is true, the data
     /// is forcibly resynced before it is returned
@@ -192,7 +211,12 @@ struct api_interface
     /// @brief Returns a fresh releases management interface: get, invalidate etc.
     virtual auto get_releases() -> recent_releases_interface* = 0;
 
+    /// @brief An interface for managing authentication cache
     virtual auto get_auth_cache() -> auth_cache_interface* = 0;
+
+    /// @brief An interface for managing devices cache
+    /// @param resync forces cache to get resynced beforehand
+    virtual auto get_devices_cache(bool resync = false) -> devices_cache_interface* = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-top-tracks
     virtual auto get_artist_top_tracks(const item_id_t &artist_id) -> std::vector<track_t> = 0;
@@ -241,6 +265,8 @@ struct api_interface
     /// @param item_id the id of the item the image belongs to (e.g. album id or artist id)
     virtual auto get_image(const image_t &image, const item_id_t &item_id) -> wstring = 0;
 
+    virtual auto get_lyrics(const track_t &) -> wstring = 0;
+
     // playback interface
 
     /// @brief Starts playback of a given `context_uri` context. If the `track_uri` is not empty,
@@ -250,7 +276,7 @@ struct api_interface
         int position_ms = 0, const item_id_t &device_id = "") = 0;
 
     /// @brief Stars playback of a given list of tracks, provided via spotify URIs
-    virtual void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") = 0;
+    virtual void start_playback(const std::vector<string> &uris, const string &track_uri = "", const item_id_t &device_id = "") = 0;
 
     /// @brief Starts playback of the given `album` from the given `track` if provided
     virtual void start_playback(const simplified_album_t &album, const simplified_track_t &track) = 0;
@@ -260,9 +286,6 @@ struct api_interface
 
     /// @brief Resumes suspended playback
     virtual void resume_playback(const item_id_t &device_id = "") = 0;
-
-    /// @brief Toggles playback state to the opposite one, depending on the current state: play/pause
-    virtual void toggle_playback(const item_id_t &device_id = "") = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/pause-a-users-playback
     virtual void pause_playback(const item_id_t &device_id = "") = 0;
@@ -285,9 +308,6 @@ struct api_interface
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/set-volume-for-users-playback
     virtual void set_playback_volume(int volume_percent, const item_id_t &device_id = "") = 0;
-
-    /// @brief https://developer.spotify.com/documentation/web-api/reference/transfer-a-users-playback
-    virtual void transfer_playback(const item_id_t &device_id, bool start_playing = false) = 0;
 //protected:
     /// @brief Performs an HTTP GET request
     /// @param cache_for caches the response for the given amount of time

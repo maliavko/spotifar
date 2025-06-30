@@ -10,13 +10,15 @@ bool playback_cache::is_active() const
 {
     // the cache is actively synchronized only when the user is authenticated and there are
     // playback observers
-    return api_proxy->is_authenticated();
+    if (auto auth = api_proxy->get_auth_cache())
+        return auth->is_authenticated();
+    return false;
 }
 
 clock_t::duration playback_cache::get_sync_interval() const
 {
     // every second, minus some gap for smoother synching
-    return utils::events::has_observers<playback_observer>() ? 950ms : 5s;
+    return utils::events::has_observers<playback_observer>() ? 1s : 5s;
 }
 
 void playback_cache::on_data_synced(const playback_state_t &data, const playback_state_t &prev_data)

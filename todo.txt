@@ -1,28 +1,30 @@
 refactor
-- investigate "market" fields for some API requests, for now completly
-- alternative compilers
+- investigate "market" fields for some API requests, for now completly unused
 - noexcept
 
 application ideas
-- small improvements
+- backlog, upcoming releases
+    - saving closed spotify playlists into your library locally
     - close plugin if another librespot device is being detected
-    - after launch there is no way to see the device is connected, not clear enough
-- new functional
-    - download music via https://github.com/spotDL/spotify-downloader
-    - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
-    - grab lyrics from here? https://lrclib.net/
-    - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
-    - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
+    - after two days of listening in a row, out of a sudden spotify started cutting http responses with 429 error for /player endpoint; stop/resume commands also did not work; to simulate the situation and rethink players behaviour
+    - make sure big collections which hit 429 during fetching are processed well
     - similar artists: https://www.music-map.com/
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
+    - filters menu, filtering by some items attributes on the panel, filtering albums by type e.g. (nust have)
+- nice to have
+    - download music via https://github.com/spotDL/spotify-downloader
+    - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
+    - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
+    - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
     - console commands support: export, flush caches, resync fresh releases
-    - it is not clear what to do when a copy or cut operation is called on the track or album etc.
 
 bugs
-- if playback is paused for a while, it losses the device, using hotkeys of watever to resume - hit the error; consider of forcibly using Librespot if possible
+- turn on/off audio backend hangs waiting
+- switchign devices sometimes causes json parsing errors
 
 to finish for alpha release
+- add gallery of schreenshots
 - check all the default view settings and sort modes
 + to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch

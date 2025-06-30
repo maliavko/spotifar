@@ -97,7 +97,7 @@ static void start_track_playback(api_weak_ptr_t api_proxy, const spotify::data_i
     if (const auto &track = static_cast<const spotify::track_t&>(item))
     {
         if (auto api = api_proxy.lock())
-            api->start_playback({ track.get_uri() });
+            api->start_playback(std::vector{ track.get_uri() });
     }
 }
 

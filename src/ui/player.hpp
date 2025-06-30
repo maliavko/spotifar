@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "spotify/observer_protocols.hpp"
 #include "controls.hpp"
-#include "playback_handler.hpp"
+#include "librespot.hpp"
 
 namespace spotifar { namespace ui {
 
@@ -13,12 +13,12 @@ using namespace spotify;
 class player:
     public playback_observer, // represent timely playback changes in UI
     public devices_observer, // to keep up to date the list of available devices
-    public playback_device_observer // to update the player visual when playback state is changed
+    public librespot_observer // to update the player visual when playback state is changed
 {
     friend struct dlg_events_supressor; // a helper to supress processing of the events
                                         // by dialog for some cases
 public:
-    player(api_weak_ptr_t api);
+    player(api_weak_ptr_t api, hotkeys_handler *hotkeys);
     ~player();
 
     bool show();
@@ -27,8 +27,6 @@ public:
     void tick();
 
     bool is_visible() const { return visible; }
-    bool is_expanded() const;
-    void expand(bool is_unfolded);
 
     // a set of public methods used globally 
     void on_seek_forward_btn_clicked();
@@ -73,10 +71,12 @@ protected:
     void update_playing_queue(bool is_visible);
 
     // librespot handlers
-    void on_running_state_changed(bool is_running) override;
+    void on_librespot_stopped(bool emergency) override;
 
-    // api even handlers
+    // devices cache handlers
     void on_devices_changed(const devices_t &devices) override;
+
+    // playback cache handlers
     void on_track_changed(const track_t &track, const track_t &prev_track) override;
     void on_track_progress_changed(int duration, int progress) override;
     void on_volume_changed(int volume) override;
@@ -87,12 +87,13 @@ protected:
     void on_permissions_changed(const actions_t &actions) override;
 
     // helpers
-    intptr_t set_control_text(int control_id, const wstring &text);
-    intptr_t set_control_enabled(int control_id, bool is_enabled);
+    auto set_control_text(int control_id, const wstring &text) -> intptr_t;
+    auto set_control_enabled(int control_id, bool is_enabled) -> intptr_t;
     bool is_control_enabled(int control_id);
-
 private:
     api_weak_ptr_t api_proxy;
+    hotkeys_handler *hotkeys;
+
     HANDLE hdlg;
     std::atomic<bool> visible = false;
     bool are_dlg_events_suppressed = true;

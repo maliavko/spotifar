@@ -24,6 +24,7 @@ namespace spotifar
         MSortColYear,
         MSortColRelease,
         MSortColArtist,
+        MSortColArtists,
         MSortColPopularity,
         MSortColAlbum,
         MSortColType,
@@ -117,6 +118,7 @@ namespace spotifar
         MCfgReleases,
         MCfgReleasesSyncStatus,
         MCfgReleasesStatusFinished,
+        MCfgReleasesStatusRunning,
         MCfgReleasesStatusLeft,
         MCfgReleasesNext,
         MCfgReleasesResyncBtn,
@@ -180,6 +182,24 @@ namespace spotifar
 		MPanelArtistTopTracks,
 		MPanelArtistTopTracksDescr,
 
+        // quick view
+        MQWDisclaimer,
+        MQWTrackName,
+        MQWArtistName,
+        MQWDuration,
+        MQWPopularity,
+        MQWExplicit,
+        MQWSaved,
+        MQWAlbumName,
+        MQWReleaseYear,
+        MQWReleaseType,
+        MQWLabelName,
+        MQWCopyrights,
+        MQWNoLyrics,
+        MQWLyricsDisclaimer,
+        MQWYes,
+        MQWNo,
+
         // player dialog
         MPlayerSourceLabel,
         MPlayerSourceCollection,
@@ -227,9 +247,11 @@ namespace spotifar
         MWaitingInitSpotify,
         MWaitingInitSyncWorker,
         MWaitingInitLibrespot,
+        MWaitingLibrespotDiscover,
         MWaitingFiniSpotify,
         MWaitingFiniSyncWorker,
         MWaitingFiniLibrespot,
+        MWaitingRequestLyrics,
     };
 }
 
