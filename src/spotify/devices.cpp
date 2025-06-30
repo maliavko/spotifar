@@ -9,6 +9,7 @@ using namespace utils;
 using utils::events::has_observers;
 using utils::far3::synchro_tasks::dispatch_event;
 
+//------------------------------------------------------------------------------------------------------
 static const device_t* find_device(const devices_t &devices, std::function<bool(const device_t&)> predicate)
 {
     const auto it = std::find_if(devices.begin(), devices.end(), predicate);
@@ -35,6 +36,7 @@ const devices_t& devices_cache::get_all() const
     return get();
 }
 
+//------------------------------------------------------------------------------------------------------
 void devices_cache::transfer_playback(const item_id_t &device_id, bool start_playing)
 {
     const auto &devices = get();
@@ -64,8 +66,11 @@ void devices_cache::transfer_playback(const item_id_t &device_id, bool start_pla
             auto requester = put_requester("/v1/me/player", body.str());
             if (requester.execute(api_proxy->get_ptr()))
             {
-                this->patch([dev_idx](auto &d) {
-                    json::Pointer(std::format("/{}/is_active", dev_idx)).Set(d, true);
+                // `dev_idx` - now active device index, `size` - number of all available devices
+                this->patch([dev_idx, size = get().size()](auto &d)
+                {
+                    for (size_t i = 0; i < size; i++)
+                        json::Pointer(std::format("/{}/is_active", dev_idx)).Set(d, i == dev_idx);
                 });
                 this->resync(true);
             }
