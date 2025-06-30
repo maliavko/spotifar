@@ -474,6 +474,12 @@ namespace far3
         /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_GETFARRECT
         auto get_far_rect() -> SMALL_RECT;
 
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_GETWINDOWCOUNT
+        auto get_windows_count() -> size_t;
+
+        /// @brief https://api.farmanager.com/ru/service_functions/advcontrol.html#ACTL_GETWINDOWINFO
+        auto get_window_info(size_t window_idx) -> std::shared_ptr<WindowInfo>;
+
         /// @brief Is Far window in focus or not
         bool is_wnd_in_focus();
     }

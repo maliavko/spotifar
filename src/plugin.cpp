@@ -137,10 +137,10 @@ void plugin::shutdown_sync_worker()
 
 void plugin::launch_librespot_process(const string &access_token)
 {
-    ui::show_waiting(MWaitingInitLibrespot);
-
     if (config::is_playback_backend_enabled())
     {
+        ui::show_waiting(MWaitingInitLibrespot);
+
         if (!librespot->start(access_token))
         {
             shutdown_librespot_process(); // cleaning up the allocated resources if any

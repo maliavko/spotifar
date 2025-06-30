@@ -20,7 +20,6 @@ application ideas
     - console commands support: export, flush caches, resync fresh releases
 
 bugs
-- turn on/off audio backend hangs waiting
 - switchign devices sometimes causes json parsing errors
 
 to finish for alpha release

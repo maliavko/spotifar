@@ -539,6 +539,44 @@ namespace far3
             config::ps_info.AdvControl(&MainGuid, ACTL_GETFARRECT, 0, &rect);
             return rect;
         }
+        
+        size_t get_windows_count()
+        {
+            return config::ps_info.AdvControl(&MainGuid, ACTL_GETWINDOWCOUNT, 0, NULL);
+        }
+        
+        std::shared_ptr<WindowInfo> get_window_info(size_t window_idx)
+        {
+            struct deleter
+            {
+                void operator()(WindowInfo *data)
+                {
+                    free(data->TypeName);
+                    free(data->Name);
+                }
+            };
+
+            auto winfo = std::shared_ptr<WindowInfo>(new WindowInfo{}, deleter());
+
+            winfo->StructSize = sizeof(WindowInfo);
+            winfo->Pos = window_idx;
+
+            winfo->TypeName = NULL;
+            winfo->Name = NULL;
+
+            // obtaining the Name and TypeName sizes
+            if (!config::ps_info.AdvControl(&MainGuid, ACTL_GETWINDOWINFO, 0, (void*)winfo.get()))
+                return nullptr;
+
+            winfo->TypeName = (wchar_t *)calloc(winfo->TypeNameSize, sizeof(wchar_t));
+            winfo->Name = (wchar_t *)calloc(winfo->NameSize, sizeof(wchar_t));
+
+            // requesting an actual data
+            if (!config::ps_info.AdvControl(&MainGuid, ACTL_GETWINDOWINFO, 0, (void*)winfo.get()))
+                return nullptr;
+
+            return winfo;
+        }
 
         bool is_wnd_in_focus()
         {
