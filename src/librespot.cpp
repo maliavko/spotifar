@@ -117,15 +117,6 @@ bool librespot::start(const string &access_token)
     return true;
 }
 
-void librespot::restart(const string &access_token)
-{
-    stop();
-
-    std::this_thread::sleep_for(1s);
-
-    start(access_token);
-}
-
 void librespot::stop(bool emergency)
 {
     if (!running) return;

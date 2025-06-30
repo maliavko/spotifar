@@ -12,7 +12,6 @@ class librespot:
 {
 public:
     bool start(const string &access_token);
-    void restart(const string &access_token);
     void stop(bool emergency = false);
 
     void tick();
