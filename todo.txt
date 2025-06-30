@@ -12,6 +12,7 @@ application ideas
     - similar artists: https://www.music-map.com/
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
+    - filters menu, filtering by some items attributes on the panel, filtering albums by type e.g. (nust have)
 - nice to have
     - download music via https://github.com/spotDL/spotify-downloader
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm

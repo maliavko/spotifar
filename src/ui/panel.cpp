@@ -291,7 +291,7 @@ intptr_t panel::process_input(const ProcessPanelInputInfo *info)
             {
                 // switch multiview
                 auto idx = key - VK_F5 - keys::mods::shift;
-                if (idx != mview_builders.settings->idx)
+                if (!mview_builders.is_empty() && idx != mview_builders.settings->idx)
                 {
                     if (auto builder = mview_builders.switch_builder(idx))
                         set_view(builder(this), view->get_return_callback());
