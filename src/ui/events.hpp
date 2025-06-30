@@ -69,7 +69,7 @@ using view_builder_t = std::function<view_ptr_t(HANDLE)>;
 
 struct multiview_builder_t
 {
-    enum : int
+    enum: int
     {
         default_idx = -1,
         artists_idx,
@@ -80,6 +80,11 @@ struct multiview_builder_t
 
     view_builder_t artists, albums, tracks, playlists;
     config::settings::multiview_t *settings;
+
+    bool is_empty() const
+    {
+        return !artists && !albums && !tracks && !playlists;
+    }
 
     void clear()
     {
