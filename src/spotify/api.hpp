@@ -50,7 +50,7 @@ public:
     // playback api interface
 
     void start_playback(const string &context_uri, const string &track_uri = "", int position_ms = 0, const item_id_t &device_id = "") override;
-    void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") override;
+    void start_playback(const std::vector<string> &uris, const string &track_uri = "", const item_id_t &device_id = "") override;
     void start_playback(const simplified_album_t &album, const simplified_track_t &track) override;
     void start_playback(const simplified_playlist_t &playlist, const simplified_track_t &track) override;
     void resume_playback(const item_id_t &device_id = "") override;
