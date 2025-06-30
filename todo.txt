@@ -1,27 +1,27 @@
 refactor
-- investigate "market" fields for some API requests, for now completly
-- alternative compilers
+- investigate "market" fields for some API requests, for now completly unused
 - noexcept
 
 application ideas
-- small improvements
+- backlog, upcoming releases
+    - saving closed spotify playlists into your library locally
     - close plugin if another librespot device is being detected
     - F8 in player to mark as liked
     - after two days of listening in a row, out of a sudden spotify started cutting http responses with 429 error for /player endpoint; stop/resume commands also did not work; to simulate the situation and rethink players behaviour
     - make sure big collections which hit 429 during fetching are processed well
-- new functional
+    - similar artists: https://www.music-map.com/
+    - playlists and collections management
+        - working with playlists through Use the snapshot_id to reduce amount of requests
+- nice to have
     - download music via https://github.com/spotDL/spotify-downloader
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
     - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
     - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
-    - similar artists: https://www.music-map.com/
-    - playlists and collections management
-        - working with playlists through Use the snapshot_id to reduce amount of requests
     - console commands support: export, flush caches, resync fresh releases
 
 bugs
-- changing track progress with arrow on the player dialog creates a visual bug, if we receive middle playback-state update: it shows choses track position, then old position, then applies finally and show chosen position again
 - turn on/off audio backend hangs waiting
+- switchign devices sometimes causes json parsing errors
 
 to finish for alpha release
 - add gallery of schreenshots
