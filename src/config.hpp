@@ -167,6 +167,9 @@ struct settings
     wstring plugin_startup_folder;
     wstring plugin_data_folder;
     search_dialog_t search_dialog;
+
+    // <playlist id, user name>
+    std::unordered_map<string, string> hidden_playlists;
 };
 
 struct config_observer: public BaseObserverProtocol
@@ -321,8 +324,13 @@ auto get_playback_initial_volume() -> size_t;
 /// @brief Whether to show Windows pop-up notification when the track is changed
 bool is_track_changed_notification_enabled();
 
-/// @brief THe image on the notifications will be squared or circled
+/// @brief The image on the notifications will be squared or circled
 bool is_notification_image_circled();
+
+/// @brief Returns a reference to saved hidden user playlists, this
+/// playlists are forbidden for saving by API, so this is the local storage
+/// @return std::unordered_map<playlist id, utf8 encoded name>&
+auto get_hidden_playlists() -> std::unordered_map<string, string>&;
 
 
 /// @brief An interface to the class, which provides functionality to write
