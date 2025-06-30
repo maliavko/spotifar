@@ -260,7 +260,7 @@ void api::start_playback(const string &context_uri, const string &track_uri,
     start_playback_base(body.str(), device_id);
 }
 
-void api::start_playback(const std::vector<string> &uris, const item_id_t &device_id)
+void api::start_playback(const std::vector<string> &uris, const string &track_uri, const item_id_t &device_id)
 {
     assert(uris.size() > 0);
 
@@ -269,6 +269,13 @@ void api::start_playback(const std::vector<string> &uris, const item_id_t &devic
     body.object([&]
     {
         body.insert("uris", uris);
+        if (!track_uri.empty())
+        {
+            body.object("offset", [&]
+            {
+                body.insert("uri", track_uri);
+            });
+        }
     });
 
     start_playback_base(body.str(), device_id);
@@ -591,8 +598,8 @@ wstring api::get_lyrics(const track_t &track)
     }
     else
     {
-        log::api->error("An error occured while downloading tyhe lyrics for the track: {}, url {}",
-            http::get_status_message(res), url);
+        log::api->error("An error occured while downloading tyhe lyrics for the track {}: {}, url {}",
+            track.id, http::get_status_message(res), url);
     }
     return L"";
 }

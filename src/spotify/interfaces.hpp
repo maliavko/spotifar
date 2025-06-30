@@ -276,7 +276,7 @@ struct api_interface
         int position_ms = 0, const item_id_t &device_id = "") = 0;
 
     /// @brief Stars playback of a given list of tracks, provided via spotify URIs
-    virtual void start_playback(const std::vector<string> &uris, const item_id_t &device_id = "") = 0;
+    virtual void start_playback(const std::vector<string> &uris, const string &track_uri = "", const item_id_t &device_id = "") = 0;
 
     /// @brief Starts playback of the given `album` from the given `track` if provided
     virtual void start_playback(const simplified_album_t &album, const simplified_track_t &track) = 0;
