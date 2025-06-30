@@ -95,8 +95,9 @@ void plugin::launch_sync_worker()
 
     std::packaged_task<void()> task([this]
     {
-        try
-        {
+        // TODO: temporarily commented for catching flanky bug under debugger
+        // try
+        // {
             std::lock_guard worker_lock(sync_worker_mutex);
             clock_t::time_point last_tick = clock_t::now();
 
@@ -116,14 +117,14 @@ void plugin::launch_sync_worker()
                 std::this_thread::sleep_for(50ms);
                 last_tick = now;
             }
-        }
-        catch (const std::exception &ex)
-        {
-            far3::synchro_tasks::push([ex] {
-                far3::show_far_error_dlg(MErrorSyncThreadFailed, to_wstring(ex.what()));
-                ui::events::quit();
-            }, "synch thread, show error dialog task");
-        }
+        // }
+        // catch (const std::exception &ex)
+        // {
+        //     far3::synchro_tasks::push([ex] {
+        //         far3::show_far_error_dlg(MErrorSyncThreadFailed, to_wstring(ex.what()));
+        //         ui::events::quit();
+        //     }, "sync thread, show error dialog task");
+        // }
     });
 
     is_worker_listening = true;
@@ -188,10 +189,12 @@ void plugin::on_playback_backend_setting_changed(bool is_enabled)
 
 void plugin::on_playback_backend_configuration_changed()
 {
-    log::global->debug("on_playback_backend_configuration_changed");
-    
+    shutdown_librespot_process();
+
+    std::this_thread::sleep_for(1s);
+
     if (const auto &auth_cache = api->get_auth_cache())
-        librespot->restart(auth_cache->get_access_token());
+        launch_librespot_process(auth_cache->get_access_token());
 }
 
 void plugin::on_auth_status_changed(const spotify::auth_t &auth, bool is_renewal)

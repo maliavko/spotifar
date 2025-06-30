@@ -68,7 +68,8 @@ static const wchar_t
     *playback_volume_ctrl_opt = L"PlaybackVolumeCtrl",
     *playback_initial_volume_opt = L"PlaybackInitialVolume",
     *track_changed_notification_enabled_opt = L"TrackChangedNotificationEnabled",
-    *is_circled_notification_image_opt = L"IsNotificationImageCircled";
+    *is_circled_notification_image_opt = L"IsNotificationImageCircled",
+    *hidden_playlists_opt = L"HiddenPlaylists";
 
 // vector index is the migration version, values are the list of the config
 // keys to be removed from it
@@ -373,6 +374,7 @@ void read(const PluginStartupInfo *info)
     if (!mviews_json.empty())
         json::parse_to(mviews_json, _settings.mviews);
     
+    // search dialog last checkt controls
     auto search_dialog_json = ctx->get_str(search_dialog_settings_opt, "");
     if (!search_dialog_json.empty())
         json::parse_to(search_dialog_json, _settings.search_dialog);
@@ -386,6 +388,11 @@ void read(const PluginStartupInfo *info)
         _settings.hotkeys[hotkey_id] = std::make_pair(HIWORD(key_and_mods), LOWORD(key_and_mods));
     }
 
+    // saved spotify hidden playlists
+    auto hidden_playlists_json = ctx->get_str(hidden_playlists_opt, "");
+    if (!hidden_playlists_json.empty())
+        json::parse_to(hidden_playlists_json, _settings.hidden_playlists);
+    
     // complimentary config data
     _settings.plugin_startup_folder = get_plugin_launch_folder(info);
     _settings.plugin_data_folder = get_user_app_data_folder();
@@ -436,6 +443,10 @@ void write()
     ctx->set_bool(activate_global_hotkeys_opt, _settings.is_global_hotkeys_enabled);
     for (const auto &[key, p]: _settings.hotkeys)
         ctx->set_int64(get_hotkey_node_name(key), MAKELONG(p.second, p.first));
+
+    // saved spotify hidden playlists
+    auto hidden_playlists_buffer = json::dump(_settings.hidden_playlists);
+    ctx->set_str(hidden_playlists_opt, hidden_playlists_buffer->GetString());
 }
 
 void cleanup()
@@ -561,6 +572,11 @@ bool is_track_changed_notification_enabled()
 bool is_notification_image_circled()
 {
     return _settings.is_circled_notification_image;
+}
+
+std::unordered_map<string, string>& get_hidden_playlists()
+{
+    return _settings.hidden_playlists;
 }
 
 } // namespace config
