@@ -265,7 +265,7 @@ struct api_interface
     /// @param item_id the id of the item the image belongs to (e.g. album id or artist id)
     virtual auto get_image(const image_t &image, const item_id_t &item_id) -> wstring = 0;
 
-    virtual auto get_lyrics(const track_t &) -> wstring = 0;
+    virtual auto get_lyrics(const track_t &) -> string = 0;
 
     // playback interface
 

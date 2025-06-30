@@ -187,7 +187,7 @@ wstring tracks_base_view::get_quick_item_info(const data_item_t *data)
         if (const auto &lyrics = api->get_lyrics(*track); lyrics.empty())
             oss << "  " << get_text(MQWNoLyrics) << endl;
         else
-            oss << "  " << get_text(MQWLyricsDisclaimer) << endl << endl << lyrics << endl;
+            oss << "  " << get_text(MQWLyricsDisclaimer) << endl << endl << utils::utf8_decode(lyrics) << endl;
         
         return oss.str();
     }

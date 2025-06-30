@@ -522,14 +522,14 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
     return filepath;
 }
 
-wstring api::get_lyrics(const track_t &track)
+string api::get_lyrics(const track_t &track)
 {
     static const wstring cache_folder = std::format(L"{}\\lyrics", config::get_plugin_data_folder());
 
     if (!track)
     {
         log::global->warn("Could not retrieve lyrics, the given track is invalid");
-        return L"";
+        return "";
     }
 
     if (!fs::exists(cache_folder))
@@ -545,8 +545,8 @@ wstring api::get_lyrics(const track_t &track)
     
     if (fs::exists(filepath))
     {
-        if (auto ifs = std::wifstream(filepath))
-            return wstring(std::istreambuf_iterator<wchar_t>(ifs), std::istreambuf_iterator<wchar_t>());
+        if (auto ifs = std::ifstream(filepath))
+            return string(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
     }
 
     httplib::Client client("https://lrclib.net");
@@ -577,9 +577,9 @@ wstring api::get_lyrics(const track_t &track)
 
             if (!lyrics_node.IsNull())
             {
-                auto lyrics = utils::utf8_decode(lyrics_node.GetString());
+                auto lyrics = lyrics_node.GetString();
 
-                if (std::wofstream file(filepath); file.good())
+                if (std::ofstream file(filepath); file.good())
                 {
                     file << lyrics;
                 }
@@ -601,7 +601,7 @@ wstring api::get_lyrics(const track_t &track)
         log::api->error("An error occured while downloading tyhe lyrics for the track {}: {}, url {}",
             track.id, http::get_status_message(res), url);
     }
-    return L"";
+    return "";
 }
 
 bool api::is_request_cached(const string &url) const
