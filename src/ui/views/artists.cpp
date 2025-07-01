@@ -16,6 +16,23 @@ static wstring format_followers(uintmax_t followers)
     return utils::to_wstring(utils::format_number(followers, 1000, " KMGTPE", 100.));
 }
 
+static std::vector<string> get_album_types_filters()
+{
+    std::vector<string> groups;
+    
+    auto filters = config::get_filters_settings();
+    if (filters.albums_lps)
+        groups.push_back("album");
+    if (filters.albums_eps)
+        groups.push_back("single");
+    if (filters.albums_appears_on)
+        groups.push_back("appears_on");
+    if (filters.albums_compilations)
+        groups.push_back("compilation");
+
+    return groups;
+}
+
 //-----------------------------------------------------------------------------------------------------------
 artists_base_view::artists_base_view(HANDLE panel, api_weak_ptr_t api, const wstring &title, const wstring &dir_name):
     view(panel, title, dir_name), api_proxy(api)
@@ -42,7 +59,7 @@ const items_t& artists_base_view::get_items()
         
         if (auto api = api_proxy.lock())
         {
-            auto albums = api->get_artist_albums(artist.id);
+            auto albums = api->get_artist_albums(artist.id, get_album_types_filters());
 
             total_albums_str = std::to_wstring(albums->peek_total());
             is_followed = api->get_library()->is_artist_followed(artist.id);
@@ -91,7 +108,7 @@ bool artists_base_view::request_extra_info(const data_item_t *data)
 {
     if (data != nullptr && !api_proxy.expired())
     {
-        api_proxy.lock()->get_artist_albums(data->id)->get_total();
+        api_proxy.lock()->get_artist_albums(data->id, get_album_types_filters())->get_total();
         return true;
     }
     return false;

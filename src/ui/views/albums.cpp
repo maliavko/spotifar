@@ -1,6 +1,7 @@
 #include "albums.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
+#include "ui/dialogs/filters/albums.hpp"
 #include "spotify/requesters.hpp"
 
 namespace spotifar { namespace ui {
@@ -123,6 +124,12 @@ const panel_modes_t* albums_base_view::get_panel_modes() const
     };
     
     return &modes;
+}
+
+void albums_base_view::show_filters_dialog()
+{
+    if (does_support_filtering())
+        filters::albums_filters_dialog().run();
 }
 
 const sort_modes_t& albums_base_view::get_sort_modes() const
@@ -332,12 +339,18 @@ void albums_base_view::on_albums_statuses_received(const item_ids_t &ids)
         events::refresh_panel(get_panel_handle());
 }
 
-
 //-----------------------------------------------------------------------------------------------------------
 artist_albums_view::artist_albums_view(HANDLE panel, api_weak_ptr_t api, const artist_t &a):
     albums_base_view(panel, api, a.name, a.name), artist(a)
 {
     rebuild_items();
+    utils::events::start_listening<config::config_observer>(this);
+}
+
+artist_albums_view::~artist_albums_view()
+{
+    utils::events::stop_listening<config::config_observer>(this);
+    albums.clear();
 }
 
 config::settings::view_t artist_albums_view::get_default_settings() const
@@ -393,19 +406,38 @@ void artist_albums_view::show_tracks_view(const album_t &album) const
         });
 }
 
+void artist_albums_view::on_album_filters_changed(bool lps, bool eps, bool appears_on, bool comp)
+{
+    rebuild_items();
+    events::refresh_panel(get_panel_handle());
+}
+
 void artist_albums_view::rebuild_items()
 {
     albums.clear();
 
+    std::vector<string> groups;
+    
+    auto filters = config::get_filters_settings();
+    if (filters.albums_lps)
+        groups.push_back("album");
+    if (filters.albums_eps)
+        groups.push_back("single");
+    if (filters.albums_appears_on)
+        groups.push_back("appears_on");
+    if (filters.albums_compilations)
+        groups.push_back("compilation");
+
     if (auto api = api_proxy.lock())
     {
-        if (const auto &simple_albums = api->get_artist_albums(artist.id); simple_albums->fetch())
+        if (const auto &simple_albums = api->get_artist_albums(artist.id, groups); simple_albums->fetch())
         {
             item_ids_t ids;
             std::transform(simple_albums->begin(), simple_albums->end(), back_inserter(ids),
                 [](const auto &a) { return a.id; });
 
-            albums = api->get_albums(ids);
+            if (ids.size() > 0)
+                albums = api->get_albums(ids);
         }
     }
 }

@@ -69,7 +69,8 @@ static const wchar_t
     *playback_initial_volume_opt = L"PlaybackInitialVolume",
     *track_changed_notification_enabled_opt = L"TrackChangedNotificationEnabled",
     *is_circled_notification_image_opt = L"IsNotificationImageCircled",
-    *hidden_playlists_opt = L"HiddenPlaylists";
+    *hidden_playlists_opt = L"HiddenPlaylists",
+    *view_filters_opt = L"ViewSettings";
 
 // vector index is the migration version, values are the list of the config
 // keys to be removed from it
@@ -79,6 +80,7 @@ static const std::vector<std::vector<const wchar_t*>> migrations =
     { L"AccessToken", L"AccessTokenTime" },
     { L"AccessToken", L"AccessTokenTime" },
     { L"PlayHistory", L"PlayHistoryTime" }, // added `external_urls` field to the API items
+    { view_filters_opt, }
 };
 
 PluginStartupInfo ps_info;
@@ -148,6 +150,24 @@ void to_json(json::Value &result, const settings::search_dialog_t &v, json::Allo
     result.AddMember("is_playlists", json::Value(v.is_playlists), allocator);
 }
 
+void from_json(const json::Value &j, settings::filters_t &f)
+{
+    f.albums_lps = j["albums_lps"].GetBool();
+    f.albums_eps = j["albums_eps"].GetBool();
+    f.albums_appears_on = j["albums_appears_on"].GetBool();
+    f.albums_compilations = j["albums_compilations"].GetBool();
+}
+
+void to_json(json::Value &result, const settings::filters_t &f, json::Allocator &allocator)
+{
+    result = json::Value(json::kObjectType);
+
+    result.AddMember("albums_lps", json::Value(f.albums_lps), allocator);
+    result.AddMember("albums_eps", json::Value(f.albums_eps), allocator);
+    result.AddMember("albums_appears_on", json::Value(f.albums_appears_on), allocator);
+    result.AddMember("albums_compilations", json::Value(f.albums_compilations), allocator);
+}
+
 settings_context::settings_context(const wstring &subkey):
     ps(MainGuid, ps_info.SettingsControl), settings_copy(_settings), subkey_path(subkey)
 {
@@ -198,6 +218,16 @@ void settings_context::fire_events()
         (_settings.playback_initial_volume != settings_copy.playback_initial_volume)
     )
         dispatch_event(&config_observer::on_playback_backend_configuration_changed);
+
+    if (
+        (_settings.filters.albums_lps != settings_copy.filters.albums_lps) ||
+        (_settings.filters.albums_eps != settings_copy.filters.albums_eps) ||
+        (_settings.filters.albums_appears_on != settings_copy.filters.albums_appears_on) ||
+        (_settings.filters.albums_compilations != settings_copy.filters.albums_compilations)
+    )
+        dispatch_event(&config_observer::on_album_filters_changed,
+            _settings.filters.albums_lps, _settings.filters.albums_eps,
+            _settings.filters.albums_appears_on, _settings.filters.albums_compilations);
 
     settings_copy = _settings;
 }
@@ -392,6 +422,11 @@ void read(const PluginStartupInfo *info)
     auto hidden_playlists_json = ctx->get_str(hidden_playlists_opt, "");
     if (!hidden_playlists_json.empty())
         json::parse_to(hidden_playlists_json, _settings.hidden_playlists);
+
+    // view filters
+    auto filters_json = ctx->get_str(view_filters_opt, "");
+    if (!filters_json.empty())
+        json::parse_to(filters_json, _settings.filters);
     
     // complimentary config data
     _settings.plugin_startup_folder = get_plugin_launch_folder(info);
@@ -447,6 +482,10 @@ void write()
     // saved spotify hidden playlists
     auto hidden_playlists_buffer = json::dump(_settings.hidden_playlists);
     ctx->set_str(hidden_playlists_opt, hidden_playlists_buffer->GetString());
+
+    // view filters
+    auto filters_buffer = json::dump(_settings.filters);
+    ctx->set_str(view_filters_opt, filters_buffer->GetString());
 }
 
 void cleanup()
@@ -577,6 +616,11 @@ bool is_notification_image_circled()
 std::unordered_map<string, string>& get_hidden_playlists()
 {
     return _settings.hidden_playlists;
+}
+
+const settings::filters_t& get_filters_settings()
+{
+    return _settings.filters;
 }
 
 } // namespace config

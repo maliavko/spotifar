@@ -136,6 +136,13 @@ namespace spotifar
         MSearchResultsTitle,
         MSearchResultsNewBtn,
 
+        // albums filters
+        MFiltersAlbumsTitle,
+        MFiltersAlbums,
+        MFiltersSingles,
+        MFiltersAppearsOn,
+        MFiltersCompilations,
+
         // panels & ui
         MPanelCollection,
         MPanelCollectionDescr,
