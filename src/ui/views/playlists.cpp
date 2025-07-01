@@ -274,11 +274,7 @@ std::generator<const simplified_playlist_t&> saved_playlists_view::get_playlists
 
     hidden_playlists.clear();
     for (const auto &[pid, pname]: config::get_hidden_playlists())
-        hidden_playlists.push_back({
-            { pid },
-            utils::utf8_decode(pname),
-            true,
-        });
+        hidden_playlists.push_back(simplified_playlist_t::make_hidden(pid, utils::utf8_decode(pname)));
     
     if (collection)
         for (const auto &p: *collection) co_yield p;
