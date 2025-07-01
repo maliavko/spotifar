@@ -577,6 +577,37 @@ namespace json
         }
     }
 
+    /// @brief unordered_set support for rapidjson parse/pack
+    /// @note the vector's type T should support packing as well
+    template<class T>
+    void from_json(const Value &j, std::unordered_set<T> &result)
+    {
+        result.clear();
+
+        for (SizeType i = 0; i < j.Size(); i++)
+            if (!j[i].IsNull())
+            {
+                T value;
+                from_json(j[i], value);
+
+                result.insert(value);
+            }
+    }
+
+    template<class T>
+    void to_json(Value &result, const std::unordered_set<T> &data, Allocator &allocator)
+    {
+        result = Value(kArrayType);
+
+        for (const auto &item: data)
+        {
+            Value value;
+            to_json(value, item, allocator);
+
+            result.PushBack(value, allocator);
+        }
+    }
+
     /// @brief deque support for rapidjson parse/pack
     /// @note the vector's type T should support packing as well
     template<class T>

@@ -26,6 +26,7 @@ protected:
     virtual auto get_albums() -> std::generator<const album_t&> = 0;
     virtual void show_tracks_view(const album_t &album) const = 0;
     virtual auto get_extra_columns(const album_t&) const -> std::vector<wstring> { return {}; }
+    virtual bool does_support_filtering() const { return false; }
 
     // view interface
     auto get_sort_modes() const -> const sort_modes_t& override;
@@ -35,6 +36,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
     auto get_key_bar_info() -> const key_bar_info_t* override;
     auto get_panel_modes() const -> const panel_modes_t* override;
+    void show_filters_dialog() override;
 
     // collection_observer
     void on_albums_statuses_changed(const item_ids_t &ids) override;
@@ -46,11 +48,13 @@ protected:
 
 
 /// @brief A class-view, representing the list of albums of a given `artist`
-class artist_albums_view: public albums_base_view
+class artist_albums_view:
+    public albums_base_view,
+    public config::config_observer
 {
 public:
     artist_albums_view(HANDLE panel, api_weak_ptr_t api, const artist_t &artist);
-    ~artist_albums_view() { albums.clear(); }
+    ~artist_albums_view();
 protected:
     void rebuild_items();
 
@@ -61,6 +65,10 @@ protected:
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
+    bool does_support_filtering() const override { return true; }
+
+    // config_observer
+    void on_album_filters_changed(bool lps, bool eps, bool appears_on, bool comp) override;
 private:
     artist_t artist;
     std::vector<album_t> albums;
