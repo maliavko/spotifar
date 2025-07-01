@@ -217,6 +217,7 @@ struct simplified_playlist_t: public data_item_t
 
     static string make_uri(const item_id_t &id) { return make_item_uri("playlist", id); }
     static const string& get_fields_filter();
+    static simplified_playlist_t make_hidden(const item_id_t &id, const wstring &name);
 
     inline string get_uri() const { return make_uri(id); }
     

@@ -212,6 +212,8 @@ namespace spotifar
         MArtistUnknown,
         MGenreUnknown,
         MCopyrightUnknown,
+        MSpotifyOwner,
+        MSpotifyDescr,
 
         // warnings & errors
         MFarMessageWarningTitle,
