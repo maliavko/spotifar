@@ -5,6 +5,7 @@
 namespace spotifar { namespace spotify {
 
 using namespace utils::json;
+using utils::far3::get_text;
 
 string make_item_uri(const string &item_type_name, const string &id)
 {
@@ -121,7 +122,7 @@ wstring artist_t::get_main_genre() const
 {
     if (genres.size() > 0)
         return utils::to_wstring(genres[0]);
-    return utils::far3::get_text(MGenreUnknown);
+    return get_text(MGenreUnknown);
 }
 
 string simplified_album_t::get_release_year() const
@@ -227,7 +228,7 @@ copyrights_t album_t::get_main_copyright() const
 {
     if (copyrights.size() > 0)
         return copyrights[0];
-    return { "C", utils::far3::get_text(MCopyrightUnknown) };
+    return { "C", get_text(MCopyrightUnknown) };
 }
 
 void from_json(const Value &j, album_t &a)
@@ -434,6 +435,23 @@ const string& simplified_playlist_t::get_fields_filter()
     static string fields = std::format("id,href,name,collaborative,public,description,"
         "tracks(total),owner(display_name),snapshot_id,external_urls");
     return fields;
+}
+
+simplified_playlist_t simplified_playlist_t::make_hidden(const item_id_t &id, const wstring &name)
+{
+    return {
+        { id },
+        name,
+        true,   // is hidden
+        "",     // href
+        "",     // snapshot id
+        get_text(MSpotifyOwner), // user name
+        false,      // is collaborative
+        false,      // is public
+        get_text(MSpotifyDescr),
+        0,      // total tracks
+        { "", } // urls
+    };
 }
 
 const string& playlist_t::get_fields_filter()
