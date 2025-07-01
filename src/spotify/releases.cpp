@@ -85,7 +85,7 @@ void recent_releases::queue_artists(const item_ids_t &ids)
             // could have been removed from collection, so skipping it quickly
             if (!api_proxy->get_library()->is_artist_followed(artist_id)) return;
 
-            auto albums = api_proxy->get_artist_albums(artist_id, { "album", "single", "appears_on", "compilation" });
+            auto albums = api_proxy->get_artist_albums(artist_id, { "album", "single", /*"appears_on", "compilation"*/ });
             bool is_cached = albums->is_cached();
                             
             dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
