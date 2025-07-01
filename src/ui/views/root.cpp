@@ -141,11 +141,6 @@ root_view::root_view(HANDLE panel, api_weak_ptr_t api):
             [api] { show_browse(api); },
         },
         {
-            { recently_played_id },
-            MPanelRecents, MPanelRecentsDescr,
-            [api] { show_recents(api); },
-        },
-        {
             { playing_queue_id },
             MPanelPlayingQueue, MPanelPlayingQueueDescr,
             [api] { show_playing_queue(api); },
@@ -167,6 +162,11 @@ browse_view::browse_view(HANDLE panel, api_weak_ptr_t api):
             { recently_saved_id },
             MPanelRecentlySaved, MPanelRecentlySavedDescr,
             [api] { show_recently_saved(api); },
+        },
+        {
+            { recently_played_id },
+            MPanelRecents, MPanelRecentsDescr,
+            [api] { show_recents(api); },
         },
         {
             { user_top_items_id },

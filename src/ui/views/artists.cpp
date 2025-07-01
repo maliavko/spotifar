@@ -61,7 +61,8 @@ const items_t& artists_base_view::get_items()
         {
             auto albums = api->get_artist_albums(artist.id, get_album_types_filters());
 
-            total_albums_str = std::to_wstring(albums->peek_total());
+            auto albums_count = albums->peek_total();
+            total_albums_str = albums_count > 0 ? std::to_wstring(albums_count) : L"";
             is_followed = api->get_library()->is_artist_followed(artist.id);
         }
 
