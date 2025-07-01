@@ -76,7 +76,7 @@ void show_recents(api_weak_ptr_t api, int page_idx)
             .playlists = get_builder<recent_playlists_view>(api),
             .settings = settings
         },
-        [api] { show_root(api); }
+        [api] { show_browse(api); }
     );
 }
 
