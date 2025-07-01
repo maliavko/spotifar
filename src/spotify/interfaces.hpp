@@ -228,7 +228,8 @@ struct api_interface
     virtual auto get_artists(const item_ids_t &ids) -> std::vector<artist_t> = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-artists-albums
-    virtual auto get_artist_albums(const item_id_t &artist_id) -> artist_albums_ptr = 0;
+    /// @param groups vector of strings [album, single, appears_on, compilation]
+    virtual auto get_artist_albums(const item_id_t &artist_id, const std::vector<string> &groups) -> artist_albums_ptr = 0;
 
     /// @brief https://developer.spotify.com/documentation/web-api/reference/get-an-album
     virtual auto get_album(const item_id_t &album_id) -> album_t = 0;
