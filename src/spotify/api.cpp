@@ -598,7 +598,7 @@ string api::get_lyrics(const track_t &track)
     }
     else
     {
-        log::api->error("An error occured while downloading tyhe lyrics for the track {}: {}, url {}",
+        log::api->error("An error occured while downloading the lyrics for the track {}: {}, url {}",
             track.id, http::get_status_message(res), url);
     }
     return "";
