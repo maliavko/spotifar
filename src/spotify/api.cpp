@@ -151,12 +151,12 @@ std::vector<artist_t> api::get_artists(const item_ids_t &ids)
         "/v1/artists", ids, 50, "artists"), get_ptr());
 }
 
-artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id)
+artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id, const std::vector<string> &groups)
 {
     return artist_albums_ptr(new artist_albums_t(
         get_ptr(),
         std::format("/v1/artists/{}/albums", artist_id), {
-            { "include_groups", "album,single" }
+            { "include_groups", utils::string_join(groups, ",") }
         }
     ));
 }

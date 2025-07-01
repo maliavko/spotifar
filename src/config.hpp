@@ -132,6 +132,17 @@ struct settings
         friend void to_json(json::Value &j, const search_dialog_t &v, json::Allocator &allocator);
     };
 
+    struct filters_t
+    {
+        bool albums_lps = true;
+        bool albums_eps = true;
+        bool albums_appears_on = true;
+        bool albums_compilations = true;
+        
+        friend void from_json(const json::Value &j, filters_t &f);
+        friend void to_json(json::Value &j, const filters_t &f, json::Allocator &allocator);
+    };
+
     // general settings
     bool add_to_disk_menu;
     bool verbose_logging;
@@ -167,7 +178,7 @@ struct settings
     wstring plugin_startup_folder;
     wstring plugin_data_folder;
     search_dialog_t search_dialog;
-
+    filters_t filters;
     // <playlist id, user name>
     std::unordered_map<string, string> hidden_playlists;
 };
@@ -188,6 +199,9 @@ struct config_observer: public BaseObserverProtocol
 
     /// @brief The event is called when any of the backend configuration has changed
     virtual void on_playback_backend_configuration_changed() {}
+
+    /// @brief The event is called when the albums filtes have been changed
+    virtual void on_album_filters_changed(bool lps, bool eps, bool appears_on, bool comp) {}
 };
 
 class settings_context
@@ -331,6 +345,9 @@ bool is_notification_image_circled();
 /// playlists are forbidden for saving by API, so this is the local storage
 /// @return std::unordered_map<playlist id, utf8 encoded name>&
 auto get_hidden_playlists() -> std::unordered_map<string, string>&;
+
+/// @brief Returns view filters settings
+auto get_filters_settings() -> const settings::filters_t&;
 
 
 /// @brief An interface to the class, which provides functionality to write
