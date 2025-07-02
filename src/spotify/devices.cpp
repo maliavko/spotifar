@@ -84,7 +84,7 @@ bool devices_cache::is_active() const
     // the cache is actively synchronized only when the user is authenticated and there are
     // playback observers
     if (auto auth = api_proxy->get_auth_cache())
-        return auth->is_authenticated() && has_observers<devices_observer>();
+        return auth->is_authenticated() && (has_observers<devices_observer>() || is_first_sync);
     return false;
 }
 
@@ -108,6 +108,9 @@ void devices_cache::on_data_synced(const devices_t &data, const devices_t &prev_
 
 bool devices_cache::request_data(devices_t &data)
 {
+    if (is_first_sync)
+        is_first_sync = false;
+    
     auto r = item_requester<devices_t>("/v1/me/player/devices", {}, "devices");
     if (r.execute(api_proxy->get_ptr()))
     {

@@ -117,7 +117,7 @@ const panel_modes_t* tracks_base_view::get_panel_modes() const
         IsExplicit  { L"C0",    get_text(MSortColExplicit),     L"3" },
         Duration    { L"C1",    get_text(MSortColDuration),     L"7" },
         Year        { L"C2",    get_text(MSortColYear),         L"6" },
-        Artist      { L"C3",    get_text(MSortColArtist),       L"30" },
+        Artist      { L"C3",    get_text(MSortColArtist),       L"20" },
         Popularity  { L"C4",    get_text(MSortColPopularity),   L"5" },
         Album       { L"C5",    get_text(MSortColAlbum),        L"30" },
         Type        { L"C6",    get_text(MSortColType),         L"6" },
@@ -496,8 +496,8 @@ void album_tracks_view::rebuild_items()
 
 config::settings::view_t album_tracks_view::get_default_settings() const
 {
-    // sort mode - by `Track number`; ascending; view mode - F3
-    return { 7, false, 3 };
+    // sort mode - by Track number; ascending; view mode - F3
+    return { 6, false, 3 };
 }
 
 const sort_modes_t& album_tracks_view::get_sort_modes() const
@@ -601,7 +601,8 @@ recent_tracks_view::~recent_tracks_view()
 
 config::settings::view_t recent_tracks_view::get_default_settings() const
 {
-    return { 0, false, 3 };
+    // sort mode - by Played At; descending; view mode - F4 (with artist's name)
+    return { 6, true, 4 };
 }
 
 const sort_modes_t& recent_tracks_view::get_sort_modes() const
@@ -736,8 +737,8 @@ bool saved_tracks_view::repopulate()
 
 config::settings::view_t saved_tracks_view::get_default_settings() const
 {
-    // sort mode - by Release year; descending; view mode - F3
-    return { 0, true, 3 };
+    // sort mode - by Saved At; descending; view mode - 4 (with artist's name)
+    return { 6, true, 4 };
 }
 
 const sort_modes_t& saved_tracks_view::get_sort_modes() const
@@ -823,8 +824,8 @@ playing_queue_view::~playing_queue_view()
 
 config::settings::view_t playing_queue_view::get_default_settings() const
 {
-    // sort mode - Unsorted; ascending; view mode - F7
-    return { 1, false, 7 };
+    // sort mode - Unsorted; ascending; view mode - 6 (with artist's name and duration)
+    return { 0, false, 6 };
 }
 
 bool playing_queue_view::start_playback(const track_t &track)
@@ -906,7 +907,8 @@ recently_liked_tracks_view::~recently_liked_tracks_view()
 
 config::settings::view_t recently_liked_tracks_view::get_default_settings() const
 {
-    return { 0, false, 3 };
+    // sort mode - by Saved At; descending; view mode - 4 (with artist's name)
+    return { 6, true, 4 };
 }
 
 bool recently_liked_tracks_view::start_playback(const track_t &track)
@@ -970,7 +972,8 @@ user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_prox
 
 config::settings::view_t user_top_tracks_view::get_default_settings() const
 {
-    return { 0, false, 1 };
+    // sort mode - Unsorted; ascending; view mode - 4 (with artist's name)
+    return { 0, false, 4 };
 }
 
 const sort_modes_t& user_top_tracks_view::get_sort_modes() const
@@ -1028,7 +1031,8 @@ artist_top_tracks_view::~artist_top_tracks_view()
 
 config::settings::view_t artist_top_tracks_view::get_default_settings() const
 {
-    return { 5, false, 7 };
+    // sort mode - Unsorted; ascending; view mode - 3
+    return { 5, false, 3 };
 }
 
 const sort_modes_t& artist_top_tracks_view::get_sort_modes() const
@@ -1099,7 +1103,8 @@ playlist_view::~playlist_view()
 
 config::settings::view_t playlist_view::get_default_settings() const
 {
-    return { 0, true, 3 };
+    // sort mode - Unsorted; ascending; view mode - 4 (with artist's name)
+    return { 7, false, 4 };
 }
 
 const sort_modes_t& playlist_view::get_sort_modes() const
@@ -1108,7 +1113,8 @@ const sort_modes_t& playlist_view::get_sort_modes() const
     if (!modes.size())
     {
         modes = tracks_base_view::get_sort_modes();
-        modes.push_back({ get_text(MSortBarAddedAt), SM_MTIME, { VK_F9, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarAddedAt),    SM_MTIME,       { VK_F9, LEFT_CTRL_PRESSED } });
+        modes.push_back({ get_text(MSortBarUnsorted),   SM_UNSORTED,    { VK_F10, LEFT_CTRL_PRESSED } });
     }
     return modes;
 }

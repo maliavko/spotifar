@@ -31,6 +31,7 @@ protected:
 
 private:
     api_interface *api_proxy;
+    std::atomic<bool> is_first_sync = true;
 };
 
 } // namespace spotify
