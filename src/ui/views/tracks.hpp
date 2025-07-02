@@ -11,6 +11,9 @@ namespace spotifar { namespace ui {
 
 using namespace spotify;
 
+/// @brief A base class for all the views, representing tracks list in
+/// either way. Supports save/remove to/from collection functionality,
+/// refreshing panels and Quick View page with the track basic info, including lyrics
 class tracks_base_view:
     public view,
     public collection_observer
@@ -164,7 +167,7 @@ protected:
 };
 
 
-/// @brief
+/// @brief Recently liked tracks view
 class recently_liked_tracks_view:
     public tracks_base_view,
     public playback_observer
@@ -189,7 +192,8 @@ private:
 };
 
 
-/// @brief
+/// @brief User top tracks view. The list of tracks are taken
+/// directly from Spotify service
 class user_top_tracks_view:
     public tracks_base_view,
     public playback_observer
@@ -212,7 +216,7 @@ private:
 };
 
 
-/// @brief
+/// @brief Artist's top tracks
 class artist_top_tracks_view:
     public tracks_base_view,
     public playback_observer
@@ -237,7 +241,7 @@ private:
 };
 
 
-/// @brief
+/// @brief Playlist's tracks view
 class playlist_view:
     public tracks_base_view,
     public playback_observer
