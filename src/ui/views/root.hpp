@@ -47,9 +47,9 @@ class root_view: public root_base_view
 {
 public:
     inline static const item_id_t
-        collection_id = "collection",
-        browse_id = "browse",
-        playing_queue_id = "playing_queue";
+        collection_id       = "collection",
+        browse_id           = "browse",
+        playing_queue_id    = "playing_queue";
 public:
     root_view(HANDLE panel, api_weak_ptr_t api);
 };
@@ -59,10 +59,10 @@ class browse_view: public root_base_view
 {
 public:
     inline static const item_id_t
-        new_releases_id = "new_releases",
-        recently_saved_id = "recently_saved",
-        recently_played_id = "recently_played",
-        user_top_items_id = "user_top_items";
+        new_releases_id     = "new_releases",
+        recently_saved_id   = "recently_saved",
+        recently_played_id  = "recently_played",
+        user_top_items_id   = "user_top_items";
 public:
     browse_view(HANDLE panel, api_weak_ptr_t api);
 };

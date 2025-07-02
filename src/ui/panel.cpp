@@ -27,7 +27,7 @@ static const FarKey overriden_bindings[] = {
 
 static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
 {
-    // as we do not allocate any memory for user data, we do not free it, just nulify
+    // as we do not allocate any memory for user data, we do not need to free it, just nullify
     user_data = nullptr;
 }
 

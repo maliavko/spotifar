@@ -43,6 +43,7 @@ namespace spotifar
         MSortColGenre,
         MSortColAlbumsCount,
         MSortColCopyrights,
+        MSortColRecLabel,
         
         MSortBarName,
         MSortBarRelease,

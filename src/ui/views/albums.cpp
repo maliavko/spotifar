@@ -85,13 +85,22 @@ const items_t& albums_base_view::get_items()
         items.push_back({
             album.id,
             album.name,
-            album.get_main_copyright().text,
+            album.recording_label,
             FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_VIRTUAL,
             columns,
             const_cast<album_t*>(&album)
         });
     }
+
+    is_invalid = false;
+
     return items;
+}
+
+void albums_base_view::rebuild_panels()
+{
+    is_invalid = true;
+    events::refresh_panel(get_panel_handle());
 }
 
 const panel_modes_t* albums_base_view::get_panel_modes() const
@@ -108,17 +117,18 @@ const panel_modes_t* albums_base_view::get_panel_modes() const
         FullArtists     { L"C8",    get_text(MSortColArtists),      L"30" },
         SavedAt         { L"C9",    get_text(MSortColSavedAt),      L"12" },
         Name            { L"NON",   get_text(MSortColName),         L"0" },
-        Copyrights      { L"Z",     get_text(MSortColCopyrights),   L"0" };
+        Copyrights      { L"Z",     get_text(MSortColCopyrights),   L"0" },
+        RecLabel        { L"Z",     get_text(MSortColRecLabel),     L"0" };
         
     static panel_modes_t modes{
-        /* 0 */ PM::dummy(4),
+        /* 0 */ PM::dummy(8),
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
         /* 3 */ PM({ &ReleaseYear, &Name, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity }),
-        /* 4 */ PM({ &ReleaseYear, &Saved, &Name, &FullArtists }),
-        /* 5 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity, &Copyrights }, true),
-        /* 6 */ PM({ &ReleaseYear, &Name, &Saved, &Copyrights }),
-        /* 7 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &Copyrights }, true),
+        /* 4 */ PM({ &ReleaseYear, &Name, &FullArtists, &Saved, &TracksCount }),
+        /* 5 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity, &RecLabel }, true),
+        /* 6 */ PM({ &ReleaseYear, &Name, &Saved, &RecLabel }),
+        /* 7 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &RecLabel }, true),
         /* 8 */ PM({ &ReleaseYear, &Name, &Artist, &Saved, &TracksCount, &TotalDuration, &Type, &Popularity }),
         /* 9 */ PM::dummy(8),
     };
@@ -135,11 +145,11 @@ void albums_base_view::show_filters_dialog()
 const sort_modes_t& albums_base_view::get_sort_modes() const
 {
     static sort_modes_t modes = {
-        { get_text(MSortBarName),       SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
-        { get_text(MSortBarRelease),    SM_ATIME,           { VK_F4, LEFT_CTRL_PRESSED } },
-        { get_text(MSortBarPopularity), SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
-        { get_text(MSortBarTracksCount),SM_SIZE,            { VK_F6, LEFT_CTRL_PRESSED } },
-        { get_text(MSortBarArtist),     SM_OWNER,           { VK_F7, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarName),           SM_NAME,            { VK_F3, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarRelease),        SM_ATIME,           { VK_F4, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarPopularity),     SM_COMPRESSEDSIZE,  { VK_F5, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarTracksCount),    SM_SIZE,            { VK_F6, LEFT_CTRL_PRESSED } },
+        { get_text(MSortBarArtist),         SM_OWNER,           { VK_F7, LEFT_CTRL_PRESSED } },
     };
     return modes;
 }
@@ -300,17 +310,18 @@ const key_bar_info_t* albums_base_view::get_key_bar_info()
 {
     static key_bar_info_t key_bar{};
 
-    auto view_crc32 = get_uid();
+    if (is_invalidated()) return nullptr;
+
     auto item = utils::far3::panels::get_current_item(get_panel_handle());
 
     // right after switching the directory on the panel, when we trap here `panels::get_current_item`
     // returns the `item` from  the previous directory. Checking crc32 helps to identify
     // when the panel is refreshed eventually and we can be sure the item is valid
-    if (item->CRC32 != view_crc32) return nullptr;
+    if (item->CRC32 != get_uid()) return nullptr;
 
     if (auto api = api_proxy.lock())
     {
-        if (auto *user_data = unpack_user_data(item->UserData))
+        if (auto *user_data = unpack_user_data(item->UserData); user_data && user_data->is_valid())
         {
             if (api->get_library()->is_album_saved(user_data->id))
                 key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
@@ -336,7 +347,7 @@ void albums_base_view::on_albums_statuses_received(const item_ids_t &ids)
 
     // if any of view's tracks are changed, we need to refresh the panel
     if (it != items.end())
-        events::refresh_panel(get_panel_handle());
+        rebuild_panels();
 }
 
 //-----------------------------------------------------------------------------------------------------------
@@ -355,6 +366,7 @@ artist_albums_view::~artist_albums_view()
 
 config::settings::view_t artist_albums_view::get_default_settings() const
 {
+    // by release year; descending; view mode - 3 (with stats)
     return { 1, true, 3 };
 }
 
@@ -409,7 +421,7 @@ void artist_albums_view::show_tracks_view(const album_t &album) const
 void artist_albums_view::on_album_filters_changed(bool lps, bool eps, bool appears_on, bool comp)
 {
     rebuild_items();
-    events::refresh_panel(get_panel_handle());
+    rebuild_panels();
 }
 
 void artist_albums_view::rebuild_items()
@@ -466,8 +478,8 @@ saved_albums_view::saved_albums_view(HANDLE panel, api_weak_ptr_t api_proxy):
 
 config::settings::view_t saved_albums_view::get_default_settings() const
 {
-    // sort mode - by `Saved at`; descending; view mode - F6
-    return { 5, true, 3 };
+    // sort mode - by Saved at; descending; view mode - 4 (artist's name visible)
+    return { 5, true, 4 };
 }
 
 std::generator<const album_t&> saved_albums_view::get_albums()
@@ -524,7 +536,7 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
 //     // were being change, this view should repopulate itself anyway
 //     // as it represents the list of saved tracks
 //     if (collection->fetch())
-//         events::refresh_panel(get_panel_handle());
+//         rebuild_panels();
 // }
 
 
@@ -544,8 +556,8 @@ new_releases_view::~new_releases_view()
 
 config::settings::view_t new_releases_view::get_default_settings() const
 {
-    // sort mode - by Name; ascending; view mode - F8
-    return { 1, false, 8 };
+    // sort mode - by Release data; descending; view mode - F4 (artist's name visible)
+    return { 1, true, 4 };
 }
 
 std::generator<const album_t&> new_releases_view::get_albums()
@@ -566,7 +578,7 @@ void new_releases_view::show_tracks_view(const album_t &album) const
 void new_releases_view::on_releases_sync_finished(const recent_releases_t releases)
 {
     rebuild_items();
-    events::refresh_panel(get_panel_handle());
+    rebuild_panels();
 }
 
 void new_releases_view::rebuild_items()
@@ -602,7 +614,8 @@ recent_albums_view::~recent_albums_view()
 
 config::settings::view_t recent_albums_view::get_default_settings() const
 {
-    return { 1, false, 6 };
+    // sort mode - by Played At; descending; view mode - F4 (artist's name visible)
+    return { 5, true, 4 };
 }
 
 const sort_modes_t& recent_albums_view::get_sort_modes() const
@@ -678,7 +691,7 @@ void recent_albums_view::show_tracks_view(const album_t &album) const
 void recent_albums_view::on_history_changed()
 {
     rebuild_items();
-    events::refresh_panel(get_panel_handle());
+    rebuild_panels();
 }
 
 
@@ -710,7 +723,8 @@ bool recently_saved_albums_view::repopulate()
 
 config::settings::view_t recently_saved_albums_view::get_default_settings() const
 {
-    return { 1, false, 6 };
+    // sort mode - by Saved At; descending; view mode - F4 (artist's name visible)
+    return { 5, true, 4 };
 }
 
 const sort_modes_t& recently_saved_albums_view::get_sort_modes() const
@@ -768,7 +782,7 @@ std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t
 //     // were being change, this view should repopulate itself anyway
 //     // as it represents the list of saved tracks
 //     if (repopulate())
-//         events::refresh_panel(get_panel_handle());
+//         rebuild_panels();
 // }
 
 } // namespace ui

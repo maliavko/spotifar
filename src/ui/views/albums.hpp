@@ -23,6 +23,12 @@ public:
 
     auto get_items() -> const items_t& override;
 protected:
+    // the view is under reconstruction, the access to the item's user data is unsafe
+    bool is_invalidated() const { return is_invalid; }
+
+    // request to refresh panel's items: recollect data and redraw
+    void rebuild_panels();
+
     virtual auto get_albums() -> std::generator<const album_t&> = 0;
     virtual void show_tracks_view(const album_t &album) const = 0;
     virtual auto get_extra_columns(const album_t&) const -> std::vector<wstring> { return {}; }
@@ -44,6 +50,11 @@ protected:
 protected:
     api_weak_ptr_t api_proxy;
     items_t items;
+
+    // this flag is set to true between the calls of 'rebuild_panels' and actual
+    // items udpate 'get_albums'; during this time the items are being rebuild
+    // and it is not safe to use them
+    bool is_invalid = false;
 };
 
 

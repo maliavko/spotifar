@@ -31,7 +31,8 @@ const sort_modes_t& root_base_view::get_sort_modes() const
 
 config::settings::view_t root_base_view::get_default_settings() const
 {
-    return { 1, false, 3 };
+    // sort mode - SM_UNSORTED; ascending; view mode - 4
+    return { 1, false, 4 };
 }
 
 const items_t& root_base_view::get_items()
