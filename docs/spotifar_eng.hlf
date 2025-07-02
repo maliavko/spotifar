@@ -388,10 +388,10 @@ items types for the same view. For the different views a different range of swit
         #Collection                 # &user's collection multiview; supports switching between artists, albums, tracks or playlists
             #Artist                 # &artist personal view multiview; supports switching betwen albums and top tracks
         #Browse                     # &a menu with aux items, helping to browse your Spotify activity
-            #New Releases           # &a list of albums, recently release by your followed artists
-            #Recently Saved Items   # &your 150 recently saved items; supports switching between albums and tracks
+            #New Releases           # &a list of albums, recently release by your followed artistss
+            #Recently Saved         # &your 150 recently saved items; supports switching between albums and tracks
+            #Recently Played        # &recently played tracks multiview; supports switching between artists, albums, tracks or playlist
             #Your top items         # &your top items for the past six months; supports switching between artists and tracks
-        #Recently Played            # &recently played tracks multiview; supports switching between artists, albums, tracks or playlists
         #Playing Queue              # &represents a list of the closes 20 tracks of a currently playing queue
 
 

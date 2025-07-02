@@ -310,7 +310,7 @@ const key_bar_info_t* albums_base_view::get_key_bar_info()
 
     if (auto api = api_proxy.lock())
     {
-        if (auto *user_data = unpack_user_data(item->UserData))
+        if (auto *user_data = unpack_user_data(item->UserData); user_data && user_data->is_valid())
         {
             if (api->get_library()->is_album_saved(user_data->id))
                 key_bar[{ VK_F8, 0 }] = get_text(MUnlike);
