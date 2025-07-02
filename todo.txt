@@ -21,6 +21,7 @@ application ideas
     - console commands support: export, flush caches, resync fresh releases
 
 bugs
+- git workflows does not have fixes of Librespot build
 
 to finish for alpha release
 - add gallery of schreenshots
