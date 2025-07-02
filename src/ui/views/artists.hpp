@@ -98,7 +98,8 @@ private:
 };
 
 
-/// @brief
+/// @brief A class-view, representing a list of usert top artists.
+/// The list is provided by Spotify service, no internal logic
 class user_top_artists_view: public artists_base_view
 {
 public:

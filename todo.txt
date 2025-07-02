@@ -4,14 +4,18 @@ refactor
 
 application ideas
 - backlog, upcoming releases
-    - saving closed spotify playlists into your library locally
     - close plugin if another librespot device is being detected
     - after two days of listening in a row, out of a sudden spotify started cutting http responses with 429 error for /player endpoint; stop/resume commands also did not work; to simulate the situation and rethink players behaviour
     - make sure big collections which hit 429 during fetching are processed well
     - similar artists: https://www.music-map.com/
     - playlists and collections management
         - working with playlists through Use the snapshot_id to reduce amount of requests
-    - filters menu, filtering by some items attributes on the panel, filtering albums by type e.g. (nust have)
+        - saving tracks into several playlists at the same time vis save_to_collection dialog
+    - filters menu
+        + albums filtering by type
+        - filtering artists by genre
+    - artists or albums info on some QuickView like?
+        - possible in the info block by Ctrl+L
 - nice to have
     - download music via https://github.com/spotDL/spotify-downloader
     - add possibility to register librespot as a win service to avoid interrupting music when far is closed: https://github.com/kirillkovalenko/nssm
@@ -23,7 +27,7 @@ bugs
 
 to finish for alpha release
 - add gallery of schreenshots
-- check all the default view settings and sort modes
++ check all the default view settings and sort modes
 + to saved/remove artists, albums and tracks, to show their status on the panels
 + disabled shuffle plus, move it to some separate branch
 + help window
