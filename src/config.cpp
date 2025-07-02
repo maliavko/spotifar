@@ -47,30 +47,30 @@ namespace playback
 }
 
 static const wchar_t
-    *version_opt = L"ConfigVersion",
-    *add_to_disk_menu_opt = L"AddToDisksMenu",
-    *activate_global_hotkeys_opt = L"ActivateGlobalHotkeys",
-    *verbose_logging_enabled_opt = L"EnableVerboseLogging",
-    *views_settings_opt = L"ViewsSettings",
-    *multi_views_settings_opt = L"MultiViewsSettings",
-    *search_dialog_settings_opt = L"SearchDialogSettings",
-    *spotify_client_id_opt = L"SpotifyClientID",
-    *spotify_client_secret_opt = L"SpotifyClientSecret",
-    *localhost_service_port_opt = L"LocalhostServicePort",
-    *playback_backend_enabled_opt = L"PlaybackBackendEnabled",
-    *volume_normalisation_enabled_opt = L"VolumeNormalisationEnabled",
-    *playback_autoplay_enabled_opt = L"PlaybackAutoplayEnabled",
-    *gapless_playback_enabled_opt = L"GaplessPlaybackEnabled",
-    *playback_cache_enabled_opt = L"PlaybackCacheEnabled",
-    *playback_bitrate_opt = L"PlaybackBitrate",
-    *playback_format_opt = L"PlaybackFormat",
-    *playback_dither_opt = L"PlaybackDither",
-    *playback_volume_ctrl_opt = L"PlaybackVolumeCtrl",
-    *playback_initial_volume_opt = L"PlaybackInitialVolume",
+    *version_opt                        = L"ConfigVersion",
+    *add_to_disk_menu_opt               = L"AddToDisksMenu",
+    *activate_global_hotkeys_opt        = L"ActivateGlobalHotkeys",
+    *verbose_logging_enabled_opt        = L"EnableVerboseLogging",
+    *views_settings_opt                 = L"ViewsSettings",
+    *multi_views_settings_opt           = L"MultiViewsSettings",
+    *search_dialog_settings_opt         = L"SearchDialogSettings",
+    *spotify_client_id_opt              = L"SpotifyClientID",
+    *spotify_client_secret_opt          = L"SpotifyClientSecret",
+    *localhost_service_port_opt         = L"LocalhostServicePort",
+    *playback_backend_enabled_opt       = L"PlaybackBackendEnabled",
+    *volume_normalisation_enabled_opt   = L"VolumeNormalisationEnabled",
+    *playback_autoplay_enabled_opt      = L"PlaybackAutoplayEnabled",
+    *gapless_playback_enabled_opt       = L"GaplessPlaybackEnabled",
+    *playback_cache_enabled_opt         = L"PlaybackCacheEnabled",
+    *playback_bitrate_opt               = L"PlaybackBitrate",
+    *playback_format_opt                = L"PlaybackFormat",
+    *playback_dither_opt                = L"PlaybackDither",
+    *playback_volume_ctrl_opt           = L"PlaybackVolumeCtrl",
+    *playback_initial_volume_opt        = L"PlaybackInitialVolume",
     *track_changed_notification_enabled_opt = L"TrackChangedNotificationEnabled",
-    *is_circled_notification_image_opt = L"IsNotificationImageCircled",
-    *hidden_playlists_opt = L"HiddenPlaylists",
-    *view_filters_opt = L"ViewSettings";
+    *is_circled_notification_image_opt  = L"IsNotificationImageCircled",
+    *hidden_playlists_opt               = L"HiddenPlaylists",
+    *view_filters_opt                   = L"ViewSettings";
 
 // vector index is the migration version, values are the list of the config
 // keys to be removed from it
@@ -80,7 +80,8 @@ static const std::vector<std::vector<const wchar_t*>> migrations =
     { L"AccessToken", L"AccessTokenTime" },
     { L"AccessToken", L"AccessTokenTime" },
     { L"PlayHistory", L"PlayHistoryTime" }, // added `external_urls` field to the API items
-    { view_filters_opt, }
+    { view_filters_opt, }, // added filters menu for the albums views
+    { views_settings_opt, } // updating default view settings, for testing purposes
 };
 
 PluginStartupInfo ps_info;

@@ -163,11 +163,11 @@ const panel_modes_t* artists_base_view::get_panel_modes() const
         /* 1 */ PM::dummy(),
         /* 2 */ PM::dummy(),
         /* 3 */ PM({ &Name, &IsFollowed, &AlbumsCount, &Followers, &Popularity }),
-        /* 4 */ PM({ &Name, &IsFollowed, &AlbumsCount }),
+        /* 4 */ PM({ &Name, &IsFollowed, &AlbumsCount, &MainGenre }),
         /* 5 */ PM({ &Name, &IsFollowed, &AlbumsCount, &Followers, &Popularity, &MainGenre }, true),
         /* 6 */ PM({ &NameFixed, &Genres }),
-        /* 7 */ PM({ &NameFixed, &AlbumsCount, &Genres }, true),
-        /* 8 */ PM::dummy(8, true),
+        /* 7 */ PM({ &Name, &IsFollowed, &AlbumsCount, &Followers, &Popularity, &Genres }, true),
+        /* 5 */ PM({ &Name, &IsFollowed, &AlbumsCount, &Followers, &Popularity, &MainGenre }),
         /* 9 */ PM::dummy(8),
     };
     
@@ -348,7 +348,8 @@ recent_artists_view::~recent_artists_view()
 
 config::settings::view_t recent_artists_view::get_default_settings() const
 {
-    return { 1, false, 6 };
+    // sort mode - by Name; ascending; view mode - F4 (with main genre)
+    return { 0, false, 4 };
 }
 
 const sort_modes_t& recent_artists_view::get_sort_modes() const
@@ -433,7 +434,8 @@ user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
 
 config::settings::view_t user_top_artists_view::get_default_settings() const
 {
-    return { 1, false, 1 };
+    // sort mode - by Name; ascending; view mode - F4 (with main genre)
+    return { 0, false, 4 };
 }
 
 const sort_modes_t& user_top_artists_view::get_sort_modes() const
