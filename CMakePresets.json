@@ -17,6 +17,18 @@
       }
     },
     {
+      "name": "mingw-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin",
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
+        "CMAKE_CXX_COMPILER": "C:/Msys64/ucrt64/bin/g++.exe"
+      }
+    },
+    {
       "name": "x64",
       "displayName": "Visual Studio 17 x64",
       "inherits": "vs17base",
@@ -27,6 +39,11 @@
       "displayName": "Visual Studio 17 Win32",
       "inherits": "vs17base",
       "architecture": "Win32"
+    },
+    {
+      "name": "mingw-x86_64",
+      "displayName": "MinGW x86_64",
+      "inherits": "mingw-base"
     }
   ],
   "buildPresets": [
@@ -53,6 +70,11 @@
       "displayName": "Visual Studio 17 Win32 Release",
       "configurePreset": "Win32",
       "configuration": "Release"
+    },
+    {
+      "name": "mingw-x86_64-Release",
+      "displayName": "MinGW x86_64 Release",
+      "configurePreset": "mingw-x86_64"
     }
   ]
 }

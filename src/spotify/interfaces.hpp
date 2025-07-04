@@ -10,7 +10,7 @@ namespace spotifar { namespace spotify {
 template<class T, int N = 0, class C = utils::clock_t::duration>
 class item_requester;
 
-template<class T, int N, class C, class ContainerT = std::vector<typename T>>
+template<class T, int N, class C, class ContainerT = std::vector<T>>
 class several_items_requester;
 
 template<class T, int N = 0, class C = utils::clock_t::duration>

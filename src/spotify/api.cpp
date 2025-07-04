@@ -488,7 +488,7 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
     if (!fs::exists(cache_folder))
         fs::create_directories(cache_folder);
 
-    const wstring filepath = std::format(L"{}\\{}.{}.png",
+    const std::filesystem::path filepath = std::format(L"{}\\{}.{}.png",
         cache_folder, utils::to_wstring(item_id), image.width);
     
     if (!fs::exists(filepath))
@@ -540,8 +540,7 @@ string api::get_lyrics(const track_t &track)
         track.get_artist().name, track.album.name, track.name,
         utils::to_wstring(track.id)));
     
-    const wstring filepath = std::format(L"{}\\{}.lrc", cache_folder, filename);
-    
+    const std::filesystem::path filepath = std::format(L"{}\\{}.lrc", cache_folder, filename);
     
     if (fs::exists(filepath))
     {
