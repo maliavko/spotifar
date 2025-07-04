@@ -373,7 +373,7 @@ template<typename T>
 class persistent_data: public persistent_data_abstract
 {
 public:
-    using value_t = typename T;
+    using value_t = T;
 
     persistent_data(const wstring &storage_key);
 

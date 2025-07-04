@@ -22,7 +22,7 @@ plugin_ptr_t get_plugin()
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getglobalinfow.html
-void WINAPI GetGlobalInfoW(GlobalInfo *info)
+extern "C" void WINAPI GetGlobalInfoW(GlobalInfo *info)
 {
     info->StructSize = sizeof(GlobalInfo);
     info->MinFarVersion = MAKEFARVERSION(3, 0, 0, 4400, VS_RELEASE);
@@ -34,7 +34,7 @@ void WINAPI GetGlobalInfoW(GlobalInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getplugininfow.html
-void WINAPI GetPluginInfoW(PluginInfo *info)
+extern "C" void WINAPI GetPluginInfoW(PluginInfo *info)
 {
     info->StructSize = sizeof(*info);
     info->Flags = PF_NONE;
@@ -66,7 +66,7 @@ void WINAPI GetPluginInfoW(PluginInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/setstartupinfow.html 
-void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
+extern "C" void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 {
     try 
     {
@@ -81,7 +81,7 @@ void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/openw.html
-HANDLE WINAPI OpenW(const OpenInfo *info)
+extern "C" HANDLE WINAPI OpenW(const OpenInfo *info)
 {
     if (auto plugin_ptr = plugin_weak_ptr.lock())
         return new ui::panel(plugin_ptr);
@@ -112,7 +112,7 @@ HANDLE WINAPI OpenW(const OpenInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/closepanelw.html
-void WINAPI ClosePanelW(const ClosePanelInfo *info)
+extern "C" void WINAPI ClosePanelW(const ClosePanelInfo *info)
 {
     log::global->debug("Plugin's panel is closed, cleaning resources");
 
@@ -126,14 +126,14 @@ void WINAPI ClosePanelW(const ClosePanelInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/structures/openpanelinfo.html
-void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
+extern "C" void WINAPI GetOpenPanelInfoW(OpenPanelInfo *info)
 {
     if (auto panel = static_cast<ui::panel*>(info->hPanel))
         panel->update_panel_info(info);
 }
 
 /// @brief https://api.farmanager.com/ru/structures/getfinddatainfo.html
-intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
+extern "C" intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 {
     // plugin does not use Far's traditional recursive search mechanism
     if (info->OpMode & OPM_FIND)
@@ -146,14 +146,14 @@ intptr_t WINAPI GetFindDataW(GetFindDataInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/freefinddataw.html 
-void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
+extern "C" void WINAPI FreeFindDataW(const FreeFindDataInfo *info)
 {
     if (auto panel = static_cast<ui::panel*>(info->hPanel))
         panel->free_panel_items(info);
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/setdirectoryw.html
-intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
+extern "C" intptr_t WINAPI SetDirectoryW(const SetDirectoryInfo *info)
 {
     // plugins does not use Far's traditional recursive search mechanism
     if (info->OpMode & OPM_FIND)
@@ -176,7 +176,7 @@ static bool is_plugin_active()
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processconsoleinputw.html
-intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
+extern "C" intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 {
     namespace keys = utils::keys;
 
@@ -204,7 +204,7 @@ intptr_t WINAPI ProcessConsoleInputW(ProcessConsoleInputInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpanelinputw.html
-intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
+extern "C" intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 {
     namespace keys = utils::keys;
 
@@ -227,7 +227,7 @@ intptr_t WINAPI ProcessPanelInputW(const ProcessPanelInputInfo *info)
 }
 
 /// @brief  @brief https://api.farmanager.com/ru/exported_functions/comparew.html
-intptr_t WINAPI CompareW(const CompareInfo *info)
+extern "C" intptr_t WINAPI CompareW(const CompareInfo *info)
 {
     if (auto panel = static_cast<ui::panel*>(info->hPanel))
         return panel->compare_items(info);
@@ -235,30 +235,30 @@ intptr_t WINAPI CompareW(const CompareInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processpaneleventw.html
-intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
+extern "C" intptr_t WINAPI ProcessPanelEventW(const ProcessPanelEventInfo *info)
 {
     return FALSE;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/configurew.html 
-intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
+extern "C" intptr_t WINAPI ConfigureW(const ConfigureInfo *info)
 {
     return ui::show_settings_menu();
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/processsynchroeventw.html
-intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
+extern "C" intptr_t WINAPI ProcessSynchroEventW(const ProcessSynchroEventInfo *info)
 {
     if (info->Event == SE_COMMONSYNCHRO)
     {
         far3::synchro_tasks::process((intptr_t)info->Param);
-        return NULL;
+        return FALSE;
     }
-    return NULL;
+    return FALSE;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/analysew.html 
-HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
+extern "C" HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 {
     // unfinished experiments, not for the alpha release
     return NULL;
@@ -266,7 +266,7 @@ HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 
 /// @brief https://api.farmanager.com/ru/exported_functions/getfilesw.html.
 /// The function is also called when file on the panel is being copied to the other panel
-intptr_t WINAPI GetFilesW(GetFilesInfo *info)
+extern "C" intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 {
     if (auto panel = static_cast<ui::panel*>(info->hPanel))
     {
@@ -283,7 +283,7 @@ intptr_t WINAPI GetFilesW(GetFilesInfo *info)
             {
                 if (files[i].empty()) continue;
 
-                auto filepath = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[i].FileName);
+                std::filesystem::path filepath = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[i].FileName);
                 if (auto fout = std::ofstream(filepath, std::ios::trunc))
                     fout << utils::utf8_encode(files[i]);
             }
@@ -300,13 +300,13 @@ intptr_t WINAPI GetFilesW(GetFilesInfo *info)
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/deletefilesw.html
-intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
+extern "C" intptr_t WINAPI DeleteFilesW(const DeleteFilesInfo *info)
 {
     return FALSE;
 }
 
 /// @brief https://api.farmanager.com/ru/exported_functions/exitfarw.html
-void WINAPI ExitFARW(const ExitInfo *info)
+extern "C" void WINAPI ExitFARW(const ExitInfo *info)
 {
 }
 

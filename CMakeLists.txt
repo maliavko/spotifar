@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.5...3.10)
 #
 # Major - plugin build number
 # Minor - version stage id from above
-project(spotifar VERSION 1.1)
+project(spotifar VERSION 1.1 LANGUAGES CXX)
 
 configure_file(src/version.hpp.in version.hpp)
 
