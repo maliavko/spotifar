@@ -8,7 +8,7 @@
 
 namespace spotifar { namespace ui {
 
-using namespace WinToastLib;
+//using namespace WinToastLib;
 using namespace spotify;
 using utils::far3::get_text;
 using utils::far3::synchro_tasks::dispatch_event;
@@ -30,7 +30,7 @@ namespace notifications
 
 /// @brief Toasts notifications handler-class, for handling actions
 /// performed on the track-changed toast notification
-class track_changed_handler:
+/*class track_changed_handler:
     public WinToastLib::IWinToastHandler,
     public playback_observer
 {
@@ -114,7 +114,7 @@ protected:
     void toastFailed() const override {}
 private:
     api_weak_ptr_t api_proxy;
-};
+};*/
 
 
 //-----------------------------------------------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ bool notifications_handler::start()
     utils::events::start_listening<spotify::releases_observer>(this);
     utils::events::start_listening<notifications_observer>(this);
 
-    try
+    /*try
     {
         // initializing win toast notifications library
         WinToast::instance()->setAppName(PLUGIN_NAME);
@@ -144,13 +144,13 @@ bool notifications_handler::start()
         log::global->error("There is an error initializing a WinToast notifications "
             "library: {}", ex.what());
         return false;
-    }
+    }*/
     return true;
 }
 
 bool notifications_handler::shutdown()
 {
-    try
+    /*try
     {
         WinToast::instance()->clear();
 
@@ -163,7 +163,7 @@ bool notifications_handler::shutdown()
         log::global->error("There is an error finalizing a WinToast notifications "
             "library: {}", ex.what());
         return false;
-    }
+    }*/
     return true;
 }
 
@@ -171,7 +171,7 @@ void notifications_handler::on_track_changed(const track_t &track, const track_t
 {
     using utils::far3::actl::is_wnd_in_focus;
 
-    if (WinToast::instance()->isInitialized())
+    /*if (WinToast::instance()->isInitialized())
     {
         if (const auto plugin_ptr = get_plugin())
         {
@@ -181,7 +181,7 @@ void notifications_handler::on_track_changed(const track_t &track, const track_t
             if (config::is_track_changed_notification_enabled() && track && !already_seen)
                 show_now_playing(track, true);
         }
-    }
+    }*/
 }
 
 void notifications_handler::on_releases_sync_finished(const spotify::recent_releases_t releases)
@@ -191,7 +191,7 @@ void notifications_handler::on_releases_sync_finished(const spotify::recent_rele
 
 void notifications_handler::show_now_playing(const spotify::track_t &track, bool show_buttons)
 {
-    if (!WinToast::instance()->isInitialized()) return;
+    /*if (!WinToast::instance()->isInitialized()) return;
 
     if (auto api = api_proxy.lock())
     {
@@ -243,12 +243,12 @@ void notifications_handler::show_now_playing(const spotify::track_t &track, bool
         if (toast_id < 0)
             log::global->error("There is an error showing track changed notification, {}",
                 utils::to_string(WinToast::strerror(error)));
-    }
+    }*/
 }
 
 void notifications_handler::show_releases_found(const spotify::recent_releases_t &releases)
 {
-    if (!WinToast::instance()->isInitialized()) return;
+    /*if (!WinToast::instance()->isInitialized()) return;
 
     if (auto api = api_proxy.lock())
     {
@@ -280,7 +280,7 @@ void notifications_handler::show_releases_found(const spotify::recent_releases_t
         if (toast_id < 0)
             log::global->error("There is an error showing fresh releases notification, {}",
                 utils::to_string(WinToast::strerror(error)));
-    }
+    }*/
 }
 
 } // namespace ui

@@ -544,15 +544,20 @@ class sync_collection: public collection_abstract<T, N, C>
 {
 public:
     using base_t = collection_abstract<T, N, C>;
-    using base_t::requester_t;
-    using base_t::requester_ptr;
-    using base_t::collection_abstract;
+    using typename base_t::requester_t;
+    using typename base_t::requester_ptr;
+    using typename base_t::collection_abstract;
     
     bool is_modified() const override
     {
         return modified;
     }
 protected:
+    requester_ptr get_begin_requester() const override
+    {
+        return requester_ptr(new requester_t(this->url, this->params, this->fieldname));
+    }
+
     bool fetch_items(api_weak_ptr_t api, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) override
     {       
@@ -596,11 +601,6 @@ protected:
 
         return true;
     }
-
-    requester_ptr get_begin_requester() const override
-    {
-        return requester_ptr(new requester_t(this->url, this->params, this->fieldname));
-    }
 private:
     bool modified = false;
 };
@@ -617,15 +617,29 @@ class async_collection: public collection_abstract<T, N, C>
 {
 public:
     using base_t = collection_abstract<T, N, C>;
-    using base_t::requester_t;
-    using base_t::requester_ptr;
-    using base_t::collection_abstract;
+    using typename base_t::requester_t;
+    using typename base_t::requester_ptr;
+    using typename base_t::collection_abstract;
     
     bool is_modified() const override
     {
         return modified;
     }
 protected:
+    requester_ptr get_begin_requester() const override
+    {
+        return make_requester(0);
+    }
+
+    // a collection's requester fabric
+    requester_ptr make_requester(size_t offset) const
+    {
+        auto updated_params = this->params;
+        updated_params.insert(std::pair{ "offset", std::to_string(offset) });
+
+        return requester_ptr(new requester_t(this->url, updated_params, this->fieldname));
+    }
+
     bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true,
         size_t pages_to_request = 0) override
     {   
@@ -708,20 +722,6 @@ protected:
             this->insert(this->end(), chunk.begin(), chunk.end());
 
         return true;
-    }
-
-    requester_ptr get_begin_requester() const override
-    {
-        return make_requester(0);
-    }
-
-    // a collection's requester fabric
-    requester_ptr make_requester(size_t offset) const
-    {
-        auto updated_params = this->params;
-        updated_params.insert(std::pair{ "offset", std::to_string(offset) });
-
-        return requester_ptr(new requester_t(this->url, updated_params, this->fieldname));
     }
 private:
     bool modified = false;

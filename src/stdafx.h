@@ -11,21 +11,32 @@
 // replacing asserts with runtime exceptions, while working with rapidson for proper error handling
 #define RAPIDJSON_ASSERT(x) if (!(x)) throw std::runtime_error("json error, " #x);
 
+// MinGW does not define these keys
+#ifndef VK_NAVIGATION_UP
+#define VK_NAVIGATION_UP 0x8A
+#endif
+#ifndef VK_NAVIGATION_DOWN
+#define VK_NAVIGATION_DOWN 0x8B
+#endif
+
+#define _WINSOCKAPI_
+#ifndef NOMINMAX
+# define NOMINMAX
+#endif
+
+#include <iostream>
 #include <fstream>
+#include <generator> // std::generator<T>
+#include <WinSock2.h> // should be included before windows.h
 #include <string>
 #include <map>
 #include <vector>
 #include <chrono> // std::chrono::system_clock
 #include <typeindex> // std::type_index
 #include <filesystem> // std::filesystem::path
-#define _WINSOCKAPI_
-#ifndef NOMINMAX
-# define NOMINMAX
-#endif
-#include <generator> // std::generator<T>
 #include <windows.h> // win api support
 #include <shellapi.h>  // for ShellExecute
-#include <shlobj_core.h>  // for SHGetKnownFolderPath
+#include <shlobj.h> // for SHGetKnownFolderPath
 
 #include "httplib.h" // single-threaded http client/server library
 #include "spdlog/spdlog.h" // logging library
@@ -36,7 +47,7 @@
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-#include "wintoastlib.h" // win toast notifications library
+//#include "wintoastlib.h" // win toast notifications library
 
 #include <plugin.hpp> // far api
 #include <PluginSettings.hpp> // far plugin's data storage access
