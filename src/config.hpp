@@ -4,6 +4,7 @@
 
 #include "stdafx.h"
 #include "utils.hpp"
+#include <PluginSettings.hpp>
 
 namespace spotifar { namespace config {
 

@@ -1,3 +1,4 @@
+#include <time.h>
 #include "caches.hpp"
 #include "config.hpp"
 #include "utils.hpp"
@@ -182,9 +183,14 @@ void set_releases_sync_status(HANDLE hdlg)
         status_lbl = get_text(MCfgReleasesStatusFinished);
 
         if (next_sync_time > utils::clock_t::now())
-            next_sync_time_lbl = std::format(L"{:%d %b, %H:%M}", std::chrono::current_zone()->to_local(next_sync_time));
+        {
+            auto time = utils::clock_t::to_time_t(next_sync_time);
+            next_sync_time_lbl = utils::format_localtime(time, L"%d %b, %H:%M");
+        }
         else
+        {
             next_sync_time_lbl = L"---------";
+        }
     }
 
     dialogs::set_text(hdlg, releases_status_value, status_lbl.c_str());

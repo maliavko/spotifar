@@ -143,6 +143,9 @@ intptr_t playlists_base_view::compare_items(const sort_mode_t &sort_mode,
         &item1 = static_cast<const simplified_playlist_t*>(data1),
         &item2 = static_cast<const simplified_playlist_t*>(data2);
 
+    #if defined (__clang__)
+    #   pragma clang diagnostic ignored "-Wswitch"
+    #endif
     switch (sort_mode.far_sort_mode)
     {
         case SM_NAME: // by playlist name

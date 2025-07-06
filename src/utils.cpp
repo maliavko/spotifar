@@ -17,7 +17,7 @@ namespace spotifar { namespace utils {
 
 string format_number(uintmax_t num, float divider, const char units[8], float precision)
 {
-    if (num == 0) return "0" + units[0];
+    if (num == 0) return string("0") + string(units[0], 1);
 
     std::ostringstream os;
 
@@ -699,7 +699,7 @@ namespace log
             spdlog::register_logger(librespot);
         }
 
-        #ifdef _DEBUG
+        #ifndef NDEBUG
             // for debugging in VS Code this sink helps seeing the messages in the Debug Console view
             auto msvc_debug_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
             spdlog::apply_all([&msvc_debug_sink](const auto &logger)
@@ -722,7 +722,7 @@ namespace log
 
     void fini()
     {
-        #ifdef _DEBUG
+        #ifndef NDEBUG
             if (wcout_old_buf != nullptr)
                 std::wcout.rdbuf(wcout_old_buf);
         #endif
@@ -822,14 +822,38 @@ string get_last_system_error()
     return utils::to_string((LPCTSTR)lpMsgBuf);
 }
 
-clock_t::duration get_timestamp(const string &time_str)
+time_t parse_time(const string &time_str, const string &fmt)
 {
-    std::istringstream ss(time_str);
+    std::tm timeinfo = {};
+    std::istringstream in{ time_str };
+    in >> std::get_time(&timeinfo, fmt.c_str());
 
-    clock_t::time_point time_point;
-    std::chrono::from_stream(ss, "%Y-%m-%dT%H:%M:%S%Z", time_point);
+    if (in.fail())
+        log::global->warn("Cound not parse time string '{}', format '{}'", time_str, fmt);
 
-    return time_point.time_since_epoch();
+    return std::mktime(&timeinfo);
+}
+
+clock_t::time_point get_timestamp(const string &time_str)
+{
+    // MSVC implementation
+    // std::istringstream ss(time_str);
+    // clock_t::time_point time_point;
+    // std::chrono::from_stream(ss, "%Y-%m-%dT%H:%M:%S%Z", time_point);
+
+    return utils::clock_t::from_time_t(parse_time(time_str, "%Y-%m-%dT%H:%M:%S%Z"));
+}
+
+wstring format_localtime(const time_t &time, const wstring &fmt)
+{
+    struct tm timeinfo;
+    localtime_s(&timeinfo, &time);
+
+    std::wostringstream ss;
+    if (ss << std::put_time(&timeinfo, fmt.c_str()); ss.fail())
+        log::global->warn("Cound not format time, format '{}'", utils::to_string(fmt));
+
+    return ss.str();
 }
 
 string trim(const string &s)

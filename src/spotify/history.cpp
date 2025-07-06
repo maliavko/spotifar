@@ -48,8 +48,10 @@ bool play_history::request_data(history_items_t &data)
 
     auto last_sync_time = 0LL;
     if (data.size() > 0)
-        last_sync_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-            utils::get_timestamp(data[0].played_at)).count();
+    {
+        auto duration = utils::get_timestamp(data[0].played_at).time_since_epoch();
+        last_sync_time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    }
 
     // we request only the new items after the last request timestamp, then we take
     // the old items list and extend it from the front
