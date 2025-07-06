@@ -81,7 +81,8 @@ static const std::vector<std::vector<const wchar_t*>> migrations =
     { L"AccessToken", L"AccessTokenTime" },
     { L"PlayHistory", L"PlayHistoryTime" }, // added `external_urls` field to the API items
     { view_filters_opt, }, // added filters menu for the albums views
-    { views_settings_opt, } // updating default view settings, for testing purposes
+    { views_settings_opt, }, // updating default view settings, for testing purposes
+    { L"AccessToken", L"AccessTokenTime", } // clang support
 };
 
 PluginStartupInfo ps_info;

@@ -74,7 +74,7 @@ protected:
     auto compare_items(const sort_mode_t &sort_mode, const data_item_t *data1, const data_item_t *data2) -> intptr_t override;
 
     // playlists_base_view interface
-    auto get_playlists() -> std::generator<const simplified_playlist_t&>;
+    auto get_playlists() -> std::generator<const simplified_playlist_t&> override;
     
     // play_history_observer handler
     void on_history_changed() override;

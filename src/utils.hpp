@@ -30,8 +30,15 @@ wstring strip_invalid_filename_chars(const wstring &filename);
 /// @brief Returns the message of GetLastError function
 string get_last_system_error();
 
+/// @brief Parses given `time_str` into time_t struct, using given `fmt` format 
+/// https://en.cppreference.com/w/cpp/io/manip/get_time
+auto parse_time(const string &time_str, const string &fmt) -> time_t;
+
 /// @brief Converts a time string of `2025-03-20T21:32:45.384Z` format to a timestamp
-clock_t::duration get_timestamp(const string &time_str);
+auto get_timestamp(const string &time_str) -> clock_t::time_point;
+
+/// @brief Returns given `time` as a formatteed string 
+auto format_localtime(const time_t &time, const wstring &fmt) -> wstring;
 
 /// @brief Join a vector of string into one, using given `delimeter`
 /// @param parts string parts
