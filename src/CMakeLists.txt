@@ -85,13 +85,8 @@ endif()
 
 # POST BUILD
 #-----------------------------------------------------------------------------------------
-if(NOT MINGW)
-    set(OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
-    set(CARGO_BUILD_TYPE x$<CONFIG>)
-else()
-    set(OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-    set(CARGO_BUILD_TYPE x${CMAKE_BUILD_TYPE})
-endif()
+set(OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
+set(CARGO_BUILD_TYPE x$<CONFIG>)
 
 message(STATUS "Packaging Spotifar docs")
 add_custom_command(

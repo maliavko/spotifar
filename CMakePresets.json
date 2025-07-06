@@ -25,28 +25,10 @@
       "name": "clang-base",
       "inherits": "default",
       "hidden": true,
-      "generator": "Ninja",
+      "generator": "Ninja Multi-Config",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
-    },
-    {
-      "name": "clang-x64-base",
-      "inherits": "clang-base",
-      "hidden": true,
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
-        "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
-      }
-    },
-    {
-      "name": "clang-x86-base",
-      "inherits": "clang-base",
-      "hidden": true,
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x86-mingw-dynamic",
-        "VCPKG_HOST_TRIPLET": "x86-mingw-dynamic"
       }
     },
     {
@@ -62,19 +44,21 @@
       "architecture": "Win32"
     },
     {
-      "name": "clang-x64-debug",
-      "inherits": "clang-x64-base",
-      "displayName": "MinGW Clang x64 Debug",
+      "name": "clang-x64",
+      "inherits": "clang-base",
+      "displayName": "MinGW Clang x64",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+        "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
       }
     },
     {
-      "name": "clang-x64-release",
-      "inherits": "clang-x64-base",
-      "displayName": "MinGW Clang x64 Release",
+      "name": "clang-x86",
+      "inherits": "clang-base",
+      "displayName": "MinGW Clang x86",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "VCPKG_TARGET_TRIPLET": "x86-mingw-dynamic",
+        "VCPKG_HOST_TRIPLET": "x86-mingw-dynamic"
       }
     }
   ],
@@ -106,12 +90,26 @@
     {
       "name": "clang-x64-Debug",
       "displayName": "MinGW Clang x64 Debug",
-      "configurePreset": "clang-x64-debug"
+      "configurePreset": "clang-x64",
+      "configuration": "Debug"
     },
     {
       "name": "clang-x64-Release",
       "displayName": "MinGW Clang x64 Release",
-      "configurePreset": "clang-x64-release"
+      "configurePreset": "clang-x64",
+      "configuration": "Release"
+    },
+    {
+      "name": "clang-x86-Debug",
+      "displayName": "MinGW Clang x64 Debug",
+      "configurePreset": "clang-x86",
+      "configuration": "Debug"
+    },
+    {
+      "name": "clang-x86-Release",
+      "displayName": "MinGW Clang x64 Release",
+      "configurePreset": "clang-x86",
+      "configuration": "Release"
     }
   ]
 }
