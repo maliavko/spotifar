@@ -136,10 +136,12 @@ string simplified_album_t::get_release_year() const
 
 utils::clock_t::time_point simplified_album_t::get_release_date() const
 {
-    std::istringstream in{ release_date };
-    utils::clock_t::time_point tp;
-    in >> parse("%F", tp);
-    return tp;
+    // MSVC std::chrono::parse implementation
+    // std::istringstream in{ release_date };
+    // utils::clock_t::time_point tp;
+    // in >> std::chrono::parse("%F", tp);
+
+    return std::chrono::system_clock::from_time_t(utils::parse_time(release_date, "%Y-%m-%d"));
 }
 
 wstring simplified_album_t::get_type_abbrev() const
@@ -186,11 +188,11 @@ void from_json(const Value &j, simplified_album_t &a)
     
     if (j.HasMember("release_date_precision"))
     {
-        auto precision = j["release_date_precision"].GetString(); // year, month, day
+        string precision = j["release_date_precision"].GetString(); // year, month, day
         if (precision == "year")
-            a.release_date = std::format("%s-01-01", a.release_date);
+            a.release_date = std::format("{}-01-01", a.release_date);
         else if (precision == "month")
-            a.release_date = std::format("%s-01", a.release_date);
+            a.release_date = std::format("{}-01", a.release_date);
     }
 
     a.href = j["href"].GetString();
