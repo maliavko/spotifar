@@ -2,6 +2,12 @@ refactor
 - investigate "market" fields for some API requests, for now completly unused
 - noexcept
 
+mingw
+- Ninja Multi Config
+- Clang Tidy
+- FMT_STRING patch
+- clean up tasks
+
 application ideas
 - backlog, upcoming releases
     - close plugin if another librespot device is being detected

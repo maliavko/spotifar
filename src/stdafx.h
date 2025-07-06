@@ -6,17 +6,18 @@
 #define SPDLOG_WCHAR_FILENAMES // using wstring with spdlog library
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
-#define BS_THREAD_POOL_ENABLE_PRIORITY // possibility to use priorities for the thread tasks in BS::thread_pool
 #define RAPIDJSON_HAS_STDSTRING 1 // using string with rapidjson library
 // replacing asserts with runtime exceptions, while working with rapidson for proper error handling
 #define RAPIDJSON_ASSERT(x) if (!(x)) throw std::runtime_error("json error, " #x);
 
 // MinGW does not define these keys
-#ifndef VK_NAVIGATION_UP
-#define VK_NAVIGATION_UP 0x8A
-#endif
-#ifndef VK_NAVIGATION_DOWN
-#define VK_NAVIGATION_DOWN 0x8B
+#if defined(__MINGW32__)
+#   ifndef VK_NAVIGATION_UP
+#       define VK_NAVIGATION_UP 0x8A
+#   endif
+#   ifndef VK_NAVIGATION_DOWN
+#       define VK_NAVIGATION_DOWN 0x8B
+#   endif
 #endif
 
 #define _WINSOCKAPI_
@@ -25,16 +26,20 @@
 #endif
 
 #include <iostream>
+// this <generator> header is a quite a pain: it hits "winsock include" warning on MinGW
+// builds all the times, plus it works only if you put it with some specific order of headers
+#if defined (__clang__)
+#   pragma clang diagnostic ignored "-W#warnings"
+#endif
+#include <generator>
+#include <windows.h> // win api support
 #include <fstream>
-#include <generator> // std::generator<T>
-#include <WinSock2.h> // should be included before windows.h
 #include <string>
 #include <map>
 #include <vector>
 #include <chrono> // std::chrono::system_clock
 #include <typeindex> // std::type_index
 #include <filesystem> // std::filesystem::path
-#include <windows.h> // win api support
 #include <shellapi.h>  // for ShellExecute
 #include <shlobj.h> // for SHGetKnownFolderPath
 
@@ -47,11 +52,11 @@
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-//#include "wintoastlib.h" // win toast notifications library
+#if defined (_MSC_VER)
+#   include "wintoastlib.h" // win toast notifications library
+#endif
 
-#include <plugin.hpp> // far api
-#include <PluginSettings.hpp> // far plugin's data storage access
-#include <DlgBuilder.hpp> // far automatic dialogs builders
+#include <plugin.hpp> // Far api
 
 #include "guid.hpp"
 #include "version.hpp"

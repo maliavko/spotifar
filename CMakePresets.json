@@ -7,9 +7,8 @@
   },
   "configurePresets": [
     {
-      "name": "vs17base",
+      "name": "default",
       "hidden": true,
-      "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
@@ -17,64 +16,102 @@
       }
     },
     {
-      "name": "mingw-base",
+      "name": "vs17-base",
+      "inherits": "default",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022"
+    },
+    {
+      "name": "clang-base",
+      "inherits": "default",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin",
-        "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
-        "CMAKE_CXX_COMPILER": "C:/Msys64/ucrt64/bin/g++.exe"
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
-      "name": "x64",
+      "name": "clang-x64-base",
+      "inherits": "clang-base",
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+        "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
+      }
+    },
+    {
+      "name": "clang-x86-base",
+      "inherits": "clang-base",
+      "hidden": true,
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x86-mingw-dynamic",
+        "VCPKG_HOST_TRIPLET": "x86-mingw-dynamic"
+      }
+    },
+    {
+      "name": "vs17-x64",
+      "inherits": "vs17-base",
       "displayName": "Visual Studio 17 x64",
-      "inherits": "vs17base",
       "architecture": "x64"
     },
     {
-      "name": "Win32",
-      "displayName": "Visual Studio 17 Win32",
-      "inherits": "vs17base",
+      "name": "vs17-x86",
+      "inherits": "vs17-base",
+      "displayName": "Visual Studio 17 x86",
       "architecture": "Win32"
     },
     {
-      "name": "mingw-x86_64",
-      "displayName": "MinGW x86_64",
-      "inherits": "mingw-base"
+      "name": "clang-x64-debug",
+      "inherits": "clang-x64-base",
+      "displayName": "MinGW Clang x64 Debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "clang-x64-release",
+      "inherits": "clang-x64-base",
+      "displayName": "MinGW Clang x64 Release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
     {
-      "name": "x64-Debug",
+      "name": "vs17-x64-Debug",
       "displayName": "Visual Studio 17 x64 Debug",
-      "configurePreset": "x64",
+      "configurePreset": "vs17-x64",
       "configuration": "Debug"
     },
     {
-      "name": "x64-Release",
+      "name": "vs17-x64-Release",
       "displayName": "Visual Studio 17 x64 Release",
-      "configurePreset": "x64",
+      "configurePreset": "vs17-x64",
       "configuration": "Release"
     },
     {
-      "name": "Win32-Debug",
-      "displayName": "Visual Studio 17 Win32 Debug",
-      "configurePreset": "Win32",
+      "name": "vs17-x86-Debug",
+      "displayName": "Visual Studio 17 x86 Debug",
+      "configurePreset": "vs17-x86",
       "configuration": "Debug"
     },
     {
-      "name": "Win32-Release",
-      "displayName": "Visual Studio 17 Win32 Release",
-      "configurePreset": "Win32",
+      "name": "vs17-x86-Release",
+      "displayName": "Visual Studio 17 x86 Release",
+      "configurePreset": "vs17-x86",
       "configuration": "Release"
     },
     {
-      "name": "mingw-x86_64-Release",
-      "displayName": "MinGW x86_64 Release",
-      "configurePreset": "mingw-x86_64"
+      "name": "clang-x64-Debug",
+      "displayName": "MinGW Clang x64 Debug",
+      "configurePreset": "clang-x64-debug"
+    },
+    {
+      "name": "clang-x64-Release",
+      "displayName": "MinGW Clang x64 Release",
+      "configurePreset": "clang-x64-release"
     }
   ]
 }

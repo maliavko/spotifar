@@ -89,13 +89,19 @@ struct cycled_set_descriptor: public descriptor_abstract<T>
     {
         for (size_t idx = 0; idx < values.size(); idx++)
             if (values[idx] == v)
+            {
                 // if there is offset waiting to be applied, we do not changed it;
                 // otherwise we change both values: offset and value, to avoid creating
                 // an offset
                 if (value_idx == offset_idx)
+                {
                     value_idx = offset_idx = idx;
+                }
                 else
+                {
                     value_idx = idx;
+                }
+            }
     }
 
     virtual const T next()

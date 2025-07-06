@@ -501,7 +501,7 @@ public:
     /// @param notify_watchers does not send changes to the requesting status observers like
     /// showing request progress splashing screen and etc.
     /// @param pages_to_request number of data pages to request; "0" means all
-    bool fetch(bool only_cached = false, bool notify_watchers = true, size_t pages_to_request = 0)
+    bool fetch(bool only_cached = false, bool notify_watchers = true, size_t pages_to_request = 0) override
     {
         clear();
 
@@ -546,7 +546,7 @@ public:
     using base_t = collection_abstract<T, N, C>;
     using typename base_t::requester_t;
     using typename base_t::requester_ptr;
-    using typename base_t::collection_abstract;
+    using base_t::collection_abstract;
     
     bool is_modified() const override
     {
@@ -619,7 +619,7 @@ public:
     using base_t = collection_abstract<T, N, C>;
     using typename base_t::requester_t;
     using typename base_t::requester_ptr;
-    using typename base_t::collection_abstract;
+    using base_t::collection_abstract;
     
     bool is_modified() const override
     {

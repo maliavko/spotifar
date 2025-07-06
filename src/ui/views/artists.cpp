@@ -132,6 +132,9 @@ intptr_t artists_base_view::compare_items(const sort_mode_t &sort_mode,
         &item1 = static_cast<const artist_t*>(data1),
         &item2 = static_cast<const artist_t*>(data2);
 
+    #if defined (__clang__)
+    #   pragma clang diagnostic ignored "-Wswitch"
+    #endif
     switch (sort_mode.far_sort_mode)
     {
         case SM_NAME:
@@ -203,13 +206,18 @@ intptr_t artists_base_view::process_key_input(int combined_key)
             const auto &ids = get_selected_items();
 
             if (auto api = api_proxy.lock(); api && !ids.empty())
+            {
                 // what to do - like or unlike - with the whole list of items
                 // we decide based on the first item state
                 if (auto *library = api->get_library(); library->is_artist_followed(ids[0], true))
+                {
                     library->unfollow_artists(ids);
+                }
                 else
+                {
                     library->follow_artists(ids);
-
+                }
+            }
             return TRUE;
         }
 

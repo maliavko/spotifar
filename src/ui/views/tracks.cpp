@@ -201,6 +201,9 @@ intptr_t tracks_base_view::compare_items(const sort_mode_t &sort_mode,
         &item1 = static_cast<const track_t*>(data1),
         &item2 = static_cast<const track_t*>(data2);
 
+    #if defined (__clang__)
+    #   pragma clang diagnostic ignored "-Wswitch"
+    #endif
     switch (sort_mode.far_sort_mode)
     {
         case SM_NAME: // by name
@@ -676,11 +679,14 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
     try
     {
         // parsing datetime string, to be able to reformat it
-        std::istringstream in{ played_track.played_at };
-        utils::clock_t::time_point tp;
-        in >> parse("%FT%T", tp); // e.g. 2025-06-01T21:57:59.793Z
 
-        formatted_time = std::format(L"{:%d %b, %H:%M}", std::chrono::current_zone()->to_local(tp));
+        // MSVC implementation with std::chrone::parse
+        // std::istringstream in{ played_track.played_at };
+        // utils::clock_t::time_point tp;
+        // in >> parse("%FT%T", tp); // e.g. 2025-06-01T21:57:59.793Z
+        
+        auto time = utils::parse_time(played_track.played_at, "%FT%T");
+        formatted_time = utils::format_localtime(time, L"%d %b, %H:%M");
     }
     catch (const std::runtime_error &ex)
     {
