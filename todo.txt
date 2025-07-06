@@ -3,7 +3,6 @@ refactor
 - noexcept
 
 mingw
-- Ninja Multi Config
 - Clang Tidy
 - FMT_STRING patch
 - clean up tasks
