@@ -3,66 +3,18 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
 
-    // extending win shell environment, so by default all the commands are
-    // being launched with VsDevCmd context for ability to access VS dev
-    // tools and variables
-    "windows": {
-      "options": {
-        "shell": {
-          "executable": "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/Tools/VsDevCmd.bat",
-          "args": [
-            "&"
-          ]
-        }
-      }
-    },
     "tasks": [
         {
-            "label": "Build librespot",
-            "type": "shell",
-            "command": "cargo",
+            "label": "Far MSBuild",
+            "type": "process",
+            "command": "${workspaceFolder}\\misc\\vsdevcmd.cmd",
             "args": [
-                "build",
-                "--profile=x${input:buildType}",
-                "--manifest-path=${workspaceFolder}\\thirdparty\\librespot\\Cargo.toml"
-            ],
-            "group": {
-                "kind": "build"
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "clear": true
-            },
-            "dependsOrder": "sequence",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "Build all",
-            "type": "shell",
-            "group": {
-                "kind": "build"
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "clear": true
-            },
-            "dependsOn": ["Far msbuild", "Spotifar cmake build", "Build librespot", "Install Librespot to Spotifar", "Install Spotifar to Far"],
-            "dependsOrder": "sequence",
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "Far msbuild",
-            "type": "shell",
-            "command": "msbuild",
-            "args": [
+                "&",
+                "msbuild",
                 "${workspaceFolder}\\thirdparty\\Farmanager\\_build\\vc\\all.sln",
                 "/t:Far\\Far",
-                "/p:Configuration=\"${input:buildType}\"",
-                "/p:Platform=\"${input:platform}\""
+                "/p:Configuration=${input:buildType}",
+                "/p:Platform=${input:platform}"
             ],
             "group": {
                 "kind": "build"
@@ -72,26 +24,6 @@
                 "reveal": "always",
                 "focus": true,
                 "clear": true
-            },
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "Spotifar cmake build",
-            "type": "shell",
-            "command": "cmake --build --preset ${input:platform}-${input:buildType}",
-            "group": {
-                "kind": "build",
-                "isDefault": true,
-            },
-            "dependsOn":["Spotifar cmake configure"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "Spotifar cmake configure",
-            "type": "shell",
-            "command": "cmake --preset ${input:platform}",
-            "group": {
-                "kind": "build"
             },
             "problemMatcher": "$msCompile"
         },
@@ -101,7 +33,7 @@
             "options": {
                 "env": {
                     "dest_folder": "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\Spotifar\\",
-                    "target_folder": "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\"
+                    "target_folder": "${workspaceFolder}\\build\\${input:toolchain}-${input:platform}\\bin\\${input:buildType}\\"
                 }
             },
             "command": "cmd",
@@ -112,23 +44,9 @@
                     "quoting": "weak"
                 }
             ],
-            "dependsOn": ["Create Spotifar plugin folder"],
-            "group": {
-                "kind": "build"
-            }
-        },
-        {
-            "label": "Install Librespot to Spotifar",
-            "type": "shell",
-            "command": "xcopy",
-            "args": [
-                "${workspaceFolder}\\thirdparty\\librespot\\target\\x${input:buildType}\\librespot.exe",
-                "${workspaceFolder}\\build\\${input:platform}\\bin\\${input:buildType}\\librespot.exe*",
-                "/y",
+            "dependsOn": [
+                "Create Spotifar plugin folder"
             ],
-            "presentation": {
-                "reveal": "silent"
-            },
             "group": {
                 "kind": "build"
             }
@@ -136,6 +54,7 @@
         {
             "label": "Create Spotifar plugin folder",
             "type": "shell",
+            "hide": true,
             "options": {
                 "env": {
                     "plugin_folder": "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
@@ -161,7 +80,7 @@
             "description": "Select a platform",
             "options": [
                 "x64",
-                "Win32"
+                "x86"
             ],
             "default": "x64"
         },
@@ -174,6 +93,16 @@
                 "Debug"
             ],
             "default": "Debug"
+        },
+        {
+            "id": "toolchain",
+            "type": "pickString",
+            "description": "Select a Toolchain type",
+            "options": [
+                "vs17",
+                "clang"
+            ],
+            "default": "vs17"
         }
     ]
 }

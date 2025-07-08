@@ -57,6 +57,7 @@ target_include_directories(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode
         ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 
+
 # DEPENDENCIES
 #-----------------------------------------------------------------------------------------
 find_package(httplib CONFIG REQUIRED)
@@ -83,40 +84,61 @@ if(NOT MINGW)
     )
 endif()
 
+
 # POST BUILD
 #-----------------------------------------------------------------------------------------
-set(OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>)
+set(OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 set(CARGO_BUILD_TYPE x$<CONFIG>)
-
-message(STATUS "Packaging Spotifar docs")
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E
-    copy_directory ${PROJECT_SOURCE_DIR}/docs ${OUTPUT_DIRECTORY}
-)
 
 find_program(CARGO_EXECUTABLE cargo)
 if (CARGO_EXECUTABLE)
 
-    set(LIBRESPOT_TARGET ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${CARGO_BUILD_TYPE}/librespot.exe)
-
-    if(NOT EXISTS "${LIBRESPOT_TARGET}")
-        message(STATUS "Cargo executable is found, building Librespot")
-        add_custom_command(
-            TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CARGO_EXECUTABLE} build --profile=${CARGO_BUILD_TYPE} --manifest-path=${PROJECT_SOURCE_DIR}\\thirdparty\\librespot\\Cargo.toml
-            VERBATIM
-            USES_TERMINAL
-        )
-    endif()
-
-    message(STATUS "Copying Librespot executable to the output directory")
+    message(STATUS "Cargo executable is found, building Librespot")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E
-        copy ${LIBRESPOT_TARGET} ${OUTPUT_DIRECTORY}
+        COMMAND ${CARGO_EXECUTABLE} build --profile=${CARGO_BUILD_TYPE} --manifest-path=${PROJECT_SOURCE_DIR}\\thirdparty\\librespot\\Cargo.toml
+        VERBATIM
+        USES_TERMINAL
     )
 
+    # packaging Librespot executable
+    install(
+        FILES
+            ${LIBRESPOT_TARGET}
+        DESTINATION ${OUTPUT_DIRECTORY}
+    )
 else()
     message(WARNING "No cargo command is found, Libresepot building is skipped")
 endif()
+
+
+# INSTALLATION
+#-----------------------------------------------------------------------------------------
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME_DEPENDENCY_SET my_deps
+    DESTINATION ${OUTPUT_DIRECTORY}
+)
+
+# packaging dependencies
+install(RUNTIME_DEPENDENCY_SET my_deps
+    PRE_EXCLUDE_REGEXES
+        [[api-ms-win-.*]]
+        [[ext-ms-.*]]
+        [[kernel32\.dll]]
+        [[msvcr.*\.dll]]
+        [[vcruntime.*\.dll]]
+    POST_EXCLUDE_REGEXES
+        [[.*system32/.*\.dll]]
+    DESTINATION ${OUTPUT_DIRECTORY}
+)
+
+file(GLOB HELP_FILES "${PROJECT_SOURCE_DIR}/docs/*.hlf")
+file(GLOB LANG_FILES "${PROJECT_SOURCE_DIR}/docs/*.lng")
+
+# packaging language and help files
+install(
+    FILES
+        ${HELP_FILES}
+        ${LANG_FILES}
+    DESTINATION ${OUTPUT_DIRECTORY}
+)
