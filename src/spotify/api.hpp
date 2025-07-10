@@ -6,6 +6,19 @@
 
 namespace spotifar { namespace spotify {
 
+class endpoint_guard
+{
+public:
+    void wait(std::function<bool()> predicate);
+    void set_wait_until(const utils::clock_t::time_point &);
+    bool is_rate_limited() const { return wait_until > utils::clock_t::now(); }
+private:
+    std::condition_variable cv;
+    std::mutex guard;
+    utils::clock_t::time_point wait_until{};
+};
+
+
 class api:
     public api_interface,
     public std::enable_shared_from_this<api>
@@ -65,6 +78,7 @@ protected:
     /// @brief Creates a new http-client instance with the Spotify web API domain address,
     /// fills up all the default attributes and token, and returns it
     auto get_client() const -> std::shared_ptr<httplib::Client>;
+    auto get_endpoint(const string &url) -> endpoint_guard&;
     
     void start_playback_base(const string &body, const item_id_t &device_id);
     
@@ -78,9 +92,9 @@ protected:
 private:
     BS::light_thread_pool requests_pool;
     BS::light_thread_pool resyncs_pool;
-    
-    std::condition_variable retry_cv;
-    std::mutex retry_cv_guard;
+
+    std::unordered_map<string, endpoint_guard> guards;
+
     bool stop_flag = false;
 
     // caches

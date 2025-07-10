@@ -12,7 +12,8 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build/${presetName}/bin"
+        "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "TRUE",
+        "BUILD_LIBRESPOT": "FALSE"
       }
     },
     {
