@@ -67,14 +67,16 @@ bool api::start()
 
 void api::shutdown()
 {
+    stop_flag = true;
+
     if (auto ctx = config::lock_settings())
         std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
     
-    if (!stop_flag)
+    /*if (!stop_flag)
     {
         stop_flag = true;
         retry_cv.notify_all();
-    }
+    }*/
 
     // removing unfinished tasks from the queue
     requests_pool.purge();
@@ -609,6 +611,55 @@ bool api::is_request_cached(const string &url) const
     return api_responses_cache->is_cached(u) && api_responses_cache->get(u).is_valid();
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+static string get_endpoint_name(const string &url)
+{
+    static auto pattern = std::regex("/v1/(.*?)/.*");
+
+    std::smatch match;
+    if (std::regex_search(url, match, pattern) && match.size() > 1)
+        return match[1].str();
+    return "";
+}
+
+
+
+void endpoint_guard::wait(std::function<bool()> predicate)
+{
+    if (is_rate_limited())
+    {
+        std::unique_lock<std::mutex> thread_lock(guard);
+        cv.wait_until(thread_lock, wait_until, predicate);
+    }
+}
+
+void endpoint_guard::set_wait_until(const clock_t::time_point &tp)
+{
+    wait_until = tp;
+}
+
+endpoint_guard& api::get_endpoint(const string &url)
+{
+    const auto &ep_name = get_endpoint_name(url);
+    const auto it = guards.try_emplace(ep_name);
+    return it.first->second;
+}
+
+
+
+
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for, bool retry_429)
 {
     string cached_etag = "";
@@ -629,12 +680,12 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
         cached_etag = cache.etag;
     }
 
-    httplib::Result res;
-    clock_t::duration delay = 0s;
+    Result res(std::make_unique<Response>(), Error::Success);
+    //clock_t::duration delay = 0s;
 
     while (1)
     {
-        if (delay > clock_t::duration::zero())
+        /*if (delay > clock_t::duration::zero())
         {
             log::api->warn("The request was rate-limited, postponing for {} seconds: {}",
                 std::chrono::duration_cast<std::chrono::seconds>(delay).count(), request_url);
@@ -645,6 +696,29 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
 
             // if the thread is woken up already after the plugin is shutdown, just return
             if (stop_flag) return res;
+        }*/
+
+        auto &ep = get_endpoint(url);
+
+        if (ep.is_rate_limited())
+        {
+            if (retry_429)
+            {
+                log::api->debug("waiting for 429");
+                ep.wait([this] { return stop_flag; });
+            }
+            else
+            {
+                res->status = TooManyRequests_429;
+                return res;
+            }
+        }
+
+        if (stop_flag)
+        {
+            log::api->debug("Cancelling request due to closing plugin");
+            res->status = RequestTimeout_408;
+            return res;
         }
         
         // in some rare cases res could not contain any response object, just finish execution in such case
@@ -652,9 +726,16 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
             return res;
 
         // in case we were rate-limited, we retry the request a bit postponed
-        if (res->status == TooManyRequests_429 && retry_429)
+        if ((res->status == TooManyRequests_429 && retry_429) || get_endpoint_name(url) == "artists")
         {
-            delay = std::chrono::seconds(std::stoi(res->get_header_value("retry-after", 0))) + 2s;
+            auto retry_after = 30s;
+            
+            if (res->has_header("retry-after"))
+                retry_after = std::chrono::seconds(std::stoi(res->get_header_value("retry-after", 0)));
+
+            auto &ep = get_endpoint(url);
+            ep.set_wait_until(utils::clock_t::now() + retry_after + 2s);
+
             continue;
         }
 

@@ -91,7 +91,7 @@ set(OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 set(CARGO_BUILD_TYPE x$<CONFIG>)
 
 find_program(CARGO_EXECUTABLE cargo)
-if (CARGO_EXECUTABLE)
+if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
 
     message(STATUS "Cargo executable is found, building Librespot")
     add_custom_command(
