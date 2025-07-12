@@ -89,11 +89,12 @@ endif()
 #-----------------------------------------------------------------------------------------
 set(OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
 set(CARGO_BUILD_TYPE x$<CONFIG>)
+set(LIBRESPOT_TARGET ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${CARGO_BUILD_TYPE}/librespot.exe)
 
 find_program(CARGO_EXECUTABLE cargo)
 if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
 
-    message(STATUS "Cargo executable is found, building Librespot")
+    message(STATUS "Cargo executable is found, Librespot building process is configured")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CARGO_EXECUTABLE} build --profile=${CARGO_BUILD_TYPE} --manifest-path=${PROJECT_SOURCE_DIR}\\thirdparty\\librespot\\Cargo.toml
@@ -108,7 +109,7 @@ if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
         DESTINATION ${OUTPUT_DIRECTORY}
     )
 else()
-    message(WARNING "No cargo command is found, Libresepot building is skipped")
+    message(WARNING "No cargo command is found or disabled, Libresepot building is skipped")
 endif()
 
 
@@ -119,6 +120,12 @@ install(TARGETS ${PROJECT_NAME}
     DESTINATION ${OUTPUT_DIRECTORY}
 )
 
+# copying PDB symbols toi the install directory
+install(
+    FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.pdb
+    DESTINATION ${OUTPUT_DIRECTORY}
+    OPTIONAL)
+
 # packaging dependencies
 install(RUNTIME_DEPENDENCY_SET my_deps
     PRE_EXCLUDE_REGEXES
@@ -127,8 +134,12 @@ install(RUNTIME_DEPENDENCY_SET my_deps
         [[kernel32\.dll]]
         [[msvcr.*\.dll]]
         [[vcruntime.*\.dll]]
+        [[C:\msys64\clang64\bin\.dll]]
     POST_EXCLUDE_REGEXES
         [[.*system32/.*\.dll]]
+        [[C:\msys64\clang64\bin\.dll]]
+    DIRECTORIES
+        "C:/msys64/clang64/bin"
     DESTINATION ${OUTPUT_DIRECTORY}
 )
 

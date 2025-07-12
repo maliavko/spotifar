@@ -19,10 +19,16 @@ configure_file(src/version.hpp.in version.hpp)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+add_subdirectory(src)
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # for some reason I needed to specify Clang keys for generating PDB symbols
-    add_compile_options(-g -gcodeview)
-    add_link_options(-fuse-ld=lld -g -Wl,--pdb=)
+    # Clang keys for generating PDB symbols
+    target_compile_options(${PROJECT_NAME} PRIVATE -g -gcodeview)
+    #target_link_options(${PROJECT_NAME} PRIVATE -fuse-ld=lld -g -Wl,--pdb=$<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.pdb)
+    target_link_options(${PROJECT_NAME} PRIVATE -fuse-ld=lld -g -O0 -fPIC -Wl)
 endif()
 
-add_subdirectory(src)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    OUTPUT_NAME "spotifar"
+    PREFIX ""
+)

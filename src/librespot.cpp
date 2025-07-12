@@ -1,5 +1,4 @@
 #include "librespot.hpp"
-#include "lng.hpp"
 #include "utils.hpp"
 #include "config.hpp"
 
