@@ -3,8 +3,6 @@
 #include "lng.hpp"
 #include "librespot.hpp"
 #include "spotify/interfaces.hpp"
-#include "ui/dialogs/menus.hpp"
-#include "ui/events.hpp"
 #include "ui/notifications.hpp"
 
 namespace spotifar {

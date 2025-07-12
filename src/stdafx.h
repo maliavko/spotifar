@@ -25,7 +25,7 @@
 # define NOMINMAX
 #endif
 
-#include <iostream>
+#include <string>
 // this <generator> header is a quite a pain: it hits "winsock include" warning on MinGW
 // builds all the times, plus it works only if you put it with some specific order of headers
 #if defined (__clang__)
@@ -34,7 +34,6 @@
 #include <generator>
 #include <windows.h> // win api support
 #include <fstream>
-#include <string>
 #include <map>
 #include <vector>
 #include <chrono> // std::chrono::system_clock
