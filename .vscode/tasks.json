@@ -17,7 +17,8 @@
                 "/p:Platform=${input:platform}"
             ],
             "group": {
-                "kind": "build"
+                "kind": "build",
+                "isDefault": true
             },
             "presentation": {
                 "echo": true,
@@ -28,49 +29,30 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "Install Spotifar to Far",
-            "type": "shell",
+            "label": "Far Msys2/Clang64",
+            "type": "process",
+            "command": "mingw32-make",
+            "args": [
+                "-f",
+                "makefile_gcc"
+            ],
             "options": {
+                "cwd": "${workspaceFolder}/thirdparty/Farmanager/far",
                 "env": {
-                    "dest_folder": "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\Spotifar\\",
-                    "target_folder": "${workspaceFolder}\\build\\${input:toolchain}-${input:platform}\\bin\\${input:buildType}\\"
+                    "CLANG": "1"
                 }
             },
-            "command": "cmd",
-            "args": [
-                "/C",
-                {
-                    "value": "if not exist \"%dest_folder%\" mklink /J \"%dest_folder%\" \"%target_folder%\"",
-                    "quoting": "weak"
-                }
-            ],
-            "dependsOn": [
-                "Create Spotifar plugin folder"
-            ],
             "group": {
-                "kind": "build"
-            }
-        },
-        {
-            "label": "Create Spotifar plugin folder",
-            "type": "shell",
-            "hide": true,
-            "options": {
-                "env": {
-                    "plugin_folder": "${workspaceFolder}\\thirdparty\\FarManager\\_build\\vc\\_output\\product\\${input:buildType}.${input:platform}\\Plugins\\"
-                }
+                "kind": "build",
+                "isDefault": true
             },
-            "command": "cmd",
-            "args": [
-                "/C",
-                {
-                    "value": "if not exist \"%plugin_folder%\" mkdir \"%plugin_folder%\"",
-                    "quoting": "weak"
-                }
-            ],
-            "group": {
-                "kind": "build"
-            }
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "clear": true
+            },
+            "problemMatcher": "$gcc"
         }
     ],
     "inputs": [
