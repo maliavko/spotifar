@@ -4,29 +4,21 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
-        // NOTE: Far and dependencies should be built in advance,
-        // launch a task (Ctrl+Shift+P): "Far + Spotifar build and configure" Debug x64
         {
-            "name": "Far run Debug.x64",
-            "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Debug.x64/Far.exe",
-            "type":"cppvsdbg",
+            "name": "Far clang release 64",
+            "type": "lldb",
             "request": "launch",
-            //"cwd": "${fileDirname}",
-            "console": "externalTerminal",
-            "logging": {
-                "exceptions": true,
-                "moduleLoad": false,
-                "engineLogging": false,
-                "programOutput": true,
-            }
+            "program": "${workspaceFolder}/thirdparty/FarManager/far/Release.64.clang/Far.exe",
+            "args": [],
+            "cwd": "${fileDirname}",
+            "console": "externalTerminal"
         },
         {
-            "name": "Far run Release.x64",
+            "name": "Far msvc release 64",
             "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Far.exe",
             "type":"cppvsdbg",
             "request": "launch",
-            //"cwd": "${fileDirname}",
+            "cwd": "${fileDirname}",
             "console": "externalTerminal",
             "logging": {
                 "exceptions": true,

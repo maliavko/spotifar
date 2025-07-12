@@ -3,7 +3,6 @@
 #include "lng.hpp"
 
 #include "spdlog/spdlog.h"
-#include "spdlog/fmt/ostr.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
 

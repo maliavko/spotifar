@@ -5,7 +5,6 @@
 #include "ui/events.hpp"
 #include "ui/panel.hpp"
 #include "ui/dialogs/menus.hpp"
-#include "ui/dialogs/search.hpp"
 
 namespace spotifar {
 

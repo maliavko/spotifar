@@ -11,7 +11,6 @@
 
 namespace spotifar {
 
-namespace hotkeys = config::hotkeys;
 using namespace utils;
 using namespace utils::http;
 using namespace spotify;
