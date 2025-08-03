@@ -330,6 +330,8 @@ struct api_interface
     /// @brief Whether the given url is cached
     virtual bool is_request_cached(const string &url) const = 0;
 
+    virtual void cancel_pending_requests() = 0;
+
 private:
     friend class put_requester;
 
