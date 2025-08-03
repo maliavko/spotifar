@@ -1,5 +1,4 @@
 #include "auth.hpp"
-#include "lng.hpp"
 #include "requesters.hpp"
 #include "observer_protocols.hpp"
 
@@ -221,23 +220,6 @@ string auth_cache::request_auth_code()
             httplib::status_message(res.status), res.status, result_msg), "text/html");
         auth_server.stop();
     });
-
-    // a waiting timeout for the user to enter his credentials. Works well, not sure
-    // this functionality is needed at all
-    // auto a = std::async(std::launch::async, [this]
-    // {
-    //     // preliminary 1200 iterations by 25 milliseconds ~30 seconds, no need in
-    //     // precision here
-    //     for (size_t i = 0; i < 1200; i++)
-    //     {
-    //         std::this_thread::sleep_for(std::chrono::milliseconds(25));
-
-    //         // in case the server is stopped - we finilize a handler
-    //         if (!auth_server.is_running())
-    //             return;
-    //     }
-    //     auth_server.stop();
-    // });
 
     auth_server.listen("127.0.0.1", port);
 
