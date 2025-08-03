@@ -1,6 +1,9 @@
 #include "ui/dialogs/waiting.hpp"
 #include "ui/dialogs/dialog.hpp"
 #include "config.hpp"
+#include "spotifar.hpp"
+#include "plugin.h" // IWYU pragma: keep
+#include "spotify/api.hpp" // IWYU pragma: keep
 
 namespace spotifar { namespace ui {
 
@@ -31,15 +34,30 @@ static const std::vector<FarDialogItem> dlg_items_layout{
     ctrl(DI_TEXT,        view_x1, view_y1+1, view_x2, 1,    DIF_CENTERTEXT)
 };
 
-static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void *param2)
+static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t control_id, void *param)
 {
     if (msg == DN_CONTROLINPUT)
     {
+        const auto *ir = reinterpret_cast<INPUT_RECORD*>(param);
+        if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.bKeyDown)
+        {
+            const auto key = utils::keys::make_combined(ir->Event.KeyEvent);
+            if (key == VK_ESCAPE)
+            {
+                log::global->debug("!!!!!!!!!!!!!!!!");
+                if (auto plugin = get_plugin())
+                    if (auto api = plugin->get_api())
+                    {
+                        api->cancel_pending_requests();
+                    }
+            }
+        }
+
         // blocking possibility to close waiting by escape e.g.
         return TRUE;
     }
 
-    return config::ps_info.DefDlgProc(hdlg, msg, param1, param2);
+    return config::ps_info.DefDlgProc(hdlg, msg, control_id, param);
 }
 
 /// @note if `text` is empty, that means we keep the message, but updating ticker

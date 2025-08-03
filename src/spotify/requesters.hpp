@@ -347,7 +347,7 @@ public:
     auto get() const -> const result_t& { return result; }
 
     /// @brief see `item_requester::execute` interface
-    bool execute(api_weak_ptr_t api, bool only_cached = false, bool notify_watchers = true)
+    bool execute(api_weak_ptr_t api, bool only_cached = false, bool notify_watchers = true, bool retry_429 = false)
     {   
         result.clear();
 
@@ -369,7 +369,7 @@ public:
                 { "ids", utils::string_join(item_ids_t(chunk_begin, chunk_end), ",") },
             }, data_field);
 
-            if (!requester.execute(api, only_cached))
+            if (!requester.execute(api, only_cached, retry_429))
                 return false;
             
             const auto &items = requester.get();
@@ -640,8 +640,7 @@ protected:
         return requester_ptr(new requester_t(this->url, updated_params, this->fieldname));
     }
 
-    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true,
-        size_t pages_to_request = 0) override
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
     {   
         if (api_proxy.expired()) return false;
 

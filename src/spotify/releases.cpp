@@ -145,7 +145,7 @@ bool recent_releases::request_data(data_t &data)
         return !is_in_sync;
     }
 
-    if (artists->fetch(false, false))
+    /*if (artists->fetch(false, false))
     {
         is_in_sync = true;
 
@@ -154,7 +154,7 @@ bool recent_releases::request_data(data_t &data)
             [](const auto &t) { return t.id; });
 
         queue_artists(ids);
-    }
+    }*/
 
     return false;
 }
