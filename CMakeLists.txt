@@ -21,14 +21,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(src)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # Clang keys for generating PDB symbols
-    target_compile_options(${PROJECT_NAME} PRIVATE -g -gcodeview)
-    #target_link_options(${PROJECT_NAME} PRIVATE -fuse-ld=lld -g -Wl,--pdb=$<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.pdb)
-    target_link_options(${PROJECT_NAME} PRIVATE -fuse-ld=lld -g -O0 -fPIC -Wl)
-endif()
-
 set_target_properties(${PROJECT_NAME} PROPERTIES
     OUTPUT_NAME "spotifar"
     PREFIX ""
+)
+
+# Add debug config compile definition for sources
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  $<$<CONFIG:Debug>:DEBUG>
 )

@@ -1,14 +1,21 @@
 {
-  "version": 6,
+  "version": 10,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 5,
+    "minor": 31,
     "patch": 0
   },
   "configurePresets": [
     {
       "name": "default",
       "hidden": true,
+      "$comment": [
+        "the following paths are used for plugin installation into built Far Manager instances:",
+        "Clang or MSBuild respectively; use it as the value for the 'installDir' attribute",
+        "",
+        "${sourceDir}/thirdparty/FarManager/far/Release.64.clang/Plugins/Spotifar",
+        "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
+      ],
       "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {

@@ -4,11 +4,9 @@
 #include "utils.hpp"
 #include "lng.hpp"
 #include "spotifar.hpp"
-#include "plugin.h"
+#include "plugin.h" // IWYU pragma: keep
 #include "spotify/cache.hpp"
 #include "spotify/auth.hpp"
-#include "spotify/api.hpp"
-#include "spotify/releases.hpp"
 
 namespace spotifar { namespace ui { namespace settings {
 
@@ -234,6 +232,7 @@ static void clear_credentials()
 {
     auto ctx = config::lock_settings();
     ctx->delete_value(spotify::auth_config_key);
+    ctx->delete_value(spotify::auth_config_key + L"Time");
 
     if (auto plugin = get_plugin())
     {

@@ -2,7 +2,7 @@
 #include "lng.hpp"
 #include "ui/events.hpp"
 #include "ui/dialogs/filters/albums.hpp"
-#include "spotify/requesters.hpp"
+#include "spotify/requesters.hpp" // IWYU pragma: keep
 
 namespace spotifar { namespace ui {
 
