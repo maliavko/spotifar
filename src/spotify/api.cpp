@@ -7,7 +7,7 @@
 #include "devices.hpp"
 #include "releases.hpp"
 #include "history.hpp"
-#include "hotkeys_handler.hpp"
+#include "utils.hpp"
 
 namespace spotifar { namespace spotify {
 
@@ -42,6 +42,7 @@ api::~api()
     api_responses_cache.reset();
 }
 
+
 bool api::start()
 {
     // the order matters
@@ -62,12 +63,19 @@ bool api::start()
     // initializing http responses cache
     api_responses_cache->start();
 
+    //TODO: for debugging, remove later
+    auto it = guards.try_emplace("me");
+    it.first->second.set_wait_until(utils::clock_t::now() + 60min);
+
     return true;
 }
 
 void api::shutdown()
 {
     stop_flag = true;
+    
+    for (auto &guard: guards)
+        guard.second.notify_all();
 
     if (auto ctx = config::lock_settings())
         std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
@@ -611,6 +619,12 @@ bool api::is_request_cached(const string &url) const
     return api_responses_cache->is_cached(u) && api_responses_cache->get(u).is_valid();
 }
 
+void api::cancel_pending_requests()
+{
+    log::api->debug("aaaaaaaaa cancel_pending_requests");
+    for (auto &guard: guards)
+        guard.second.notify_all();
+}
 
 
 
@@ -681,30 +695,16 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
     }
 
     Result res(std::make_unique<Response>(), Error::Success);
-    //clock_t::duration delay = 0s;
 
     while (1)
     {
-        /*if (delay > clock_t::duration::zero())
-        {
-            log::api->warn("The request was rate-limited, postponing for {} seconds: {}",
-                std::chrono::duration_cast<std::chrono::seconds>(delay).count(), request_url);
-            //std::this_thread::sleep_for(delay);
-
-            std::unique_lock<std::mutex> thread_lock(retry_cv_guard);
-            retry_cv.wait_for(thread_lock, delay, [this]{ return stop_flag; });
-
-            // if the thread is woken up already after the plugin is shutdown, just return
-            if (stop_flag) return res;
-        }*/
-
         auto &ep = get_endpoint(url);
 
         if (ep.is_rate_limited())
         {
+            log::api->debug("--------------- rate limited {}, {}", retry_429, url);
             if (retry_429)
             {
-                log::api->debug("waiting for 429");
                 ep.wait([this] { return stop_flag; });
             }
             else
@@ -726,9 +726,9 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
             return res;
 
         // in case we were rate-limited, we retry the request a bit postponed
-        if ((res->status == TooManyRequests_429 && retry_429) || get_endpoint_name(url) == "artists")
+        if (res->status == TooManyRequests_429 && retry_429)
         {
-            auto retry_after = 30s;
+            auto retry_after = 3s;
             
             if (res->has_header("retry-after"))
                 retry_after = std::chrono::seconds(std::stoi(res->get_header_value("retry-after", 0)));
