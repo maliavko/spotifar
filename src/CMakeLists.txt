@@ -101,13 +101,6 @@ if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
         VERBATIM
         USES_TERMINAL
     )
-
-    # packaging Librespot executable
-    install(
-        FILES
-            ${LIBRESPOT_TARGET}
-        DESTINATION ${OUTPUT_DIRECTORY}
-    )
 else()
     message(WARNING "No cargo command is found or disabled, Libresepot building is skipped")
 endif()
@@ -117,6 +110,13 @@ endif()
 #-----------------------------------------------------------------------------------------
 install(TARGETS ${PROJECT_NAME}
     RUNTIME_DEPENDENCY_SET my_deps
+    DESTINATION ${OUTPUT_DIRECTORY}
+)
+
+# packaging Librespot executable
+install(
+    FILES
+        ${LIBRESPOT_TARGET}
     DESTINATION ${OUTPUT_DIRECTORY}
 )
 

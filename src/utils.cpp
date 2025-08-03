@@ -5,6 +5,9 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/msvc_sink.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include <spdlog/sinks/sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
 
 bool operator==(const FarKey &lhs, const FarKey &rhs)
 {
@@ -698,12 +701,20 @@ namespace log
             spdlog::register_logger(librespot);
         }
 
-        #ifndef NDEBUG
+        #if defined (DEBUG)
+
+            std::shared_ptr<spdlog::sinks::sink> debug_console_sink = nullptr;
+
+            #if defined (__clang__)
+                debug_console_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+            #else
+                debug_console_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+            #endif
+
             // for debugging in VS Code this sink helps seeing the messages in the Debug Console view
-            auto msvc_debug_sink = std::make_shared<spdlog::sinks::msvc_sink_mt>();
-            spdlog::apply_all([&msvc_debug_sink](const auto &logger)
+            spdlog::apply_all([&debug_console_sink](const auto &logger)
             {
-                logger->sinks().push_back(msvc_debug_sink);
+                logger->sinks().push_back(debug_console_sink);
             });
 
             // WinToast library send debug messages to the std::wcout, this is the attempt to redirect
@@ -721,7 +732,7 @@ namespace log
 
     void fini()
     {
-        #ifndef NDEBUG
+        #if defined (DEBUG)
             if (wcout_old_buf != nullptr)
                 std::wcout.rdbuf(wcout_old_buf);
         #endif

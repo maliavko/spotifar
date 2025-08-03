@@ -29,6 +29,15 @@ bugs
 - git workflows does not have fixes of Librespot build, on top now bin folder does not have all the binaries, cmake install should be called
 - I supressed wintoast library, need to recover it for msvc builds
 
+clang toolchain
+- install external cmake
+- install msys2
+- install updates: pacman -Syu
+- install toolchain: pacman -S mingw-w64-clang-x86_64-toolchain
+- install ninja: pacman -S mingw-w64-clang-x86_64-ninja
+- add to account PATH C:\msys64\clang64\bin
+- eplxain how to install plugin and how to build librespot
+
 to finish for alpha release
 - add gallery of schreenshots
 + check all the default view settings and sort modes
