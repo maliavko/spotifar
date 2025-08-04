@@ -55,8 +55,8 @@ protected:
     void on_request_started(const string &url) override;
     void on_request_finished(const string &url) override;
     void on_request_progress_changed(const string &url, size_t progress, size_t total) override;
-    void on_playback_command_failed(const string &msg) override;
-    void on_collection_fetching_failed(const string &msg) override;
+    void on_playback_command_failed(const string &message) override;
+    void on_collection_fetching_failed(const string &message) override;
 
     // librespot observer handlers
     void on_librespot_stopped(bool emergency) override;

@@ -45,15 +45,17 @@ plugin::~plugin()
 {
     try
     {
+        // api class can have pending requests, which should be marked for cancellation first,
+        // otherwise `worker_lock` will wait for them to complete
+        api->shutdown();
+        notifications->shutdown();
+
         player->hide();
         
         shutdown_sync_worker();
 
         shutdown_librespot_process();
 
-        api->shutdown();
-        notifications->shutdown();
-    
         events::stop_listening<spotify::auth_observer>(this);
         events::stop_listening<spotify::api_requests_observer>(this);
         events::stop_listening<config::config_observer>(this);

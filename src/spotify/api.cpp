@@ -7,7 +7,9 @@
 #include "devices.hpp"
 #include "releases.hpp"
 #include "history.hpp"
+#include "stdafx.h"
 #include "utils.hpp"
+#include <mutex>
 
 namespace spotifar { namespace spotify {
 
@@ -16,6 +18,10 @@ using namespace httplib;
 using namespace utils;
 
 const string spotify_api_url = "https://api.spotify.com";
+
+std::random_device rd;                  // get a random seed from hardware
+std::mt19937 gen(rd());                 // Mersenne Twister PRNG seeded with rd
+std::bernoulli_distribution d(0.85);    // 50% chance for true, 50% for false
 
 // a helper-function to avoid copy-pasting. Performs an execution of a given
 // requester, checks the result and returns it back
@@ -64,27 +70,18 @@ bool api::start()
     api_responses_cache->start();
 
     //TODO: for debugging, remove later
-    auto it = guards.try_emplace("me");
-    it.first->second.set_wait_until(utils::clock_t::now() + 60min);
+    //auto it = guards.try_emplace("me");
+    //it.first->second.set_wait_until(utils::clock_t::now() + 60min);
 
     return true;
 }
 
 void api::shutdown()
 {
-    stop_flag = true;
-    
-    for (auto &guard: guards)
-        guard.second.notify_all();
+    cancel_pending_requests(false);
 
     if (auto ctx = config::lock_settings())
         std::for_each(caches.begin(), caches.end(), [ctx](auto &c){ c->shutdown(*ctx); });
-    
-    /*if (!stop_flag)
-    {
-        stop_flag = true;
-        retry_cv.notify_all();
-    }*/
 
     // removing unfinished tasks from the queue
     requests_pool.purge();
@@ -619,11 +616,22 @@ bool api::is_request_cached(const string &url) const
     return api_responses_cache->is_cached(u) && api_responses_cache->get(u).is_valid();
 }
 
-void api::cancel_pending_requests()
+void api::cancel_pending_requests(bool wait_for_result)
 {
-    log::api->debug("aaaaaaaaa cancel_pending_requests");
+    stop_flag = true;
+
     for (auto &guard: guards)
         guard.second.notify_all();
+    
+    log::api->debug("------------- cancel_pending_requests");
+
+    if (wait_for_result)
+    {
+        auto r = std::async(std::launch::async, [this] {
+            std::this_thread::sleep_for(1s);
+            stop_flag = false;
+        });
+    }
 }
 
 
@@ -664,8 +672,16 @@ void endpoint_guard::set_wait_until(const clock_t::time_point &tp)
     wait_until = tp;
 }
 
+const utils::clock_t::time_point& endpoint_guard::get_wait_until() const
+{
+    return wait_until;
+}
+
 endpoint_guard& api::get_endpoint(const string &url)
 {
+    std::mutex m;
+    std::lock_guard guard(m);
+
     const auto &ep_name = get_endpoint_name(url);
     const auto it = guards.try_emplace(ep_name);
     return it.first->second;
@@ -680,19 +696,19 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
     string url = http::trim_domain(request_url);
 
     // we have a cache for the requested url and it is still valid
-    if (api_responses_cache->is_cached(url))
-    {
-        const auto &cache = api_responses_cache->get(url);
-        if (cache)
-        {
-            Result res(std::make_unique<Response>(), Error::Success);
-            res->status = OK_200;
-            res->body = cache.body;
-            return res;
-        }
+    // if (api_responses_cache->is_cached(url))
+    // {
+    //     const auto &cache = api_responses_cache->get(url);
+    //     if (cache)
+    //     {
+    //         Result res(std::make_unique<Response>(), Error::Success);
+    //         res->status = OK_200;
+    //         res->body = cache.body;
+    //         return res;
+    //     }
 
-        cached_etag = cache.etag;
-    }
+    //     cached_etag = cache.etag;
+    // }
 
     Result res(std::make_unique<Response>(), Error::Success);
 
@@ -702,13 +718,14 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
 
         if (ep.is_rate_limited())
         {
-            log::api->debug("--------------- rate limited {}, {}", retry_429, url);
             if (retry_429)
             {
                 ep.wait([this] { return stop_flag; });
             }
             else
             {
+                string rate_limited_for = std::format("{:%T}", ep.get_wait_until() - utils::clock_t::now());
+                log::api->trace("The endpoint is rate limited for {}, the request is cancelled: {}", rate_limited_for, url);
                 res->status = TooManyRequests_429;
                 return res;
             }
@@ -716,27 +733,42 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
 
         if (stop_flag)
         {
-            log::api->debug("Cancelling request due to closing plugin");
-            res->status = RequestTimeout_408;
+            log::api->warn("The request is cancelled by user: {}", url);
+            res->status = http::CancelledByUser_470;
             return res;
         }
+
+        if (d(gen))
+        {
+            // in some rare cases `res` could not contain any response object, just finish execution in such case
+            if (res = get_client()->Get(url, {{ "If-None-Match", cached_etag }}); !res)
+                return res;
+        }
+        else
+        {
+            res->status = TooManyRequests_429;
+            res->set_header("retry-after", "15");
+        }
         
-        // in some rare cases res could not contain any response object, just finish execution in such case
-        if (res = get_client()->Get(url, {{ "If-None-Match", cached_etag }}); !res)
-            return res;
+        // in some rare cases `res` could not contain any response object, just finish execution in such case
+        // if (res = get_client()->Get(url, {{ "If-None-Match", cached_etag }}); !res)
+        //     return res;
 
         // in case we were rate-limited, we retry the request a bit postponed
-        if (res->status == TooManyRequests_429 && retry_429)
+        if (res->status == TooManyRequests_429)
         {
             auto retry_after = 3s;
             
             if (res->has_header("retry-after"))
                 retry_after = std::chrono::seconds(std::stoi(res->get_header_value("retry-after", 0)));
 
-            auto &ep = get_endpoint(url);
-            ep.set_wait_until(utils::clock_t::now() + retry_after + 2s);
+            ep.set_wait_until(utils::clock_t::now() + retry_after + 1s);
 
-            continue;
+            if (retry_429)
+            {
+                log::api->debug("Putting the request for retry in {} seconds, {}", retry_after.count(), url);
+                continue;
+            }
         }
 
         // ...in all other cases - just process and return the result

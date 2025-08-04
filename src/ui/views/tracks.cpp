@@ -1,7 +1,7 @@
 #include "tracks.hpp"
 #include "lng.hpp"
 #include "ui/events.hpp"
-#include "spotify/requesters.hpp"
+#include "spotify/requesters.hpp" // IWYU pragma: keep
 
 namespace spotifar { namespace ui {
 
