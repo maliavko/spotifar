@@ -827,6 +827,7 @@ time_t parse_time(const string &time_str, const string &fmt)
     std::istringstream in{ time_str };
     in >> std::get_time(&timeinfo, fmt.c_str());
 
+    // TODO it looks like in.fail() hits when the parsing has finished well, to double check it
     if (in.fail())
         log::global->warn("Cound not parse time string '{}', format '{}'", time_str, fmt);
 
