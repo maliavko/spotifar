@@ -4,10 +4,12 @@
 
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/daily_file_sink.h"
-#include "spdlog/sinks/msvc_sink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include <spdlog/sinks/sink.h>
-#include <spdlog/sinks/stdout_sinks.h>
+#if defined (__clang__)
+#   include <spdlog/sinks/stdout_sinks.h>
+#else
+#   include "spdlog/sinks/msvc_sink.h"
+#endif
 
 bool operator==(const FarKey &lhs, const FarKey &rhs)
 {
@@ -980,15 +982,29 @@ namespace http
         if (!res)
             return httplib::to_string(res.error());
     
-        string message = "";
+        string err_msg = "", status_msg = "";
 
         // trying to get an additional error message in the API response body
         Document doc;
         if (!doc.Parse(res->body).HasParseError())
             if (doc.HasMember("error") && doc["error"].HasMember("message"))
-                message = doc["error"]["message"].GetString();
+                err_msg = doc["error"]["message"].GetString();
 
-        return std::format("status {}, {}. {}", res->status, httplib::status_message(res->status), message);
+        switch (res->status)
+        {
+            case CancelledByUser_470:
+                status_msg = "Cancelled by user";
+                break;
+            
+            default:
+                status_msg = httplib::status_message(res->status);
+                break;
+        }
+
+        if (err_msg.empty())
+            return std::format("status {}, {}.", res->status, status_msg);
+        else
+            return std::format("status {}, {}. {}", res->status, status_msg, err_msg);
     }
 
     string trim_params(const string &url)

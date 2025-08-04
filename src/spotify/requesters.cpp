@@ -10,9 +10,9 @@ const size_t max_limit = 50ULL;
 void http_logger(const Request &req, const Response &res)
 {
     static const std::set<string> exclude{
-        "/v1/me/player",
-        "/v1/me/player/devices",
-        "/v1/me/player/recently-played",
+        // "/v1/me/player",
+        // "/v1/me/player/devices",
+        // "/v1/me/player/recently-played",
     };
     
     if (utils::http::is_success(res.status))

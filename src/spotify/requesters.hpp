@@ -175,7 +175,7 @@ public:
         auto response = api_proxy.lock()->get(url);
         if (!utils::http::is_success(response))
         {
-            log::api->error("There is an error while executing API fetching request: '{}', "
+            log::api->error("There is an error while executing API search request: '{}', "
                 "url '{}'", utils::http::get_status_message(response), url);
             return false;
         }
@@ -275,7 +275,7 @@ public:
         response = api_proxy.lock()->get(url, C{ N }, retry_429);
         if (!is_success(response))
         {
-            log::api->error("There is an error while executing API fetching request: '{}', "
+            log::api->error("There is an error while executing API GET request '{}', "
                 "url '{}'", utils::http::get_status_message(response), url);
             return false;
         }
@@ -645,6 +645,9 @@ protected:
         if (api_proxy.expired()) return false;
 
         auto requester = make_requester(0);
+
+        requester_progress_notifier notifier(requester->get_url(), notify_watchers);
+
         // performing the first request to obtain a total number fo items
         if (!requester->execute(api_proxy, only_cached, true))
         {
@@ -659,8 +662,6 @@ protected:
         size_t total = requester->get_total();
         if (total == 0) // if there is no entries, the results is still valid
             return true;
-
-        requester_progress_notifier notifier(requester->get_url(), notify_watchers);
 
         // calculating the amount of pages
         size_t start = 1ULL, end = total / max_limit;
@@ -707,9 +708,9 @@ protected:
             sequence_future.wait();
             sequence_future.get();
         }
-        catch (const string &message)
+        catch (const std::runtime_error &ex)
         {
-            dispatch_event(&api_requests_observer::on_collection_fetching_failed, message);
+            dispatch_event(&api_requests_observer::on_collection_fetching_failed, std::string(ex.what()));
             return false;
         }
 
