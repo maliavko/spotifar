@@ -716,6 +716,8 @@ namespace http
     using namespace json;
     using namespace httplib;
 
+    static const size_t CancelledByUser_470 = 470;
+
     /// @brief Returns whether the http request's result is successful
     /// (response code is 200, 204 or 304)
     bool is_success(const http::Result &res);
@@ -804,7 +806,7 @@ namespace crc32
 } // namespace utils
 
 // exposing `log` namespace to the 
-namespace log = utils::log;
+namespace log = utils::log; // NOLINT(misc-unused-alias-decls)
 
 } // namespace spotifar
 
