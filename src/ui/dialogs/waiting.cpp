@@ -4,6 +4,8 @@
 #include "spotifar.hpp"
 #include "plugin.h" // IWYU pragma: keep
 #include "spotify/api.hpp" // IWYU pragma: keep
+#include "utils.hpp"
+#include <windows.h>
 
 namespace spotifar { namespace ui {
 
@@ -121,6 +123,13 @@ void waiting::tick(const utils::clock_t::duration &delta)
             ticker = 0;
 
         accumulated = accumulated % period;
+    }
+
+    if (utils::keys::is_pressed(VK_ESCAPE))
+    {
+        if (auto plugin = get_plugin())
+            if (auto api = plugin->get_api())
+                api->cancel_pending_requests();
     }
 }
 
