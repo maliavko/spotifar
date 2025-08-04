@@ -9,7 +9,7 @@ using namespace spotify;
 using utils::far3::synchro_tasks::dispatch_event;
 
 
-#ifndef NDEBUG
+#if defined (DEBUG)
     static const wstring device_name = L"librespot-debug";
 #else
     static const wstring device_name = L"librespot";

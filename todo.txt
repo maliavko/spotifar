@@ -30,6 +30,15 @@ bugs
 - hitting ".." on the top artist tracks raises assert
 - [2025-07-31 11:02:30.152] [global] [warning] Cound not parse time string '2025-07-31T08:56:32.194Z', format '%Y-%m-%dT%H:%M:%S%Z', while syncing recently-played items
 
+clang toolchain
+- install external cmake
+- install msys2
+- install updates: pacman -Syu
+- install toolchain: pacman -S mingw-w64-clang-x86_64-toolchain
+- install ninja: pacman -S mingw-w64-clang-x86_64-ninja
+- add to account PATH C:\msys64\clang64\bin
+- eplxain how to install plugin and how to build librespot
+
 to finish for alpha release
 - add gallery of schreenshots
 + check all the default view settings and sort modes

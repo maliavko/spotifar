@@ -12,6 +12,7 @@ public:
     void wait(std::function<bool()> predicate);
     void set_wait_until(const utils::clock_t::time_point &);
     bool is_rate_limited() const { return wait_until > utils::clock_t::now(); }
+    void notify_all() { cv.notify_all(); }
 private:
     std::condition_variable cv;
     std::mutex guard;
@@ -89,6 +90,7 @@ protected:
     
     auto get_pool() -> BS::light_thread_pool& override { return requests_pool; };
     bool is_request_cached(const string &url) const override;
+    void cancel_pending_requests() override;
 private:
     BS::light_thread_pool requests_pool;
     BS::light_thread_pool resyncs_pool;

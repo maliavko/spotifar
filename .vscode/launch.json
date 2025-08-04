@@ -5,16 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Far clang release 64",
-            "type": "lldb",
+            "name": "lldb-dap",
+            "type": "lldb-dap",
             "request": "launch",
             "program": "${workspaceFolder}/thirdparty/FarManager/far/Release.64.clang/Far.exe",
             "args": [],
-            "cwd": "${fileDirname}",
-            "console": "externalTerminal"
+            "env": [],
+            "cwd": "${workspaceRoot}"
         },
+
         {
-            "name": "Far msvc release 64",
+            "name": "VS dbg",
             "program": "${workspaceFolder}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Far.exe",
             "type":"cppvsdbg",
             "request": "launch",
