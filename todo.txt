@@ -27,6 +27,8 @@ bugs
 - for mingw-clang csuccessful compilation a patch for spdlog FMT_STRING is needed; investigate how to store it locally and reapply with vcpkg
 - git workflows does not have fixes of Librespot build, on top now bin folder does not have all the binaries, cmake install should be called
 - I supressed wintoast library, need to recover it for msvc builds
+- hitting ".." on the top artist tracks raises assert
+- [2025-07-31 11:02:30.152] [global] [warning] Cound not parse time string '2025-07-31T08:56:32.194Z', format '%Y-%m-%dT%H:%M:%S%Z', while syncing recently-played items
 
 clang toolchain
 - install external cmake
