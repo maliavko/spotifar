@@ -840,7 +840,6 @@ time_t parse_time(const string &time_str, const string &fmt)
     std::istringstream in{ time_str };
     in >> std::get_time(&timeinfo, fmt.c_str());
 
-    // TODO it looks like in.fail() hits when the parsing has finished well, to double check it
     if (in.fail())
         log::global->warn("Cound not parse time string '{}', format '{}'", time_str, fmt);
 
@@ -849,12 +848,7 @@ time_t parse_time(const string &time_str, const string &fmt)
 
 clock_t::time_point get_timestamp(const string &time_str)
 {
-    // MSVC implementation
-    // std::istringstream ss(time_str);
-    // clock_t::time_point time_point;
-    // std::chrono::from_stream(ss, "%Y-%m-%dT%H:%M:%S%Z", time_point);
-
-    return utils::clock_t::from_time_t(parse_time(time_str, "%Y-%m-%dT%H:%M:%S%Z"));
+    return utils::clock_t::from_time_t(parse_time(time_str, "%Y-%m-%dT%H:%M:%S"));
 }
 
 wstring format_localtime(const time_t &time, const wstring &fmt)

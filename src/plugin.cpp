@@ -68,10 +68,10 @@ plugin::~plugin()
         events::stop_listening<ui::ui_events_observer>(this);
         events::stop_listening<librespot_observer>(this);
 
-        player.reset();
+        /*player.reset();
         api.reset();
         notifications.reset();
-        hotkeys.reset();
+        hotkeys.reset();*/
     }
     catch (const std::exception &ex)
     {

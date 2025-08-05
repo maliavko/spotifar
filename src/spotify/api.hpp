@@ -9,15 +9,19 @@ namespace spotifar { namespace spotify {
 class endpoint_guard
 {
 public:
+    endpoint_guard(const string &name): name(name) {}
+
     void wait(std::function<bool()> predicate);
     void set_wait_until(const utils::clock_t::time_point &);
     auto get_wait_until() const -> const utils::clock_t::time_point&;
     bool is_rate_limited() const { return wait_until > utils::clock_t::now(); }
     void notify_all() { cv.notify_all(); }
+    auto get_name() const -> const string& { return name; }
 private:
     std::condition_variable cv;
     std::mutex guard;
     utils::clock_t::time_point wait_until{};
+    string name;
 };
 
 
@@ -84,13 +88,14 @@ protected:
     
     void start_playback_base(const string &body, const item_id_t &device_id);
     
-    httplib::Result get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) override;
-    httplib::Result put(const string &url, const string &body = "") override;
-    httplib::Result del(const string &url, const string &body = "") override;
-    httplib::Result post(const string &url, const string &body = "") override;
+    auto get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) -> httplib::Result override;
+    auto put(const string &url, const string &body = "") -> httplib::Result override;
+    auto del(const string &url, const string &body = "") -> httplib::Result override;
+    auto post(const string &url, const string &body = "") -> httplib::Result override;
     
     auto get_pool() -> BS::light_thread_pool& override { return requests_pool; };
     bool is_request_cached(const string &url) const override;
+    bool is_endpoint_rate_limited(const string &endpoint_name) const override;
     void cancel_pending_requests(bool wait_for_result = true) override;
 private:
     BS::light_thread_pool requests_pool;
@@ -98,7 +103,7 @@ private:
 
     std::unordered_map<string, endpoint_guard> guards;
 
-    bool stop_flag = false;
+    bool cancel_flag = false;
 
     // caches
 
