@@ -8,11 +8,7 @@ using utils::far3::synchro_tasks::dispatch_event;
 
 bool playback_cache::is_active() const
 {
-    // the cache is actively synchronized only when the user is authenticated and there are
-    // playback observers
-    if (auto auth = api_proxy->get_auth_cache())
-        return auth->is_authenticated();
-    return false;
+    return api_proxy->get_auth_cache()->is_authenticated() && !api_proxy->is_endpoint_rate_limited("me");
 }
 
 clock_t::duration playback_cache::get_sync_interval() const
@@ -50,8 +46,7 @@ void playback_cache::on_data_synced(const playback_state_t &data, const playback
 
 bool playback_cache::request_data(playback_state_t &data)
 {
-    auto req = item_requester<playback_state_t>("/v1/me/player");
-    if (req.execute(api_proxy->get_ptr()))
+    if (auto req = item_requester<playback_state_t>("/v1/me/player"); req.execute(api_proxy->get_ptr()))
     {
         data = req.get();
         return true;

@@ -67,10 +67,11 @@ struct collection_interface
     /// @brief A public interface method to populate the collection fully
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
-    /// @param notify_watchers does not send changes to the requesting status observers like
-    /// showing request progress splashing screen and etc.
+    /// @param silent perform a silent background request, as of now it means:
+    ///     1. no updates to the watchers, so no 'waiting' splash shown
+    ///     2. no retries in case of http errors, immediate error dispatch
     /// @param pages_to_request number of data pages to request; "0" means all
-    virtual bool fetch(bool only_cached = false, bool notify_watchers = true, size_t pages_to_request = 0) = 0;
+    virtual bool fetch(bool only_cached = false, bool silent = false, size_t pages_to_request = 0) = 0;
 
     /// @brief Returns whether the container is populated from server or not
     virtual bool is_populated() const = 0;
@@ -329,6 +330,8 @@ struct api_interface
 
     /// @brief Whether the given url is cached
     virtual bool is_request_cached(const string &url) const = 0;
+
+    virtual bool is_endpoint_rate_limited(const string &url) const = 0;
 
     virtual void cancel_pending_requests(bool wait_for_result = true) = 0;
 
