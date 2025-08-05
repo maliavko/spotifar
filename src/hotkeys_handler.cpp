@@ -1,8 +1,8 @@
 #include "hotkeys_handler.hpp"
 #include "config.hpp"
 #include "lng.hpp"
-#include "librespot.hpp"
-#include "spotify/interfaces.hpp"
+#include "librespot.hpp" // IWYU pragma: keep
+#include "spotify/interfaces.hpp" // IWYU pragma: keep
 #include "ui/notifications.hpp"
 
 namespace spotifar {
@@ -12,14 +12,17 @@ using namespace utils;
 using namespace spotify;
 using utils::far3::get_text;
 
-
 hotkeys_handler::hotkeys_handler(api_weak_ptr_t api): api_proxy(api)
 {
     on_global_hotkeys_setting_changed(config::is_global_hotkeys_enabled());
+    
+    events::start_listening<config::config_observer>(this);
 }
 
 hotkeys_handler::~hotkeys_handler()
 {
+    events::stop_listening<config::config_observer>(this);
+
     background_tasks.clear_tasks();
 }
 

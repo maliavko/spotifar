@@ -26,39 +26,39 @@
 #endif
 
 #include <string>
-// this <generator> header is a quite a pain: it hits "winsock include" warning on MinGW
+// this <generator> header is quite a pain: it hits "winsock include" warning on MinGW
 // builds all the times, plus it works only if you put it with some specific order of headers
 #if defined (__clang__)
 #   pragma clang diagnostic ignored "-W#warnings"
 #endif
 #include <generator>
 #include <windows.h> // win api support
-#include <fstream>
-#include <map>
+#include <fstream> // IWYU pragma: keep
+#include <map> // IWYU pragma: keep
 #include <vector>
 #include <chrono> // std::chrono::system_clock
-#include <typeindex> // std::type_index
-#include <filesystem> // std::filesystem::path
+#include <typeindex> // IWYU pragma: keep; std::type_index
+#include <filesystem> // IWYU pragma: keep; std::filesystem::path
 #include <shellapi.h>  // for ShellExecute
 #include <shlobj.h> // for SHGetKnownFolderPath
 
-#include "httplib.h" // single-threaded http client/server library
-#include "spdlog/spdlog.h" // logging library
-#include "BS_thread_pool.hpp" // thread pool library
-#include "ObserverManager.h" // event bus library
+#include "httplib.h" // IWYU pragma: keep; single-threaded http client/server library
+#include "spdlog/spdlog.h" // IWYU pragma: keep; logging library
+#include "BS_thread_pool.hpp" // IWYU pragma: keep; thread pool library
+#include "ObserverManager.h" // IWYU pragma: keep; event bus library
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/document.h"
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-#if defined (_MSC_VER)
+#if defined (_WIN32)
 #   include "wintoastlib.h" // win toast notifications library
 #endif
 
 #include <plugin.hpp> // Far api
 
-#include "guid.hpp"
-#include "version.hpp"
+#include "guid.hpp" // IWYU pragma: keep
+#include "version.hpp" // IWYU pragma: keep
 
 namespace spotifar
 {

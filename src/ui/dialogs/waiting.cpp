@@ -40,21 +40,6 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t control_id, 
 {
     if (msg == DN_CONTROLINPUT)
     {
-        const auto *ir = reinterpret_cast<INPUT_RECORD*>(param);
-        if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.bKeyDown)
-        {
-            const auto key = utils::keys::make_combined(ir->Event.KeyEvent);
-            if (key == VK_ESCAPE)
-            {
-                log::global->debug("!!!!!!!!!!!!!!!!");
-                if (auto plugin = get_plugin())
-                    if (auto api = plugin->get_api())
-                    {
-                        api->cancel_pending_requests();
-                    }
-            }
-        }
-
         // blocking possibility to close waiting by escape e.g.
         return TRUE;
     }
@@ -125,6 +110,11 @@ void waiting::tick(const utils::clock_t::duration &delta)
         accumulated = accumulated % period;
     }
 
+    // collections fetching requests can suspend the threads, while waiting for the
+    // endpoints availability; hitting Escape button during this time period, when
+    // the user sees the waiting splash dialog, allows to break this freeze, however
+    // the main thread can also be suspended, so the button pressed condition is checked
+    // separately in the forground thread
     if (utils::keys::is_pressed(VK_ESCAPE))
     {
         if (auto plugin = get_plugin())
