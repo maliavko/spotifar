@@ -1,5 +1,4 @@
 #include "cache.hpp"
-#include "items.hpp"
 
 namespace spotifar { namespace spotify {
 

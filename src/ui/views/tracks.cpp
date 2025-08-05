@@ -242,7 +242,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
         {
             const auto &ids = get_selected_items();
 
-            if (ids.size() == 1)
+            if (ids.size() == 1) // one item was selected
             {
                 if (const auto &item = panels::get_current_item(get_panel_handle()))
                 {
@@ -253,7 +253,7 @@ intptr_t tracks_base_view::process_key_input(int combined_key)
                     }
                 }
             }
-            else
+            else if (ids.size() > 1)
             {
                 // if there are several items selected on the panel, we are launching them in the order
                 // selected as a range of URIs
