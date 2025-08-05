@@ -267,7 +267,8 @@ struct api_interface
     /// @param item_id the id of the item the image belongs to (e.g. album id or artist id)
     virtual auto get_image(const image_t &image, const item_id_t &item_id) -> wstring = 0;
 
-    virtual auto get_lyrics(const track_t &) -> string = 0;
+    /// @brief Seeks and returns the lyrics for the given track on the https://lrclib.net resource
+    virtual auto get_lyrics(const track_t&) -> string = 0;
 
     // playback interface
 
@@ -331,8 +332,11 @@ struct api_interface
     /// @brief Whether the given url is cached
     virtual bool is_request_cached(const string &url) const = 0;
 
-    virtual bool is_endpoint_rate_limited(const string &url) const = 0;
+    /// @brief Returns the given `endpoint_name` endpoint's busy status
+    virtual bool is_endpoint_rate_limited(const string &endpoint_name) const = 0;
 
+    /// @brief Cancels all the pending requests, waiting for the all busy endpoints 
+    /// availability
     virtual void cancel_pending_requests(bool wait_for_result = true) = 0;
 
 private:

@@ -139,7 +139,7 @@ static std::deque<bool> check_saved_items(api_interface *api, const string &endp
     auto requester = several_items_requester<bool, -1, utils::clock_t::duration, std::deque<bool>>(
         endpoint_url, ids, BATCH_SIZE);
 
-    if (requester.execute(api->get_ptr(), false, false))
+    if (requester.execute(api->get_ptr(), false, true))
         return requester.get();
     
     // perhaps at some point it'd be good to add an error propagation here

@@ -6,21 +6,42 @@
 
 namespace spotifar { namespace spotify {
 
+/// @brief A class-helper to guard an endpoint from spam requests. Implemets the logic
+/// to track endpoint's busy (retry after) time and blocks accessing threads until the
+/// delay is expired. The algorithm is built on the conditional variables and mutexes:
+/// API receiving 429 http error marks an endpoint as busy and all the further requests
+/// can check its status to avoid spamming or get into the waiting queue until it is free
+///
+/// @note The endpoint's name is the first part of the requesting url, except API version
+/// specificator: /v1/me/player/ -> "me", /v1/artists/123kjasd2342 -> artists
 class endpoint_guard
 {
 public:
     endpoint_guard(const string &name): name(name) {}
 
+    /// @brief Blocks an accessing thread until the delay time is expired or
+    /// `predicate` returns `true`
     void wait(std::function<bool()> predicate);
-    void set_wait_until(const utils::clock_t::time_point &);
-    auto get_wait_until() const -> const utils::clock_t::time_point&;
-    bool is_rate_limited() const { return wait_until > utils::clock_t::now(); }
+
+    /// @brief Set the busy expiration time
+    void set_expires_at(const utils::clock_t::time_point &);
+
+    /// @brief Returns the busy status expiration time point
+    auto get_expires_at() const -> const utils::clock_t::time_point&;
+
+    /// @brief Returns the endpoint's busy status, if it is rate limited and should be not used
+    /// until the expiration time
+    bool is_rate_limited() const { return expires_at > utils::clock_t::now(); }
+
+    /// @brief Notifies all the blocked (pending) threads to wake up and check their statuses
     void notify_all() { cv.notify_all(); }
+
+    /// @brief The endpoint's name
     auto get_name() const -> const string& { return name; }
 private:
     std::condition_variable cv;
     std::mutex guard;
-    utils::clock_t::time_point wait_until{};
+    utils::clock_t::time_point expires_at{};
     string name;
 };
 
@@ -84,8 +105,14 @@ protected:
     /// @brief Creates a new http-client instance with the Spotify web API domain address,
     /// fills up all the default attributes and token, and returns it
     auto get_client() const -> std::shared_ptr<httplib::Client>;
+
+    /// @brief Returns the endpoint guard, depending on the given `url`
     auto get_endpoint(const string &url) -> endpoint_guard&;
     
+    /// @brief A raw low level start-playback method, receives a http POST request json body string,
+    /// in the certain format
+    ///
+    /// https://developer.spotify.com/documentation/web-api/reference/start-a-users-playback
     void start_playback_base(const string &body, const item_id_t &device_id);
     
     auto get(const string &url, utils::clock_t::duration cache_for = {}, bool retry_429 = false) -> httplib::Result override;
@@ -103,6 +130,7 @@ private:
 
     std::unordered_map<string, endpoint_guard> guards;
 
+    /// @brief A pending requests cancellation flag, used by `cancel_pending_requests` method
     bool cancel_flag = false;
 
     // caches
