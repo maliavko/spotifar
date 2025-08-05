@@ -35,7 +35,7 @@ const items_t& playlists_base_view::get_items()
         if (auto api = api_proxy.lock())
         {
             // collecting the data only from cache if exists
-            if (auto tracks = api->get_playlist_tracks(playlist.id); tracks->fetch(true, false))
+            if (auto tracks = api->get_playlist_tracks(playlist.id); tracks->fetch(true, true))
                 for (const auto &t: *tracks)
                     total_length_ms += t.duration_ms;
         }

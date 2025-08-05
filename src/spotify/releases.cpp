@@ -57,9 +57,12 @@ const utils::clock_t::time_point recent_releases::get_next_sync_time() const
 
 bool recent_releases::is_active() const
 {
-    if (auto auth = api_proxy->get_auth_cache())
-        return auth->is_authenticated();
-    return false;
+    bool is_authenticated = api_proxy->get_auth_cache()->is_authenticated();
+    bool is_rate_limited = (
+        api_proxy->is_endpoint_rate_limited("me") ||
+        api_proxy->is_endpoint_rate_limited("artists"));
+
+    return is_authenticated && !is_rate_limited;
 }
 
 clock_t::duration recent_releases::get_sync_interval() const
@@ -90,7 +93,7 @@ void recent_releases::queue_artists(const item_ids_t &ids)
                             
             dispatch_event(&releases_observer::on_sync_progress_changed, pool.get_tasks_total());
             
-            if (albums->fetch(false, false))
+            if (albums->fetch(false, true))
             {
                 for (const auto &album: *albums)
                     if (album.get_release_date() > time_treshold)
@@ -145,7 +148,7 @@ bool recent_releases::request_data(data_t &data)
         return !is_in_sync;
     }
 
-    /*if (artists->fetch(false, false))
+    if (artists->fetch(false, true))
     {
         is_in_sync = true;
 
@@ -154,7 +157,7 @@ bool recent_releases::request_data(data_t &data)
             [](const auto &t) { return t.id; });
 
         queue_artists(ids);
-    }*/
+    }
 
     return false;
 }
