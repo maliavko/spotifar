@@ -900,7 +900,7 @@ recently_liked_tracks_view::recently_liked_tracks_view(HANDLE panel, api_weak_pt
     if (auto api = api_proxy.lock())
     {
         collection = api->get_library()->get_saved_tracks();
-        collection->fetch(false, true, 3);
+        collection->fetch(false, false, 3);
     }
 
     utils::events::start_listening<playback_observer>(this, true);
@@ -972,7 +972,7 @@ user_top_tracks_view::user_top_tracks_view(HANDLE panel, api_weak_ptr_t api_prox
     if (auto api = api_proxy.lock())
     {
         collection = api->get_user_top_tracks();
-        collection->fetch(false, true, 4);
+        collection->fetch(false, false, 4);
     }
 }
 

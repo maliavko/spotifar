@@ -33,7 +33,7 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
 
 /// @brief A helper-formatter to get an error message of a collection fetching requester
 template<class R>
-static string get_fetching_error(const R &requester)
+string get_fetching_error(const R &requester)
 {
     return std::format("collection fetching error '{}', url '{}'",
         utils::http::get_status_message(requester->get_response()), requester->get_url());
@@ -346,15 +346,20 @@ public:
     /// @brief Returns a result. Valid only after a successful request
     auto get() const -> const result_t& { return result; }
 
+    /// @brief Returns the last processes response object
+    auto get_response() const -> const httplib::Result& { return response; }
+
+    auto get_url() const -> const string& { return url; }
+
     /// @brief see `item_requester::execute` interface
-    bool execute(api_weak_ptr_t api, bool only_cached = false, bool notify_watchers = true, bool retry_429 = false)
+    bool execute(api_weak_ptr_t api, bool only_cached = false, bool silent = false, bool retry_429 = false)
     {   
         result.clear();
 
         auto chunk_begin = ids.begin();
         auto chunk_end = ids.begin();
         
-        requester_progress_notifier notifier(url, notify_watchers);
+        requester_progress_notifier notifier(url, !silent);
         
         do
         {
@@ -382,6 +387,7 @@ public:
         return true;
     }
 private:
+    httplib::Result response;
     result_t result;
     ptrdiff_t chunk_size;
     item_ids_t ids;
@@ -457,6 +463,8 @@ public:
         this->params.insert(std::pair{ "limit", std::to_string(max_limit) });
     }
 
+    auto get_url() const -> const string& { return url; }
+
     size_t get_total() const override
     {
         if (populated) // if the collection is populated, return its size
@@ -498,14 +506,13 @@ public:
 
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
-    /// @param notify_watchers does not send changes to the requesting status observers like
-    /// showing request progress splashing screen and etc.
+    /// @param silent 1. does not send watcher updates; 2. no retries requesting policy
     /// @param pages_to_request number of data pages to request; "0" means all
-    bool fetch(bool only_cached = false, bool notify_watchers = true, size_t pages_to_request = 0) override
+    bool fetch(bool only_cached = false, bool silent = false, size_t pages_to_request = 0) override
     {
         clear();
 
-        if (!fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        if (!fetch_items(api_proxy, only_cached, silent, pages_to_request))
             return false;
 
         populated = true;
@@ -520,11 +527,9 @@ protected:
     /// @brief A main requesting logic is implemented here
     /// @param only_cached flag, telling the logic, that the method wa called
     /// from some heavy environment and should not perform many http calls
-    /// @param notify_watchers does not send changes to the requesting status observers like
-    /// showing request progress splashing screen and etc.
+    /// @param silent 1. does not send watcher updates; 2. no retries requesting policy
     /// @param pages_to_request number of data pages to request; "0" means all
-    virtual bool fetch_items(api_weak_ptr_t api, bool only_cached, bool notify_watchers = true,
-        size_t pages_to_request = 0) = 0;
+    virtual bool fetch_items(api_weak_ptr_t api, bool only_cached, bool silent = false, size_t pages_to_request = 0) = 0;
 protected:
     api_weak_ptr_t api_proxy;
     string url;
@@ -558,16 +563,15 @@ protected:
         return requester_ptr(new requester_t(this->url, this->params, this->fieldname));
     }
 
-    bool fetch_items(api_weak_ptr_t api, bool only_cached, bool notify_watchers = true,
-        size_t pages_to_request = 0) override
+    bool fetch_items(api_weak_ptr_t api, bool only_cached, bool silent = false, size_t pages_to_request = 0) override
     {       
         auto requester = get_begin_requester();
-        requester_progress_notifier notifier(requester->get_url(), notify_watchers);
+        requester_progress_notifier notifier(requester->get_url(), !silent);
 
         while (requester != nullptr)
         {
             // if some of the pages were not requested well, all the operation is aborted
-            if (!requester->execute(api, only_cached, true))
+            if (!requester->execute(api, only_cached, !silent))
             {
                 dispatch_event(&api_requests_observer::on_collection_fetching_failed,
                     get_fetching_error(requester));
@@ -640,16 +644,16 @@ protected:
         return requester_ptr(new requester_t(this->url, updated_params, this->fieldname));
     }
 
-    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool silent = false, size_t pages_to_request = 0) override
     {   
         if (api_proxy.expired()) return false;
 
         auto requester = make_requester(0);
 
-        requester_progress_notifier notifier(requester->get_url(), notify_watchers);
+        requester_progress_notifier notifier(requester->get_url(), !silent);
 
         // performing the first request to obtain a total number fo items
-        if (!requester->execute(api_proxy, only_cached, true))
+        if (!requester->execute(api_proxy, only_cached, !silent))
         {
             dispatch_event(&api_requests_observer::on_collection_fetching_failed,
                 get_fetching_error(requester));
@@ -681,14 +685,14 @@ protected:
         /// So, I am passing real api pointer which works well
         auto api = api_proxy.lock();
         auto sequence_future = api->get_pool().submit_sequence(start, end,
-            [this, &result, api = api.get(), &notifier, total, only_cached, notify_watchers]
+            [this, &result, api = api.get(), &notifier, total, only_cached, silent]
             (const size_t idx)
             {
                 auto requester = make_requester(idx * max_limit);
 
                 // all the exceptions are being accumulated and rethrown by thread-pool
                 // library later
-                if (!requester->execute(api->get_ptr(), only_cached, true))
+                if (!requester->execute(api->get_ptr(), only_cached, !silent))
                     throw std::runtime_error(get_fetching_error(requester));
                 
                 if (requester->get_response()->status != httplib::NotModified_304)

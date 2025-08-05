@@ -6,7 +6,6 @@
 namespace spotifar { namespace spotify {
 
 using namespace utils;
-using utils::events::has_observers;
 using utils::far3::synchro_tasks::dispatch_event;
 
 //------------------------------------------------------------------------------------------------------
@@ -81,11 +80,11 @@ void devices_cache::transfer_playback(const item_id_t &device_id, bool start_pla
 
 bool devices_cache::is_active() const
 {
-    // the cache is actively synchronized only when the user is authenticated and there are
-    // playback observers
-    if (auto auth = api_proxy->get_auth_cache())
-        return auth->is_authenticated() && (has_observers<devices_observer>() || is_first_sync);
-    return false;
+    bool is_authenticated = api_proxy->get_auth_cache()->is_authenticated();
+    bool is_rate_limited = api_proxy->is_endpoint_rate_limited("me");
+    bool has_observers = utils::events::has_observers<devices_observer>() || is_first_sync;
+
+    return is_authenticated && !is_rate_limited && has_observers;
 }
 
 clock_t::duration devices_cache::get_sync_interval() const

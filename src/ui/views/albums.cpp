@@ -40,7 +40,7 @@ const items_t& albums_base_view::get_items()
         {
             auto tracks = api->get_album_tracks(album.id);
             // collecting the data only from cache if exists
-            if (tracks->fetch(true, false))
+            if (tracks->fetch(true, true))
                 for (const auto &t: *tracks)
                     total_length_ms += t.duration_ms;
 
@@ -721,7 +721,7 @@ recently_saved_albums_view::recently_saved_albums_view(HANDLE panel, api_weak_pt
 
 bool recently_saved_albums_view::repopulate()
 {
-    return collection->fetch(false, true, 3);
+    return collection->fetch(false, false, 3);
 }
 
 config::settings::view_t recently_saved_albums_view::get_default_settings() const

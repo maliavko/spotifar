@@ -436,7 +436,7 @@ user_top_artists_view::user_top_artists_view(HANDLE panel, api_weak_ptr_t api):
     if (auto api = api_proxy.lock())
     {
         collection = api->get_user_top_artists();
-        collection->fetch(false, true, 4);
+        collection->fetch(false, false, 4);
     }
 }
 

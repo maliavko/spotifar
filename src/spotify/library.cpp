@@ -23,9 +23,9 @@ public:
     
     ~saved_tracks_collection() { library = nullptr; }
 
-    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool silent = false, size_t pages_to_request = 0) override
     {
-        if (saved_tracks_t::fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        if (saved_tracks_t::fetch_items(api_proxy, only_cached, silent, pages_to_request))
         {
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
@@ -51,9 +51,9 @@ public:
         {}
     ~saved_albums_collection() { library = nullptr; }
 
-    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool silent = false, size_t pages_to_request = 0) override
     {
-        if (saved_albums_t::fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        if (saved_albums_t::fetch_items(api_proxy, only_cached, silent, pages_to_request))
         {
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
@@ -79,9 +79,9 @@ public:
         {}
     ~followed_artists_collection() { library = nullptr; }
 
-    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool notify_watchers = true, size_t pages_to_request = 0) override
+    bool fetch_items(api_weak_ptr_t api_proxy, bool only_cached, bool silent = false, size_t pages_to_request = 0) override
     {
-        if (followed_artists_t::fetch_items(api_proxy, only_cached, notify_watchers, pages_to_request))
+        if (followed_artists_t::fetch_items(api_proxy, only_cached, silent, pages_to_request))
         {
             item_ids_t ids;
             std::transform(cbegin(), cend(), std::back_inserter(ids), [](const auto &t) { return t.id; });
@@ -512,9 +512,10 @@ followed_artists_ptr library::get_followed_artists()
 
 bool library::is_active() const
 {
-    if (auto auth = api_proxy->get_auth_cache())
-        return auth->is_authenticated();
-    return false;
+    bool is_authenticated = api_proxy->get_auth_cache()->is_authenticated();
+    bool is_rate_limited = api_proxy->is_endpoint_rate_limited("me");
+    
+    return is_authenticated && !is_rate_limited;
 }
 
 clock_t::duration library::get_sync_interval() const
