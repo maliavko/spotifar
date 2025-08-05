@@ -242,6 +242,7 @@ public:
     /// @brief Returns a result. Valid only after a successful request
     auto get() const -> const result_t& { return result; }
 
+    /// @brief Returns the target url
     auto get_url() const -> const string& { return url; }
 
     /// @brief Returns the http-result object
@@ -263,6 +264,7 @@ public:
     /// long waiting delays.
     /// @param only_cached returns a valid result only if it was cached previously and
     /// the cache is still valid
+    /// @param retry_429 whether the request will be repeated in case of the TooManyRequests_429 http error
     /// @returns `true` in case of: no errors, 204 No Content response, `only_cached` is true, but
     /// no cache exists
     bool execute(api_weak_ptr_t api_proxy, bool only_cached = false, bool retry_429 = false)

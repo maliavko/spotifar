@@ -9,7 +9,6 @@
 #include "history.hpp"
 #include "stdafx.h"
 #include "utils.hpp"
-#include <mutex>
 
 namespace spotifar { namespace spotify {
 
@@ -57,6 +56,54 @@ static httplib::Result get_rate_limited_response(const utils::clock_t::time_poin
 }
 
 //----------------------------------------------------------------------------------------------
+
+/// @brief Returns an endpoint's name by the given http url. In practise it is the first
+/// part of the url, excep the API versino specificator "v1"
+static string get_endpoint_name(const string &url)
+{
+    static auto pattern = std::regex("/v1/(.*?)/.*");
+
+    std::smatch match;
+    if (std::regex_search(url, match, pattern) && match.size() > 1)
+        return match[1].str();
+    return "";
+}
+
+void endpoint_guard::wait(std::function<bool()> predicate)
+{
+    if (is_rate_limited())
+    {
+        // if the endpoint is busy, the accessing thread is put into the waiting
+        // queue until the expiration time or `predicate` is `true`
+        std::unique_lock<std::mutex> thread_lock(guard);
+        cv.wait_until(thread_lock, expires_at, predicate);
+    }
+}
+
+void endpoint_guard::set_expires_at(const clock_t::time_point &tp)
+{
+    expires_at = tp;
+}
+
+const utils::clock_t::time_point& endpoint_guard::get_expires_at() const
+{
+    return expires_at;
+}
+
+endpoint_guard& api::get_endpoint(const string &url)
+{
+    const auto &ep_name = get_endpoint_name(url);
+
+    std::mutex m;
+    std::lock_guard guard(m);
+
+    // we create a new guard if there is no such exists for the given `ep_name`
+    const auto it = guards.try_emplace(ep_name, ep_name);
+    return it.first->second;
+}
+
+
+//----------------------------------------------------------------------------------------------
 api::api(): requests_pool(5), resyncs_pool(3)
 {
     api_responses_cache = std::make_unique<http_cache>();
@@ -87,9 +134,9 @@ bool api::start()
     // initializing http responses cache
     api_responses_cache->start();
 
-    //TODO: for debugging, remove later
-    auto it = guards.try_emplace("me", "me");
-    it.first->second.set_wait_until(utils::clock_t::now() + 60min);
+    // for debugging, marks some endpoints as rate limited from the start of the app
+    // auto it = guards.try_emplace("me", "me");
+    // it.first->second.set_expires_at(utils::clock_t::now() + 60min);
 
     return true;
 }
@@ -643,85 +690,32 @@ void api::cancel_pending_requests(bool wait_for_result)
 {
     cancel_flag = true;
 
+    // notifying all the threads to checks their statuses
     for (auto &guard: guards)
         guard.second.notify_all();
     
     log::api->debug("Cancelling pending API requests, wait for result: {}", wait_for_result);
 
+    // a very unreliable piece of code, waiting for 1.5s for all the pending threads to
+    // wake up, check their statuses and drop unfinished requests; in case of plugin closure,
+    // we do not wait for the result to avoid Far freezing
     if (wait_for_result)
     {
         auto r = std::async(std::launch::async, [this] {
-            std::this_thread::sleep_for(1s);
+            std::this_thread::sleep_for(1.5s);
             cancel_flag = false;
         });
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-static string get_endpoint_name(const string &url)
-{
-    static auto pattern = std::regex("/v1/(.*?)/.*");
-
-    std::smatch match;
-    if (std::regex_search(url, match, pattern) && match.size() > 1)
-        return match[1].str();
-    return "";
-}
-
-
-
-void endpoint_guard::wait(std::function<bool()> predicate)
-{
-    if (is_rate_limited())
-    {
-        std::unique_lock<std::mutex> thread_lock(guard);
-        cv.wait_until(thread_lock, wait_until, predicate);
-    }
-}
-
-void endpoint_guard::set_wait_until(const clock_t::time_point &tp)
-{
-    wait_until = tp;
-}
-
-const utils::clock_t::time_point& endpoint_guard::get_wait_until() const
-{
-    return wait_until;
-}
-
-endpoint_guard& api::get_endpoint(const string &url)
-{
-    const auto &ep_name = get_endpoint_name(url);
-
-    std::mutex m;
-    std::lock_guard guard(m);
-
-    const auto it = guards.try_emplace(ep_name, ep_name);
-    return it.first->second;
-}
-
-
-
 
 httplib::Result api::get(const string &request_url, clock_t::duration cache_for, bool retry_429)
 {
     string cached_etag = "";
     string url = http::trim_domain(request_url);
 
-    // we have a cache for the requested url and it is still valid
     if (api_responses_cache->is_cached(url))
     {
+        // we have a cache for the requested url and it is still valid
         if (const auto &cache = api_responses_cache->get(url))
         {
             Result res(std::make_unique<Response>(), Error::Success);
@@ -729,6 +723,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
             res->body = cache.body;
             return res;
         }
+        // ..or it is invalid already, so we use its ETag to refresh the response
         else
         {
             cached_etag = cache.etag;
@@ -739,18 +734,25 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
 
     while (1)
     {
+        // the target endpoint is rate limited...
         if (auto &ep = get_endpoint(url); ep.is_rate_limited())
         {
+            // in case the request specifies `retry` flag, we lock the thread and wait for
+            // the endpoint to get released
             if (retry_429)
             {
                 ep.wait([this] { return cancel_flag; });
             }
+            // ..otherwise just return the error http request result
             else
             {
-                return get_rate_limited_response(ep.get_wait_until());
+                return get_rate_limited_response(ep.get_expires_at());
             }
         }
 
+        // if we get here with the `cancel_flag` is `true`, this means that user requested to
+        // cancel all the current pending requests via Escape on Waiting splash dialog, all the
+        // pending thread woke up and reached this codepoint with the activated flag
         if (cancel_flag)
         {
             log::api->warn("The request is cancelled by user: {}", url);
@@ -758,7 +760,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
             return res;
         }
 
-        // pure debugging code
+        // pure debugging code for emulating randomly 429 http error
         // if (d(gen))
         // {
         //     // in some rare cases `res` could not contain any response object, just finish execution in such case
@@ -778,13 +780,16 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
         // in case we were rate-limited, we retry the request a bit postponed
         if (res->status == TooManyRequests_429)
         {
-            auto retry_after = 3s;
+            auto retry_after = 3s; // default retry delay in case it is not present in the headers
             
             if (res->has_header("retry-after"))
+                // +1s just in case
                 retry_after = std::chrono::seconds(std::stoi(res->get_header_value("retry-after", 0))) + 1s;
 
+            // in any case we update the endpoint's expiration time, so all the subsequent requests
+            // will not bother API server
             auto &ep = get_endpoint(url);
-            ep.set_wait_until(utils::clock_t::now() + retry_after);
+            ep.set_expires_at(utils::clock_t::now() + retry_after);
 
             log::api->warn("The endpoint \"{}\" is rate limited for {}", ep.get_name(), std::format("{:%T}", retry_after));
 
@@ -825,8 +830,9 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
 
 httplib::Result api::put(const string &request_url, const string &body)
 {
+    // checking if the target endpoint is available
     if (auto &ep = get_endpoint(request_url); ep.is_rate_limited())
-        return get_rate_limited_response(ep.get_wait_until());
+        return get_rate_limited_response(ep.get_expires_at());
 
     httplib::Result res;
     auto client = get_client();
@@ -847,8 +853,9 @@ httplib::Result api::put(const string &request_url, const string &body)
 
 httplib::Result api::del(const string &request_url, const string &body)
 {
+    // checking if the target endpoint is available
     if (auto &ep = get_endpoint(request_url); ep.is_rate_limited())
-        return get_rate_limited_response(ep.get_wait_until());
+        return get_rate_limited_response(ep.get_expires_at());
     
     auto res = get_client()->Delete(request_url, body, "application/json");
     
@@ -863,8 +870,9 @@ httplib::Result api::del(const string &request_url, const string &body)
 
 httplib::Result api::post(const string &request_url, const string &body)
 {
+    // checking if the target endpoint is available
     if (auto &ep = get_endpoint(request_url); ep.is_rate_limited())
-        return get_rate_limited_response(ep.get_wait_until());
+        return get_rate_limited_response(ep.get_expires_at());
     
     auto res = get_client()->Post(request_url, body, "application/json");
     
