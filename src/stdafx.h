@@ -51,7 +51,7 @@
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-#if defined (_WIN32)
+#if defined (_MSC_VER)
 #   include "wintoastlib.h" // win toast notifications library
 #endif
 
