@@ -27,11 +27,6 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: '3.31.8'
-
       - name: Checkout code with dependencies
         uses: actions/checkout@v4
         with:
@@ -50,6 +45,11 @@ jobs:
         with:
           workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
           prefix-key: "v0-rust-${{ matrix.platform }}"
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.8'
 
       - name: Configure spotifar
         env:
