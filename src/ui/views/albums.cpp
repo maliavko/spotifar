@@ -549,6 +549,15 @@ new_releases_view::new_releases_view(HANDLE panel, api_weak_ptr_t api_proxy):
 {
     rebuild_items();
     utils::events::start_listening<releases_observer>(this);
+
+    static const panel_mode_t::column_t
+        ReleaseDate { L"C3", get_text(MSortColRelease), L"10" };
+
+    panel_modes = *albums_base_view::get_panel_modes();
+    for (size_t idx = 3; idx < 9; idx++)
+        panel_modes[idx].insert_column(&ReleaseDate, 0, true);
+
+    panel_modes.rebuild();
 }
 
 new_releases_view::~new_releases_view()
@@ -559,7 +568,7 @@ new_releases_view::~new_releases_view()
 
 config::settings::view_t new_releases_view::get_default_settings() const
 {
-    // sort mode - by Release data; descending; view mode - F4 (artist's name visible)
+    // sort mode - by Release date; descending; view mode - F4 (artist's name visible)
     return { 1, true, 4 };
 }
 

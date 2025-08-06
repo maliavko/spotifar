@@ -4,6 +4,7 @@ refactor
 
 application ideas
 - backlog, upcoming releases
+    - to add the config setting to pick the amount of past weeks for fresh releases search
     - close plugin if another librespot device is being detected
     - after two days of listening in a row, out of a sudden spotify started cutting http responses with 429 error for /player endpoint; stop/resume commands also did not work; to simulate the situation and rethink players behaviour
     - make sure big collections which hit 429 during fetching are processed well

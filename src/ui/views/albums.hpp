@@ -136,11 +136,13 @@ protected:
     // albums_base_view interface
     auto get_albums() -> std::generator<const album_t&> override;
     void show_tracks_view(const album_t &album) const override;
+    auto get_panel_modes() const -> const panel_modes_t* override { return &panel_modes; }
 
     // releases_observer interface
     void on_releases_sync_finished(const recent_releases_t releases) override;
 private:
     std::vector<album_t> recent_releases;
+    panel_modes_t panel_modes;
 };
 
 
