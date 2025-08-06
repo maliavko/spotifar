@@ -2,7 +2,7 @@ name: build-and-package
 
 on:
   push:
-    branches: [main]
+    branches: [mingw]
 
 jobs:
   build-binaries:
@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [x64, Win32]
+        platform: [vs17-x64, vs17-x86]
 
     # https://github.com/marketplace/actions/vcpkg-cache
     permissions:
@@ -43,15 +43,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure spotifar
-        env:
-          VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
-          VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }}
-
-      - name: Build spotifar
-        run: cmake --build --preset ${{ matrix.platform }}-Release
-
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Restore cargo cache
@@ -60,18 +51,29 @@ jobs:
           workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
           prefix-key: "v0-rust-${{ matrix.platform }}"
 
-      - name: Build librespot
+      - name: Configure spotifar
         env:
-          CARGO_TERM_COLOR: always
-        run: cargo build --release --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
+          VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
+          VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
+        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=1 -DCMAKE_INSTALL_PREFIX=./install/${{ matrix.platform }}
 
-      - name: Pack librespot
-        shell: cmd
-        run: xcopy /Y ${{ github.workspace }}\\thirdparty\\librespot\\target\\release\\librespot.exe ${{ github.workspace }}\\build\\${{ matrix.platform }}\\bin\\Release\\
-          
+      - name: Build spotifar
+        run: cmake --build --preset ${{ matrix.platform }}-Release --target install
+
+      # - name: Pack librespot
+      #   shell: cmd
+      #   run: xcopy /Y ${{ github.workspace }}\\thirdparty\\librespot\\target\\release\\librespot.exe ${{ github.workspace }}\\build\\${{ matrix.platform }}\\bin\\Release\\
+      
+      # - name: Pack spotifar
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: spotifar-plugin-${{ matrix.platform }}-release
+      #     path: |
+      #         ${{ github.workspace }}/build/${{ matrix.platform }}/bin/Release
+
       - name: Pack spotifar
         uses: actions/upload-artifact@v4
         with:
           name: spotifar-plugin-${{ matrix.platform }}-release
           path: |
-              ${{ github.workspace }}/build/${{ matrix.platform }}/bin/Release
+              ./install/${{ matrix.platform }}
