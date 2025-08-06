@@ -25,7 +25,7 @@ static const FarKey overriden_bindings[] = {
     { VK_F11, LEFT_CTRL_PRESSED },
 };
 
-static void free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
+static void WINAPI free_user_data(void *user_data, const FarPanelItemFreeInfo *info)
 {
     // as we do not allocate any memory for user data, we do not need to free it, just nullify
     user_data = nullptr;
