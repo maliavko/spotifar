@@ -62,7 +62,7 @@ struct panel_mode_t
     bool is_empty() const { return columns.size() == 0; }
 
     /// @brief Inserts a given column `col` to the mode at the specified position `idx`
-    void insert_column(const column_t *col, size_t idx);
+    void insert_column(const column_t *col, size_t idx, bool replace = false);
 
     /// @brief Rebuild the public members according to the latest columns
     /// data provided.
