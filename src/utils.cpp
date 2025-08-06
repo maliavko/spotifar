@@ -1150,7 +1150,7 @@ namespace json
     // size_t
     void from_json(const Value &j, size_t &result)
     {
-        result = j.GetUint64();
+        result = j.GetUint();
     }
 
     void to_json(Value &j, const size_t &result, Allocator &allocator)
