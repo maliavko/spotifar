@@ -124,7 +124,7 @@ void to_json(json::Value &result, const settings::view_t &v, json::Allocator &al
 
 void from_json(const json::Value &j, settings::multiview_t &v)
 {
-    v.idx = j["idx"].GetUint64();
+    v.idx = j["idx"].GetUint();
 }
 
 void to_json(json::Value &result, const settings::multiview_t &v, json::Allocator &allocator)
