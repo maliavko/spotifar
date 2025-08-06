@@ -55,10 +55,10 @@ jobs:
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=1 -DCMAKE_INSTALL_PREFIX=./install/${{ matrix.platform }} .
+        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=1 -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
 
       - name: Build spotifar
-        run: cmake --build --preset ${{ matrix.platform }}-Release --target install .
+        run: cmake --build --preset ${{ matrix.platform }}-Release --target install
 
       # - name: Pack librespot
       #   shell: cmd
@@ -76,4 +76,4 @@ jobs:
         with:
           name: spotifar-plugin-${{ matrix.platform }}-release
           path: |
-              ./install/${{ matrix.platform }}
+              /install/${{ matrix.platform }}
