@@ -46,18 +46,18 @@ jobs:
           workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
           prefix-key: "v0-rust"
 
-      - name: Installing Msys2 for Clang64
+      - name: Installing Msys2 for CLANG64
         uses: msys2/setup-msys2@v2
         if: ${{ matrix.platform == 'clang-x64' }}
         with:
-          msystem: Clang64
+          msystem: CLANG64
           update: true
           install: >
             base-devel
             mingw-w64-clang-x86_64-toolchain
             mingw-w64-clang-x86_64-cmake
 
-      - name: Installing Msys2 for ucrt64
+      - name: Installing Msys2 for UCRT64
         uses: msys2/setup-msys2@v2
         if: ${{ matrix.platform == 'gcc-x64' }}
         with:
