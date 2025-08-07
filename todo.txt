@@ -24,10 +24,9 @@ application ideas
     - concerts setlists: https://api.setlist.fm/docs/1.0/index.html
     - upcoming events: https://app.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
     - console commands support: export, flush caches, resync fresh releases
+    - https://github.com/AlienCowEatCake/WinToastLibC library to non-msvc compilers
 
 bugs
-- for mingw-clang successful compilation a patch for spdlog FMT_STRING is needed; investigate how to store it locally and reapply with vcpkg
-- git workflows does not have fixes of Librespot build, on top now bin folder does not have all the binaries, cmake install should be called
 
 to finish for alpha release
 - add gallery of schreenshots
