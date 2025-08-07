@@ -36,5 +36,11 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   RAPIDJSON_HAS_STDSTRING=1
   FMT_HEADER_ONLY
   SPDLOG_WCHAR_FILENAMES
-  SPDLOG_USE_STD_FORMAT=0
 )
+
+# Clang does not compile without this spdlog flag, bug gcc fails with it on Github workflows
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
+    SPDLOG_USE_STD_FORMAT
+  )
+endif()
