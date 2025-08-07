@@ -28,15 +28,6 @@ bugs
 - for mingw-clang successful compilation a patch for spdlog FMT_STRING is needed; investigate how to store it locally and reapply with vcpkg
 - git workflows does not have fixes of Librespot build, on top now bin folder does not have all the binaries, cmake install should be called
 
-clang toolchain
-- install external cmake: 3.31.8
-- install msys2
-- install updates: pacman -Syu
-- install toolchain: pacman -S mingw-w64-clang-x86_64-toolchain
-- install ninja: pacman -S mingw-w64-clang-x86_64-ninja
-- add to account PATH C:\msys64\clang64\bin
-- eplxain how to install plugin and how to build librespot
-
 to finish for alpha release
 - add gallery of schreenshots
 + check all the default view settings and sort modes
