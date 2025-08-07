@@ -87,8 +87,13 @@ endif()
 
 # POST BUILD
 #-----------------------------------------------------------------------------------------
+if(CARGO_BUILD_TYPE STREQUAL "Debug" OR CARGO_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(CARGO_BUILD_TYPE "xDebug")
+else()
+    set(CARGO_BUILD_TYPE "xRelease")
+endif()
+
 set(OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
-set(CARGO_BUILD_TYPE x$<CONFIG>)
 set(LIBRESPOT_TARGET ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${CARGO_BUILD_TYPE}/librespot.exe)
 
 find_program(CARGO_EXECUTABLE cargo)
@@ -102,7 +107,7 @@ if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
         USES_TERMINAL
     )
 else()
-    message(WARNING "No cargo command is found or disabled, Libresepot building is skipped")
+    message(NOTICE "No cargo command is found or disabled, Libresepot building is skipped")
 endif()
 
 
@@ -126,6 +131,14 @@ install(
     DESTINATION ${OUTPUT_DIRECTORY}
     OPTIONAL)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/ucrt64/bin")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/clang64/bin")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(RUNTIME_DEPENDENCY_DIRECTORIES "${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/bin")
+endif()
+
 # packaging dependencies
 install(RUNTIME_DEPENDENCY_SET my_deps
     PRE_EXCLUDE_REGEXES
@@ -135,11 +148,12 @@ install(RUNTIME_DEPENDENCY_SET my_deps
         [[msvcr.*\.dll]]
         [[vcruntime.*\.dll]]
         [[C:\msys64\clang64\bin\.dll]]
+        [[C:\msys64\ucrt64\bin\.dll]]
     POST_EXCLUDE_REGEXES
         [[.*system32/.*\.dll]]
         [[C:\msys64\clang64\bin\.dll]]
-    DIRECTORIES
-        "C:/msys64/clang64/bin"
+        [[C:\msys64\ucrt64\bin\.dll]]
+    DIRECTORIES ${RUNTIME_DEPENDENCY_DIRECTORIES}
     DESTINATION ${OUTPUT_DIRECTORY}
 )
 

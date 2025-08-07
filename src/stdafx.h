@@ -2,12 +2,6 @@
 #define STDAFX_H_1C7F58A6_19FE_42B6_BD4D_300A869FD713
 #pragma once
 
-#define UNICODE
-#define SPDLOG_WCHAR_FILENAMES // using wstring with spdlog library
-#define SPDLOG_USE_STD_FORMAT 0
-#define VC_EXTRALEAN
-#define WIN32_LEAN_AND_MEAN
-#define RAPIDJSON_HAS_STDSTRING 1 // using string with rapidjson library
 // replacing asserts with runtime exceptions, while working with rapidson for proper error handling
 #define RAPIDJSON_ASSERT(x) if (!(x)) throw std::runtime_error("json error, " #x);
 
@@ -21,7 +15,6 @@
 #   endif
 #endif
 
-#define _WINSOCKAPI_
 #ifndef NOMINMAX
 # define NOMINMAX
 #endif
@@ -31,6 +24,8 @@
 // builds all the times, plus it works only if you put it with some specific order of headers
 #if defined (__clang__)
 #   pragma clang diagnostic ignored "-W#warnings"
+#elif defined (__GNUC__)
+#   pragma GCC diagnostic ignored "-Wcpp"
 #endif
 #include <generator>
 #include <windows.h> // win api support

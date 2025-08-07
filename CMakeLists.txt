@@ -29,4 +29,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # Add debug config compile definition for sources
 target_compile_definitions(${PROJECT_NAME} PRIVATE
   $<$<CONFIG:Debug>:DEBUG>
+  UNICODE
+  VC_EXTRALEAN
+  WIN32_LEAN_AND_MEAN
+  _WINSOCKAPI_
+  RAPIDJSON_HAS_STDSTRING=1
+  FMT_HEADER_ONLY
+  SPDLOG_WCHAR_FILENAMES
+  SPDLOG_USE_STD_FORMAT=1
 )
