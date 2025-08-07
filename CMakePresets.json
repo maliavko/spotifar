@@ -3,7 +3,7 @@
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 31,
-    "patch": 0
+    "patch": 8
   },
   "configurePresets": [
     {
@@ -17,7 +17,8 @@
         "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
       ],
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
       "cacheVariables": {
         "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
         "BUILD_LIBRESPOT": "0"
@@ -40,6 +41,15 @@
       }
     },
     {
+      "name": "gcc-base",
+      "inherits": "default",
+      "hidden": true,
+      "generator": "Ninja Multi-Config",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
       "name": "vs17-x64",
       "inherits": "vs17-base",
       "displayName": "Visual Studio 17 x64",
@@ -58,15 +68,18 @@
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
         "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
+      },
+      "environment": {
+        "PATH": "C:/msys64/clang64/bin;$penv{PATH}"
       }
     },
     {
-      "name": "clang-x86",
-      "inherits": "clang-base",
-      "displayName": "MinGW Clang x86",
+      "name": "gcc-x64",
+      "inherits": "gcc-base",
+      "displayName": "MinGW GCC x64",
       "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x86-mingw-dynamic",
-        "VCPKG_HOST_TRIPLET": "x86-mingw-dynamic"
+        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+        "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
       }
     }
   ],
@@ -108,15 +121,15 @@
       "configuration": "Release"
     },
     {
-      "name": "clang-x86-Debug",
-      "displayName": "MinGW Clang x64 Debug",
-      "configurePreset": "clang-x86",
+      "name": "gcc-x64-Debug",
+      "displayName": "MinGW GCC x64 Debug",
+      "configurePreset": "gcc-x64",
       "configuration": "Debug"
     },
     {
-      "name": "clang-x86-Release",
-      "displayName": "MinGW Clang x64 Release",
-      "configurePreset": "clang-x86",
+      "name": "gcc-x64-Release",
+      "displayName": "MinGW GCC x64 Release",
+      "configurePreset": "gcc-x64",
       "configuration": "Release"
     }
   ]
