@@ -44,7 +44,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
-          prefix-key: "v0-rust-${{ matrix.platform }}"
+          prefix-key: "v0-rust"
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
