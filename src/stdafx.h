@@ -4,6 +4,7 @@
 
 #define UNICODE
 #define SPDLOG_WCHAR_FILENAMES // using wstring with spdlog library
+#define SPDLOG_USE_STD_FORMAT 0
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #define RAPIDJSON_HAS_STDSTRING 1 // using string with rapidjson library
