@@ -80,6 +80,9 @@
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
         "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
+      },
+      "environment": {
+        "PATH": "C:/msys64/mingw64/bin;$penv{PATH}"
       }
     }
   ],
@@ -88,7 +91,7 @@
       "name": "vs17-x64-Debug",
       "displayName": "Visual Studio 17 x64 Debug",
       "configurePreset": "vs17-x64",
-      "configuration": "Debug"
+      "configuration": "RelWithDebInfo"
     },
     {
       "name": "vs17-x64-Release",
@@ -100,7 +103,7 @@
       "name": "vs17-x86-Debug",
       "displayName": "Visual Studio 17 x86 Debug",
       "configurePreset": "vs17-x86",
-      "configuration": "Debug"
+      "configuration": "RelWithDebInfo"
     },
     {
       "name": "vs17-x86-Release",
@@ -112,7 +115,7 @@
       "name": "clang-x64-Debug",
       "displayName": "MinGW Clang x64 Debug",
       "configurePreset": "clang-x64",
-      "configuration": "Debug"
+      "configuration": "RelWithDebInfo"
     },
     {
       "name": "clang-x64-Release",
@@ -124,7 +127,7 @@
       "name": "gcc-x64-Debug",
       "displayName": "MinGW GCC x64 Debug",
       "configurePreset": "gcc-x64",
-      "configuration": "Debug"
+      "configuration": "RelWithDebInfo"
     },
     {
       "name": "gcc-x64-Release",
