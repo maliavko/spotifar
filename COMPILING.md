@@ -30,7 +30,6 @@ git clone --recurse-submodules https://github.com/maliavko/spotifar.git
 - add your "C:\msys64\clang64\bin" to the system environment PATH
 > [!NOTE]
 > the WinToastLib does not provide a clang version, so the final binary will not have all the pop-up notifications functionality
-> ```
 
 ### Compiling
 1. to configure (x64 example, build librespot, install folder is "./install/vs17-x64)
