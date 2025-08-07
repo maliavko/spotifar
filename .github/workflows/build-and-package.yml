@@ -2,7 +2,7 @@ name: build-and-package
 
 on:
   push:
-    branches: [main]
+    branches: [mingw]
 
 jobs:
   build-binaries:
@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [vs17-x64, vs17-x86]
+        platform: [vs17-x64, vs17-x86, clang-x64, gcc-x64]
 
     # https://github.com/marketplace/actions/vcpkg-cache
     permissions:
