@@ -10,22 +10,36 @@ git clone --recurse-submodules https://github.com/maliavko/spotifar.git
 > Besides the necessary libraries for plugin compiling, the repo contains a Far Manager submodule for convenient debugging
 
 # Plugin
-### Toolchain
-- Download and install [MS Build and Win SDKs](https://visualstudio.microsoft.com/downloads/). The list of the components with their minimum required versions needed for compiling:
+### CMake
+- Download and install [CMake](https://cmake.org/download/). The recommended version is 3.31.8
+
+### MSVC Toolchain
+- install [MS Build and Win SDKs](https://visualstudio.microsoft.com/downloads/). The list of the components with their minimum required versions needed for compiling:
   - MSBuild
   - MSVC v143 VS 2022
   - C++ core features
   - Windows 10 SDK
   - [optional] [Rust](https://www.rust-lang.org/tools/install) for building librespot
-- Download and install [CMake](https://cmake.org/download/). The latest recommended version is 3.31
+
+### Msys2/Clang64 toolchain
+- install msys2
+- open msys2 clang64 terminal:
+  - install all the updates: "pacman -Syu"
+  - install clang toolchain: "pacman -S mingw-w64-clang-x86_64-toolchain"
+  - install ninja generator: "pacman -S mingw-w64-clang-x86_64-ninja"
+- add your "C:\msys64\clang64\bin" to the system environment PATH
+> [!NOTE]
+> the WinToastLib does not provide a clang version, so the final binary will not have all the pop-up notifications functionality
+> ```
+
 ### Compiling
-1. to configure (x64 example)
+1. to configure (x64 example, build librespot, install folder is "./install/vs17-x64)
 ```
-cmake --preset x64
+cmake --preset vs17-x64 -DBUILD_LIBRESPOT=1 -DCMAKE_INSTALL_PREFIX=./install/vs17-x64
 ```
 2. to build (x64-Release example)
 ```
-cmake --build --preset x64-Release
+cmake --build --preset vs17-x64-Release --target install
 ```
 > [!NOTE]
 > to list all available configure presets
