@@ -34,7 +34,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
-          shared-key: "v0-rust-librespot"
+          shared-key: "librespot"
 
       - name: Build librespot
         env:
@@ -82,7 +82,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
-          shared-key: "v0-rust-librespot"
+          shared-key: "librespot"
 
       - name: Installing Msys2 for CLANG64
         uses: msys2/setup-msys2@v2
