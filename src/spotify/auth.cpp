@@ -89,8 +89,7 @@ clock_t::duration auth_cache::get_sync_interval() const
 
 void auth_cache::on_data_synced(const auth_t &data, const auth_t &prev_data)
 {
-    log::api->info("A valid access token is found, expires in {}",
-        std::format("{:%T}", get_expires_at() - clock_t::now()));
+    log::api->info("A valid access token is found, expires in {:%T}", get_expires_at() - clock_t::now());
     
     utils::far3::synchro_tasks::dispatch_event(&auth_observer::on_auth_status_changed, data, is_logged_in);
 
@@ -159,7 +158,7 @@ auth_t auth_cache::authenticate(const httplib::Params &params)
     // any error while authorization means critical error, they are being caught in the sync-thread,
     // which will lead to showing an error dialog and closing plugin
     if (!http::is_success(res))
-        throw std::runtime_error(std::format("Authorization error: {}", http::get_status_message(res)));
+        throw std::runtime_error(utils::format("Authorization error: {}", http::get_status_message(res)));
 
     json::parse_to(res->body, result);
 
@@ -212,11 +211,11 @@ string auth_cache::request_auth_code()
         else
         {
             res.status = httplib::StatusCode::InternalServerError_500;
-            result_msg = std::format("state field does not match, requested '{}', "
+            result_msg = utils::format("state field does not match, requested '{}', "
                 "received '{}'", state, response_state);
         }
 
-        res.set_content(std::format("<h1>{}, {}</h1><p>{}</p>",
+        res.set_content(utils::format("<h1>{}, {}</h1><p>{}</p>",
             httplib::status_message(res.status), res.status, result_msg), "text/html");
         auth_server.stop();
     });
@@ -224,14 +223,14 @@ string auth_cache::request_auth_code()
     auth_server.listen("127.0.0.1", port);
 
     if (result.empty())
-        throw std::runtime_error(std::format("Authentication error: '{}'", result_msg));
+        throw std::runtime_error(utils::format("Authentication error: '{}'", result_msg));
 
     return result;
 }
 
 string auth_cache::get_auth_callback_url() const
 {
-    return std::format("http://127.0.0.1:{}/auth/callback", port);
+    return utils::format("http://127.0.0.1:{}/auth/callback", port);
 }
 
 } // namespace spotify

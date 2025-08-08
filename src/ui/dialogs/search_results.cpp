@@ -104,7 +104,7 @@ static void start_track_playback(api_weak_ptr_t api_proxy, const spotify::data_i
 template<typename... Args>
 static inline wstring format(const wstring &fmt, Args&&... args)
 {
-    return std::vformat(fmt, std::make_wformat_args(args...));
+    return utils::vformat(utils::wstring_view(fmt), utils::make_wformat_args(args...));
 }
 
 static wstring format_followers(uintmax_t followers)
@@ -233,9 +233,9 @@ void search_results_dialog::rebuild_items()
             auto duration = std::chrono::milliseconds(track.duration_ms);
             wstring track_length;
             if (duration < 1h)
-                track_length = std::format(L"{:%M:%S}", duration);
+                track_length = utils::format(L"{:%M:%S}", duration);
             else
-                track_length = std::format(L"{:%Hh%M}", duration);
+                track_length = utils::format(L"{:%Hh%M}", duration);
 
             wstring label = format(
                 tracks_tpl,

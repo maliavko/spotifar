@@ -45,7 +45,7 @@ static httplib::Result get_rate_limited_response(const utils::clock_t::time_poin
     {
         body.object("error", [&]
         {
-            body.insert("message", std::format("expires at {}", std::format("{:%T}", expires_at)));
+            body.insert("message", utils::format("expires at {}", utils::format("{:%T}", expires_at)));
         });
     });
 
@@ -214,7 +214,7 @@ const play_history::data_t& api::get_play_history(bool force_resync)
 artist_t api::get_artist(const item_id_t &artist_id)
 {
     return request_item(item_requester<artist_t, 1, std::chrono::weeks>(
-        std::format("/v1/artists/{}", artist_id)), get_ptr());
+        utils::format("/v1/artists/{}", artist_id)), get_ptr());
 }
 
 std::vector<artist_t> api::get_artists(const item_ids_t &ids)
@@ -227,7 +227,7 @@ artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id, const std::
 {
     return artist_albums_ptr(new artist_albums_t(
         get_ptr(),
-        std::format("/v1/artists/{}/albums", artist_id), {
+        utils::format("/v1/artists/{}/albums", artist_id), {
             { "include_groups", utils::string_join(groups, ",") }
         }
     ));
@@ -236,13 +236,13 @@ artist_albums_ptr api::get_artist_albums(const item_id_t &artist_id, const std::
 std::vector<track_t> api::get_artist_top_tracks(const item_id_t &artist_id)
 {
     return request_item(item_requester<std::vector<track_t>, 1, std::chrono::weeks>(
-        std::format("/v1/artists/{}/top-tracks", artist_id), {}, "tracks"), get_ptr());
+        utils::format("/v1/artists/{}/top-tracks", artist_id), {}, "tracks"), get_ptr());
 }
     
 album_t api::get_album(const item_id_t &album_id)
 {
     return request_item(item_requester<album_t, 1, std::chrono::weeks>(
-        std::format("/v1/albums/{}", album_id)), get_ptr());
+        utils::format("/v1/albums/{}", album_id)), get_ptr());
 }
 
 std::vector<album_t> api::get_albums(const item_ids_t &ids)
@@ -260,7 +260,7 @@ std::vector<track_t> api::get_tracks(const item_ids_t &ids)
 album_tracks_ptr api::get_album_tracks(const item_id_t &album_id)
 {
     return album_tracks_ptr(new album_tracks_t(
-        get_ptr(), std::format("/v1/albums/{}/tracks", album_id)));
+        get_ptr(), utils::format("/v1/albums/{}/tracks", album_id)));
 }
 
 saved_playlists_ptr api::get_saved_playlists()
@@ -271,7 +271,7 @@ saved_playlists_ptr api::get_saved_playlists()
 playlist_t api::get_playlist(const item_id_t &playlist_id)
 {
     return request_item(item_requester<playlist_t, 1, std::chrono::days>(
-        std::format("/v1/playlists/{}", playlist_id), {
+        utils::format("/v1/playlists/{}", playlist_id), {
             { "additional_types", "track" },
             { "fields", playlist_t::get_fields_filter() },
         }), get_ptr());
@@ -299,9 +299,9 @@ saved_tracks_ptr api::get_playlist_tracks(const item_id_t &playlist_id)
 {
     return saved_tracks_ptr(new saved_tracks_t(
         get_ptr(),
-        std::format("/v1/playlists/{}/tracks", playlist_id), {
+        utils::format("/v1/playlists/{}/tracks", playlist_id), {
             { "additional_types", "track" },
-            { "fields", std::format("items({}),next,total", saved_track_t::get_fields_filter()) },
+            { "fields", utils::format("items({}),next,total", saved_track_t::get_fields_filter()) },
         }));
 }
 
@@ -549,7 +549,7 @@ void api::start_playback_base(const string &body, const item_id_t &device_id)
 
 wstring api::get_image(const image_t &image, const item_id_t &item_id)
 {
-    static const wstring cache_folder = std::format(L"{}\\images", config::get_plugin_data_folder());
+    static const wstring cache_folder = utils::format(L"{}\\images", config::get_plugin_data_folder());
 
     if (!image.is_valid())
     {
@@ -560,7 +560,7 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
     if (!fs::exists(cache_folder))
         fs::create_directories(cache_folder);
 
-    const std::filesystem::path filepath = std::format(L"{}\\{}.{}.png",
+    const std::filesystem::path filepath = utils::format(L"{}\\{}.{}.png",
         cache_folder, utils::to_wstring(item_id), image.width);
     
     if (!fs::exists(filepath))
@@ -596,7 +596,7 @@ wstring api::get_image(const image_t &image, const item_id_t &item_id)
 
 string api::get_lyrics(const track_t &track)
 {
-    static const wstring cache_folder = std::format(L"{}\\lyrics", config::get_plugin_data_folder());
+    static const wstring cache_folder = utils::format(L"{}\\lyrics", config::get_plugin_data_folder());
 
     if (!track)
     {
@@ -607,12 +607,12 @@ string api::get_lyrics(const track_t &track)
     if (!fs::exists(cache_folder))
         fs::create_directories(cache_folder);
 
-    const wstring filename = utils::strip_invalid_filename_chars(std::format(
+    const wstring filename = utils::strip_invalid_filename_chars(utils::format(
         L"{} - {} - {} [{}]",
         track.get_artist().name, track.album.name, track.name,
         utils::to_wstring(track.id)));
     
-    const std::filesystem::path filepath = std::format(L"{}\\{}.lrc", cache_folder, filename);
+    const std::filesystem::path filepath = utils::format(L"{}\\{}.lrc", cache_folder, filename);
     
     if (fs::exists(filepath))
     {
@@ -791,7 +791,7 @@ httplib::Result api::get(const string &request_url, clock_t::duration cache_for,
             auto &ep = get_endpoint(url);
             ep.set_expires_at(utils::clock_t::now() + retry_after);
 
-            log::api->warn("The endpoint \"{}\" is rate limited for {}", ep.get_name(), std::format("{:%T}", retry_after));
+            log::api->warn("The endpoint \"{}\" is rate limited for {}", ep.get_name(), utils::format("{:%T}", retry_after));
 
             if (retry_429)
             {

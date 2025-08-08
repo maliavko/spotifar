@@ -49,25 +49,25 @@ const items_t& albums_base_view::get_items()
         }
         
         // column C0 - release year
-        columns.push_back(std::format(L"{: ^6}", utils::to_wstring(album.get_release_year())));
+        columns.push_back(utils::format(L"{: ^6}", utils::to_wstring(album.get_release_year())));
         
         // column C1 - album type
-        columns.push_back(std::format(L"{: ^6}", album.get_type_abbrev()));
+        columns.push_back(utils::format(L"{: ^6}", album.get_type_abbrev()));
         
         // column C2 - total tracks
-        columns.push_back(std::format(L"{:3}", album.total_tracks));
+        columns.push_back(utils::format(L"{:3}", album.total_tracks));
 
         // column C3 - full release date
-        columns.push_back(std::format(L"{: ^10}", utils::to_wstring(album.release_date)));
+        columns.push_back(utils::format(L"{: ^10}", utils::to_wstring(album.release_date)));
 
         // column C4 - album length
         if (total_length_ms > 0)
-            columns.push_back(std::format(L"{:%T >8}", std::chrono::milliseconds(total_length_ms)));
+            columns.push_back(utils::format(L"{:%T >8}", std::chrono::milliseconds(total_length_ms)));
         else
             columns.push_back(L"");
         
         // column C5 - album's popularity
-        columns.push_back(std::format(L"{:5}", album.popularity));
+        columns.push_back(utils::format(L"{:5}", album.popularity));
 
         // column C6 - main artist name
         columns.push_back(album.get_artist().name);
@@ -526,7 +526,7 @@ std::vector<wstring> saved_albums_view::get_extra_columns(const album_t& album) 
     const auto &saved_album = static_cast<const saved_album_t&>(album);
 
     // we take first 10 symbols - it is date, the rest is time
-    const auto &saved_at_str = std::format("{:^12}", saved_album.added_at.substr(0, 10));
+    const auto &saved_at_str = utils::format("{:^12}", saved_album.added_at.substr(0, 10));
 
     return {
         utils::to_wstring(saved_at_str), // C9 - `added at` date
@@ -781,7 +781,7 @@ std::vector<wstring> recently_saved_albums_view::get_extra_columns(const album_t
     const auto &saved_album = static_cast<const saved_album_t&>(album);
 
     // we take first 10 symbols - it is date, the rest is time
-    const auto &saved_at_str = std::format("{:^12}", saved_album.added_at.substr(0, 10));
+    const auto &saved_at_str = utils::format("{:^12}", saved_album.added_at.substr(0, 10));
 
     return {
         utils::to_wstring(saved_at_str), // C9 - `added at` date

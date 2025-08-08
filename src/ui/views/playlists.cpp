@@ -19,10 +19,10 @@ const items_t& playlists_base_view::get_items()
         std::vector<wstring> columns;
 
         // column C0 - total playlist's tracks count
-        columns.push_back(std::format(L"{: >6}", playlist.tracks_total));
+        columns.push_back(utils::format(L"{: >6}", playlist.tracks_total));
 
         // column C1 - owner
-        columns.push_back(std::format(L"{: >15}", playlist.user_display_name));
+        columns.push_back(utils::format(L"{: >15}", playlist.user_display_name));
 
         // column C2 - is public
         columns.push_back(playlist.is_public ? L" + " : L"");
@@ -41,7 +41,7 @@ const items_t& playlists_base_view::get_items()
         }
 
         if (total_length_ms > 0)
-            columns.push_back(std::format(L"{:>10%Hh %Mm}", std::chrono::milliseconds(total_length_ms)));
+            columns.push_back(utils::format(L"{:>10%Hh %Mm}", std::chrono::milliseconds(total_length_ms)));
         else
             columns.push_back(L"");
 
@@ -363,7 +363,7 @@ void recent_playlists_view::rebuild_items()
             }
             else
             {
-                playlist.name = std::format(L"Hidden_{}", utils::to_wstring(item_id));
+                playlist.name = utils::format(L"Hidden_{}", utils::to_wstring(item_id));
             }
         }
 
