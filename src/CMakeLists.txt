@@ -101,7 +101,9 @@ else()
 endif()
 
 set(OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
-set(LIBRESPOT_TARGET ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${CARGO_BUILD_TYPE}/librespot.exe)
+set(LIBRESPOT_TARGET
+    ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${CARGO_BUILD_TYPE}/librespot.exe
+    OPTIONAL)
 
 find_program(CARGO_EXECUTABLE cargo)
 if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
