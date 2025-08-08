@@ -127,8 +127,7 @@
       "name": "gcc-x64-Debug",
       "displayName": "MinGW GCC x64 Debug",
       "configurePreset": "gcc-x64",
-      "configuration": "RelWithDebInfo",
-      "jobs": 1
+      "configuration": "RelWithDebInfo"
     },
     {
       "name": "gcc-x64-Release",
