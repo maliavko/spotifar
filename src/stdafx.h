@@ -23,7 +23,6 @@
 // this <generator> header is quite a pain: it hits "winsock include" warning on MinGW
 // builds all the times, plus it works only if you put it with some specific order of headers
 #pragma clang diagnostic ignored "-W#warnings"
-#pragma GCC diagnostic ignored "-Wcpp"
 #include <generator>
 
 #include <windows.h> // win api support
@@ -52,6 +51,7 @@
 #   include <fmt/xchar.h>
 #endif
     
+#pragma GCC diagnostic ignored "-Wcpp"
 #include "httplib.h" // IWYU pragma: keep; single-threaded http client/server library
 #include "spdlog/spdlog.h" // IWYU pragma: keep; logging library
 #include "BS_thread_pool.hpp" // IWYU pragma: keep; thread pool library
