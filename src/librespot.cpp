@@ -50,9 +50,9 @@ bool librespot::start(const string &access_token)
     std::wstringstream cmd;
 
     // https://github.com/librespot-org/librespot/wiki/Options
-    cmd << std::format(L"{}\\librespot.exe", config::get_plugin_launch_folder());
-    cmd << std::format(L" --cache {}\\cache", config::get_plugin_data_folder());
-    cmd << std::format(L" --system-cache {}\\system-cache", config::get_plugin_data_folder());
+    cmd << utils::format(L"{}\\librespot.exe", config::get_plugin_launch_folder());
+    cmd << utils::format(L" --cache {}\\cache", config::get_plugin_data_folder());
+    cmd << utils::format(L" --system-cache {}\\system-cache", config::get_plugin_data_folder());
     cmd << L" --name " << device_name;
     cmd << L" --device-type computer";
     cmd << L" --cache-size-limit 1.5G";

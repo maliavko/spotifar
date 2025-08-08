@@ -282,7 +282,7 @@ extern "C" intptr_t WINAPI GetFilesW(GetFilesInfo *info)
             {
                 if (files[i].empty()) continue;
 
-                std::filesystem::path filepath = std::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[i].FileName);
+                std::filesystem::path filepath = utils::format(L"{}\\{}.txt", info->DestPath, info->PanelItem[i].FileName);
                 if (auto fout = std::ofstream(filepath, std::ios::trunc))
                     fout << utils::utf8_encode(files[i]);
             }

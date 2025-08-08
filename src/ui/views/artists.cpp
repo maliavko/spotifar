@@ -67,16 +67,16 @@ const items_t& artists_base_view::get_items()
         }
 
         // column C0 - followers count
-        columns.push_back(std::format(L"{: >9}", format_followers(artist.followers_total)));
+        columns.push_back(utils::format(L"{: >9}", format_followers(artist.followers_total)));
 
         // column C1 - popularity
-        columns.push_back(std::format(L"{:5}", artist.popularity));
+        columns.push_back(utils::format(L"{:5}", artist.popularity));
 
         // column C2 - main genre
         columns.push_back(artist.get_main_genre());
         
         // column C3 - total albums
-        columns.push_back(std::format(L"{: >6}", total_albums_str));
+        columns.push_back(utils::format(L"{: >6}", total_albums_str));
 
         // column C4 - is saved in collection status
         columns.push_back(is_followed ? L" + " : L"");

@@ -69,7 +69,7 @@ void devices_cache::transfer_playback(const item_id_t &device_id, bool start_pla
                 this->patch([dev_idx, size = get().size()](auto &d)
                 {
                     for (size_t i = 0; i < size; i++)
-                        json::Pointer(std::format("/{}/is_active", i)).Set(d, i == dev_idx);
+                        json::Pointer(utils::format("/{}/is_active", i)).Set(d, i == dev_idx);
                 });
                 this->resync(true);
             }

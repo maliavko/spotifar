@@ -6,7 +6,7 @@ using namespace utils;
 
 std::filesystem::path get_cache_filename()
 {
-    return std::filesystem::path(std::format("{}\\responses.cache", utils::to_string(
+    return std::filesystem::path(utils::format("{}\\responses.cache", utils::to_string(
         config::get_plugin_data_folder())));
 }
 

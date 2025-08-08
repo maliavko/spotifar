@@ -45,8 +45,6 @@ add_library(${PROJECT_NAME} SHARED
     spotifar.vc.def
 )
 
-target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
-
 target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${PROJECT_BINARY_DIR}  # required for being able to include CMake generated version file
@@ -57,15 +55,23 @@ target_include_directories(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/thirdparty/FarManager/plugins/common/unicode
         ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 
+target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
+
 
 # DEPENDENCIES
 #-----------------------------------------------------------------------------------------
 find_package(httplib CONFIG REQUIRED)
 
 find_package(RapidJSON CONFIG REQUIRED)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    RAPIDJSON_HAS_STDSTRING=1
+)
 
-set(SPDLOG_WCHAR_FILENAMES ON)
 find_package(spdlog CONFIG REQUIRED)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    FMT_HEADER_ONLY
+    SPDLOG_WCHAR_FILENAMES
+)
 
 find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
 
@@ -113,17 +119,15 @@ endif()
 
 # INSTALLATION
 #-----------------------------------------------------------------------------------------
-install(TARGETS ${PROJECT_NAME}
+install(
+    TARGETS ${PROJECT_NAME}
     RUNTIME_DEPENDENCY_SET my_deps
-    DESTINATION ${OUTPUT_DIRECTORY}
-)
+    DESTINATION ${OUTPUT_DIRECTORY})
 
 # packaging Librespot executable
 install(
-    FILES
-        ${LIBRESPOT_TARGET}
-    DESTINATION ${OUTPUT_DIRECTORY}
-)
+    FILES ${LIBRESPOT_TARGET}
+    DESTINATION ${OUTPUT_DIRECTORY})
 
 # copying PDB symbols toi the install directory
 install(
@@ -140,7 +144,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 # packaging dependencies
-install(RUNTIME_DEPENDENCY_SET my_deps
+install(
+    RUNTIME_DEPENDENCY_SET my_deps
     PRE_EXCLUDE_REGEXES
         [[api-ms-win-.*]]
         [[ext-ms-.*]]
@@ -162,8 +167,6 @@ file(GLOB LANG_FILES "${PROJECT_SOURCE_DIR}/docs/*.lng")
 
 # packaging language and help files
 install(
-    FILES
-        ${HELP_FILES}
-        ${LANG_FILES}
+    FILES ${HELP_FILES} ${LANG_FILES}
     DESTINATION ${OUTPUT_DIRECTORY}
 )
