@@ -82,7 +82,7 @@
         "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
       },
       "environment": {
-        "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
+        "PATH": "C:/msys64/mingw64/bin;$penv{PATH}"
       }
     }
   ],
@@ -127,7 +127,8 @@
       "name": "gcc-x64-Debug",
       "displayName": "MinGW GCC x64 Debug",
       "configurePreset": "gcc-x64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "RelWithDebInfo",
+      "jobs": 1
     },
     {
       "name": "gcc-x64-Release",

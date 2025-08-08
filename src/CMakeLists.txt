@@ -137,7 +137,7 @@ install(
     OPTIONAL)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/ucrt64/bin")
+    set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/mingw64/bin")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/clang64/bin")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -154,11 +154,11 @@ install(
         [[msvcr.*\.dll]]
         [[vcruntime.*\.dll]]
         [[C:\msys64\clang64\bin\.dll]]
-        [[C:\msys64\ucrt64\bin\.dll]]
+        [[C:\msys64\mingw64\bin\.dll]]
     POST_EXCLUDE_REGEXES
         [[.*system32/.*\.dll]]
         [[C:\msys64\clang64\bin\.dll]]
-        [[C:\msys64\ucrt64\bin\.dll]]
+        [[C:\msys64\mingw64\bin\.dll]]
     DIRECTORIES ${RUNTIME_DEPENDENCY_DIRECTORIES}
     DESTINATION ${OUTPUT_DIRECTORY}
 )
