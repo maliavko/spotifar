@@ -22,12 +22,10 @@
 #include <string>
 // this <generator> header is quite a pain: it hits "winsock include" warning on MinGW
 // builds all the times, plus it works only if you put it with some specific order of headers
-#if defined (__clang__)
-#   pragma clang diagnostic ignored "-W#warnings"
-#elif defined (__GNUC__)
-#   pragma GCC diagnostic ignored "-Wcpp"
-#endif
+#pragma clang diagnostic ignored "-W#warnings"
+#pragma GCC diagnostic ignored "-Wcpp"
 #include <generator>
+
 #include <windows.h> // win api support
 #include <fstream> // IWYU pragma: keep
 #include <map> // IWYU pragma: keep
@@ -38,6 +36,22 @@
 #include <shellapi.h>  // for ShellExecute
 #include <shlobj.h> // for SHGetKnownFolderPath
 
+#if defined(__cpp_lib_format)
+#   define USING_STD_FORMAT
+#endif
+
+// @note as of 8/8/2025 the situation is the following
+//  - MSVC 19.44 & GCC 15.1 compiles well with both options
+//  - Clang 20.1.8 compiles only with standard library
+//  - github workflows only with fmt::format
+#ifdef USING_STD_FORMAT
+#   define SPDLOG_USE_STD_FORMAT
+#   include <format>
+#else
+#   include <fmt/chrono.h>
+#   include <fmt/xchar.h>
+#endif
+    
 #include "httplib.h" // IWYU pragma: keep; single-threaded http client/server library
 #include "spdlog/spdlog.h" // IWYU pragma: keep; logging library
 #include "BS_thread_pool.hpp" // IWYU pragma: keep; thread pool library
@@ -47,7 +61,8 @@
 #include "rapidjson/pointer.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-#if defined (_MSC_VER)
+
+#if defined(_MSC_VER)
 #   include "wintoastlib.h" // win toast notifications library
 #endif
 
@@ -145,6 +160,22 @@ namespace spotifar
             using rapidjson::ParseResult;
             using Allocator = typename Document::AllocatorType;
         }
+
+#ifdef USING_STD_FORMAT
+    using std::format;
+    using std::vformat;
+    using std::make_format_args;
+    using std::make_wformat_args;
+    using std::string_view;
+    using std::wstring_view;
+#else
+    using fmt::format;
+    using fmt::vformat;
+    using fmt::make_format_args;
+    using fmt::make_wformat_args;
+    using fmt::string_view;
+    using fmt::wstring_view;
+#endif
     }
 }
 

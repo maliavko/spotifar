@@ -101,7 +101,7 @@ static wstring get_user_app_data_folder()
     // at first, we are trying to create a logs folder in users home directory,
     // if not possible, trying plugins home directory
     if (SUCCEEDED(hres))
-        return std::format(L"{}\\spotifar", app_data_path);
+        return utils::format(L"{}\\spotifar", app_data_path);
     
     return config::get_plugin_launch_folder();
 }
@@ -333,7 +333,7 @@ std::shared_ptr<settings_context> lock_settings(const wstring &subkey)
 
 static wstring get_hotkey_node_name(int key)
 {
-    return std::format(L"hotkey_{}", key);
+    return utils::format(L"hotkey_{}", key);
 }
 
 void migrate(settings_context &ctx)

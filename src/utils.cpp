@@ -2,13 +2,13 @@
 #include "config.hpp"
 #include "lng.hpp"
 
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/daily_file_sink.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/sink.h>
 #if defined (__clang__)
 #   include <spdlog/sinks/stdout_sinks.h>
 #else
-#   include "spdlog/sinks/msvc_sink.h"
+#   include <spdlog/sinks/msvc_sink.h>
 #endif
 
 bool operator==(const FarKey &lhs, const FarKey &rhs)
@@ -150,7 +150,7 @@ namespace far3
 
     string get_plugin_version()
     {
-        return std::format("{}.{}.{}.{}.{}",
+        return format("{}.{}.{}.{}.{}",
             PLUGIN_VERSION.Major,
             PLUGIN_VERSION.Minor,
             PLUGIN_VERSION.Revision,
@@ -678,7 +678,7 @@ namespace log
 
     void init()
     {
-        auto filepath = std::format(L"{}\\spotifar.log", get_logs_folder());
+        auto filepath = utils::format(L"{}\\spotifar.log", get_logs_folder());
 
         // a default sink to the file 
         auto daily_sink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filepath, 23, 59, false, 3);
@@ -770,7 +770,7 @@ namespace log
 
     wstring get_logs_folder()
     {
-        return std::format(L"{}\\logs\\", config::get_plugin_data_folder());
+        return utils::format(L"{}\\logs\\", config::get_plugin_data_folder());
     }
 }
 
@@ -997,9 +997,9 @@ namespace http
         }
 
         if (err_msg.empty())
-            return std::format("status {}, {}.", res->status, status_msg);
+            return utils::format("status {}, {}.", res->status, status_msg);
         else
-            return std::format("status {}, {}. {}", res->status, status_msg, err_msg);
+            return utils::format("status {}, {}. {}", res->status, status_msg, err_msg);
     }
 
     string trim_params(const string &url)
@@ -1065,15 +1065,15 @@ namespace http
         std::stringstream ss, query;
         
         for (auto it = req.params.begin(); it != req.params.end(); ++it)
-            query << std::format("{}{}={}", (it == req.params.begin()) ? '?' : '&', it->first, it->second);
+            query << utils::format("{}{}={}", (it == req.params.begin()) ? '?' : '&', it->first, it->second);
 
         ss  << "An error occured while making an http request: "
-            << std::format("{} {} {}", req.method, req.version, req.path) << query.str() << std::endl;
+            << utils::format("{} {} {}", req.method, req.version, req.path) << query.str() << std::endl;
 
         //ss << dump_headers(req.headers);
 
         ss << std::endl << "A response received: " << std::endl;
-        ss << std::format("{} {}", res.status, res.version) << std::endl;
+        ss << utils::format("{} {}", res.status, res.version) << std::endl;
 
         ss << dump_headers(res.headers) << std::endl;
 

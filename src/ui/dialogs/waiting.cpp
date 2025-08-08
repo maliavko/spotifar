@@ -62,7 +62,7 @@ static void update_message(const wstring &text = L"")
     if (!text.empty())
         message = text;
     
-    auto s = std::format(L"{}{:<3}", message, wstring(ticker, L'.'));
+    auto s = utils::format(L"{}{:<3}", message, wstring(ticker, L'.'));
     config::fsf.snprintf(msg, std::size(msg), s.c_str());
     utils::far3::dialogs::set_text(hdlg, message_lbl, msg);
 }

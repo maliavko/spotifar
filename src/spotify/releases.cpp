@@ -165,7 +165,7 @@ bool recent_releases::request_data(data_t &data)
 void recent_releases::on_data_synced(const data_t &data, const data_t &prev_data)
 {
     log::global->info("A recent releases cache is found, next update in {}",
-        std::format("{:%T}", get_expires_at() - clock_t::now()));
+        utils::format("{:%T}", get_expires_at() - clock_t::now()));
 
     const std::unordered_set<simplified_album_t> prev_releases(prev_data.begin(), prev_data.end());
 

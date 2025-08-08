@@ -9,7 +9,7 @@ using utils::far3::get_text;
 
 string make_item_uri(const string &item_type_name, const string &id)
 {
-    return std::format("spotify:{}:{}", item_type_name, id);
+    return utils::format("spotify:{}:{}", item_type_name, id);
 }
 
 bool operator==(const data_item_t &lhs, const data_item_t &rhs)
@@ -190,9 +190,9 @@ void from_json(const Value &j, simplified_album_t &a)
     {
         string precision = j["release_date_precision"].GetString(); // year, month, day
         if (precision == "year")
-            a.release_date = std::format("{}-01-01", a.release_date);
+            a.release_date = utils::format("{}-01-01", a.release_date);
         else if (precision == "month")
-            a.release_date = std::format("{}-01", a.release_date);
+            a.release_date = utils::format("{}-01", a.release_date);
     }
 
     a.href = j["href"].GetString();
@@ -333,7 +333,7 @@ void to_json(Value &result, const simplified_track_t &t, json::Allocator &alloca
 
 const string& track_t::get_fields_filter()
 {
-    static string fields = std::format("{},album,popularity", simplified_track_t::get_fields_filter());
+    static string fields = utils::format("{},album,popularity", simplified_track_t::get_fields_filter());
     return fields;
 }
 
@@ -360,7 +360,7 @@ void to_json(Value &result, const track_t &t, json::Allocator &allocator)
 
 const string& saved_track_t::get_fields_filter()
 {
-    static string fields = std::format("added_at,track({})", track_t::get_fields_filter());
+    static string fields = utils::format("added_at,track({})", track_t::get_fields_filter());
     return fields;
 }
 
@@ -434,7 +434,7 @@ void from_json(const Value &j, playlist_t &p)
 
 const string& simplified_playlist_t::get_fields_filter()
 {
-    static string fields = std::format("id,href,name,collaborative,public,description,"
+    static string fields = utils::format("id,href,name,collaborative,public,description,"
         "tracks(total),owner(display_name),snapshot_id,external_urls");
     return fields;
 }
@@ -458,7 +458,7 @@ simplified_playlist_t simplified_playlist_t::make_hidden(const item_id_t &id, co
 
 const string& playlist_t::get_fields_filter()
 {
-    static string fields = std::format("{}", simplified_playlist_t::get_fields_filter());
+    static string fields = utils::format("{}", simplified_playlist_t::get_fields_filter());
     return fields;
 }
 
@@ -636,7 +636,7 @@ void to_json(Value &result, const device_t &d, json::Allocator &allocator)
 
 string device_t::to_str() const
 {
-    return std::format("device(name={}, id={})", utils::to_string(name), id);
+    return utils::format("device(name={}, id={})", utils::to_string(name), id);
 }
 
 void to_json(Value &result, const history_item_t &i, json::Allocator &allocator)
