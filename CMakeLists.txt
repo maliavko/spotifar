@@ -34,3 +34,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   WIN32_LEAN_AND_MEAN
   _WINSOCKAPI_
 )
+
+# GitHub agents use GCC 12, which generates this obsolete warning
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "12.0")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-stringop-overread")
+endif()
