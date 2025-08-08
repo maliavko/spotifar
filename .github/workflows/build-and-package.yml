@@ -57,15 +57,15 @@ jobs:
             mingw-w64-clang-x86_64-toolchain
             mingw-w64-clang-x86_64-cmake
 
-      - name: Installing Msys2 for UCRT64
+      - name: Installing Msys2 for MINGW64
         uses: msys2/setup-msys2@v2
         if: ${{ matrix.platform == 'gcc-x64' }}
         with:
-          msystem: UCRT64
+          msystem: MINGW64
           update: true
           install: >
-            mingw-w64-ucrt-x86_64-toolchain
-            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-cmake
 
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2

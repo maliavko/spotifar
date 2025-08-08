@@ -28,9 +28,8 @@ application ideas
 bugs
 
 installing gcc
-- pacman -S mingw-w64-ucrt-x86_64-toolchain
-- pacman -S mingw-w64-ucrt-x86_64-cmake
-- pacman -S base-devel
+- pacman -S mingw-w64-x86_64-toolchain
+- pacman -S mingw-w64-x86_64-cmake
 
 to finish for alpha release
 - add gallery of schreenshots
