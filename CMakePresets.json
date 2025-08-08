@@ -82,7 +82,7 @@
         "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
       },
       "environment": {
-        "PATH": "C:/msys64/mingw64/bin;$penv{PATH}"
+        "PATH": "C:/msys64/ucrt64/bin;$penv{PATH}"
       }
     }
   ],
