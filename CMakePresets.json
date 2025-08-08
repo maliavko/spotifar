@@ -18,7 +18,6 @@
       ],
       "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
-      "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
       "cacheVariables": {
         "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
         "BUILD_LIBRESPOT": "0"
