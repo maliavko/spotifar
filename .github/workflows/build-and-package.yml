@@ -54,7 +54,6 @@ jobs:
           msystem: CLANG64
           update: true
           install: >
-            base-devel
             mingw-w64-clang-x86_64-toolchain
             mingw-w64-clang-x86_64-cmake
 
@@ -65,7 +64,6 @@ jobs:
           msystem: UCRT64
           update: true
           install: >
-            base-devel
             mingw-w64-ucrt-x86_64-toolchain
             mingw-w64-ucrt-x86_64-cmake
 
