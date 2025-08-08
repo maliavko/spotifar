@@ -21,9 +21,9 @@ void http_logger(const httplib::Request &req, const httplib::Response &res);
 // a helper function to dispatch a playback command execution error higher
 // to the listeners
 template <typename... Args>
-void playback_cmd_error(string msg_fmt, Args &&...args)
+void playback_cmd_error(const utils::string_view &msg_fmt, Args &&...args)
 {
-    auto formatted = std::vformat(msg_fmt, std::make_format_args(args...));
+    auto formatted = utils::vformat(msg_fmt, utils::make_format_args(args...));
     
     log::api->error(formatted);
 
@@ -35,7 +35,7 @@ void playback_cmd_error(string msg_fmt, Args &&...args)
 template<class R>
 string get_fetching_error(const R &requester)
 {
-    return std::format("collection fetching error '{}', url '{}'",
+    return utils::format("collection fetching error '{}', url '{}'",
         utils::http::get_status_message(requester->get_response()), requester->get_url());
 }
 
@@ -131,31 +131,31 @@ public:
         std::vector<string> query{ search };
 
         if (auto f = utils::trim(filters.album); !f.empty())
-            query.push_back(std::format("album={}", f));
+            query.push_back(utils::format("album={}", f));
 
         if (auto f = utils::trim(filters.artist); !f.empty())
-            query.push_back(std::format("artist={}", f));
+            query.push_back(utils::format("artist={}", f));
 
         if (auto f = utils::trim(filters.track); !f.empty())
-            query.push_back(std::format("track={}", f));
+            query.push_back(utils::format("track={}", f));
 
         if (auto f = utils::trim(filters.year); !f.empty())
-            query.push_back(std::format("year={}", f));
+            query.push_back(utils::format("year={}", f));
 
         if (auto f = utils::trim(filters.genre); !f.empty())
-            query.push_back(std::format("genre={}", f));
+            query.push_back(utils::format("genre={}", f));
 
         if (auto f = utils::trim(filters.upc); !f.empty())
-            query.push_back(std::format("upc={}", f));
+            query.push_back(utils::format("upc={}", f));
 
         if (auto f = utils::trim(filters.isrc); !f.empty())
-            query.push_back(std::format("isrc={}", f));
+            query.push_back(utils::format("isrc={}", f));
 
         if (filters.is_fresh)
-            query.push_back(std::format("tag:new"));
+            query.push_back(utils::format("tag:new"));
 
         if (filters.is_low)
-            query.push_back(std::format("tag:hipster"));
+            query.push_back(utils::format("tag:hipster"));
 
         httplib::Params params{
             { "q", utils::string_join(query, ",") },

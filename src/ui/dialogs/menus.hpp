@@ -49,7 +49,7 @@ template<typename... Args>
 void show_simple_waiting(int msg_id, Args&&... args)
 {
     static wstring message;
-    message = std::format(L"{: ^50}", utils::far3::get_vtext(msg_id, args...));
+    message = utils::format(L"{: ^50}", utils::far3::get_vtext(msg_id, args...));
     
     static const wchar_t* msgs[] = { L"", L"", L"", L"" };
     msgs[2] = message.c_str();

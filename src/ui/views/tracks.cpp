@@ -15,9 +15,9 @@ static wstring get_track_duration(const track_t &track)
     auto duration = std::chrono::milliseconds(track.duration_ms);
     wstring track_length;
     if (duration < 1h)
-        track_length = std::format(L"{:%M:%S}", duration);
+        track_length = utils::format(L"{:%M:%S}", duration);
     else
-        track_length = std::format(L"{:%Hh%M}", duration);
+        track_length = utils::format(L"{:%Hh%M}", duration);
     return track_length.substr(0, 5);
 }
 
@@ -71,23 +71,23 @@ const items_t& tracks_base_view::get_items()
         columns.push_back(track.is_explicit ? L" * " : L"");
 
         // column C1 - duration
-        columns.push_back(std::format(L"{: ^7}", get_track_duration(track)));
+        columns.push_back(utils::format(L"{: ^7}", get_track_duration(track)));
         
         // column C2 - album's release year
-        columns.push_back(std::format(L"{: ^6}",
+        columns.push_back(utils::format(L"{: ^6}",
             utils::to_wstring(track.album.get_release_year())));
 
         // column C3 - main artist's name
         columns.push_back(track.get_artist().name);
         
         // column C4 - track's popularity
-        columns.push_back(std::format(L"{:5}", track.popularity));
+        columns.push_back(utils::format(L"{:5}", track.popularity));
 
         // column C5 - album's name
         columns.push_back(track.album.name);
 
         // column C6 - album's type
-        columns.push_back(std::format(L"{: ^6}", track.album.get_type_abbrev()));
+        columns.push_back(utils::format(L"{: ^6}", track.album.get_type_abbrev()));
 
         // column C7 - is saved in collection status
         columns.push_back(is_saved ? L" + " : L"");
@@ -558,13 +558,13 @@ std::vector<wstring> album_tracks_view::get_extra_columns(const track_t& track) 
 
     if (is_multidisc)
     {
-        wstring label = std::format(L"{:02}/{:02}", track.track_number, track.disc_number);
-        track_number = std::format(L"{: ^7}", label);
+        wstring label = utils::format(L"{:02}/{:02}", track.track_number, track.disc_number);
+        track_number = utils::format(L"{: ^7}", label);
     }
     else
     {
-        wstring label = std::format(L"{:02}", track.track_number);
-        track_number = std::format(L"{: ^4}", label);
+        wstring label = utils::format(L"{:02}", track.track_number);
+        track_number = utils::format(L"{: ^4}", label);
     }
 
     return {
@@ -794,7 +794,7 @@ std::vector<wstring> saved_tracks_view::get_extra_columns(const track_t& track) 
     const auto &saved_track = static_cast<const saved_track_t&>(track);
 
     // we take first 10 symbols - it is date, the rest is time
-    const auto &saved_at_str = std::format("{:^12}", saved_track.added_at.substr(0, 10));
+    const auto &saved_at_str = utils::format("{:^12}", saved_track.added_at.substr(0, 10));
 
     return {
         utils::to_wstring(saved_at_str), // C8 - `added at` date
@@ -1161,7 +1161,7 @@ std::vector<wstring> playlist_view::get_extra_columns(const track_t& track) cons
     const auto &saved_track = static_cast<const saved_track_t&>(track);
 
     // we take first 10 symbols - it is date, the rest is time
-    const auto &saved_at_str = std::format("{:^12}", saved_track.added_at.substr(0, 10));
+    const auto &saved_at_str = utils::format("{:^12}", saved_track.added_at.substr(0, 10));
 
     return {
         utils::to_wstring(saved_at_str), // C8 - `added at` date

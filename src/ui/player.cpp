@@ -229,7 +229,7 @@ bool player::show()
 
         if (hdlg != NULL)
         {
-            static wstring title(std::format(L" {} ", far3::get_text(MPluginUserName)));
+            static wstring title(utils::format(L" {} ", far3::get_text(MPluginUserName)));
             set_control_text(controls::title, title);
 
             if (auto api = api_proxy.lock())
@@ -793,7 +793,7 @@ void player::on_track_changed(const track_t &track, const track_t &prev_track)
     no_redraw_player nr(hdlg);
 
     static wstring track_total_time_str;
-    track_total_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(track.duration));
+    track_total_time_str = utils::format(L"{:%M:%S}", std::chrono::seconds(track.duration));
 
     track_progress.set_higher_boundary(track.duration);
 
@@ -818,7 +818,7 @@ void player::update_track_bar(int duration, int progress)
     const auto &track_bar_layout = dlg_items_layout[controls::track_bar];
     const auto &track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
     track_bar = wstring(track_bar_length, track_bar_char_unfilled); // filling the bar with spare symbols first
-    track_time_str = std::format(L"{:%M:%S}", std::chrono::seconds(progress));
+    track_time_str = utils::format(L"{:%M:%S}", std::chrono::seconds(progress));
 
     if (duration)
     {
@@ -847,7 +847,7 @@ void player::update_volume_bar(int volume)
 
     static wstring volume_label;
     
-    volume_label = std::format(L"[{:0>3}%]", volume);
+    volume_label = utils::format(L"[{:0>3}%]", volume);
     set_control_text(controls::volume_label, volume_label);
 }
 
@@ -935,21 +935,21 @@ void player::on_context_changed(const context_t &ctx)
     {
         if (auto album = api->get_album(ctx.get_item_id()))
         {
-            wstring full_name = std::format(L"[{}] {}", utils::to_wstring(album.get_release_year()), album.name);
+            wstring full_name = utils::format(L"[{}] {}", utils::to_wstring(album.get_release_year()), album.name);
             if (album.is_single() || album.is_compilation())
                 full_name += L" " + album.get_type_abbrev();
             
-            source_label = std::format(L"Album: {}", full_name);
+            source_label = utils::format(L"Album: {}", full_name);
         }
     }
     else if (ctx.is_playlist())
     {
         if (auto playlist = api->get_playlist(ctx.get_item_id()))
-            source_label = std::format(L"Playlist: {}", playlist.name);
+            source_label = utils::format(L"Playlist: {}", playlist.name);
     }
     
     if (source_label.empty())
-        source_label = std::format(L"{}: {}", far3::get_text(MPlayerSourceLabel),
+        source_label = utils::format(L"{}: {}", far3::get_text(MPlayerSourceLabel),
                                    utils::to_wstring(ctx.type));
 
     set_control_text(controls::source_name, source_label);

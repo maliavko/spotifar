@@ -45,7 +45,7 @@ const items_t& root_base_view::get_items()
 
         wstring entries_count = L"";
         if (totals > 0)
-            entries_count = std::format(L"{: >6}", totals);
+            entries_count = utils::format(L"{: >6}", totals);
 
         items.push_back({
             item.id,

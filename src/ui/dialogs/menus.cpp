@@ -76,7 +76,7 @@ intptr_t show_sort_dialog(const view_ptr_t v)
 
         // the width of the dialog is 28, the sort mode name is aligned to the left,
         // while the hotkey name - to the right
-        wstring label = std::format(L"{: <18}{: >10}", sm.name,
+        wstring label = utils::format(L"{: <18}{: >10}", sm.name,
             keys::combined_to_string(sm.get_combined_key()));
 
         MENUITEMFLAGS flags = MIF_NONE;

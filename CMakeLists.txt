@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5...3.10)
 
 # enum VERSION_STAGE
 # {
-# 	VS_RELEASE      = 0,
+# VS_RELEASE      = 0,
 #	VS_ALPHA        = 1,
 #	VS_BETA         = 2,
 #	VS_RC           = 3,
@@ -22,7 +22,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_subdirectory(src)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    OUTPUT_NAME "spotifar"
+    OUTPUT_NAME "${PROJECT_NAME}"
     PREFIX ""
 )
 
@@ -33,14 +33,4 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   VC_EXTRALEAN
   WIN32_LEAN_AND_MEAN
   _WINSOCKAPI_
-  RAPIDJSON_HAS_STDSTRING=1
-  FMT_HEADER_ONLY
-  SPDLOG_WCHAR_FILENAMES
 )
-
-# Clang does not compile without this spdlog flag, bug gcc fails with it on Github workflows
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  target_compile_definitions(${PROJECT_NAME} PRIVATE
-    SPDLOG_USE_STD_FORMAT
-  )
-endif()

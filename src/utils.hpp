@@ -40,6 +40,14 @@ auto get_timestamp(const string &time_str) -> clock_t::time_point;
 /// @brief Returns given `time` as a formatteed string 
 auto format_localtime(const time_t &time, const wstring &fmt) -> wstring;
 
+/// @brief Formats given number `num` into user-friendly string. Appends
+/// units letter, in accordance to the number of times, it is divided by
+/// `divider`.
+///
+/// example: format_size(num, 1024., "BKMGTPE", 10.)
+/// example: format_followers(num, 1000., " KMGTPE", 100.)
+string format_number(uintmax_t num, float divider, const char units[8], float precision = 10.);
+
 /// @brief Join a vector of string into one, using given `delimeter`
 /// @param parts string parts
 /// @param delim delimeter
@@ -106,14 +114,6 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
 }
 
 wstring trunc(const wstring &str, size_t size_to_cut);
-
-/// @brief Formats given number `num` into user-friendly string. Appends
-/// units letter, in accordance to the number of times, it is divided by
-/// `divider`.
-///
-/// example: format_size(num, 1024., "BKMGTPE", 10.)
-/// example: format_followers(num, 1000., " KMGTPE", 100.)
-string format_number(uintmax_t num, float divider, const char units[8], float precision = 10.);
 
 HINSTANCE open_web_browser(const string &address);
 
@@ -499,7 +499,7 @@ namespace far3
     template<typename... Args>
     wstring get_vtext(int msg_id, Args&&... args)
     {
-        return std::vformat(get_text(msg_id), std::make_wformat_args(args...));
+        return vformat(wstring_view(get_text(msg_id)), utils::make_wformat_args(args...));
     }
 
     /// @brief ProcessSynchroEventW mechanism
@@ -521,7 +521,7 @@ namespace far3
         template <class P, typename... MethodArgumentTypes, typename... ActualArgumentTypes>
         static void dispatch_event(void (P::*method)(MethodArgumentTypes...), ActualArgumentTypes... args)
         {
-            const auto &task_descr = std::format("dispatch event task, {}", typeid(P).name());
+            const auto &task_descr = format("dispatch event task, {}", typeid(P).name());
             far3::synchro_tasks::push([method, args...] {
                 ObserverManager::notify(method, args...);
             }, task_descr);
@@ -701,9 +701,9 @@ namespace json
         }
         catch (const std::exception &ex)
         {
-            log::global->error(std::format(
+            log::global->error(
                 "There is an error parsing a json object: {}. Object type '{}', jsong string '{}'",
-                ex.what(), typeid(T).name(), json));
+                ex.what(), typeid(T).name(), json);
             throw ex;
         }
     }
