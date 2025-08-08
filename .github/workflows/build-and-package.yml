@@ -39,7 +39,7 @@ jobs:
       - name: Build librespot
         env:
           CARGO_TERM_COLOR: always
-        run: cargo build --release --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
+        run: cargo build --profile=xRelease --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
