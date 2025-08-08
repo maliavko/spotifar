@@ -26,7 +26,7 @@ namespace notifications
     }
 }
 
-#if defined(_MSC_VER)
+#if defined(WIN_TOAST_ENABLED)
 
 using namespace WinToastLib;
 
@@ -123,7 +123,7 @@ private:
 //-----------------------------------------------------------------------------------------------------------------------
 bool notifications_handler::start()
 {
-#if defined(_MSC_VER)
+#if defined(WIN_TOAST_ENABLED)
     // we mark the listener as a weak one, as it does not require frequent updates
     utils::events::start_listening<spotify::playback_observer>(this, true);
     utils::events::start_listening<spotify::releases_observer>(this);
@@ -155,7 +155,7 @@ bool notifications_handler::start()
 
 bool notifications_handler::shutdown()
 {
-#if defined(_MSC_VER)
+#if defined(WIN_TOAST_ENABLED)
     try
     {
         WinToast::instance()->clear();
@@ -178,7 +178,7 @@ void notifications_handler::on_track_changed(const track_t &track, const track_t
 {
     using utils::far3::actl::is_wnd_in_focus;
 
-#if defined(_MSC_VER)
+#if defined(WIN_TOAST_ENABLED)
     if (WinToast::instance()->isInitialized())
     {
         if (const auto plugin_ptr = get_plugin())
@@ -200,7 +200,7 @@ void notifications_handler::on_releases_sync_finished(const spotify::recent_rele
 
 void notifications_handler::show_now_playing(const spotify::track_t &track, bool show_buttons)
 {
-#if defined(_MSC_VER)
+#if defined(WIN_TOAST_ENABLED)
     if (!WinToast::instance()->isInitialized()) return;
 
     if (auto api = api_proxy.lock())
@@ -259,7 +259,7 @@ void notifications_handler::show_now_playing(const spotify::track_t &track, bool
 
 void notifications_handler::show_releases_found(const spotify::recent_releases_t &releases)
 {
-#if defined(_MSC_VER)
+#if defined(WIN_TOAST_ENABLED)
     if (!WinToast::instance()->isInitialized()) return;
 
     if (auto api = api_proxy.lock())
