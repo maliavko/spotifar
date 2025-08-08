@@ -41,7 +41,13 @@ jobs:
           CARGO_TERM_COLOR: always
         run: cargo build --release --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
 
-  build-binaries:
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: librespot-bin
+          path: ${{ github.workspace }}/thirdparty/librespot/target/xRelease/librespot.exe
+
+  build-spotifar:
     runs-on: windows-latest
     needs: build-librespot
     #continue-on-error: true
@@ -75,14 +81,6 @@ jobs:
         uses: TAServers/vcpkg-cache@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      # - uses: dtolnay/rust-toolchain@stable
-
-      - name: Restore cargo cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
-          shared-key: "librespot"
 
       - name: Installing Msys2 for CLANG64
         uses: msys2/setup-msys2@v2
@@ -119,9 +117,14 @@ jobs:
       - name: Build spotifar
         run: cmake --build --preset ${{ matrix.platform }}-Release --target install
 
+      - name: Download librespot
+        uses: actions/download-artifact@v5
+        with:
+          name: librespot-bin
+          path: /install/${{ matrix.platform }}
+
       - name: Pack spotifar
         uses: actions/upload-artifact@v4
         with:
           name: spotifar-plugin-${{ matrix.platform }}-release
-          path: |
-              /install/${{ matrix.platform }}
+          path: /install/${{ matrix.platform }}
