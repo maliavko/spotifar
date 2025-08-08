@@ -76,8 +76,8 @@ target_link_libraries(${PROJECT_NAME}
         rapidjson
 )
 
-# the library is not available on MinGW platform
-if(NOT MINGW)
+# the library compiles only for MSVC
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     find_package(unofficial-wintoast CONFIG REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         unofficial::wintoast::wintoast
