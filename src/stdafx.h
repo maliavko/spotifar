@@ -62,7 +62,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 #   include "wintoastlib.h" // win toast notifications library
 #endif
 
