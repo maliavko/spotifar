@@ -91,7 +91,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     )
 endif()
 
-
 # POST BUILD
 #-----------------------------------------------------------------------------------------
 if(CARGO_BUILD_TYPE STREQUAL "Debug" OR CARGO_BUILD_TYPE STREQUAL "RelWithDebInfo")
@@ -137,7 +136,7 @@ install(
     OPTIONAL)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/mingw64/bin")
+    set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/mingw64/bin", "C:/mingw64/bin", "/mingw64/bin")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(RUNTIME_DEPENDENCY_DIRECTORIES "C:/msys64/clang64/bin")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
