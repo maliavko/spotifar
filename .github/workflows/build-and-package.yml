@@ -43,6 +43,7 @@ jobs:
 
   build-binaries:
     runs-on: windows-latest
+    needs: build-librespot
     #continue-on-error: true
 
     strategy:
