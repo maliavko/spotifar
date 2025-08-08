@@ -85,6 +85,7 @@ target_link_libraries(${PROJECT_NAME}
 # the library compiles only for MSVC
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     find_package(unofficial-wintoast CONFIG REQUIRED)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE WIN_TOAST_ENABLED)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         unofficial::wintoast::wintoast
     )
