@@ -2,7 +2,7 @@ name: build-and-package
 
 on:
   push:
-    branches: [mingw]
+    branches: [main]
 
 jobs:
   build-librespot:
