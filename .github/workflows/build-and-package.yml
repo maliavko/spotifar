@@ -7,7 +7,7 @@ on:
 jobs:
   build-binaries:
     runs-on: windows-latest
-    continue-on-error: true
+    #continue-on-error: true
 
     strategy:
       matrix:
