@@ -5,6 +5,42 @@ on:
     branches: [mingw]
 
 jobs:
+  build-librespot:
+    runs-on: windows-latest
+
+    # https://github.com/marketplace/actions/vcpkg-cache
+    permissions:
+      actions: read
+      contents: read # Usually enabled by default. Needed for checkout
+
+    steps:
+      # activating vcpkg GitHub Actions caching
+      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Checkout code with dependencies
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
+          prefix-key: "v0-rust"
+
+      - name: Build librespot
+        env:
+          CARGO_TERM_COLOR: always
+        run: cargo build --release --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
+
   build-binaries:
     runs-on: windows-latest
     #continue-on-error: true
@@ -39,7 +75,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: dtolnay/rust-toolchain@stable
+      # - uses: dtolnay/rust-toolchain@stable
 
       - name: Restore cargo cache
         uses: Swatinem/rust-cache@v2
@@ -77,7 +113,7 @@ jobs:
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=1 -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
+        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=0 -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
 
       - name: Build spotifar
         run: cmake --build --preset ${{ matrix.platform }}-Release --target install
