@@ -1,0 +1,51 @@
+name: Build Librespot
+on:
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        default: 'xRelease'
+        type: string
+
+jobs:
+  build-librespot:
+    runs-on: windows-latest
+
+    # https://github.com/marketplace/actions/vcpkg-cache
+    permissions:
+      actions: read
+      contents: read # Usually enabled by default. Needed for checkout
+
+    steps:
+      # activating vcpkg GitHub Actions caching
+      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Checkout code with dependencies
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
+          shared-key: "librespot"
+
+      - name: Build librespot
+        env:
+          CARGO_TERM_COLOR: always
+        run: cargo build --profile=${{inputs.profile}} --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: librespot-bin
+          path: ${{ github.workspace }}/thirdparty/librespot/target/xRelease/librespot.exe
