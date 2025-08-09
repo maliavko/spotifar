@@ -14,7 +14,6 @@ jobs:
     permissions:
       actions: read
       contents: read
-    needs: build-librespot
     with:
       build_librespot: false
       caching: true
