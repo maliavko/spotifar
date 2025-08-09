@@ -10,6 +10,7 @@ jobs:
     uses: ./.github/workflows/build-librespot.yml
     permissions:
       actions: read
+      contents: read
     with:
       profile: 'xRelease'
     secrets: inherit
@@ -18,6 +19,7 @@ jobs:
     uses: ./.github/workflows/build-library.yml
     permissions:
       actions: read
+      contents: read
     needs: build-librespot
     with:
       build_librespot: false
