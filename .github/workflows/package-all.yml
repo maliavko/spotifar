@@ -1,0 +1,20 @@
+name: build-and-package
+
+on:
+  push:
+    branches: [mingw]
+
+
+jobs:
+  build-librespot:
+    uses: ./.github/workflows/build-librespot.yml
+    with:
+      profile: 'xRelease'
+    secrets: inherit
+
+  build-spotifar:
+    uses: ./.github/workflows/build-library.yml
+    needs: build-librespot
+    with:
+      build_librespot: false
+    secrets: inherit

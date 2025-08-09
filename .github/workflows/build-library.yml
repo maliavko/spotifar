@@ -1,60 +1,23 @@
-name: build-and-package
-
+name: Build Library
 on:
-  push:
-    branches: [main]
+  workflow_call:
+    inputs:
+      build_librespot:
+        required: false
+        default: false
+        type: boolean
+      platforms:
+        required: false
+        default: '["vs17-x64", "vs17-x86", "clang-x64", "gcc-x64"]'
+        type: string
 
 jobs:
-  build-librespot:
-    runs-on: windows-latest
-
-    # https://github.com/marketplace/actions/vcpkg-cache
-    permissions:
-      actions: read
-      contents: read # Usually enabled by default. Needed for checkout
-
-    steps:
-      # activating vcpkg GitHub Actions caching
-      # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
-      - name: Checkout code with dependencies
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Restore cargo cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: "${{ github.workspace }}/thirdparty/librespot/ -> ${{ github.workspace }}/thirdparty/librespot/target"
-          shared-key: "librespot"
-
-      - name: Build librespot
-        env:
-          CARGO_TERM_COLOR: always
-        run: cargo build --profile=xRelease --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: librespot-bin
-          path: ${{ github.workspace }}/thirdparty/librespot/target/xRelease/librespot.exe
-
   build-spotifar:
     runs-on: windows-latest
-    needs: build-librespot
-    #continue-on-error: true
 
     strategy:
       matrix:
-        platform: [vs17-x64, vs17-x86, clang-x64, gcc-x64]
+        platform: ${{ fromJSON(inputs.platforms) }}
 
     # https://github.com/marketplace/actions/vcpkg-cache
     permissions:
@@ -112,7 +75,7 @@ jobs:
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=0 -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
+        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
 
       - name: Build spotifar
         run: cmake --build --preset ${{ matrix.platform }}-Release --target install
@@ -126,5 +89,5 @@ jobs:
       - name: Pack spotifar
         uses: actions/upload-artifact@v4
         with:
-          name: spotifar-plugin-${{ matrix.platform }}-release
+          name: spotifar-plugin-${{ matrix.platform }}
           path: /install/${{ matrix.platform }}
