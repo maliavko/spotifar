@@ -671,7 +671,7 @@ protected:
 
         // calculating the amount of pages
         size_t start = 1ULL, end = total / max_limit;
-        if (total - end * max_limit > 0) // if there are some entries left, adding extra page on top
+        if (total > end * max_limit) // if there are some entries left, adding extra page on top
             end += 1;
 
         if (pages_to_request > 0)

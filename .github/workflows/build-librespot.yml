@@ -20,6 +20,9 @@ env:
 jobs:
   build-librespot:
     runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
 
     steps:
       # activating vcpkg GitHub Actions caching
