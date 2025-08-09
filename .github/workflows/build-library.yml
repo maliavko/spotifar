@@ -15,6 +15,10 @@ on:
         required: false
         default: true
         type: boolean
+      build_type:
+        required: false
+        default: 'Release'
+        type: string
       upload_artifacts:
         required: false
         default: true
@@ -101,7 +105,7 @@ jobs:
         run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
 
       - name: Build spotifar
-        run: cmake --build --preset ${{ matrix.platform }}-Release --target install --parallel $(nproc)
+        run: cmake --build --preset ${{ matrix.platform }}-${{ inputs.build_type }} --target install --parallel $(nproc)
 
       - name: ccache statistics
         if: inputs.caching
