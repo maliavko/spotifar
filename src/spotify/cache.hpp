@@ -65,13 +65,21 @@ public:
 protected:
     virtual void read_from_storage(settings_ctx &ctx, const wstring &key, time_point &data)
     {
-        auto storage_timestamp = ctx.get_int64(key, 0LL);
-        data = time_point{ clock_t::duration(storage_timestamp) };
+        data = time_point{ std::chrono::milliseconds{ ctx.get_int64(key, 0LL) } };
+
+        // if the timestamp is bigger than a month starting from now, the data is invalid - skip
+        if (data > clock_t::now() + std::chrono::months{1})
+        {
+            log::api->warn("The stored cache timestamp looks invalid, skipping: {}, {}",
+                utils::to_string(key), data.time_since_epoch().count());
+            data = clock_t::time_point{};
+        }
     }
 
-    virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const time_point &data)
+    virtual void write_to_storage(settings_ctx &ctx, const wstring &key, const time_point &tp)
     {
-        ctx.set_int64(key, data.time_since_epoch().count());
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch());
+        ctx.set_int64(key, duration.count());
     }
 };
 
