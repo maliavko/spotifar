@@ -32,7 +32,9 @@ jobs:
           submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
-      - uses: mozilla-actions/sccache-action@v0.0.7
+      
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Restore cargo cache
         uses: Swatinem/rust-cache@v2
@@ -44,10 +46,10 @@ jobs:
         env:
           SCCACHE_GHA_ENABLED: "true"
           RUSTC_WRAPPER: "sccache"
-        run: cargo build --profile=${{inputs.profile}} --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
+        run: cargo build --profile=${{inputs.profile}} --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: librespot-bin
-          path: ${{ github.workspace }}/thirdparty/librespot/target/xRelease/librespot.exe
+          path: ${{ github.workspace }}/thirdparty/librespot/target/${{inputs.profile}}/librespot.exe
