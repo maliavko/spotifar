@@ -50,9 +50,11 @@
 #   include <fmt/chrono.h>
 #   include <fmt/xchar.h>
 #endif
-    
+
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcpp"
 #include "httplib.h" // IWYU pragma: keep; single-threaded http client/server library
+#pragma GCC diagnostic pop
 #include "spdlog/spdlog.h" // IWYU pragma: keep; logging library
 #include "BS_thread_pool.hpp" // IWYU pragma: keep; thread pool library
 #include "ObserverManager.h" // IWYU pragma: keep; event bus library
