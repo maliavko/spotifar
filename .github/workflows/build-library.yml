@@ -27,15 +27,12 @@ on:
 jobs:
   build-spotifar:
     runs-on: windows-latest
-
+    permissions:
+      actions: read
+      contents: read
     strategy:
       matrix:
         platform: ${{ fromJSON(inputs.platforms) }}
-
-    # https://github.com/marketplace/actions/vcpkg-cache
-    permissions:
-      actions: read
-      contents: read # Usually enabled by default. Needed for checkout
 
     steps:
       # activating vcpkg GitHub Actions caching
