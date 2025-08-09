@@ -1,4 +1,5 @@
 name: Build Librespot
+
 on:
   workflow_call:
     inputs:
@@ -6,6 +7,10 @@ on:
         required: true
         default: 'xRelease'
         type: string
+      caching:
+        required: false
+        default: true
+        type: boolean
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,9 +37,16 @@ jobs:
           submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Run sccache-cache
+        if: inputs.caching
         uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Set Rust caching env vars only on non-release runs
+        if: inputs.caching
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
 
       - name: Restore cargo cache
         uses: Swatinem/rust-cache@v2
@@ -43,9 +55,6 @@ jobs:
           shared-key: "librespot"
 
       - name: Build librespot
-        env:
-          SCCACHE_GHA_ENABLED: "true"
-          RUSTC_WRAPPER: "sccache"
         run: cargo build --profile=${{inputs.profile}} --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml
 
       - name: Upload artifact
