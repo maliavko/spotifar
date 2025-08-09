@@ -7,6 +7,11 @@ on:
         default: 'xRelease'
         type: string
 
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+
 jobs:
   build-librespot:
     runs-on: windows-latest
@@ -27,6 +32,7 @@ jobs:
           submodules: true
 
       - uses: dtolnay/rust-toolchain@stable
+      - uses: mozilla-actions/sccache-action@v0.0.7
 
       - name: Restore cargo cache
         uses: Swatinem/rust-cache@v2
@@ -36,7 +42,8 @@ jobs:
 
       - name: Build librespot
         env:
-          CARGO_TERM_COLOR: always
+          SCCACHE_GHA_ENABLED: "true"
+          RUSTC_WRAPPER: "sccache"
         run: cargo build --profile=${{inputs.profile}} --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml/
 
       - name: Upload artifact
