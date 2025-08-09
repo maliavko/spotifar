@@ -1,0 +1,22 @@
+name: build-and-package
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches-ignore:
+      - main
+
+jobs:
+  build-spotifar:
+    uses: ./.github/workflows/build-library.yml
+    permissions:
+      actions: read
+      contents: read
+    needs: build-librespot
+    with:
+      build_librespot: false
+      caching: true
+      upload_artifacts: false
+    secrets: inherit

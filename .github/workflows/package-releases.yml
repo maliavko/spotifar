@@ -2,8 +2,7 @@ name: build-and-package
 
 on:
   push:
-    branches: [mingw]
-
+    branches: [main]
 
 jobs:
   build-librespot:
@@ -13,6 +12,7 @@ jobs:
       contents: read
     with:
       profile: 'xRelease'
+      caching: false # no caching used for master releases
     secrets: inherit
 
   build-spotifar:
@@ -23,4 +23,5 @@ jobs:
     needs: build-librespot
     with:
       build_librespot: false
+      caching: false # no caching used for master releases
     secrets: inherit
