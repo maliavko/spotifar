@@ -71,14 +71,29 @@ jobs:
         with:
           cmake-version: '3.31.8'
 
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ runner.os }}
+
+      - name: Cache build directory
+        uses: actions/cache@v4
+        with:
+          path: build/
+          key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: ${{ runner.os }}-cmake-
+
       - name: Configure spotifar
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
+        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }} --parallel $(nproc)
 
       - name: Build spotifar
-        run: cmake --build --preset ${{ matrix.platform }}-Release --target install
+        run: cmake --build --preset ${{ matrix.platform }}-Release --target install --parallel $(nproc)
+
+      - name: ccache statistics
+        run: ccache -s
 
       - name: Download librespot
         uses: actions/download-artifact@v5

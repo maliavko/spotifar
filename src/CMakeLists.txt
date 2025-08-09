@@ -111,7 +111,10 @@ if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
     message(STATUS "Cargo executable is found, Librespot building process is configured")
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CARGO_EXECUTABLE} build --profile=${CARGO_BUILD_TYPE} --manifest-path=${PROJECT_SOURCE_DIR}\\thirdparty\\librespot\\Cargo.toml
+        COMMAND ${CMAKE_COMMAND} -E env 
+            CARGO_INCREMENTAL=0
+            CARGO_PROFILE_TEST_DEBUG=0
+            ${CARGO_EXECUTABLE} build --profile=${CARGO_BUILD_TYPE} --manifest-path=${PROJECT_SOURCE_DIR}\\thirdparty\\librespot\\Cargo.toml
         VERBATIM
         USES_TERMINAL
     )
