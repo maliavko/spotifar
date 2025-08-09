@@ -16,11 +16,12 @@
         "${sourceDir}/thirdparty/FarManager/far/Release.64.clang/Plugins/Spotifar",
         "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
       ],
+      "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
-        "BUILD_LIBRESPOT": "0"
+        "BUILD_LIBRESPOT": "1"
       }
     },
     {
@@ -90,7 +91,7 @@
       "name": "vs17-x64-Debug",
       "displayName": "Visual Studio 17 x64 Debug",
       "configurePreset": "vs17-x64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "vs17-x64-Release",
@@ -102,7 +103,7 @@
       "name": "vs17-x86-Debug",
       "displayName": "Visual Studio 17 x86 Debug",
       "configurePreset": "vs17-x86",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "vs17-x86-Release",
@@ -114,7 +115,7 @@
       "name": "clang-x64-Debug",
       "displayName": "MinGW Clang x64 Debug",
       "configurePreset": "clang-x64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "clang-x64-Release",
