@@ -1,4 +1,5 @@
 name: Build Library
+
 on:
   workflow_call:
     inputs:
@@ -10,6 +11,14 @@ on:
         required: false
         default: '["vs17-x64", "vs17-x86", "clang-x64", "gcc-x64"]'
         type: string
+      caching:
+        required: false
+        default: true
+        type: boolean
+      upload_artifacts:
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   build-spotifar:
@@ -72,11 +81,13 @@ jobs:
           cmake-version: '3.31.8'
 
       - name: Setup ccache
+        if: inputs.caching
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}-${{ runner.os }}
 
       - name: Cache build directory
+        if: inputs.caching
         uses: actions/cache@v4
         with:
           path: build/
@@ -93,15 +104,18 @@ jobs:
         run: cmake --build --preset ${{ matrix.platform }}-Release --target install --parallel $(nproc)
 
       - name: ccache statistics
+        if: inputs.caching
         run: ccache -s
 
       - name: Download librespot
+        if: inputs.upload_artifacts
         uses: actions/download-artifact@v5
         with:
           name: librespot-bin
           path: /install/${{ matrix.platform }}
 
       - name: Pack spotifar
+        if: inputs.upload_artifacts
         uses: actions/upload-artifact@v4
         with:
           name: spotifar-plugin-${{ matrix.platform }}
