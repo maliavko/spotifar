@@ -98,8 +98,8 @@ void recent_releases::queue_artists(const item_ids_t &ids)
                 for (const auto &album: *albums)
                     if (album.get_release_date() > time_treshold)
                     {
-                        log::api->info("A new release was found for the artist '{}' - {}",
-                            artist_id, album.id);
+                        log::api->info("A new release was found for the artist '{} [{}]' - {} [{}]",
+                            utils::to_string(album.get_artist().name), artist_id, utils::to_string(album.name), album.id);
                         
                         interim_data.insert(album);
                     }
