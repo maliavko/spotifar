@@ -11,11 +11,6 @@ jobs:
   build-librespot:
     runs-on: windows-latest
 
-    # https://github.com/marketplace/actions/vcpkg-cache
-    permissions:
-      actions: read
-      contents: read # Usually enabled by default. Needed for checkout
-
     steps:
       # activating vcpkg GitHub Actions caching
       # https://learn.microsoft.com/en-us/vcpkg/consume/binary-caching-github-actions-cache

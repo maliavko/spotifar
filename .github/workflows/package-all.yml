@@ -8,12 +8,16 @@ on:
 jobs:
   build-librespot:
     uses: ./.github/workflows/build-librespot.yml
+    permissions:
+      actions: read
     with:
       profile: 'xRelease'
     secrets: inherit
 
   build-spotifar:
     uses: ./.github/workflows/build-library.yml
+    permissions:
+      actions: read
     needs: build-librespot
     with:
       build_librespot: false
