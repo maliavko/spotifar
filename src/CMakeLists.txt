@@ -46,7 +46,7 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 target_include_directories(${PROJECT_NAME}
-    PRIVATE
+    PUBLIC
         ${PROJECT_BINARY_DIR}  # required for being able to include CMake generated version file
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/thirdparty/ObserverManager/ObserverManager
@@ -63,12 +63,12 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC stdafx.h)
 find_package(httplib CONFIG REQUIRED)
 
 find_package(RapidJSON CONFIG REQUIRED)
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     RAPIDJSON_HAS_STDSTRING=1
 )
 
 find_package(spdlog CONFIG REQUIRED)
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     FMT_HEADER_ONLY
     SPDLOG_WCHAR_FILENAMES
 )
@@ -76,7 +76,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE
+    PUBLIC
         httplib::httplib
         spdlog::spdlog_header_only
         rapidjson
@@ -85,8 +85,8 @@ target_link_libraries(${PROJECT_NAME}
 # the library compiles only for MSVC
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     find_package(unofficial-wintoast CONFIG REQUIRED)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE WIN_TOAST_ENABLED)
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_compile_definitions(${PROJECT_NAME} PUBLIC WIN_TOAST_ENABLED)
+    target_link_libraries(${PROJECT_NAME} PUBLIC
         unofficial::wintoast::wintoast
     )
 endif()
@@ -94,32 +94,35 @@ endif()
 
 # POST BUILD
 #-----------------------------------------------------------------------------------------
-if(CARGO_BUILD_TYPE STREQUAL "Debug" OR CARGO_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    set(CARGO_BUILD_TYPE "xDebug")
-else()
-    set(CARGO_BUILD_TYPE "xRelease")
-endif()
-
 set(OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX})
+
+set(LIBRESPOT_BUILT_TYPE $<IF:$<CONFIG:Release>,xRelease,xDebug>)
+set(LIBRESPOT_MANIFEST ${PROJECT_SOURCE_DIR}/thirdparty/librespot/Cargo.toml)
+set(LIBRESPOT_LOCK ${PROJECT_SOURCE_DIR}/thirdparty/librespot/Cargo.lock)
+set(LIBRESPOT_TARGET_DIR ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target)
 set(LIBRESPOT_TARGET
-    ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${CARGO_BUILD_TYPE}/librespot.exe
+    ${PROJECT_SOURCE_DIR}/thirdparty/librespot/target/${LIBRESPOT_BUILT_TYPE}/librespot.exe
     OPTIONAL)
 
-find_program(CARGO_EXECUTABLE cargo)
-if (CARGO_EXECUTABLE AND ${BUILD_LIBRESPOT})
+set(LIBRESPOT_INPUTS ${LIBRESPOT_MANIFEST})
+if(EXISTS ${LIBRESPOT_LOCK})
+    list(APPEND LIBRESPOT_INPUTS ${LIBRESPOT_LOCK})
+endif()
 
-    message(STATUS "Cargo executable is found, Librespot building process is configured")
+option(BUILD_LIBRESPOT "Build librespot via Cargo" ON)
+find_program(CARGO_EXECUTABLE cargo)
+if (CARGO_EXECUTABLE AND BUILD_LIBRESPOT)
     add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E env 
             CARGO_INCREMENTAL=0
             CARGO_PROFILE_TEST_DEBUG=0
-            ${CARGO_EXECUTABLE} build --profile=${CARGO_BUILD_TYPE} --manifest-path=${PROJECT_SOURCE_DIR}\\thirdparty\\librespot\\Cargo.toml
+            ${CARGO_EXECUTABLE} build --profile=${LIBRESPOT_BUILT_TYPE} --manifest-path=${LIBRESPOT_MANIFEST}
+        DEPENDS ${LIBRESPOT_INPUTS}
         VERBATIM
         USES_TERMINAL
+        COMMENT "Building librespot with Cargo for $<CONFIG>"
     )
-else()
-    message(NOTICE "No cargo command is found or disabled, Libresepot building is skipped")
 endif()
 
 

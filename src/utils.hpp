@@ -8,7 +8,7 @@
 namespace spotifar { namespace utils {
 
 /// @brief Converts utf8 encoded string into wide-char one
-wstring utf8_decode(const string &s);
+TEST_API wstring utf8_decode(const string &s);
 
 /// @brief Converts wide-char string into utf8 encoded string
 string utf8_encode(const wstring &ws);
@@ -25,7 +25,7 @@ string to_string(const wstring &ws);
 
 /// @brief Replaces impossible filename chars from the given string
 /// with the underscore
-wstring strip_invalid_filename_chars(const wstring &filename);
+TEST_API wstring strip_invalid_filename_chars(const wstring &filename);
 
 /// @brief Returns the message of GetLastError function
 string get_last_system_error();
