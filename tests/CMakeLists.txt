@@ -23,7 +23,7 @@ target_link_libraries(spotifar_tests
 
 include(GoogleTest)
 
-# copugin Spotifar libraries to the tests folder
+# copying Spotifar libraries to the tests folder
 add_custom_command(
     TARGET spotifar_tests POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E
