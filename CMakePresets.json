@@ -1,139 +1,175 @@
 {
-  "version": 10,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 31,
-    "patch": 0
-  },
-  "configurePresets": [
-    {
-      "name": "default",
-      "hidden": true,
-      "$comment": [
-        "the following paths are used for plugin installation into built Far Manager instances:",
-        "Clang or MSBuild respectively; use it as the value for the 'installDir' attribute",
-        "",
-        "${sourceDir}/thirdparty/FarManager/far/Release.64.clang/Plugins/Spotifar",
-        "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
-      ],
-      "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
-      "cacheVariables": {
-        "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
-        "BUILD_LIBRESPOT": "1"
-      }
+    "version": 10,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 31,
+        "patch": 0
     },
-    {
-      "name": "vs17-base",
-      "inherits": "default",
-      "hidden": true,
-      "generator": "Visual Studio 17 2022"
-    },
-    {
-      "name": "clang-base",
-      "inherits": "default",
-      "hidden": true,
-      "generator": "Ninja Multi-Config",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
-    },
-    {
-      "name": "gcc-base",
-      "inherits": "default",
-      "hidden": true,
-      "generator": "Ninja Multi-Config",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "g++"
-      }
-    },
-    {
-      "name": "vs17-x64",
-      "inherits": "vs17-base",
-      "displayName": "Visual Studio 17 x64",
-      "architecture": "x64"
-    },
-    {
-      "name": "vs17-x86",
-      "inherits": "vs17-base",
-      "displayName": "Visual Studio 17 x86",
-      "architecture": "Win32"
-    },
-    {
-      "name": "clang-x64",
-      "inherits": "clang-base",
-      "displayName": "MinGW Clang x64",
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
-        "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
-      },
-      "environment": {
-        "PATH": "C:/msys64/clang64/bin;$penv{PATH}"
-      }
-    },
-    {
-      "name": "gcc-x64",
-      "inherits": "gcc-base",
-      "displayName": "MinGW GCC x64",
-      "cacheVariables": {
-        "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
-        "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
-      },
-      "environment": {
-        "PATH": "C:/msys64/mingw64/bin;$penv{PATH}"
-      }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "vs17-x64-Debug",
-      "displayName": "Visual Studio 17 x64 Debug",
-      "configurePreset": "vs17-x64",
-      "configuration": "Debug"
-    },
-    {
-      "name": "vs17-x64-Release",
-      "displayName": "Visual Studio 17 x64 Release",
-      "configurePreset": "vs17-x64",
-      "configuration": "Release"
-    },
-    {
-      "name": "vs17-x86-Debug",
-      "displayName": "Visual Studio 17 x86 Debug",
-      "configurePreset": "vs17-x86",
-      "configuration": "Debug"
-    },
-    {
-      "name": "vs17-x86-Release",
-      "displayName": "Visual Studio 17 x86 Release",
-      "configurePreset": "vs17-x86",
-      "configuration": "Release"
-    },
-    {
-      "name": "clang-x64-Debug",
-      "displayName": "MinGW Clang x64 Debug",
-      "configurePreset": "clang-x64",
-      "configuration": "Debug"
-    },
-    {
-      "name": "clang-x64-Release",
-      "displayName": "MinGW Clang x64 Release",
-      "configurePreset": "clang-x64",
-      "configuration": "Release"
-    },
-    {
-      "name": "gcc-x64-Debug",
-      "displayName": "MinGW GCC x64 Debug",
-      "configurePreset": "gcc-x64",
-      "configuration": "RelWithDebInfo"
-    },
-    {
-      "name": "gcc-x64-Release",
-      "displayName": "MinGW GCC x64 Release",
-      "configurePreset": "gcc-x64",
-      "configuration": "Release"
-    }
-  ]
+    "configurePresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "$comment": [
+                "the following paths are used for plugin installation into built Far Manager instances:",
+                "Clang or MSBuild respectively; use it as the value for the 'installDir' attribute",
+                "",
+                "${sourceDir}/thirdparty/FarManager/far/Release.64.clang/Plugins/Spotifar",
+                "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
+            ],
+            "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "cacheVariables": {
+                "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
+                "BUILD_LIBRESPOT": "1",
+                "TESTING": "1"
+            }
+        },
+        {
+            "name": "vs17-base",
+            "inherits": "default",
+            "hidden": true,
+            "generator": "Visual Studio 17 2022"
+        },
+        {
+            "name": "clang-base",
+            "inherits": "default",
+            "hidden": true,
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "gcc-base",
+            "inherits": "default",
+            "hidden": true,
+            "generator": "Ninja Multi-Config",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "vs17-x64",
+            "inherits": "vs17-base",
+            "displayName": "Visual Studio 17 x64",
+            "architecture": "x64"
+        },
+        {
+            "name": "vs17-x86",
+            "inherits": "vs17-base",
+            "displayName": "Visual Studio 17 x86",
+            "architecture": "Win32"
+        },
+        {
+            "name": "clang-x64",
+            "inherits": "clang-base",
+            "displayName": "MinGW Clang x64",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+                "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
+            },
+            "environment": {
+                "PATH": "C:/msys64/clang64/bin;$penv{PATH}"
+            }
+        },
+        {
+            "name": "gcc-x64",
+            "inherits": "gcc-base",
+            "displayName": "MinGW GCC x64",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-dynamic",
+                "VCPKG_HOST_TRIPLET": "x64-mingw-dynamic"
+            },
+            "environment": {
+                "PATH": "C:/msys64/mingw64/bin;$penv{PATH}"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "vs17-x64-Debug",
+            "displayName": "Visual Studio 17 x64 Debug",
+            "configurePreset": "vs17-x64",
+            "configuration": "Debug"
+        },
+        {
+            "name": "vs17-x64-Release",
+            "displayName": "Visual Studio 17 x64 Release",
+            "configurePreset": "vs17-x64",
+            "configuration": "Release"
+        },
+        {
+            "name": "vs17-x86-Debug",
+            "displayName": "Visual Studio 17 x86 Debug",
+            "configurePreset": "vs17-x86",
+            "configuration": "Debug"
+        },
+        {
+            "name": "vs17-x86-Release",
+            "displayName": "Visual Studio 17 x86 Release",
+            "configurePreset": "vs17-x86",
+            "configuration": "Release"
+        },
+        {
+            "name": "clang-x64-Debug",
+            "displayName": "MinGW Clang x64 Debug",
+            "configurePreset": "clang-x64",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-x64-Release",
+            "displayName": "MinGW Clang x64 Release",
+            "configurePreset": "clang-x64",
+            "configuration": "Release"
+        },
+        {
+            "name": "gcc-x64-Debug",
+            "displayName": "MinGW GCC x64 Debug",
+            "configurePreset": "gcc-x64",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "gcc-x64-Release",
+            "displayName": "MinGW GCC x64 Release",
+            "configurePreset": "gcc-x64",
+            "configuration": "Release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "tests-base",
+            "hidden": true,
+            "output": { "outputOnFailure": true },
+            "execution": {
+              "noTestsAction": "error",
+              "stopOnFailure": false
+            }
+        },
+        {
+            "name": "vs17-x64",
+            "displayName": "Visual Studio 17 x64",
+            "inherits": "tests-base",
+            "configurePreset": "vs17-x64"
+        },
+        {
+            "name": "vs17-x86",
+            "displayName": "Visual Studio 17 x86",
+            "inherits": "tests-base",
+            "configurePreset": "vs17-x86"
+        },
+        {
+            "name": "gcc-x64",
+            "displayName": "MinGW GCC x64",
+            "inherits": "tests-base",
+            "configurePreset": "gcc-x64"
+        },
+        {
+            "name": "clang-x64",
+            "displayName": "MinGW Clang x64",
+            "inherits": "tests-base",
+            "configurePreset": "clang-x64"
+        }
+    ]
 }
