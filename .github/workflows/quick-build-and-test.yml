@@ -17,6 +17,7 @@ jobs:
     with:
       build_type: 'Debug'
       build_librespot: false
+      testing: true
       caching: true
       upload_artifacts: false
     secrets: inherit

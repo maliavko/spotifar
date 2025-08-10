@@ -24,5 +24,6 @@ jobs:
     with:
       build_type: 'Release'
       build_librespot: false
+      testing: false
       caching: false # no caching used for master releases
     secrets: inherit

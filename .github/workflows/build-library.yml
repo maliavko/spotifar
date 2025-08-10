@@ -23,6 +23,10 @@ on:
         required: false
         default: true
         type: boolean
+      testing:
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-spotifar:
@@ -95,19 +99,22 @@ jobs:
           key: ${{ runner.os }}-cmake-${{ hashFiles('**/CMakeLists.txt') }}
           restore-keys: ${{ runner.os }}-cmake-
 
+      # configuring and building
       - name: Configure spotifar
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }}
+        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }} -DTESTING=${{ inputs.testing }}
 
       - name: Build spotifar
         run: cmake --build --preset ${{ matrix.platform }}-${{ inputs.build_type }} --target install --parallel $(nproc)
 
-      - name: ccache statistics
-        if: inputs.caching
-        run: ccache -s
+      # testing
+      - name: Run tests
+        if: inputs.testing
+        run: ctest --preset ${{ matrix.platform }}
 
+      # packaging
       - name: Download librespot
         if: inputs.upload_artifacts
         uses: actions/download-artifact@v5
@@ -121,3 +128,8 @@ jobs:
         with:
           name: spotifar-plugin-${{ matrix.platform }}
           path: /install/${{ matrix.platform }}
+      
+      # reporting
+      - name: ccache statistics
+        if: inputs.caching
+        run: ccache -s
