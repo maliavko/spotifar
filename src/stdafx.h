@@ -25,7 +25,6 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 
-//#include <windows.h> // win api support
 #include <fstream> // IWYU pragma: keep
 #include <map> // IWYU pragma: keep
 #include <vector>
