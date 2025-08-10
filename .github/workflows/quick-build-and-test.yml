@@ -1,10 +1,8 @@
 name: Quick build & test
 
 on:
-  push:
-    branches: [dev]
   pull_request:
-    branches: [dev]
+    branches: [dev, main]
 
 jobs:
   build-spotifar:
