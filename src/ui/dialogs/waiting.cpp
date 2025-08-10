@@ -5,7 +5,6 @@
 #include "plugin.h" // IWYU pragma: keep
 #include "spotify/api.hpp" // IWYU pragma: keep
 #include "utils.hpp"
-#include <windows.h>
 
 namespace spotifar { namespace ui {
 
