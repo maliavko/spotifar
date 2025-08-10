@@ -15,17 +15,17 @@
 #   endif
 #endif
 
-#ifndef NOMINMAX
-# define NOMINMAX
-#endif
-
 #include <string>
 // this <generator> header is quite a pain: it hits "winsock include" warning on MinGW
 // builds all the times, plus it works only if you put it with some specific order of headers
 #pragma clang diagnostic ignored "-W#warnings"
 #include <generator>
 
-#include <windows.h> // win api support
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+
+//#include <windows.h> // win api support
 #include <fstream> // IWYU pragma: keep
 #include <map> // IWYU pragma: keep
 #include <vector>
@@ -72,6 +72,12 @@
 
 #include "guid.hpp" // IWYU pragma: keep
 #include "version.hpp" // IWYU pragma: keep
+
+#if defined(TESTING)
+#   define TEST_API __declspec(dllexport)
+#else
+#   define TEST_API
+#endif
 
 namespace spotifar
 {
