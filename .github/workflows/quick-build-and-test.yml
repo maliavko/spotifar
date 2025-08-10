@@ -2,11 +2,9 @@ name: Quick build & test
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches: [dev]
   pull_request:
-    branches-ignore:
-      - main
+    branches: [dev]
 
 jobs:
   build-spotifar:
