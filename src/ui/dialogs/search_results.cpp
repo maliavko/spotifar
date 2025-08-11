@@ -114,7 +114,7 @@ static wstring format_followers(uintmax_t followers)
 
 //-----------------------------------------------------------------------------------------------
 search_results_dialog::search_results_dialog(const spotify::search_requester &r):
-    modal_dialog(&SearchResultsDialogGuid, width, height, dlg_items_layout, L"SearchResultsDialog"),
+    modal_dialog(&guids::SearchResultsDialogGuid, width, height, dlg_items_layout, L"SearchResultsDialog"),
     requester(r)
 {
     rebuild_items();

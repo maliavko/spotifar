@@ -26,7 +26,7 @@ extern "C" void WINAPI GetGlobalInfoW(GlobalInfo *info)
     info->StructSize = sizeof(GlobalInfo);
     info->MinFarVersion = MAKEFARVERSION(3, 0, 0, 4400, VS_RELEASE);
     info->Version = PLUGIN_VERSION;
-    info->Guid = MainGuid;
+    info->Guid = guids::MainGuid;
     info->Title = PLUGIN_NAME;
     info->Description = PLUGIN_DESC;
     info->Author = PLUGIN_AUTHOR;
@@ -42,7 +42,7 @@ extern "C" void WINAPI GetPluginInfoW(PluginInfo *info)
     {
         static const wchar_t *DiskMenuStrings[1];
         DiskMenuStrings[0] = far3::get_text(MPluginUserName);
-        info->DiskMenu.Guids = &MenuGuid;
+        info->DiskMenu.Guids = &guids::MenuGuid;
         info->DiskMenu.Strings = DiskMenuStrings;
         info->DiskMenu.Count = std::size(DiskMenuStrings);
     }
@@ -51,7 +51,7 @@ extern "C" void WINAPI GetPluginInfoW(PluginInfo *info)
     {
         static const wchar_t *PluginMenuStrings[1];
         PluginMenuStrings[0] = far3::get_text(MPluginUserName);
-        info->PluginMenu.Guids = &MenuGuid;
+        info->PluginMenu.Guids = &guids::MenuGuid;
         info->PluginMenu.Strings = PluginMenuStrings;
         info->PluginMenu.Count = std::size(PluginMenuStrings);
     }
@@ -59,7 +59,7 @@ extern "C" void WINAPI GetPluginInfoW(PluginInfo *info)
     // add to plugins configuration menu
     static const wchar_t *PluginCfgStrings[1];
     PluginCfgStrings[0] = far3::get_text(MPluginUserName);
-    info->PluginConfig.Guids = &MenuGuid;
+    info->PluginConfig.Guids = &guids::MenuGuid;
     info->PluginConfig.Strings = PluginCfgStrings;
     info->PluginConfig.Count = std::size(PluginCfgStrings);
 }
@@ -169,7 +169,7 @@ static bool is_plugin_active()
     if (auto plugin = plugin_weak_ptr.lock())
     {
         if (auto pinfo = utils::far3::panels::get_info(PANEL_ACTIVE))
-            return pinfo->OwnerGuid == MainGuid;
+            return pinfo->OwnerGuid == guids::MainGuid;
     }
     return false;
 }

@@ -35,7 +35,7 @@ static intptr_t WINAPI dlg_proc(HANDLE hdlg, intptr_t msg, intptr_t param1, void
 modal_dialog::modal_dialog(const GUID *dlg_guid, int width, int height, const layout_t &layout,
                            const wchar_t *help_topic, FARDIALOGFLAGS flags)
 {
-    hdlg = config::ps_info.DialogInit(&MainGuid, dlg_guid, -1, -1, width, height, help_topic,
+    hdlg = config::ps_info.DialogInit(&guids::MainGuid, dlg_guid, -1, -1, width, height, help_topic,
         &layout[0], layout.size(), 0, flags & ~FDLG_NONMODAL, &dlg_proc, this);
 }
 

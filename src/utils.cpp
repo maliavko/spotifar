@@ -488,7 +488,7 @@ namespace far3
         HANDLE get_handle()
         {
             return (HANDLE)config::ps_info.PluginsControl(
-                INVALID_HANDLE_VALUE, PCTL_FINDPLUGIN, PFM_GUID, (void*)&MainGuid);
+                INVALID_HANDLE_VALUE, PCTL_FINDPLUGIN, PFM_GUID, (void*)&guids::MainGuid);
         }
 
         std::shared_ptr<FarGetPluginInformation> get_info()
@@ -519,34 +519,34 @@ namespace far3
     {
         intptr_t redraw_all()
         {
-            return config::ps_info.AdvControl(&MainGuid, ACTL_REDRAWALL, 0, 0);
+            return config::ps_info.AdvControl(&guids::MainGuid, ACTL_REDRAWALL, 0, 0);
         }
 
         HWND get_far_hwnd()
         {
-            return (HWND)config::ps_info.AdvControl(&MainGuid, ACTL_GETFARHWND, 0, 0);
+            return (HWND)config::ps_info.AdvControl(&guids::MainGuid, ACTL_GETFARHWND, 0, 0);
         }
 
         intptr_t quit(intptr_t exit_code)
         {
-            return config::ps_info.AdvControl(&MainGuid, ACTL_QUIT, exit_code, 0);
+            return config::ps_info.AdvControl(&guids::MainGuid, ACTL_QUIT, exit_code, 0);
         }
 
         intptr_t synchro(void *user_data)
         {
-            return config::ps_info.AdvControl(&MainGuid, ACTL_SYNCHRO, 0, user_data);
+            return config::ps_info.AdvControl(&guids::MainGuid, ACTL_SYNCHRO, 0, user_data);
         }
 
         SMALL_RECT get_far_rect()
         {
             SMALL_RECT rect;
-            config::ps_info.AdvControl(&MainGuid, ACTL_GETFARRECT, 0, &rect);
+            config::ps_info.AdvControl(&guids::MainGuid, ACTL_GETFARRECT, 0, &rect);
             return rect;
         }
         
         size_t get_windows_count()
         {
-            return config::ps_info.AdvControl(&MainGuid, ACTL_GETWINDOWCOUNT, 0, NULL);
+            return config::ps_info.AdvControl(&guids::MainGuid, ACTL_GETWINDOWCOUNT, 0, NULL);
         }
         
         std::shared_ptr<WindowInfo> get_window_info(size_t window_idx)
@@ -569,14 +569,14 @@ namespace far3
             winfo->Name = NULL;
 
             // obtaining the Name and TypeName sizes
-            if (!config::ps_info.AdvControl(&MainGuid, ACTL_GETWINDOWINFO, 0, (void*)winfo.get()))
+            if (!config::ps_info.AdvControl(&guids::MainGuid, ACTL_GETWINDOWINFO, 0, (void*)winfo.get()))
                 return nullptr;
 
             winfo->TypeName = (wchar_t *)calloc(winfo->TypeNameSize, sizeof(wchar_t));
             winfo->Name = (wchar_t *)calloc(winfo->NameSize, sizeof(wchar_t));
 
             // requesting an actual data
-            if (!config::ps_info.AdvControl(&MainGuid, ACTL_GETWINDOWINFO, 0, (void*)winfo.get()))
+            if (!config::ps_info.AdvControl(&guids::MainGuid, ACTL_GETWINDOWINFO, 0, (void*)winfo.get()))
                 return nullptr;
 
             return winfo;
@@ -609,7 +609,7 @@ namespace far3
             msgs.push_back(get_text(extra_button_msg_id));
 
         auto res = config::ps_info.Message(
-            &MainGuid, &FarMessageGuid, FMSG_WARNING, 0, &msgs[0], std::size(msgs), has_extra_btn ? 2 : 1);
+            &guids::MainGuid, &guids::FarMessageGuid, FMSG_WARNING, 0, &msgs[0], std::size(msgs), has_extra_btn ? 2 : 1);
         
         // activate given handler for a custom button
         if (has_extra_btn && res == 1 && extra_btn_handler != nullptr)
@@ -622,7 +622,7 @@ namespace far3
 
     const wchar_t* get_text(int msg_id)
     {
-        return config::ps_info.GetMsg(&MainGuid, msg_id);
+        return config::ps_info.GetMsg(&guids::MainGuid, msg_id);
     }
 
     namespace synchro_tasks
@@ -843,12 +843,7 @@ time_t parse_time(const string &time_str, const string &fmt)
     if (in.fail())
         log::global->warn("Cound not parse time string '{}', format '{}'", time_str, fmt);
 
-    return std::mktime(&timeinfo);
-}
-
-clock_t::time_point get_timestamp(const string &time_str)
-{
-    return utils::clock_t::from_time_t(parse_time(time_str, "%Y-%m-%dT%H:%M:%S"));
+    return _mkgmtime(&timeinfo);
 }
 
 wstring format_localtime(const time_t &time, const wstring &fmt)

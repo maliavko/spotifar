@@ -226,7 +226,7 @@ intptr_t playlists_base_view::process_key_input(int combined_key)
                             wchar_t playlist_name[64];
 
                             if (config::ps_info.InputBox(
-                                &MainGuid, &FarMessageGuid, L"Saving playlist", L"Input the name for the playlist to save",
+                                &guids::MainGuid, &guids::FarMessageGuid, L"Saving playlist", L"Input the name for the playlist to save",
                                 NULL, L"", playlist_name, 64, NULL, 0))
                             {
                                 playlists[pl->id] = utils::utf8_encode(playlist_name);

@@ -158,7 +158,7 @@ void hotkeys_handler::pick_up_any()
             get_text(MTransferPlaybackTitle),
             get_text(MTransferNoAvailableDevices),
         };
-        config::ps_info.Message(&MainGuid, &FarMessageGuid, FMSG_MB_OK, nullptr, msgs, std::size(msgs), 0);
+        config::ps_info.Message(&guids::MainGuid, &guids::FarMessageGuid, FMSG_MB_OK, nullptr, msgs, std::size(msgs), 0);
         return;
     }
 
@@ -174,14 +174,14 @@ void hotkeys_handler::pick_up_any()
 
     // offering user to transfer a playback
     bool should_transfer = config::ps_info.Message(
-        &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+        &guids::MainGuid, &guids::FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
     ) == 0;
 
     if (should_transfer)
     {
         // offering user a choice to pick up some device from the list of available
         auto dev_idx = config::ps_info.Menu(
-            &MainGuid, &FarMessageGuid, -1, -1, 0,
+            &guids::MainGuid, &guids::FarMessageGuid, -1, -1, 0,
             FMENU_AUTOHIGHLIGHT, NULL, NULL, NULL, NULL, NULL,
             &items[0], items.size());
         

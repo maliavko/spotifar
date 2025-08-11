@@ -22,16 +22,17 @@ const string spotify_api_url = "https://api.spotify.com";
 // std::mt19937 gen(rd());                 // Mersenne Twister PRNG seeded with rd
 // std::bernoulli_distribution d(0.85);    // 50% chance for true, 50% for false
 
-// a helper-function to avoid copy-pasting. Performs an execution of a given
-// requester, checks the result and returns it back
-// @tparam R item_requester type
+/// A helper-function to avoid copy-pasting. Performs an execution of a given
+/// requester, checks the result and returns it back
+/// @tparam R item_requester type
 template<class R>
-static auto request_item(R &&requester, api_weak_ptr_t api) -> typename R::result_t
+static auto request_item(R &&requester, api_weak_ptr_t api, std::set<size_t> ignore_errors = {}) -> typename R::result_t
 {
     if (requester.execute(api))
         return requester.get();
     
-    dispatch_event(&api_requests_observer::on_collection_fetching_failed, get_fetching_error(&requester));
+    if (!ignore_errors.contains(requester.get_response()->status))
+        dispatch_event(&api_requests_observer::on_collection_fetching_failed, get_fetching_error(&requester));
 
     return {};
 }
@@ -274,7 +275,7 @@ playlist_t api::get_playlist(const item_id_t &playlist_id)
         utils::format("/v1/playlists/{}", playlist_id), {
             { "additional_types", "track" },
             { "fields", playlist_t::get_fields_filter() },
-        }), get_ptr());
+        }), get_ptr(), { httplib::NotFound_404, });
 }
 
 user_top_tracks_ptr api::get_user_top_tracks()
