@@ -275,7 +275,7 @@ playlist_t api::get_playlist(const item_id_t &playlist_id)
         utils::format("/v1/playlists/{}", playlist_id), {
             { "additional_types", "track" },
             { "fields", playlist_t::get_fields_filter() },
-        }), get_ptr(), { httplib::NotFound_404, });
+        }), get_ptr(), { httplib::NotFound_404 });
 }
 
 user_top_tracks_ptr api::get_user_top_tracks()
