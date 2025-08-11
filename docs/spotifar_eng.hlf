@@ -107,7 +107,7 @@ In practice, for third parties this means #no access# to:
 
 
     #New Releases       # &as access to the fresh releases feature is blocked by the API, Spotifar implements its own. A separate threaded worker, once every 24 hours,
-                        goes through all your followed artists and searches for their most recent releases (two-week timeframe)
+                        goes through all your followed artists and searches for their most recent releases (four-week timeframe)
 
 
     #User top items     # &your top artists and tracks over the past six months
@@ -338,7 +338,7 @@ $ #Search dialog#
 
     #Year#                                      &filters search results by the given year
 
-    #Fresh release#                             &past two weeks releases
+    #Fresh release#                             &past four weeks releases
 
     #Low rating#                                &filters search results by low rating, less than 10%
 
