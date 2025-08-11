@@ -4,6 +4,8 @@ refactor
 
 application ideas
 - backlog, upcoming releases
+    - to add a collection playlist to the saved playlists view
+    - move plugin version and guids to CMake? https://stackoverflow.com/questions/33805311/how-can-i-generate-a-guid-in-cmake
     - to add the config setting to pick the amount of past weeks for fresh releases search
     - close plugin if another librespot device is being detected
     - F8 in player to mark as liked
@@ -27,6 +29,7 @@ application ideas
     - https://github.com/AlienCowEatCake/WinToastLibC library to non-msvc compilers
 
 bugs
+- some not-simple-to-fix: when any API cache storage is synced it saves its next sync time; for some caches the resync interval depends on some conditions, which means, if conditions changed and the resync interval changed as well, the changes will not appy until the next resync
 
 to finish for alpha release
 - add gallery of schreenshots

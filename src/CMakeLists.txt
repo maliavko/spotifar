@@ -1,4 +1,23 @@
 
+# far-specific GUIDs used across the plugin sources
+set(GUID_NAMES
+    MainGuid
+    MenuGuid
+    PlayerDialogGuid
+    FarMessageGuid
+    SortDialogGuid
+    SearchDialogGuid
+    SearchResultsDialogGuid
+    ConfigMenuGuid
+    ConfigGeneralDialogGuid
+    ConfigBackendDialogGuid
+    ConfigHotkeysDialogGuid
+    ConfigCachesDialogGuid
+    SplashDialogGuid
+    FilterDialogGuid
+)
+include(${PROJECT_SOURCE_DIR}/cmake/GenerateGuids.cmake)
+
 # SOURCES
 #-----------------------------------------------------------------------------------------
 add_library(${PROJECT_NAME} SHARED
