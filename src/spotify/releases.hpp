@@ -24,7 +24,7 @@ class recent_releases:
     public recent_releases_interface
 {
 public:
-    inline static const auto release_age = std::chrono::weeks{2};
+    inline static const auto release_age = std::chrono::weeks{4};
 public:
     recent_releases(api_interface *api);
     ~recent_releases();
