@@ -1,9 +1,7 @@
-
-# Fetch GoogleTest at configure time (pin a specific release)
 include(FetchContent)
-# If building with MSVC, align CRT usage to avoid MD/MT mismatches
-# Note: this needs to be in the cache and set before bringing googletest in
+
 set(gtest_force_shared_crt ON CACHE BOOL "Use shared CRT on Windows" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "Disable googletest install" FORCE)
 
 FetchContent_Declare(
   googletest

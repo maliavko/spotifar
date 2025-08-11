@@ -69,7 +69,7 @@
 
 #include <plugin.hpp> // Far api
 
-#include "guid.hpp" // IWYU pragma: keep
+#include "guids.hpp" // IWYU pragma: keep
 #include "version.hpp" // IWYU pragma: keep
 
 #if defined(TESTING)
