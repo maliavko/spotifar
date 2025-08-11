@@ -34,9 +34,6 @@ string get_last_system_error();
 /// https://en.cppreference.com/w/cpp/io/manip/get_time
 auto parse_time(const string &time_str, const string &fmt) -> time_t;
 
-/// @brief Converts a time string of `2025-03-20T21:32:45.384Z` format to a timestamp
-auto get_timestamp(const string &time_str) -> clock_t::time_point;
-
 /// @brief Returns given `time` as a formatteed string 
 auto format_localtime(const time_t &time, const wstring &fmt) -> wstring;
 

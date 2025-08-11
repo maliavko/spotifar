@@ -73,7 +73,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 
 
 search_dialog::search_dialog():
-    modal_dialog(&SearchDialogGuid, width, height, dlg_items_layout, L"SearchDialog")
+    modal_dialog(&guids::SearchDialogGuid, width, height, dlg_items_layout, L"SearchDialog")
 {
 }
 

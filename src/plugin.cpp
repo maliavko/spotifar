@@ -280,7 +280,7 @@ void plugin::on_librespot_discovered(const device_t &dev, const device_t &active
         };
 
         if (config::ps_info.Message(
-            &MainGuid, &FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
+            &guids::MainGuid, &guids::FarMessageGuid, FMSG_MB_OKCANCEL, nullptr, msgs, std::size(msgs), 0
         ) != 0) // "would you like to transfer a playback?" "Ok" button is "0"
             return;
     }

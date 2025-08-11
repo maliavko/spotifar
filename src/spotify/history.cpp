@@ -31,7 +31,7 @@ clock_t::duration play_history::get_sync_interval() const
 {
     // if there is no active history listeners (like views e.g.) we perform
     // a sync only once per two minutes
-    return utils::events::has_observers<play_history_observer>() ? 5s : 2min;
+    return utils::events::has_observers<play_history_observer>() ? 5s : 5s;//2min;
 }
 
 void play_history::on_data_synced(const history_items_t &data, const history_items_t &prev_data)
@@ -47,13 +47,13 @@ bool play_history::request_data(history_items_t &data)
     auto last_sync_time = 0LL;
     if (data.size() > 0)
     {
-        auto duration = utils::get_timestamp(data[0].played_at).time_since_epoch();
-        last_sync_time = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+        auto tp = utils::clock_t::from_time_t(utils::parse_time(data[0].played_at, "%Y-%m-%dT%H:%M:%S"));
+        last_sync_time = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
     }
 
     // we request only the new items after the last request timestamp, then we take
     // the old items list and extend it from the front
-    auto new_items = get_recently_played(last_sync_time);
+    auto new_items = get_recently_played(last_sync_time + 151000); // +15s to avoid any overlappings
     if (new_items->fetch(false, true) && new_items->size() > 0)
         data.insert(data.begin(), new_items->begin(), new_items->end());
 

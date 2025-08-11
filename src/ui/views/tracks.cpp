@@ -678,14 +678,7 @@ std::vector<wstring> recent_tracks_view::get_extra_columns(const track_t& track)
 
     try
     {
-        // parsing datetime string, to be able to reformat it
-
-        // MSVC implementation with std::chrone::parse
-        // std::istringstream in{ played_track.played_at };
-        // utils::clock_t::time_point tp;
-        // in >> parse("%FT%T", tp); // e.g. 2025-06-01T21:57:59.793Z
-        
-        auto time = utils::parse_time(played_track.played_at, "%FT%T");
+        auto time = utils::parse_time(played_track.played_at, "%Y-%m-%dT%H:%M:%S");
         formatted_time = utils::format_localtime(time, L"%d %b, %H:%M");
     }
     catch (const std::runtime_error &ex)

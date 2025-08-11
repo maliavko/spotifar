@@ -315,7 +315,7 @@ void followed_artists_view::show_filters_dialog()
 {
     // unfinished, not for the aplha release
 
-    /*PluginDialogBuilder builder(config::ps_info, MainGuid, FarMessageGuid, L"Test Dialog", NULL);
+    /*PluginDialogBuilder builder(config::ps_info, guids::MainGuid, FarMessageGuid, L"Test Dialog", NULL);
 
     std::unordered_set<string> genres;
 

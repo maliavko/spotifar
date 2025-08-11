@@ -28,8 +28,8 @@ intptr_t show_settings_menu()
     while (1)
     {
         auto opt_idx = config::ps_info.Menu(
-            &MainGuid,
-            &ConfigMenuGuid,
+            &guids::MainGuid,
+            &guids::ConfigMenuGuid,
             -1, -1, 0, // centered, autowidth
             FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
             get_text(MCfgDlgMenuTitle), L"", L"Config", // title, bottom, helptopic
@@ -92,8 +92,8 @@ intptr_t show_sort_dialog(const view_ptr_t v)
         pos_x = info->PanelRect.left + 5; // horizontally alligned to the active panel left
 
     auto sort_idx = config::ps_info.Menu(
-        &MainGuid,
-        &SortDialogGuid,
+        &guids::MainGuid,
+        &guids::SortDialogGuid,
         pos_x, -1, 0, // x, y, max height
         FMENU_AUTOHIGHLIGHT | FMENU_WRAPMODE,
         get_text(MSortDlgTitle), L"", L"SortDialog", // title, bottom, helptopic

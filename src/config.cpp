@@ -171,7 +171,7 @@ void to_json(json::Value &result, const settings::filters_t &f, json::Allocator 
 }
 
 settings_context::settings_context(const wstring &subkey):
-    ps(MainGuid, ps_info.SettingsControl), settings_copy(_settings), subkey_path(subkey)
+    ps(guids::MainGuid, ps_info.SettingsControl), settings_copy(_settings), subkey_path(subkey)
 {
     static std::wregex pattern(L"[^/]+");
 
