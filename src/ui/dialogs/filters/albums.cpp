@@ -42,7 +42,7 @@ static const std::vector<FarDialogItem> dlg_items_layout{
 };
 
 albums_filters_dialog::albums_filters_dialog():
-    modal_dialog(&FilterDialogGuid, width, height, dlg_items_layout, L"AlbumsFiltersDialog")
+    modal_dialog(&guids::FilterDialogGuid, width, height, dlg_items_layout, L"AlbumsFiltersDialog")
 {
 }
 

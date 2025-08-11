@@ -242,7 +242,7 @@ static void clear_credentials()
 }
 
 caches_dialog::caches_dialog():
-    modal_dialog(&ConfigCachesDialogGuid, width, height, dlg_items_layout, L"ConfigCaches")
+    modal_dialog(&guids::ConfigCachesDialogGuid, width, height, dlg_items_layout, L"ConfigCaches")
 {
     utils::events::start_listening<spotify::releases_observer>(this);
 }

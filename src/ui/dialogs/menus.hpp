@@ -54,7 +54,7 @@ void show_simple_waiting(int msg_id, Args&&... args)
     static const wchar_t* msgs[] = { L"", L"", L"", L"" };
     msgs[2] = message.c_str();
 
-    config::ps_info.Message(&MainGuid, &SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
+    config::ps_info.Message(&guids::MainGuid, &guids::SplashDialogGuid, 0, L"", msgs, std::size(msgs), 0);
 }
 
 struct scoped_waiting

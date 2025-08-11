@@ -70,7 +70,7 @@ void waiting::show(const wstring &msg)
 {
     if (hdlg == NULL)
     {
-        hdlg = config::ps_info.DialogInit(&MainGuid, &SplashDialogGuid, -1, -1, width, height, L"",
+        hdlg = config::ps_info.DialogInit(&guids::MainGuid, &guids::SplashDialogGuid, -1, -1, width, height, L"",
             &dlg_items_layout[0], dlg_items_layout.size(), 0, FDLG_NONMODAL, &dlg_proc, NULL);
     }
 
