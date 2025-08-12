@@ -190,8 +190,8 @@ install(
     DESTINATION ${OUTPUT_DIRECTORY}
 )
 
-file(GLOB HELP_FILES "${PROJECT_SOURCE_DIR}/docs/*.hlf")
-file(GLOB LANG_FILES "${PROJECT_SOURCE_DIR}/docs/*.lng")
+file(GLOB HELP_FILES "${PROJECT_SOURCE_DIR}/misc/docs/*.hlf")
+file(GLOB LANG_FILES "${PROJECT_SOURCE_DIR}/misc/docs/*.lng")
 
 # packaging language and help files
 install(
