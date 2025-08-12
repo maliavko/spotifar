@@ -126,7 +126,7 @@ jobs:
         if: inputs.upload_artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: spotifar-plugin-${{ matrix.platform }}
+          name: spotifar-${{ matrix.platform }}
           path: /install/${{ matrix.platform }}
       
       # reporting
