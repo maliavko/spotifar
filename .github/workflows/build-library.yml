@@ -124,15 +124,14 @@ jobs:
 
       - name: Pack spotifar
         run: |
-          mkdir packages
-          powershell Compress-Archive -Path /install/${{ matrix.platform }}/* -DestinationPath /packages/spotifar-${{ matrix.platform }}.zip
+          powershell Compress-Archive -Path /install/${{ matrix.platform }}/* -DestinationPath /install/spotifar-${{ matrix.platform }}.zip
 
       - name: Packaging artifacts
         if: inputs.upload_artifacts
         uses: actions/upload-artifact@v4
         with:
           name: spotifar-${{ matrix.platform }}
-          path: /packages/spotifar-${{ matrix.platform }}.zip
+          path: /install/spotifar-${{ matrix.platform }}.zip
       
       # reporting
       - name: ccache statistics

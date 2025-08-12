@@ -59,9 +59,20 @@ jobs:
 
       - name: Build librespot
         run: cargo build --profile=${{inputs.profile}} --manifest-path=${{ github.workspace }}/thirdparty/librespot/Cargo.toml
-
+      
+      - name: Get librespot version
+        id: get_version
+        run: |
+          $output = & ${{ github.workspace }}/thirdparty/librespot/target/${{inputs.profile}}/librespot.exe -V
+          if ($output -match '^(librespot \S+)') {
+            $label = $Matches[1]
+          } else {
+            $label = 'librespot'
+          }
+          echo "label=$label" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: librespot-bin
+          name: ${{ steps.get_version.outputs.label }}
           path: ${{ github.workspace }}/thirdparty/librespot/target/${{inputs.profile}}/librespot.exe
