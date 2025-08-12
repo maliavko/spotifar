@@ -22,8 +22,42 @@ jobs:
       contents: read
     needs: build-librespot
     with:
+      platforms: '["vs17-x64", "vs17-x86"]'
       build_type: 'Release'
       build_librespot: false
       testing: false
       caching: false # no caching used for master releases
     secrets: inherit
+
+  packaging:
+    needs: build-and-release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version and label
+        id: get_version
+        run: |
+          $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9]+)\.([0-9]+)').Matches[0].Groups
+          $build_number = $version[1].Value
+          $stage = $version[2].Value
+          if ($stage -eq '0') { $label = 'release' }
+          elseif ($stage -eq '1') { $label = 'alpha' }
+          elseif ($stage -eq '2') { $label = 'beta' }
+          elseif ($stage -eq '3') { $label = 'rc' }
+          else { $label = 'dev' }
+          $tag = "v$build_number-$label"
+          echo "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: Spotifar ${{ steps.get_version.outputs.tag }}
+          files: artifacts/**/*.zip
+          generate_release_notes: true
