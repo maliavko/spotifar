@@ -147,10 +147,6 @@ static std::deque<bool> check_saved_items(api_interface *api, const string &endp
     return {};
 }
 
-bool library::is_track_saved(const item_id_t &track_id, bool force_sync)
-{
-    auto accessor = lock_data();
-    auto &tracks = accessor.data.tracks;
 
 //-------------------------------------------------------------------------------------------------------------------
 bool saved_items_cache_t::resync(statuses_container_t &data)
@@ -335,8 +331,9 @@ void artists_items_cache_t::statuses_changed_event(const item_ids_t &ids)
 //-------------------------------------------------------------------------------------------------------------------
 library::library(api_interface *api):
     json_cache(), api_proxy(api),
-    tracks([this] { return std::ref(value.get().tracks); }, std::bind(&library::check_saved_tracks, this, phs::_1)),
-    albums([this] { return std::ref(value.get().albums); }, std::bind(&library::check_saved_albums, this, phs::_1))
+    tracks(api, [this] { return lock_data(); }),
+    albums(api, [this] { return lock_data(); }),
+    artists(api, [this] { return lock_data(); })
 {
 }
 
@@ -367,9 +364,7 @@ bool library::save_tracks(const item_ids_t &ids)
     }
     
     // updating tracks cache with the new saved tracks ids
-    auto accessor = lock_data();
-    for (const auto &id: ids)
-        accessor.data.tracks.insert_or_assign(id, true);
+    tracks.update_saved_items(ids, true);
 
     return true;
 }
@@ -391,11 +386,7 @@ bool library::remove_saved_tracks(const item_ids_t &ids)
     }
     
     // updating tracks cache with the new saved tracks ids
-    auto accessor = lock_data();
-    for (const auto &id: ids)
-        accessor.data.tracks.insert_or_assign(id, false);
-
-    dispatch_event(&collection_observer::on_saved_tracks_changed, ids);
+    tracks.update_saved_items(ids, false);
     
     return true;
 }

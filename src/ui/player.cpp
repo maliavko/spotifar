@@ -532,7 +532,7 @@ bool player::on_artist_label_input_received(void *input_record)
 
 bool player::on_track_label_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
@@ -552,29 +552,9 @@ bool player::on_track_label_input_received(void *input_record)
     return true;
 }
 
-bool player::on_playing_queue_input_received(void *input_record)
-{
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
-    if (ir->EventType == KEY_EVENT)
-        return false;
-
-    if (ir->Event.MouseEvent.dwEventFlags & DOUBLE_CLICK)
-    {
-        auto track_uri = far3::dialogs::get_list_current_item_data<string>(
-            hdlg, controls::queue_list);
-
-        // there is no API to skip several tracks or pick the particular
-        // one in the playing queue
-        // auto &state = api_proxy->get_playback_state();
-        // api_proxy->start_playback(state.context.uri, track_uri);
-    }*/
-
-    return true;
-}
-
 bool player::on_source_label_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
     
@@ -623,16 +603,15 @@ bool player::on_track_bar_input_received(void *input_record)
     if (playback.is_empty())
         return false;
 
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+    const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
     if (ir->EventType == KEY_EVENT)
         return false;
 
-    auto dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
-    
-    auto track_bar_layout = dlg_items_layout[controls::track_bar];
-    auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
-    auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + track_bar_layout.X1);
-    auto progress_percent = (float)click_pos / track_bar_length;
+    const auto &dlg_rect = utils::far3::dialogs::get_dialog_rect(hdlg);
+    const auto &track_bar_layout = dlg_items_layout[controls::track_bar];
+    const auto track_bar_length = track_bar_layout.X2 - track_bar_layout.X1;
+    const auto click_pos = ir->Event.MouseEvent.dwMousePosition.X - (dlg_rect.Left + track_bar_layout.X1);
+    const auto progress_percent = (float)click_pos / track_bar_length;
 
     api->seek_to_position((int)std::round(playback.item.duration_ms * progress_percent));
     return true;
@@ -648,9 +627,12 @@ bool player::on_inactive_control_style_applied(void *dialog_item_colors)
 
 bool player::on_like_btn_input_received(void *input_record)
 {
-    auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
-    if (ir->EventType == KEY_EVENT)
-        return false;
+    if (input_record)
+    {
+        const auto *ir = reinterpret_cast<INPUT_RECORD*>(input_record);
+        if (ir->EventType == KEY_EVENT)
+            return false;
+    }
 
     if (api_proxy.expired()) return false;
 

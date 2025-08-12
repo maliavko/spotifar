@@ -18,14 +18,8 @@ using utils::far3::get_text;
 using utils::far3::get_vtext;
 
 
-/// @brief The requests, which do not require showing splash screen, as they are processed
-/// in the background, hidden from user
-static const std::set<string> no_splash_requests{
-    "/v1/me/player/recently-played",
-    "/v1/me/tracks/contains",
-};
-
-plugin::plugin(): api(new spotify::api())
+plugin::plugin():
+    api(new spotify::api())
 {
     hotkeys = std::make_unique<hotkeys_handler>(api);
     notifications = std::make_unique<ui::notifications_handler>(api);
