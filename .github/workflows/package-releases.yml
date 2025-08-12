@@ -32,6 +32,9 @@ jobs:
   packaging:
     needs: [build-librespot, build-spotifar]
     runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
