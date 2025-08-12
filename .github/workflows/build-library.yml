@@ -82,8 +82,6 @@ jobs:
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         if: ${{ matrix.platform == 'vs17-x64' || matrix.platform == 'vs17-x86' }}
-        with:
-          cmake-version: '3.31.8'
 
       - name: Setup ccache
         if: inputs.caching
