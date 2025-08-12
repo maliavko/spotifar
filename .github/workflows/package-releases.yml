@@ -22,7 +22,6 @@ jobs:
       contents: read
     needs: build-librespot
     with:
-      platforms: '["vs17-x64", "vs17-x86"]'
       build_type: 'Release'
       build_librespot: false
       testing: false
@@ -53,9 +52,10 @@ jobs:
           echo "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
       
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: artifacts
+          pattern: spotifar-*.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
