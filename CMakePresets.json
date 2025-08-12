@@ -16,9 +16,9 @@
                 "${sourceDir}/thirdparty/FarManager/far/Release.64.clang/Plugins/Spotifar",
                 "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
             ],
-            "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "installDir": "C:\\Users\\i_maliavko\\SynologyDrive\\soft\\tools\\Far30",
             "cacheVariables": {
                 "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
                 "BUILD_LIBRESPOT": "1",

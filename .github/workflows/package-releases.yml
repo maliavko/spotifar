@@ -30,7 +30,7 @@ jobs:
     secrets: inherit
 
   packaging:
-    needs: build-and-release
+    needs: [build-librespot, build-spotifar]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
