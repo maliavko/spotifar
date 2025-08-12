@@ -18,6 +18,7 @@
             ],
             "binaryDir": "${sourceDir}/build/${presetName}",
             "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "installDir": "C:\\Users\\i_maliavko\\SynologyDrive\\soft\\tools\\Far30",
             "cacheVariables": {
                 "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "1",
                 "BUILD_LIBRESPOT": "1",
