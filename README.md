@@ -1,10 +1,7 @@
-> [!WARNING]
-> the project is slowly crawling to his first public release
-
 # spotifar
 Alternative Spotify client implementation via [Far Manager](https://github.com/FarGroup/FarManager) [plugin](https://www.farmanager.com/plugins.php). The plugin itself is just a UI facade for the [Spotify Web API](https://developer.spotify.com/documentation/web-api), using [Far Manager API](https://api.farmanager.com/) to draw panels and dialogs for a user to perform some basic manipulations with the current playback and his spotify collection.
 
-<img src="misc/readme-plugin-cover.png" alt="Alt Text">
+<img src="misc/img/readme-plugin-cover.png" alt="Alt Text">
 
 # Rationale
 - simple minimalistic way to control your music

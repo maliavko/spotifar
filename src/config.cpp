@@ -385,7 +385,7 @@ void read(const PluginStartupInfo *info)
     _settings.is_circled_notification_image = ctx->get_bool(is_circled_notification_image_opt, false);
     
     // playback settings
-    _settings.playback_backend_enabled = ctx->get_bool(playback_backend_enabled_opt, true);
+    _settings.playback_backend_enabled = ctx->get_bool(playback_backend_enabled_opt, false);
     _settings.volume_normalisation_enabled = ctx->get_bool(volume_normalisation_enabled_opt, true);
     _settings.playback_autoplay_enabled = ctx->get_bool(playback_autoplay_enabled_opt, false);
     _settings.gapless_playback_enabled = ctx->get_bool(gapless_playback_enabled_opt, true);
