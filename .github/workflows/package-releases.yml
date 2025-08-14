@@ -3,43 +3,12 @@ name: Releases
 on:
   push:
     branches: [main]
+  pull request:
 
 jobs:
-  build-librespot:
-    uses: ./.github/workflows/build-librespot.yml
-    permissions:
-      actions: read
-      contents: read
-    with:
-      profile: 'xRelease'
-      caching: false # no caching used for master releases
-    secrets: inherit
-
-  build-spotifar:
-    needs: build-librespot
-    uses: ./.github/workflows/build-library.yml
-    permissions:
-      actions: read
-      contents: read
-    with:
-      build_type: 'Release'
-      build_librespot: false
-      testing: false
-      caching: false # no caching used for master releases
-    secrets: inherit
-
-  packaging:
-    needs: [build-librespot, build-spotifar]
+  get-version:
     runs-on: windows-latest
-    permissions:
-      actions: read
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
       - name: Get version and label
         id: get_version
         run: |
@@ -56,17 +25,55 @@ jobs:
           $new_tag_name = "v$full_version"
           Write-Host "Tag: $new_tag_name"
           echo "tag=$new_tag_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-      
-      - name: Download all artifacts
-        uses: actions/download-artifact@v5
-        with:
-          path: artifacts
-          pattern: spotifar-*
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+  # build-librespot:
+  #   uses: ./.github/workflows/build-librespot.yml
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #   with:
+  #     profile: 'xRelease'
+  #     caching: false # no caching used for master releases
+  #   secrets: inherit
+
+  # build-spotifar:
+  #   needs: [get-version, build-librespot]
+  #   uses: ./.github/workflows/build-library.yml
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #   with:
+  #     build_type: 'Release'
+  #     build_librespot: false
+  #     testing: false
+  #     caching: false # no caching used for master releases
+  #   secrets: inherit
+
+  packaging:
+    # needs: [build-librespot, build-spotifar]
+    needs: [get-version]
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
         with:
-          tag_name: ${{ steps.get_version.outputs.tag }}
-          name: Spotifar ${{ steps.get_version.outputs.tag }}
-          files: artifacts/**/*
-          generate_release_notes: true
+          fetch-depth: 0
+          fetch-tags: true
+
+      - run: echo "1111111 Value from job1: ${{ needs.get-version.outputs.tag }}"
+      
+      # - name: Download all artifacts
+      #   uses: actions/download-artifact@v5
+      #   with:
+      #     path: artifacts
+      #     pattern: spotifar-*
+
+      # - name: Create GitHub Release
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     tag_name: ${{ steps.get_version.outputs.tag }}
+      #     name: Spotifar ${{ steps.get_version.outputs.tag }}
+      #     files: artifacts/**/*
+      #     generate_release_notes: true
