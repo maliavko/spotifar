@@ -3,7 +3,7 @@ name: Releases
 on:
   push:
     branches: [main]
-  pull request:
+  pull_request:
 
 jobs:
   get-version:
