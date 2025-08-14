@@ -57,8 +57,8 @@ jobs:
       build_librespot: false
       testing: false
       caching: false # no caching used for master releases
-      build_num: ${{ steps.get_version.outputs.build_num }}
-      version_tag: ${{ steps.get_version.outputs.tag }}
+      build_num: ${{ needs.get_version.outputs.build_num }}
+      version_tag: ${{ needs.get_version.outputs.tag }}
     secrets: inherit
 
   packaging:
@@ -77,7 +77,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_version.outputs.tag }}
-          name: Spotifar ${{ steps.get_version.outputs.tag }}
+          tag_name: ${{ needs.get_version.outputs.tag }}
+          name: Spotifar ${{ needs.get_version.outputs.tag }}
           files: artifacts/**/*
           generate_release_notes: true
