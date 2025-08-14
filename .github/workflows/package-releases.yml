@@ -6,28 +6,28 @@ on:
   pull_request:
 
 jobs:
-  build-librespot:
-    uses: ./.github/workflows/build-librespot.yml
-    permissions:
-      actions: read
-      contents: read
-    with:
-      profile: 'xRelease'
-      caching: false # no caching used for master releases
-    secrets: inherit
+  # build-librespot:
+  #   uses: ./.github/workflows/build-librespot.yml
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #   with:
+  #     profile: 'xRelease'
+  #     caching: false # no caching used for master releases
+  #   secrets: inherit
 
-  build-spotifar:
-    uses: ./.github/workflows/build-library.yml
-    permissions:
-      actions: read
-      contents: read
-    needs: build-librespot
-    with:
-      build_type: 'Release'
-      build_librespot: false
-      testing: false
-      caching: false # no caching used for master releases
-    secrets: inherit
+  # build-spotifar:
+  #   uses: ./.github/workflows/build-library.yml
+  #   permissions:
+  #     actions: read
+  #     contents: read
+  #   needs: build-librespot
+  #   with:
+  #     build_type: 'Release'
+  #     build_librespot: false
+  #     testing: false
+  #     caching: false # no caching used for master releases
+  #   secrets: inherit
 
   packaging:
     needs: [build-librespot, build-spotifar]
@@ -41,6 +41,7 @@ jobs:
       - name: Get version and label
         id: get_version
         run: |
+          Get-Content CMakeLists.txt
           $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
           $tag = git describe --tags --abbrev=0 2>$null
           if (-not $tag) { $build_num = 0 }
