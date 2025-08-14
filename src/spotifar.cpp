@@ -24,7 +24,7 @@ plugin_ptr_t get_plugin()
 extern "C" void WINAPI GetGlobalInfoW(GlobalInfo *info)
 {
     info->StructSize = sizeof(GlobalInfo);
-    info->MinFarVersion = MAKEFARVERSION(3, 0, 0, 4400, VS_RELEASE);
+    info->MinFarVersion = MIN_FAR_VERSION;
     info->Version = PLUGIN_VERSION;
     info->Guid = guids::MainGuid;
     info->Title = PLUGIN_NAME;
