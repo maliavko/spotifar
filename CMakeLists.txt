@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.5...3.10)
 
+project(spotifar VERSION 0.9.0 LANGUAGES CXX)
+
+set(PLUGIN_NAME "${PROJECT_NAME}")
+set(PLUGIN_FILENAME "${PROJECT_NAME}.dll")
+set(PLUGIN_DESC "A front-end client for listening to music from Spotify")
+set(PLUGIN_AUTHOR "IgorM")
+
 # enum VERSION_STAGE
 # {
 #   VS_RELEASE      = 0,
@@ -9,15 +16,13 @@ cmake_minimum_required(VERSION 3.5...3.10)
 #	  VS_SPECIAL      = 4,
 #	  VS_PRIVATE      = 5,
 #};
-#
-# Major - plugin build number
-# Minor - version stage id from above
-project(spotifar VERSION 1.1 LANGUAGES CXX)
+set(PLUGIN_VER_STAGE VS_RELEASE)
 
-set(PLUGIN_NAME "${PROJECT_NAME}")
-set(PLUGIN_FILENAME "${PROJECT_NAME}.dll")
-set(PLUGIN_DESC "A front-end plugin to listen to music from Spotify")
-set(PLUGIN_AUTHOR "IgorM")
+set(FAR_VER_MAJOR 3)
+set(FAR_VER_MINOR 0)
+set(FAR_VER_REV 0)
+set(FAR_VER_BUILD 0)
+set(FAR_VER_STAGE VS_RELEASE)
 
 configure_file(src/version.hpp.in version.hpp)
 
