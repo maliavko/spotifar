@@ -11,6 +11,9 @@ jobs:
       build_num: ${{ steps.version.outputs.build_num }}
       tag: ${{ steps.version.outputs.tag }}
 
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
         with:
