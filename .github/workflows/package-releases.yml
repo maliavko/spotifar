@@ -63,7 +63,8 @@ jobs:
     secrets: inherit
 
   packaging:
-    needs: [build-librespot, build-spotifar]
+    needs: [build-spotifar]
+    # needs: [build-librespot, build-spotifar]
     runs-on: windows-latest
     permissions:
       actions: read
