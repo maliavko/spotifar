@@ -62,7 +62,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - run: echo "1111111 Value from job1: ${{ needs.get-version.outputs.tag }}"
+      - run: echo "1111111 Value from job1 ${{ needs.get-version.outputs.tag }}"
       
       # - name: Download all artifacts
       #   uses: actions/download-artifact@v5
