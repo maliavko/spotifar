@@ -10,6 +10,8 @@
 #define PLUGIN_NAME L"@PLUGIN_NAME@"
 #define PLUGIN_FILENAME L"@PLUGIN_FILENAME@"
 #define PLUGIN_AUTHOR L"@PLUGIN_AUTHOR@"
-#define PLUGIN_VERSION MAKEFARVERSION(@spotifar_VERSION_MAJOR@,@spotifar_VERSION_MINOR@,@spotifar_VERSION_PATCH@,0,(VERSION_STAGE)@PLUGIN_VER_STAGE@)
+// for some reason in far UI the version is shown in the mixed way: major.minor.build.revision, I swapped these components
+// here so the version in Far UI matches the one on Github
+#define PLUGIN_VERSION MAKEFARVERSION(@spotifar_VERSION_MAJOR@,@spotifar_VERSION_MINOR@,@PLUGIN_VER_BUILD@,@spotifar_VERSION_PATCH@,(VERSION_STAGE)@PLUGIN_VER_STAGE@)
 
 #endif // VERSION_HPP_190BAC0F_2C12_4955_932E_7A1D19EBC744

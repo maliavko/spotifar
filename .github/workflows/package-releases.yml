@@ -3,8 +3,41 @@ name: Releases
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
+  get_version:
+    runs-on: windows-latest
+    outputs:
+      build_num: ${{ steps.version.outputs.build_num }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+        
+      - name: Get version and label
+        id: version
+        run: |
+          $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
+          $tag = git tag --sort=-taggerdate
+          if (-not $tag) { $build_num = 0 }
+          else { $build_num = [int]($tag.Split('.')[-1]) }
+          $next_build_num = $build_num + 1
+          $full_version = "$version.$next_build_num"
+          $new_tag_name = "v$full_version"
+
+          Write-Host "Latest tag: $tag"
+          Write-Host "Build num: $build_num"
+          Write-Host "Next build num: $next_build_num"
+          Write-Host "Full version: $full_version"
+          Write-Host "New tag: $new_tag_name"
+
+          echo "tag=$new_tag_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          echo "build_num=$next_build_num" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
   build-librespot:
     uses: ./.github/workflows/build-librespot.yml
     permissions:
@@ -16,7 +49,7 @@ jobs:
     secrets: inherit
 
   build-spotifar:
-    needs: build-librespot
+    needs: [get_version, build-librespot]
     uses: ./.github/workflows/build-library.yml
     permissions:
       actions: read
@@ -26,37 +59,17 @@ jobs:
       build_librespot: false
       testing: false
       caching: false # no caching used for master releases
+      build_num: ${{ needs.get_version.outputs.build_num }}
+      version_tag: ${{ needs.get_version.outputs.tag }}
     secrets: inherit
 
   packaging:
-    needs: [build-librespot, build-spotifar]
+    needs: [get_version, build-librespot, build-spotifar]
     runs-on: windows-latest
     permissions:
       actions: read
       contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Get version and label
-        id: get_version
-        run: |
-          $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
-          $tag = git tag --sort=-taggerdate
-          Write-Host "Tag: $tag"
-          if (-not $tag) { $build_num = 0 }
-          else { $build_num = [int]($tag.Split('.')[-1]) }
-          Write-Host "Build num: $build_num"
-          $next_build_num = $build_num + 1
-          Write-Host "Next build num: $next_build_num"
-          $full_version = "$version.$next_build_num"
-          Write-Host "Full version: $full_version"
-          $new_tag_name = "v$full_version"
-          Write-Host "Tag: $new_tag_name"
-          echo "tag=$new_tag_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-      
       - name: Download all artifacts
         uses: actions/download-artifact@v5
         with:
@@ -66,7 +79,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_version.outputs.tag }}
-          name: Spotifar ${{ steps.get_version.outputs.tag }}
+          tag_name: ${{ needs.get_version.outputs.tag }}
+          name: Spotifar ${{ needs.get_version.outputs.tag }}
           files: artifacts/**/*
           generate_release_notes: true

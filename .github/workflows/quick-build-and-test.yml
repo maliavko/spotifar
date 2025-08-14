@@ -16,4 +16,6 @@ jobs:
       testing: true
       caching: true
       upload_artifacts: false
+      build_num: '0'  # not needed for testing
+      version_tag: ''  # not needed for testing
     secrets: inherit

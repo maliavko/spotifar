@@ -27,6 +27,12 @@ on:
         required: false
         default: false
         type: boolean
+      build_num:
+        required: true
+        type: string
+      version_tag:
+        required: true
+        type: string
 
 jobs:
   build-spotifar:
@@ -104,7 +110,7 @@ jobs:
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }} -DTESTING=${{ inputs.testing }}
+        run: cmake --preset ${{ matrix.platform }} -DPLUGIN_VER_BUILD=${{ inputs.build_num }} -DBUILD_LIBRESPOT=${{ inputs.build_librespot }} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }} -DTESTING=${{ inputs.testing }}
 
       - name: Build spotifar
         run: cmake --build --preset ${{ matrix.platform }}-${{ inputs.build_type }} --target install --parallel $(nproc)
@@ -123,16 +129,17 @@ jobs:
           path: /install/${{ matrix.platform }}
 
       - name: Pack spotifar
+        if: inputs.upload_artifacts
         run: |
-          powershell Compress-Archive -Path /install/${{ matrix.platform }}/* -DestinationPath /install/spotifar-${{ matrix.platform }}.zip
+          powershell Compress-Archive -Path /install/${{ matrix.platform }}/* -DestinationPath /install/spotifar-${{ matrix.platform }}-${{ inputs.version_tag }}.zip
 
       - name: Packaging artifacts
         if: inputs.upload_artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: spotifar-${{ matrix.platform }}
-          path: /install/spotifar-${{ matrix.platform }}.zip
-      
+          name: spotifar-${{ matrix.platform }}-${{ inputs.version_tag }}
+          path: /install/spotifar-${{ matrix.platform }}-${{ inputs.version_tag }}.zip
+
       # reporting
       - name: ccache statistics
         if: inputs.caching
