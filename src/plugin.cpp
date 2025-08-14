@@ -157,6 +157,10 @@ void plugin::launch_librespot_process(const string &access_token)
     if (!librespot->is_running())
     {
         ui::hide_waiting();
+
+        // if the Librespot device is not running for whatever reason we are trying to pick up
+        // any device, including the offer for user to pick from the list
+        hotkeys->pick_up_any();
     }
     else
     {

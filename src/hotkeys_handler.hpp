@@ -21,18 +21,18 @@ public:
     void volume_down(int step);
     void seek_forward(int step);
     void seek_backward(int step);
+    
+    /// @brief In case there is no active device and Librespot is not active
+    /// for any reason, this method provides a fallback solution to offer
+    /// for user to pick up manually a device to tranfer playback to from the list
+    /// of available
+    void pick_up_any();
 
     void tick();
 protected:
     /// @brief Returns a currently active device or nullptr
     auto get_active_device() const -> const spotify::device_t*;
 
-    /// @brief In case there is no active device and Librespot is not active
-    /// for any reason, this method provides a fallback solution to offer
-    /// for user to pick up manually a device to tranfer playback to from the list
-    /// of available
-    void pick_up_any();
-    
     // config handlers
     void on_global_hotkeys_setting_changed(bool is_enabled) override;
     void on_global_hotkey_changed(config::settings::hotkeys_t changed_keys) override;
