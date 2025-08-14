@@ -49,6 +49,7 @@ jobs:
   #   secrets: inherit
 
   build-spotifar:
+    runs-on: windows-latest
     needs: [get_version]
     # needs: [get_version, build-librespot]
     # uses: ./.github/workflows/build-library.yml
