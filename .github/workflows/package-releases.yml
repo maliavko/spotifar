@@ -42,7 +42,7 @@ jobs:
         id: get_version
         run: |
           $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
-          $latest_tag = git describe --tags --abbrev=0 2>$null
+          $tag = git describe --tags --abbrev=0 2>$null
           if (-not $tag) { $build_num = 0 }
           else { $build_num = [int]($tag.Split('.')[-1]) }
           $next_build_num = $build_num + 1
