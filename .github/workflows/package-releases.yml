@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
     outputs:
       build_num: ${{ steps.version.outputs.next_build_num }}
-      tag: ${{ steps.version.outputs.tag }}
+      tag: ${{ steps.version.outputs.new_tag_name }}
 
     steps:
       - uses: actions/checkout@v4
