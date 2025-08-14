@@ -16,7 +16,6 @@
                 "${sourceDir}/thirdparty/FarManager/far/Release.64.clang/Plugins/Spotifar",
                 "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar"
             ],
-            "installDir": "${sourceDir}/thirdparty/FarManager/_build/vc/_output/product/Release.x64/Plugins/Spotifar",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "toolchainFile": "./vcpkg/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {

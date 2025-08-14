@@ -43,11 +43,16 @@ jobs:
         run: |
           $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
           $tag = git tag --sort=-taggerdate
+          Write-Host "Tag: $tag"
           if (-not $tag) { $build_num = 0 }
           else { $build_num = [int]($tag.Split('.')[-1]) }
+          Write-Host "Build num: $build_num"
           $next_build_num = $build_num + 1
+          Write-Host "Next build num: $next_build_num"
           $full_version = "$version.$next_build_num"
+          Write-Host "Full version: $full_version"
           $new_tag_name = "v$full_version"
+          Write-Host "Tag: $new_tag_name"
           echo "tag=$new_tag_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
       
       - name: Download all artifacts
