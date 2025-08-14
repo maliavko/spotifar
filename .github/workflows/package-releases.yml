@@ -38,19 +38,18 @@ jobs:
           echo "tag=$new_tag_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           echo "build_num=$next_build_num" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
-  # build-librespot:
-  #   uses: ./.github/workflows/build-librespot.yml
-  #   permissions:
-  #     actions: read
-  #     contents: read
-  #   with:
-  #     profile: 'xRelease'
-  #     caching: false # no caching used for master releases
-  #   secrets: inherit
+  build-librespot:
+    uses: ./.github/workflows/build-librespot.yml
+    permissions:
+      actions: read
+      contents: read
+    with:
+      profile: 'xRelease'
+      caching: false # no caching used for master releases
+    secrets: inherit
 
   build-spotifar:
-    needs: [get_version]
-    # needs: [get_version, build-librespot]
+    needs: [get_version, build-librespot]
     uses: ./.github/workflows/build-library.yml
     permissions:
       actions: read
@@ -66,8 +65,7 @@ jobs:
     secrets: inherit
 
   packaging:
-    needs: [get_version, build-spotifar]
-    # needs: [build-librespot, build-spotifar]
+    needs: [get_version, build-librespot, build-spotifar]
     runs-on: windows-latest
     permissions:
       actions: read

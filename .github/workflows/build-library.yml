@@ -121,12 +121,12 @@ jobs:
         run: ctest --preset ${{ matrix.platform }}
 
       # packaging
-      # - name: Download librespot
-      #   if: inputs.upload_artifacts
-      #   uses: actions/download-artifact@v5
-      #   with:
-      #     name: librespot-bin
-      #     path: /install/${{ matrix.platform }}
+      - name: Download librespot
+        if: inputs.upload_artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: librespot-bin
+          path: /install/${{ matrix.platform }}
 
       - name: Pack spotifar
         if: inputs.upload_artifacts
