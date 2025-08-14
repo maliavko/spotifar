@@ -32,7 +32,7 @@ jobs:
           Write-Host "Full version: $full_version"
           $new_tag_name = "v$full_version"
           Write-Host "Tag: $new_tag_name"
-          echo "tag=$new_tag_name" >> $GITHUB_OUTPUT
+          echo "tag=$new_tag_name" >> $env:GITHUB_OUTPUT
 
   # build-librespot:
   #   uses: ./.github/workflows/build-librespot.yml
