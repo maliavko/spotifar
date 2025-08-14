@@ -34,6 +34,7 @@ jobs:
           $new_tag_name = "v$full_version"
           Write-Host "Tag: $new_tag_name"
           echo "tag=$new_tag_name" >> $env:GITHUB_OUTPUT
+          echo "build_num=$next_build_num" >> $env:GITHUB_OUTPUT
 
   # build-librespot:
   #   uses: ./.github/workflows/build-librespot.yml
