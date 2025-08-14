@@ -137,8 +137,8 @@ jobs:
         if: inputs.upload_artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: spotifar-${{ matrix.platform }}
-          path: /install/spotifar-${{ matrix.platform }}-${{ inputs.version_tag }}.zip
+          name: spotifar-${{ matrix.platform }}-${{ inputs.version_tag }}
+          path: /install/spotifar-${{ matrix.platform }}.zip
 
       # reporting
       - name: ccache statistics
