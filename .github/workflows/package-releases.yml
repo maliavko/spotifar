@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  get-version:
+  get_version:
     runs-on: windows-latest
     outputs:
       tag: ${{ steps.get_version.outputs.tag }}
@@ -45,7 +45,7 @@ jobs:
   #   secrets: inherit
 
   # build-spotifar:
-  #   needs: [get-version, build-librespot]
+  #   needs: [get_version, build-librespot]
   #   uses: ./.github/workflows/build-library.yml
   #   permissions:
   #     actions: read
@@ -59,13 +59,13 @@ jobs:
 
   packaging:
     # needs: [build-librespot, build-spotifar]
-    needs: [get-version]
+    needs: [get_version]
     runs-on: windows-latest
     permissions:
       actions: read
       contents: write
     steps:
-      - run: echo "1111111 Value from job1 ${{ needs.get-version.outputs.tag }}"
+      - run: echo "1111111 Value from job1 ${{ needs.get_version.outputs.tag }}"
       
       # - name: Download all artifacts
       #   uses: actions/download-artifact@v5
