@@ -6,7 +6,7 @@ set(PLUGIN_NAME "${PROJECT_NAME}")
 set(PLUGIN_FILENAME "${PROJECT_NAME}.dll")
 set(PLUGIN_DESC "A front-end client for listening to music from Spotify")
 set(PLUGIN_AUTHOR "IgorM")
-
+set(PLUGIN_VER_STAGE VS_RC)
 # enum VERSION_STAGE
 # {
 #   VS_RELEASE      = 0,
@@ -16,7 +16,6 @@ set(PLUGIN_AUTHOR "IgorM")
 #	  VS_SPECIAL      = 4,
 #	  VS_PRIVATE      = 5,
 #};
-set(PLUGIN_VER_STAGE VS_RELEASE)
 
 set(FAR_VER_MAJOR 3)
 set(FAR_VER_MINOR 0)
