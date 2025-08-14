@@ -9,6 +9,7 @@ jobs:
   get_version:
     runs-on: windows-latest
     outputs:
+      build_num: ${{ steps.get_version.outputs.next_build_num }}
       tag: ${{ steps.get_version.outputs.tag }}
 
     steps:
@@ -44,39 +45,39 @@ jobs:
   #     caching: false # no caching used for master releases
   #   secrets: inherit
 
-  # build-spotifar:
-  #   needs: [get_version, build-librespot]
-  #   uses: ./.github/workflows/build-library.yml
-  #   permissions:
-  #     actions: read
-  #     contents: read
-  #   with:
-  #     build_type: 'Release'
-  #     build_librespot: false
-  #     testing: false
-  #     caching: false # no caching used for master releases
-  #   secrets: inherit
+  build-spotifar:
+    needs: [get_version, build-librespot]
+    uses: ./.github/workflows/build-library.yml
+    permissions:
+      actions: read
+      contents: read
+    with:
+      platforms: '["vs17-x64", "vs17-x86"]'
+      build_type: 'Release'
+      build_librespot: false
+      testing: false
+      caching: false # no caching used for master releases
+      build_num: ${{ steps.get_version.outputs.build_num }}
+      version_tag: ${{ steps.get_version.outputs.tag }}
+    secrets: inherit
 
   packaging:
-    # needs: [build-librespot, build-spotifar]
-    needs: [get_version]
+    needs: [build-librespot, build-spotifar]
     runs-on: windows-latest
     permissions:
       actions: read
       contents: write
     steps:
-      - run: echo "1111111 Value from job1 ${{ needs.get_version.outputs.tag }}"
-      
-      # - name: Download all artifacts
-      #   uses: actions/download-artifact@v5
-      #   with:
-      #     path: artifacts
-      #     pattern: spotifar-*
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          pattern: spotifar-*
 
-      # - name: Create GitHub Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     tag_name: ${{ steps.get_version.outputs.tag }}
-      #     name: Spotifar ${{ steps.get_version.outputs.tag }}
-      #     files: artifacts/**/*
-      #     generate_release_notes: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: Spotifar ${{ steps.get_version.outputs.tag }}
+          files: artifacts/**/*
+          generate_release_notes: true

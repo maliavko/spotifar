@@ -27,6 +27,12 @@ on:
         required: false
         default: false
         type: boolean
+      build_num:
+        required: true
+        type: int
+      version_tag:
+        required: true
+        type: string
 
 jobs:
   build-spotifar:
@@ -104,7 +110,11 @@ jobs:
         env:
           VCPKG_FEATURE_FLAGS: "binarycaching" # Possibly redundant, but explicitly sets the binary caching feature flag
           VCPKG_BINARY_SOURCES: "clear;files,${{ steps.vcpkg-cache.outputs.path }},readwrite"
-        run: cmake --preset ${{ matrix.platform }} -DBUILD_LIBRESPOT=${{inputs.build_librespot}} -DCMAKE_INSTALL_PREFIX=/install/${{ matrix.platform }} -DTESTING=${{ inputs.testing }}
+          PLUGIN_VER_BUILD: ${{ inputs.build_num }}
+          BUILD_LIBRESPOT: ${{inputs.build_librespot}}
+          CMAKE_INSTALL_PREFIX: /install/${{ matrix.platform }}
+          TESTING: ${{ inputs.testing }}
+        run: cmake --preset ${{ matrix.platform }}
 
       - name: Build spotifar
         run: cmake --build --preset ${{ matrix.platform }}-${{ inputs.build_type }} --target install --parallel $(nproc)
@@ -131,8 +141,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: spotifar-${{ matrix.platform }}
-          path: /install/spotifar-${{ matrix.platform }}.zip
-      
+          path: /install/spotifar-${{ matrix.platform }}-${{ inputs.version_tag }}.zip
+
       # reporting
       - name: ccache statistics
         if: inputs.caching
