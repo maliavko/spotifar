@@ -3,7 +3,6 @@ name: Releases
 on:
   push:
     branches: [main]
-  pull_request:
 
 jobs:
   get_version:
@@ -22,7 +21,7 @@ jobs:
         id: version
         run: |
           $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
-          $tag = git tag --sort=-taggerdate
+          $tag = git tag --sort=-taggerdate | Select-Object -Last 1
           if (-not $tag) { $build_num = 0 }
           else { $build_num = [int]($tag.Split('.')[-1]) }
           $next_build_num = $build_num + 1
