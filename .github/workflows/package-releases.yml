@@ -42,37 +42,13 @@ jobs:
       - name: Get version and label
         id: get_version
         run: |
-          $ErrorActionPreference = "Stop"
-          try {
-              $match = Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)'
-              if ($match) {
-                  $version = $match.Matches[0].Groups[1].Value
-                  Write-Host "Extracted version: $version"
-              } else {
-                  Write-Host "No version found in CMakeLists.txt"
-                  exit 1
-              }
-
-              $tag = git describe --tags --abbrev=0 2>$null
-              Write-Host "Latest tag: $tag"
-              if (-not $tag) { $build_num = 0 }
-              else { $build_num = [int]($tag.Split('.')[-1]) }
-              Write-Host "Build number: $build_num"
-
-              $next_build_num = $build_num + 1
-              Write-Host "Next build number: $next_build_num"
-
-              $full_version = "$version.$next_build_num"
-              Write-Host "Full version: $full_version"
-
-              $new_tag_name = "v$full_version"
-              Write-Host "New tag name: $new_tag_name"
-
-              echo "tag=$new_tag_name" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          } catch {
-              Write-Host "Caught error: $_"
-              exit 1
-          }
+          $version = (Select-String -Path CMakeLists.txt -Pattern 'project\(.*VERSION ([0-9\.]+)').Matches[0].Groups[1].Value
+          $tag = git describe --tags --abbrev=0 2>$null
+          if (-not $tag) { $build_num = 0 }
+          else { $build_num = [int]($tag.Split('.')[-1]) }
+          $next_build_num = $build_num + 1
+          $full_version = "$version.$next_build_num"
+          $new_tag_name = "v$full_version"
       
       - name: Download all artifacts
         uses: actions/download-artifact@v5
